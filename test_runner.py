@@ -236,6 +236,21 @@ class RunnerTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 initialize(self.s)
 
+    def test_consolidated_demo(self):
+        from demo import run_demo
+        result = run_demo()
+        self.assertEqual(result, run_demo())
+        self.assertEqual(result["timeline"], [
+            {"turn": 0, "minute": 0, "actual_rooms": 0, "reported_rooms": None,
+             "pending_reviews": 2, "reviewed": 0},
+            {"turn": 1, "minute": 360, "actual_rooms": 5, "reported_rooms": 2,
+             "pending_reviews": 1, "reviewed": 1},
+            {"turn": 2, "minute": 720, "actual_rooms": 5, "reported_rooms": 5,
+             "pending_reviews": 0, "reviewed": 2},
+        ])
+        self.assertTrue(result["constraints_passed"])
+        self.assertTrue(result["final_objectives"]["library"]["objectives"]["access"]["met"])
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):

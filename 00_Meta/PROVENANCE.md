@@ -35,3 +35,7 @@ PR #6 passed both Python CI jobs and was merged by the integration. Added explic
 ## Increment 8
 
 PR #7 passed both Python CI jobs and was merged by the integration. Added bounded administrative review capacity and replay-derived dispositions for the library example. Review does not imply fulfillment or world-state change. Checkpoint version raised to 2; three tests added. CI pending.
+
+## Increment 9
+
+PR #8 merged after both Python CI jobs passed. Consolidated the public library scenario into a repeatable referee demonstration, with temporary checkpoint round trips and a single acceptance test. Compressed the active plan around functional deliverables. CI pending; no new world-state semantics or private data.

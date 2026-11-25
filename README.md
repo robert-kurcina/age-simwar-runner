@@ -4,6 +4,8 @@ Experimental script-first scenario execution component. Python 3.10+; no depende
 
 ## Demonstration
 
+Run `python demo.py` for a repeatable referee-side report using temporary checkpoints. The manual workflow below permits individual actor requests and inspection.
+
 Run from the repository root using a fresh checkpoint path:
 
 ```sh
