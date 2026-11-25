@@ -10,9 +10,11 @@
 - Actor registry and independent descriptive objectives, with derived checkpoint state.
 - CI verification on Python 3.10 and 3.12, including CLI resume.
 
+- Actor-specific observation projections and visibility tests (PR #3 CI passed and merged).
+
 ## WIP
-- Actor-specific observation projections and visibility tests.
-- Next: explicit action contracts.
+- Administrative request catalog, actor-bound validation and detached registration records.
+- Next: durable administrative request ledger and observation timestamps.
 
 ## DEFERRED
 - AGE/AIGen versioned integration contracts; actor cognition; delayed or uncertain observation models; branching; resource and relationship models.
