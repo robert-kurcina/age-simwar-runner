@@ -55,3 +55,7 @@ PR #11 passed both Python CI jobs and was merged. Added read-only same-revision 
 ## Increment 13
 
 PR #12 passed both Python CI jobs and was merged by the integration. The limited prototype plan is verified (35 tests and consolidated demonstration). Documented unresolved original objectives and prioritized an actual request-dependent administrative outcome over further infrastructure. Corrected unsupported historical attribution of local test unavailability to DNS. Documentation-only increment; no new runtime behavior.
+
+## Increment 14
+
+PR #13 passed both Python CI jobs and was merged. Added a standalone synthetic library service example with two study rooms, two shifts and one inspection slot per shift. Human-submitted requests can release rooms after inspection; duplicates do not consume additional inspection capacity. The assumptions are illustrative, not sourced operational rules. Existing runner and checkpoint semantics remain unchanged. Two tests added; CI pending.
