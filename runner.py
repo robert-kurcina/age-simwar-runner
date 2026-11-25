@@ -8,6 +8,7 @@ from pathlib import Path
 import tempfile
 from actors import validate_actors, evaluate
 from observations import validate_views, observe
+from actions import validate_catalog
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -27,6 +28,7 @@ def validate(s):
         raise ValueError("initial values must be integers")
     validate_actors(s)
     validate_views(s)
+    validate_catalog(s)
     ids = set()
     for e in s["events"]:
         if not isinstance(e["id"], str) or e["id"] in ids:
