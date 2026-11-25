@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "id": "library-reopening",
+  "turn_minutes": 360,
+  "end_minute": 720,
+  "initial": {
+    "available_rooms": 0
+  },
+  "events": [
+    {
+      "id": "inspection",
+      "minute": 60,
+      "key": "available_rooms",
+      "delta": 2
+    },
+    {
+      "id": "reopening",
+      "minute": 360,
+      "key": "available_rooms",
+      "delta": 3
+    }
+  ],
+  "constraints": [
+    {
+      "minute": 60,
+      "key": "available_rooms",
+      "equals": 2
+    },
+    {
+      "minute": 360,
+      "key": "available_rooms",
+      "equals": 5
+    }
+  ]
+}

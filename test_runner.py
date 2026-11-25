@@ -1,0 +1,48 @@
+import copy
+import json
+import unittest
+from pathlib import Path
+from runner import initialize, advance, verify_checkpoint
+
+class RunnerTest(unittest.TestCase):
+    def setUp(self):
+        self.s = json.loads((Path(__file__).parent / "scenarios/demo.json").read_text())
+
+    def test_subturn_and_boundary(self):
+        a = initialize(self.s)
+        b = advance(self.s, a)
+        self.assertEqual(a["values"]["available_rooms"], 0)
+        self.assertEqual(b["minute"], 360)
+        self.assertEqual(b["values"]["available_rooms"], 5)
+        self.assertEqual(len(b["ledger"]), 2)
+        self.assertTrue(all(c["passed"] for c in b["checks"]))
+        c = advance(self.s, b)
+        self.assertEqual(len(c["ledger"]), 2)
+        self.assertEqual(advance(self.s, c), c)
+        verify_checkpoint(self.s, c)
+
+    def test_failed_constraint_is_not_forced(self):
+        self.s["constraints"][0]["equals"] = 99
+        b = advance(self.s, initialize(self.s))
+        self.assertFalse(b["checks"][0]["passed"])
+        self.assertEqual(b["values"]["available_rooms"], 5)
+
+    def test_changed_scenario(self):
+        a = initialize(self.s)
+        self.s["turn_minutes"] = 120
+        with self.assertRaises(ValueError):
+            advance(self.s, a)
+
+    def test_tampered_checkpoint(self):
+        a = advance(self.s, initialize(self.s))
+        a["values"]["available_rooms"] += 1
+        with self.assertRaises(ValueError):
+            verify_checkpoint(self.s, a)
+
+    def test_duplicate_event(self):
+        self.s["events"].append(copy.deepcopy(self.s["events"][0]))
+        with self.assertRaises(ValueError):
+            initialize(self.s)
+
+if __name__ == "__main__":
+    unittest.main()
