@@ -67,3 +67,7 @@ PR #14 passed both Python CI jobs and merged; 37 tests verified. Subsequent plan
 ## Increment 16
 
 PR #15 passed both Python CI jobs and merged. Added local campaign catalog, three synthetic scheduled-event scenarios, catalog validation and two regression tests. Prerequisites are descriptive only; no state transfer or new consequence semantics. CI pending. No private corpus material included.
+
+## Post-stabilization interface decision
+
+PR #16 passed both Python CI jobs and merged; 39 tests verified. Author requested ChatGPT-native MCP plugin development only after stabilization of the current engine. Added a deferred implementation phase with deployment and actual invocation acceptance criteria. No runtime change or hosting decision made.
