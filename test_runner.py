@@ -2,7 +2,7 @@ import copy
 import json
 import unittest
 from pathlib import Path
-from runner import initialize, advance, verify_checkpoint
+from runner import initialize, advance, verify_checkpoint, submit_request, save
 from observations import observe
 from actions import register_request, validate_request
 
@@ -115,6 +115,37 @@ class RunnerTest(unittest.TestCase):
         self.s["action_catalog"]["request_room_inspection"]["actors"] = ["unknown"]
         with self.assertRaises(ValueError):
             initialize(self.s)
+
+    def test_persistent_request_replay(self):
+        a = initialize(self.s)
+        b = submit_request(self.s, a, "library", {"action": "request_room_inspection"})
+        self.assertEqual(a["requests"], [])
+        self.assertEqual(a["values"], b["values"])
+        c = advance(self.s, b)
+        d = submit_request(self.s, c, "maintenance", {"action": "request_maintenance_review"})
+        self.assertEqual([r["sequence"] for r in d["requests"]], [1, 2])
+        verify_checkpoint(self.s, d)
+        self.assertEqual(len(observe(self.s, d, "library")["own_requests"]), 1)
+        self.assertEqual(len(observe(self.s, d, "maintenance")["own_requests"]), 1)
+        self.assertNotIn("sequence", observe(self.s, d, "maintenance")["own_requests"][0])
+
+    def test_request_replay_rejects_altered_metadata(self):
+        state = submit_request(self.s, initialize(self.s), "library", {"action": "request_room_inspection"})
+        for field, value in [("minute", 1), ("sequence", 8), ("status", "executed"), ("turn", False)]:
+            altered = copy.deepcopy(state)
+            altered["requests"][0][field] = value
+            with self.assertRaises(ValueError):
+                verify_checkpoint(self.s, altered)
+
+    def test_request_checkpoint_round_trip(self):
+        import tempfile
+        state = submit_request(self.s, initialize(self.s), "library", {"action": "request_room_inspection"})
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "session.json"
+            save(path, state)
+            restored = json.loads(path.read_text())
+            verify_checkpoint(self.s, restored)
+            self.assertEqual(state, restored)
 
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))

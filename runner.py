@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 from actors import validate_actors, evaluate
 from observations import validate_views, observe
-from actions import validate_catalog
+from actions import validate_catalog, register_request
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -48,7 +48,7 @@ def initialize(s):
     validate(s)
     return {"scenario": digest(s), "minute": 0, "turn": 0,
             "values": copy.deepcopy(s["initial"]), "ledger": [], "checks": [],
-            "actors": evaluate(s, s["initial"])}
+            "actors": evaluate(s, s["initial"]), "requests": []}
 
 def advance(s, state):
     validate(s)
@@ -77,13 +77,38 @@ def advance(s, state):
                   actors=evaluate(s, result["values"]))
     return result
 
+def submit_request(s, state, actor_id, proposal):
+    """Append an administrative request to a new checkpoint, without effects."""
+    verify_checkpoint(s, state)
+    return _append_request(s, state, actor_id, proposal)
+
+def _append_request(s, state, actor_id, proposal):
+    record = register_request(s, state, actor_id, proposal)
+    result = copy.deepcopy(state)
+    record["sequence"] = len(result["requests"]) + 1
+    result["requests"].append(record)
+    return result
+
 def verify_checkpoint(s, state):
     expected = initialize(s)
     if not integer(state.get("turn")) or not 0 <= state["turn"] <= (s["end_minute"] + s["turn_minutes"] - 1) // s["turn_minutes"]:
         raise ValueError("invalid checkpoint turn")
-    for _ in range(state["turn"]):
-        expected = advance(s, expected)
-    if expected != state:
+    records = state.get("requests")
+    if not isinstance(records, list):
+        raise ValueError("missing request ledger")
+    index = 0
+    for turn in range(state["turn"] + 1):
+        while index < len(records):
+            record = records[index]
+            if not isinstance(record, dict) or not integer(record.get("turn")):
+                raise ValueError("invalid request record")
+            if record["turn"] != turn:
+                break
+            expected = _append_request(s, expected, record["actor"], {"action": record["action"]})
+            index += 1
+        if turn < state["turn"]:
+            expected = advance(s, expected)
+    if index != len(records) or digest(expected) != digest(state):
         raise ValueError("checkpoint differs from deterministic replay")
 
 def save(path, state):
@@ -106,7 +131,10 @@ def main():
     p.add_argument("checkpoint", type=Path)
     p.add_argument("--turns", type=int, default=1)
     p.add_argument("--actor", help="Print only this actor’s observation; checkpoint remains referee-only")
+    p.add_argument("--request", help="Record a permitted administrative request before advancing; requires --actor")
     args = p.parse_args()
+    if args.request is not None and args.actor is None:
+        p.error("--request requires --actor")
     if args.turns < 0:
         p.error("turns must be nonnegative")
     s = json.loads(args.scenario.read_text())
@@ -116,6 +144,8 @@ def main():
     if args.checkpoint.exists():
         state = json.loads(args.checkpoint.read_text())
         verify_checkpoint(s, state)
+    if args.request is not None:
+        state = submit_request(s, state, args.actor, {"action": args.request})
     for _ in range(args.turns):
         if state["minute"] >= s["end_minute"]:
             break

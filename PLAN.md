@@ -12,9 +12,11 @@
 
 - Actor-specific observation projections and visibility tests (PR #3 CI passed and merged).
 
+- Administrative request catalog, actor-bound validation and detached registration records (PR #4 merged after CI).
+
 ## WIP
-- Administrative request catalog, actor-bound validation and detached registration records.
-- Next: durable administrative request ledger and observation timestamps.
+- Durable administrative request ledger and replay verification.
+- Next: observation timestamps and non-military demonstration improvements.
 
 ## DEFERRED
 - AGE/AIGen versioned integration contracts; actor cognition; delayed or uncertain observation models; branching; resource and relationship models.

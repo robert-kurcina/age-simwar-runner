@@ -19,3 +19,7 @@ PR #2 merged; both Python matrix jobs passed. Added default-deny actor observati
 ## Increment 4
 
 PR #3 passed both Python CI jobs and was merged by the integration using a pinned head SHA. Introduced a generic administrative request validation contract with no action effects or autonomous policies. Added five unit tests. Private scenarios remain external. CI verification of this increment is pending.
+
+## Increment 5
+
+PR #4 merged by the integration after both CI jobs passed. Added a durable administrative request ledger, replay checks, CLI submission and actor-owned request projections. Records do not execute actions or modify scenario values. Three tests added; CI verification pending. Old prototype checkpoints require recreation.
