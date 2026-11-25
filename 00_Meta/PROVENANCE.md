@@ -43,3 +43,7 @@ PR #8 merged after both Python CI jobs passed. Consolidated the public library s
 ## Increment 10
 
 PR #9 passed both Python CI jobs and was merged by the integration. Added a read-only prompt/response exchange for the public library demonstration, including packet binding and explicit non-authoritative commentary status. Three regression tests added; CI pending. No live model invocation or factual verification is claimed.
+
+## Increment 11
+
+PR #10 passed both Python CI jobs and was merged. Documented local scenario configuration and added validation-only CLI, top-level field checks and a guard against overwriting scenario input. Two regression tests added; CI pending. No new execution semantics.

@@ -19,7 +19,15 @@ def integer(value):
     return type(value) is int
 
 def validate(s):
-    if type(s.get("version")) is not int or s["version"] != 1 or not isinstance(s.get("id"), str):
+    if not isinstance(s, dict):
+        raise ValueError("scenario must be an object")
+    required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn"}
+    if required - s.keys():
+        raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
+    if s.keys() - required - optional:
+        raise ValueError("unknown scenario fields: " + ", ".join(sorted(s.keys() - required - optional)))
+    if type(s.get("version")) is not int or s["version"] != 1 or not isinstance(s.get("id"), str) or not s["id"].strip():
         raise ValueError("invalid scenario identity")
     if not integer(s["turn_minutes"]) or s["turn_minutes"] <= 0:
         raise ValueError("invalid turn duration")
@@ -32,8 +40,12 @@ def validate(s):
     validate_views(s)
     validate_catalog(s)
     validate_review_capacity(s)
+    if not isinstance(s["events"], list) or not isinstance(s["constraints"], list):
+        raise ValueError("events and constraints must be arrays")
     ids = set()
     for e in s["events"]:
+        if not isinstance(e, dict) or set(e) != {"id", "minute", "key", "delta"}:
+            raise ValueError("invalid event fields")
         if not isinstance(e["id"], str) or e["id"] in ids:
             raise ValueError("duplicate or invalid event ID")
         ids.add(e["id"])
@@ -42,6 +54,8 @@ def validate(s):
         if e["key"] not in initial or not integer(e["delta"]):
             raise ValueError("invalid event update")
     for c in s["constraints"]:
+        if not isinstance(c, dict) or set(c) != {"minute", "key", "equals"}:
+            raise ValueError("invalid constraint fields")
         if c["key"] not in initial or not integer(c["equals"]):
             raise ValueError("invalid constraint")
         if not integer(c["minute"]) or not 0 < c["minute"] <= s["end_minute"]:
@@ -138,12 +152,27 @@ def save(path, state):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("scenario", type=Path)
-    p.add_argument("checkpoint", type=Path)
+    p.add_argument("checkpoint", type=Path, nargs="?")
+    p.add_argument("--validate", action="store_true", help="Validate scenario without creating a checkpoint")
     p.add_argument("--turns", type=int, default=1)
     p.add_argument("--actor", help="Print only this actor’s observation; checkpoint remains referee-only")
     p.add_argument("--inspect", action="store_true", help="Read existing checkpoint without advancing or saving")
     p.add_argument("--request", help="Record a permitted administrative request before advancing; requires --actor")
     args = p.parse_args()
+    if args.validate:
+        if args.checkpoint is not None or args.actor is not None or args.request is not None or args.inspect:
+            p.error("--validate is a scenario-only operation")
+        try:
+            s = json.loads(args.scenario.read_text())
+            validate(s)
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            p.error(str(exc))
+        print(json.dumps({"scenario": s["id"], "valid": True, "digest": digest(s)}))
+        return 0
+    if args.checkpoint is None:
+        p.error("checkpoint required unless --validate is used")
+    if args.scenario.resolve() == args.checkpoint.resolve():
+        p.error("scenario and checkpoint must be different files")
     if args.inspect and args.request is not None:
         p.error("--inspect cannot submit requests")
     if args.inspect and not args.checkpoint.is_file():

@@ -279,6 +279,26 @@ class RunnerTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             interpretation_packet(initialize(self.s), "library")
 
+    def test_invalid_scenario_fields(self):
+        for variant in [[], {**self.s, "typo": 1}, {**self.s, "id": ""},
+                        {**self.s, "events": {}}, {**self.s, "constraints": [None]}]:
+            with self.assertRaises(ValueError):
+                initialize(variant)
+        missing = copy.deepcopy(self.s)
+        del missing["events"]
+        with self.assertRaisesRegex(ValueError, "missing scenario fields"):
+            initialize(missing)
+
+    def test_validate_cli(self):
+        import subprocess
+        import sys
+        root = Path(__file__).parent
+        result = subprocess.run(
+            [sys.executable, str(root / "runner.py"),
+             str(root / "scenarios/demo.json"), "--validate"],
+            capture_output=True, text=True, check=True)
+        self.assertTrue(json.loads(result.stdout)["valid"])
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):

@@ -30,6 +30,10 @@ python interpretation.py checkpoint.json --actor library --response interpretati
 
 The first command emits a prompt with a packet ID. A separately operated language model may return JSON containing that packet ID and a short summary. The second command validates the response structure and packet binding, but does not verify factual accuracy. The summary remains non-authoritative commentary. No provider connection, action recommendation, automatic submission or state mutation is implemented.
 
+## External scenarios
+
+See [scenario configuration](docs/scenario-format.md). Use `python runner.py path/to/scenario.json --validate` before starting a local session. The supported contract remains scheduled events and administrative review.
+
 ## Verification
 
 `python -m unittest -v`
