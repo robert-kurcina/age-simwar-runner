@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "id": "civic-recovery",
+  "title": "Civic recovery (synthetic)",
+  "groups": [
+    {
+      "id": "services",
+      "title": "Public services",
+      "scenarios": [
+        {
+          "id": "service-restoration",
+          "title": "Service restoration",
+          "scope": "Municipal",
+          "file": "service-restoration.json"
+        }
+      ]
+    },
+    {
+      "id": "assistance",
+      "title": "Humanitarian assistance",
+      "scenarios": [
+        {
+          "id": "community-assistance",
+          "title": "Community assistance",
+          "scope": "Regional",
+          "file": "community-assistance.json",
+          "prerequisites": [
+            "service-restoration"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "coordination",
+      "title": "Civic coordination",
+      "scenarios": [
+        {
+          "id": "civic-agreement",
+          "title": "Civic agreement",
+          "scope": "Intermunicipal",
+          "file": "civic-agreement.json",
+          "prerequisites": [
+            "community-assistance"
+          ]
+        }
+      ]
+    }
+  ]
+}
