@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from runner import initialize, advance, verify_checkpoint
 from observations import observe
+from actions import register_request, validate_request
 
 class RunnerTest(unittest.TestCase):
     def setUp(self):
@@ -80,6 +81,38 @@ class RunnerTest(unittest.TestCase):
 
     def test_invalid_visibility(self):
         self.s["actors"]["library"]["visible_keys"] = ["missing"]
+        with self.assertRaises(ValueError):
+            initialize(self.s)
+
+    def test_request_registration_is_pure(self):
+        state = initialize(self.s)
+        original = copy.deepcopy(state)
+        record = register_request(self.s, state, "library", {"action": "request_room_inspection"})
+        self.assertEqual(record["status"], "validated_request")
+        self.assertEqual(record["minute"], 0)
+        self.assertEqual(state, original)
+
+    def test_request_rejects_actor_override_and_unlisted_action(self):
+        with self.assertRaises(ValueError):
+            validate_request(self.s, "library", {"action": "request_room_inspection", "actor": "maintenance"})
+        with self.assertRaises(ValueError):
+            validate_request(self.s, "library", {"action": "request_maintenance_review"})
+        with self.assertRaises(ValueError):
+            validate_request(self.s, "library", {"action": "unknown"})
+
+    def test_actor_request_projection(self):
+        state = initialize(self.s)
+        self.assertNotIn("request_maintenance_review", observe(self.s, state, "library")["available_requests"])
+        self.assertIn("request_maintenance_review", observe(self.s, state, "maintenance")["available_requests"])
+
+    def test_ended_session_rejects_requests(self):
+        state = advance(self.s, advance(self.s, initialize(self.s)))
+        self.assertEqual(observe(self.s, state, "library")["available_requests"], {})
+        with self.assertRaises(ValueError):
+            register_request(self.s, state, "library", {"action": "request_room_inspection"})
+
+    def test_catalog_rejects_unknown_actor(self):
+        self.s["action_catalog"]["request_room_inspection"]["actors"] = ["unknown"]
         with self.assertRaises(ValueError):
             initialize(self.s)
 

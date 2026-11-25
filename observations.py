@@ -1,5 +1,6 @@
 """Read-only actor projections. Full checkpoints are referee-only."""
 from copy import deepcopy
+from actions import available_requests
 
 def validate_views(s):
     for actor in s.get("actors", {}).values():
@@ -19,6 +20,7 @@ def observe(s, state, actor_id):
         "minute": state["minute"],
         "turn": state["turn"],
         "values": {k: v for k, v in state["values"].items() if k in keys},
+        "available_requests": available_requests(s, actor_id) if state["minute"] < s["end_minute"] else {},
         "objectives": {
             oid: deepcopy(result)
             for oid, result in state["actors"][actor_id]["objectives"].items()
