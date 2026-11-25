@@ -34,6 +34,19 @@ The first command emits a prompt with a packet ID. A separately operated languag
 
 See [scenario configuration](docs/scenario-format.md). Use `python runner.py path/to/scenario.json --validate` before starting a local session. The supported contract remains scheduled events and administrative review.
 
+## Compare completed sessions
+
+The existing CLI supports manual interaction through request submission, actor inspection and turn advancement. Use separate fresh checkpoint paths for independent sessions:
+
+```sh
+python runner.py scenarios/demo.json baseline.json --turns 2
+python runner.py scenarios/demo.json alternative.json --actor library --request request_room_inspection --turns 0
+python runner.py scenarios/demo.json alternative.json --turns 2
+python comparison.py scenarios/demo.json baseline.json alternative.json
+```
+
+The comparison is read-only and requires completed checkpoints from the same scenario revision. It reports actual state, milestone results, objective status and administrative request counts. Differences are descriptive, not evidence of causation.
+
 ## Verification
 
 `python -m unittest -v`
