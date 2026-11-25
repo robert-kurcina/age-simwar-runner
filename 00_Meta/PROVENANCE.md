@@ -63,3 +63,7 @@ PR #13 passed both Python CI jobs and was merged. Added a standalone synthetic l
 ## Campaign-oriented reset
 
 PR #14 passed both Python CI jobs and merged; 37 tests verified. Subsequent planning-only turns did not implement changes. Reoriented the public development plan toward campaign catalog, civilian recovery vertical slice, distinct scenarios and explicit continuity. Private campaign concepts are not copied into this repository.
+
+## Increment 16
+
+PR #15 passed both Python CI jobs and merged. Added local campaign catalog, three synthetic scheduled-event scenarios, catalog validation and two regression tests. Prerequisites are descriptive only; no state transfer or new consequence semantics. CI pending. No private corpus material included.
