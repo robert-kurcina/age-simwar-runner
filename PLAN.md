@@ -1,6 +1,6 @@
 # Development plan
 
-## DONE (implemented in foundation branch, verification pending)
+## DONE (foundation merged; tests awaiting CI)
 - Minimal external JSON scenario contract.
 - Deterministic clock, scheduled observations, numeric state updates, invariant checks.
 - Atomic checkpoint persistence and scenario fingerprint.
@@ -8,7 +8,9 @@
 - Dedicated 00_Meta directory for provenance and LLM guidance.
 
 ## WIP
-- Run acceptance tests and review first PR.
+- Actor registry and independent descriptive objectives, with derived checkpoint state.
+- CI verification on Python 3.10 and 3.12, including CLI resume.
+- Next: actor-specific observations and explicit action contracts.
 
 ## DEFERRED
 - AGE/AIGen versioned integration contracts; actor cognition; observation filtering; branching; resource and relationship models.
