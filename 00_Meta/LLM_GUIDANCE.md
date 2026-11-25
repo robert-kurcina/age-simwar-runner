@@ -7,3 +7,5 @@
 - Keep provenance and LLM guidance under 00_Meta; keep runtime code, scenario data and technical documentation separate.
 - Never publish private corpus or private scenario data here. Use synthetic examples.
 - Report test execution status accurately and distinguish assumptions from verified facts.
+
+- Merge routine and breaking-change PRs only after successful verification and applicable branch protections, within this repository's authorization; hold unverified changes. Never bypass required checks.
