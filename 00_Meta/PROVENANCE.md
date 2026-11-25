@@ -59,3 +59,7 @@ PR #12 passed both Python CI jobs and was merged by the integration. The limited
 ## Increment 14
 
 PR #13 passed both Python CI jobs and was merged. Added a standalone synthetic library service example with two study rooms, two shifts and one inspection slot per shift. Human-submitted requests can release rooms after inspection; duplicates do not consume additional inspection capacity. The assumptions are illustrative, not sourced operational rules. Existing runner and checkpoint semantics remain unchanged. Two tests added; CI pending.
+
+## Campaign-oriented reset
+
+PR #14 passed both Python CI jobs and merged; 37 tests verified. Subsequent planning-only turns did not implement changes. Reoriented the public development plan toward campaign catalog, civilian recovery vertical slice, distinct scenarios and explicit continuity. Private campaign concepts are not copied into this repository.
