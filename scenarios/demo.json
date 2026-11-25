@@ -4,7 +4,8 @@
   "turn_minutes": 360,
   "end_minute": 720,
   "initial": {
-    "available_rooms": 0
+    "available_rooms": 0,
+    "inspection_notes": 1
   },
   "events": [
     {
@@ -42,7 +43,10 @@
           "comparison": "at_least",
           "threshold": 5
         }
-      }
+      },
+      "visible_keys": [
+        "available_rooms"
+      ]
     },
     "maintenance": {
       "label": "Maintenance department",
@@ -53,7 +57,11 @@
           "comparison": "at_least",
           "threshold": 2
         }
-      }
+      },
+      "visible_keys": [
+        "available_rooms",
+        "inspection_notes"
+      ]
     }
   }
 }
