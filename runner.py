@@ -10,6 +10,8 @@ from actors import validate_actors, evaluate
 from observations import validate_views, observe
 from actions import validate_catalog, register_request
 
+CHECKPOINT_VERSION = 1
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
 
@@ -17,7 +19,7 @@ def integer(value):
     return type(value) is int
 
 def validate(s):
-    if s.get("version") != 1 or not isinstance(s.get("id"), str):
+    if type(s.get("version")) is not int or s["version"] != 1 or not isinstance(s.get("id"), str):
         raise ValueError("invalid scenario identity")
     if not integer(s["turn_minutes"]) or s["turn_minutes"] <= 0:
         raise ValueError("invalid turn duration")
@@ -46,14 +48,19 @@ def validate(s):
 
 def initialize(s):
     validate(s)
-    return {"scenario": digest(s), "minute": 0, "turn": 0,
+    return {"checkpoint_version": CHECKPOINT_VERSION, "scenario": digest(s), "minute": 0, "turn": 0,
             "values": copy.deepcopy(s["initial"]), "ledger": [], "checks": [],
             "actors": evaluate(s, s["initial"]), "requests": []}
 
+def check_identity(s, state):
+    if not isinstance(state, dict) or type(state.get("checkpoint_version")) is not int or state["checkpoint_version"] != CHECKPOINT_VERSION:
+        raise ValueError("unsupported checkpoint version; recreate the prototype session")
+    if state.get("scenario") != digest(s):
+        raise ValueError("scenario revision mismatch")
+
 def advance(s, state):
     validate(s)
-    if state["scenario"] != digest(s):
-        raise ValueError("scenario revision mismatch")
+    check_identity(s, state)
     start = state["minute"]
     if start >= s["end_minute"]:
         return copy.deepcopy(state)
@@ -91,6 +98,7 @@ def _append_request(s, state, actor_id, proposal):
 
 def verify_checkpoint(s, state):
     expected = initialize(s)
+    check_identity(s, state)
     if not integer(state.get("turn")) or not 0 <= state["turn"] <= (s["end_minute"] + s["turn_minutes"] - 1) // s["turn_minutes"]:
         raise ValueError("invalid checkpoint turn")
     records = state.get("requests")
@@ -131,8 +139,13 @@ def main():
     p.add_argument("checkpoint", type=Path)
     p.add_argument("--turns", type=int, default=1)
     p.add_argument("--actor", help="Print only this actor’s observation; checkpoint remains referee-only")
+    p.add_argument("--inspect", action="store_true", help="Read existing checkpoint without advancing or saving")
     p.add_argument("--request", help="Record a permitted administrative request before advancing; requires --actor")
     args = p.parse_args()
+    if args.inspect and args.request is not None:
+        p.error("--inspect cannot submit requests")
+    if args.inspect and not args.checkpoint.is_file():
+        p.error("--inspect requires an existing checkpoint")
     if args.request is not None and args.actor is None:
         p.error("--request requires --actor")
     if args.turns < 0:
@@ -146,11 +159,12 @@ def main():
         verify_checkpoint(s, state)
     if args.request is not None:
         state = submit_request(s, state, args.actor, {"action": args.request})
-    for _ in range(args.turns):
+    for _ in range(0 if args.inspect else args.turns):
         if state["minute"] >= s["end_minute"]:
             break
         state = advance(s, state)
-    save(args.checkpoint, state)
+    if not args.inspect:
+        save(args.checkpoint, state)
     if args.actor is not None:
         print(json.dumps(observe(s, state, args.actor), indent=2))
         return 0  # do not leak private historical constraint status via exit code

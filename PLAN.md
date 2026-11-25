@@ -16,9 +16,11 @@
 
 - Durable administrative request ledger and replay verification (PR #5 merged after CI).
 
+- Timestamped administrative observations and knowledge-consistent objective reporting (PR #6 merged after CI).
+
 ## WIP
-- Timestamped administrative observations and knowledge-consistent objective reporting.
-- Next: improve checkpoint schema and non-military demonstration usability.
+- Explicit checkpoint format version and read-only inspection, with runnable demonstration.
+- Next: review remaining scope and administrative workflow usability.
 
 ## DEFERRED
 - AGE/AIGen versioned integration contracts; actor cognition; uncertain observation models; branching; resource and relationship models.

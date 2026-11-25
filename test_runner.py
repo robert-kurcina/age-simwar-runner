@@ -177,6 +177,36 @@ class RunnerTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 initialize(self.s)
 
+    def test_checkpoint_version_and_identity(self):
+        state = initialize(self.s)
+        for version in [None, True, 2]:
+            bad = copy.deepcopy(state)
+            bad["checkpoint_version"] = version
+            with self.assertRaisesRegex(ValueError, "unsupported checkpoint version"):
+                verify_checkpoint(self.s, bad)
+        revised = copy.deepcopy(self.s)
+        revised["id"] = "revised"
+        with self.assertRaisesRegex(ValueError, "scenario revision mismatch"):
+            verify_checkpoint(revised, state)
+
+    def test_inspect_is_read_only(self):
+        import subprocess
+        import sys
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "session.json"
+            state = initialize(self.s)
+            save(path, state)
+            before = path.read_bytes()
+            root = Path(__file__).parent
+            result = subprocess.run(
+                [sys.executable, str(root / "runner.py"),
+                 str(root / "scenarios/demo.json"), str(path),
+                 "--inspect", "--actor", "library"],
+                capture_output=True, text=True, check=True)
+            self.assertEqual(json.loads(result.stdout)["turn"], 0)
+            self.assertEqual(path.read_bytes(), before)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):
