@@ -31,3 +31,7 @@ PR #5 passed both Python CI jobs and was merged by the integration. Added determ
 ## Increment 7
 
 PR #6 passed both Python CI jobs and was merged by the integration. Added explicit checkpoint format version, scenario identity diagnostics, read-only inspection and a documented demonstration. Two tests added. Unversioned prototype saves require recreation; no migration is claimed. CI pending.
+
+## Increment 8
+
+PR #7 passed both Python CI jobs and was merged by the integration. Added bounded administrative review capacity and replay-derived dispositions for the library example. Review does not imply fulfillment or world-state change. Checkpoint version raised to 2; three tests added. CI pending.

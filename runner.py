@@ -8,9 +8,9 @@ from pathlib import Path
 import tempfile
 from actors import validate_actors, evaluate
 from observations import validate_views, observe
-from actions import validate_catalog, register_request
+from actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews
 
-CHECKPOINT_VERSION = 1
+CHECKPOINT_VERSION = 2
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -31,6 +31,7 @@ def validate(s):
     validate_actors(s)
     validate_views(s)
     validate_catalog(s)
+    validate_review_capacity(s)
     ids = set()
     for e in s["events"]:
         if not isinstance(e["id"], str) or e["id"] in ids:
@@ -80,6 +81,7 @@ def advance(s, state):
                 actual = result["values"][check["key"]]
                 result["checks"].append({**check, "actual": actual,
                     "passed": actual == check["equals"]})
+    resolve_reviews(s, result, end)
     result.update(minute=end, turn=state["turn"] + 1,
                   actors=evaluate(s, result["values"]))
     return result

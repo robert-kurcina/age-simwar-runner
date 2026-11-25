@@ -1,7 +1,7 @@
 """Validate structured proposals without granting mutation authority.
 
 The prototype accepts only scenario-declared administrative requests.
-Registration is a pure operation; no action effects are executed here.
+Registration is pure; resolution records administrative dispositions.
 """
 def validate_catalog(s):
     catalog = s.get("action_catalog", {})
@@ -19,6 +19,26 @@ def validate_catalog(s):
             raise ValueError("unknown action actor")
         if len(ids) != len(set(ids)):
             raise ValueError("duplicate action actor")
+
+def validate_review_capacity(s):
+    capacity = s.get("administrative_reviews_per_turn", 0)
+    if type(capacity) is not int or capacity < 0:
+        raise ValueError("invalid administrative review capacity")
+
+def resolve_reviews(s, state, end):
+    """Review pending administrative requests FIFO within a fixed capacity.
+
+    A completed review is not fulfillment of the underlying request.
+    No scenario values, objectives or other actor permissions are changed.
+    """
+    capacity = s.get("administrative_reviews_per_turn", 0)
+    for record in state["requests"]:
+        if capacity == 0:
+            break
+        if record["status"] == "validated_request":
+            record["status"] = "reviewed"
+            record["reviewed_minute"] = end
+            capacity -= 1
 
 def available_requests(s, actor_id):
     if actor_id not in s.get("actors", {}):

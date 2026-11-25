@@ -81,5 +81,6 @@
         "maintenance"
       ]
     }
-  }
+  },
+  "administrative_reviews_per_turn": 1
 }

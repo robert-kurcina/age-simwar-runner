@@ -18,9 +18,11 @@
 
 - Timestamped administrative observations and knowledge-consistent objective reporting (PR #6 merged after CI).
 
+- Explicit checkpoint format version and read-only inspection (PR #7 merged after CI).
+
 ## WIP
-- Explicit checkpoint format version and read-only inspection, with runnable demonstration.
-- Next: review remaining scope and administrative workflow usability.
+- Bounded administrative review capacity and deterministic request disposition.
+- Next: evaluate demonstration completeness and simplify the remaining plan.
 
 ## DEFERRED
 - AGE/AIGen versioned integration contracts; actor cognition; uncertain observation models; branching; resource and relationship models.
