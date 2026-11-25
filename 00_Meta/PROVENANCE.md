@@ -4,13 +4,13 @@
 
 ChatGPT-assisted implementation of a script-first scheduled-event runner, with author-approved experimental development and PR workflow. The public example is synthetic and non-military. The initial implementation was informed by an architectural review of the AGE session boundary; no private source text or scenario data is included.
 
-Five unit tests were authored; execution has not yet been verified. The runner is a prototype, not a validated simulation model.
+Five unit tests were authored; execution was not yet verified at that increment. The runner is a prototype, not a validated simulation model.
 
 Record subsequent material design decisions, source provenance suitable for public disclosure, and verification status here or in dedicated files under this directory. Do not store private conversation transcripts or credentials.
 
 ## Increment 2
 
-Foundation PR merged by owner. Added descriptive actor objective reporting and CI configuration; no autonomous decision policy. Local checkout was blocked by DNS/network access. CI execution must be verified before merge. Checkpoint schema change intentionally requires recreation of old prototype saves.
+Foundation PR merged by owner. Added descriptive actor objective reporting and CI configuration; no autonomous decision policy. Local test execution was not verified at that point. The earlier attribution to DNS/network failure is not supported by a recorded checkout attempt. CI execution was subsequently verified. Checkpoint schema change intentionally requires recreation of old prototype saves.
 
 ## Increment 3
 
@@ -51,3 +51,7 @@ PR #10 passed both Python CI jobs and was merged. Documented local scenario conf
 ## Increment 12
 
 PR #11 passed both Python CI jobs and was merged. Added read-only same-revision comparison of completed administrative sessions, documented manual interaction, and two regression tests. No autonomous actors, new world-state effects, or causal attribution. CI pending.
+
+## Increment 13
+
+PR #12 passed both Python CI jobs and was merged by the integration. The limited prototype plan is verified (35 tests and consolidated demonstration). Documented unresolved original objectives and prioritized an actual request-dependent administrative outcome over further infrastructure. Corrected unsupported historical attribution of local test unavailability to DNS. Documentation-only increment; no new runtime behavior.
