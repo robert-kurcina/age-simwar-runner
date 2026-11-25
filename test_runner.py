@@ -127,6 +127,7 @@ class RunnerTest(unittest.TestCase):
         verify_checkpoint(self.s, d)
         self.assertEqual(len(observe(self.s, d, "library")["own_requests"]), 1)
         self.assertEqual(len(observe(self.s, d, "maintenance")["own_requests"]), 1)
+        self.assertNotIn("sequence", observe(self.s, d, "maintenance")["own_requests"][0])
 
     def test_request_replay_rejects_altered_metadata(self):
         state = submit_request(self.s, initialize(self.s), "library", {"action": "request_room_inspection"})
