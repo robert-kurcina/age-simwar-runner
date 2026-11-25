@@ -5,18 +5,20 @@
 - Actor objectives, filtered observations and report delays.
 - Administrative request validation, persistence and bounded review.
 - Checkpoint versioning and read-only inspection.
-- Python 3.10 and 3.12 CI; 31 tests passed at PR #10.
+- Python 3.10 and 3.12 CI; 33 tests passed at PR #11.
 - Metadata separation under 00_Meta.
 
 - Consolidated repeatable library demonstration (PR #9 passed CI and merged).
 
 - Read-only interpretation exchange (PR #10 merged after CI).
 
+- External scenario configuration documentation and validation-only CLI (PR #11 merged after CI).
+
 ## WIP
-- External scenario configuration documentation and validation-only CLI.
+- Manual administrative interaction workflow and read-only comparison of completed sessions.
 
 ## NEXT
-- Interactive administrative sessions and comparative reporting.
+- Review the limited prototype against its acceptance criteria; explicitly distinguish it from a completed simulation engine.
 
 ## DEFERRED
 - AGE/AIGen integration contracts, more elaborate observation models, migration, UI and multi-agent frameworks.

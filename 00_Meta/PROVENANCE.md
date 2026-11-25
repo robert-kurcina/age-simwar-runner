@@ -47,3 +47,7 @@ PR #9 passed both Python CI jobs and was merged by the integration. Added a read
 ## Increment 11
 
 PR #10 passed both Python CI jobs and was merged. Documented local scenario configuration and added validation-only CLI, top-level field checks and a guard against overwriting scenario input. Two regression tests added; CI pending. No new execution semantics.
+
+## Increment 12
+
+PR #11 passed both Python CI jobs and was merged. Added read-only same-revision comparison of completed administrative sessions, documented manual interaction, and two regression tests. No autonomous actors, new world-state effects, or causal attribution. CI pending.

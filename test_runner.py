@@ -299,6 +299,30 @@ class RunnerTest(unittest.TestCase):
             capture_output=True, text=True, check=True)
         self.assertTrue(json.loads(result.stdout)["valid"])
 
+    def test_compare_completed_sessions(self):
+        from comparison import compare
+        a = initialize(self.s)
+        b = submit_request(self.s, a, "library", {"action": "request_room_inspection"})
+        for _ in range(2):
+            a = advance(self.s, a)
+            b = advance(self.s, b)
+        result = compare(self.s, a, b)
+        self.assertEqual(result["right_minus_left"]["requests"],
+                         {"submitted": 1, "reviewed": 1, "pending": 0})
+        self.assertEqual(result["right_minus_left"]["values"]["available_rooms"], 0)
+        self.assertEqual(result["left"]["milestones"], {"passed": 2, "total": 2})
+
+    def test_compare_rejects_incomplete_or_changed_scenario(self):
+        from comparison import compare
+        a = initialize(self.s)
+        b = advance(self.s, advance(self.s, a))
+        with self.assertRaisesRegex(ValueError, "completed sessions"):
+            compare(self.s, a, b)
+        revised = copy.deepcopy(self.s)
+        revised["id"] = "changed"
+        with self.assertRaisesRegex(ValueError, "scenario revision mismatch"):
+            compare(revised, b, b)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):
