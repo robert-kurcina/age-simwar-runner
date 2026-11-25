@@ -1,35 +1,27 @@
 # Development plan
 
 ## DONE (merged and CI verified)
-- Minimal external JSON scenario contract.
-- Deterministic clock, scheduled observations, numeric state updates, invariant checks.
-- Atomic checkpoint persistence and scenario fingerprint.
-- Synthetic non-military demonstration.
-- Dedicated 00_Meta directory for provenance and LLM guidance.
-
-- Actor registry and independent descriptive objectives, with derived checkpoint state.
-- CI verification on Python 3.10 and 3.12, including CLI resume.
-
-- Actor-specific observation projections and visibility tests (PR #3 CI passed and merged).
-
-- Administrative request catalog, actor-bound validation and detached registration records (PR #4 merged after CI).
-
-- Durable administrative request ledger and replay verification (PR #5 merged after CI).
-
-- Timestamped administrative observations and knowledge-consistent objective reporting (PR #6 merged after CI).
-
-- Explicit checkpoint format version and read-only inspection (PR #7 merged after CI).
+- Deterministic scenario execution, historical milestone checks, checkpoint persistence and replay.
+- Actor objectives, filtered observations and report delays.
+- Administrative request validation, persistence and bounded review.
+- Checkpoint versioning and read-only inspection.
+- Python 3.10 and 3.12 CI; 27 unit tests passed at PR #8.
+- Metadata separation under 00_Meta.
 
 ## WIP
-- Bounded administrative review capacity and deterministic request disposition.
-- Next: evaluate demonstration completeness and simplify the remaining plan.
+- Consolidated repeatable library demonstration and acceptance verification.
+
+## NEXT
+- Bounded LLM interpretation of synthetic administrative observations, without state authority.
+- External scenario configuration documentation and usability.
+- Interactive administrative sessions and comparative reporting.
 
 ## DEFERRED
-- AGE/AIGen versioned integration contracts; actor cognition; uncertain observation models; branching; resource and relationship models.
-- Private scenario integration, separately authorized.
-- UI, multi-agent frameworks, probabilistic domain models.
+- AGE/AIGen integration contracts, more elaborate observation models, migration, UI and multi-agent frameworks.
+- Private scenario integration, subject to separate scope review.
 
 ## REJECTED
 - Generated prose as state authority.
 - Publishing private corpus material.
 - Runtime-generated rules with unrestricted state mutation.
+- Infrastructure expansion without a demonstrated functional need.
