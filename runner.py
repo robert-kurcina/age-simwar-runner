@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from actors import validate_actors, evaluate
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -23,6 +24,7 @@ def validate(s):
     initial = s["initial"]
     if not isinstance(initial, dict) or not all(integer(v) for v in initial.values()):
         raise ValueError("initial values must be integers")
+    validate_actors(s)
     ids = set()
     for e in s["events"]:
         if not isinstance(e["id"], str) or e["id"] in ids:
@@ -41,7 +43,8 @@ def validate(s):
 def initialize(s):
     validate(s)
     return {"scenario": digest(s), "minute": 0, "turn": 0,
-            "values": copy.deepcopy(s["initial"]), "ledger": [], "checks": []}
+            "values": copy.deepcopy(s["initial"]), "ledger": [], "checks": [],
+            "actors": evaluate(s, s["initial"])}
 
 def advance(s, state):
     validate(s)
@@ -66,7 +69,8 @@ def advance(s, state):
                 actual = result["values"][check["key"]]
                 result["checks"].append({**check, "actual": actual,
                     "passed": actual == check["equals"]})
-    result.update(minute=end, turn=state["turn"] + 1)
+    result.update(minute=end, turn=state["turn"] + 1,
+                  actors=evaluate(s, result["values"]))
     return result
 
 def verify_checkpoint(s, state):
