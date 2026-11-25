@@ -63,5 +63,20 @@
         "inspection_notes"
       ]
     }
+  },
+  "action_catalog": {
+    "request_room_inspection": {
+      "description": "Request a room inspection",
+      "actors": [
+        "library",
+        "maintenance"
+      ]
+    },
+    "request_maintenance_review": {
+      "description": "Request an administrative maintenance review",
+      "actors": [
+        "maintenance"
+      ]
+    }
   }
 }
