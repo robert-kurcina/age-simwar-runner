@@ -1,31 +1,32 @@
 # Development plan
 
-## DONE — deterministic administrative prototype (PRs #1–12)
-- Scenario configuration, clock, scheduled updates and milestone checks.
-- Checkpoint v2 persistence, replay and read-only inspection.
-- Actor objectives, filtered observations and deterministic report delays.
-- Administrative request validation, persistence and bounded review.
-- Repeatable library demonstration and manual CLI workflow.
-- Read-only interpretation exchange and completed-session comparison.
-- Python 3.10 and 3.12 CI: 35 tests and demonstration passed at PR #12.
-- Metadata under 00_Meta.
-
-- Prototype closeout and scope documentation (PR #13 merged after CI).
+## DONE
+- Deterministic scheduled-event runner, actor reports, checkpoints and replay.
+- Administrative request ledger, review capacity, read-only interpretation exchange and completed-session comparison.
+- Standalone request-dependent library service example (PR #14 merged; 37 tests passed in Python 3.10 and 3.12).
+- Existing examples are regression fixtures, not the product objective.
 
 ## WIP
-- Standalone request-dependent library service example, bounded inspection capacity and comparative acceptance tests.
+- Campaign-oriented development reset: this plan.
 
-## NEXT — functional development, in a non-military example
-- Evaluate the resulting behavior before extending the model; preserve failed milestone checks rather than forcing outcomes.
-- Evaluate optional read-only local LLM summarization, separately from state authority. Verify with a real model before claiming integration.
+## NEXT (ordered, with acceptance criteria)
+1. Campaign catalog: local manifest listing scenario groups, scenario IDs, relative scenario references, geographic scope and optional prerequisite IDs. Add a CLI that lists and validates the catalog. Acceptance: a public synthetic civic-recovery campaign contains at least three distinct scenarios; duplicate IDs and missing references are reported. No shared mutable campaign state yet.
+2. Playable civilian recovery vertical slice: integrate a narrowly scoped, human-directed public-service restoration rule with the existing runner, rather than extending the standalone example. Acceptance: two human choices lead to different service outcomes under identical initial conditions, persisted and replay-verified, with resource accounting and actor-visible reporting.
+3. Scenario variety: add a humanitarian assistance scenario and a civic negotiation scenario in the public synthetic campaign. Acceptance: each has distinct objectives and completion criteria, executes using shared chronology and persistence; no duplicated runner.
+4. Campaign continuity: explicitly export approved civilian recovery outcomes and import them into a later scenario. Acceptance: two completed sessions can yield distinct valid starting conditions; provenance identifies the source session and variables. Independent starts remain supported.
+5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
+6. Campaign usability: provide a single documented workflow to list scenarios, start, inspect, submit permitted civilian requests, advance, finish and compare sessions. Acceptance: run the public campaign end to end using the documented commands.
 
 ## DEFERRED
-- AGE/AIGen integration contracts; richer observation models; migration; UI; multi-agent frameworks.
-- Private scenario integration and original historical reconstruction objective are not delivered by this prototype.
-- Autonomous decision-making and general causal adjudication are not implemented.
+- Private campaign content belongs in an external private package, not this public repository.
+- Historical reconstruction may be represented by documented milestones and retrospective civilian consequences; no operational military escalation, targeting, or optimization of casualties.
+- Autonomous actor policy, general causal inference, AGE/AIGen integration, rich UI and stochastic models are not delivered. Reassess only after the civilian vertical slice works.
 
 ## REJECTED
-- Generated prose as state authority.
+- Counting repeated plans, additional isolated demonstrations or documentation-only changes as functional implementation.
 - Publishing private corpus material.
-- Runtime-generated rules with unrestricted state mutation.
-- Infrastructure expansion without a demonstrated functional need.
+- Generated prose as authoritative state or unrestricted runtime-generated rules.
+- New infrastructure without a demonstrated scenario requirement.
+
+## Execution discipline
+Each development increment must complete an acceptance criterion or a concrete implementation step toward it, or explicitly document a blocker. Update this file after each increment. Review CI before merging; do not count an unverified branch as done.
