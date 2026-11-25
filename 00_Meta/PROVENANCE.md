@@ -27,3 +27,7 @@ PR #4 merged by the integration after both CI jobs passed. Added a durable admin
 ## Increment 6
 
 PR #5 passed both Python CI jobs and was merged by the integration. Added deterministic historical observation projections and three regression tests, including objective side-channel prevention. No private data or military decision model included. CI pending.
+
+## Increment 7
+
+PR #6 passed both Python CI jobs and was merged by the integration. Added explicit checkpoint format version, scenario identity diagnostics, read-only inspection and a documented demonstration. Two tests added. Unversioned prototype saves require recreation; no migration is claimed. CI pending.
