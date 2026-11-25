@@ -20,6 +20,7 @@ def observe(s, state, actor_id):
         "minute": state["minute"],
         "turn": state["turn"],
         "values": {k: v for k, v in state["values"].items() if k in keys},
+        "own_requests": [deepcopy(r) for r in state["requests"] if r["actor"] == actor_id],
         "available_requests": available_requests(s, actor_id) if state["minute"] < s["end_minute"] else {},
         "objectives": {
             oid: deepcopy(result)
