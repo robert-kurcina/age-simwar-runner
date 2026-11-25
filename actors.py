@@ -1,0 +1,41 @@
+"""Scenario-owned actor metadata and descriptive objective evaluation."""
+import copy
+
+def validate_actors(s):
+    actors = s.get("actors", {})
+    if not isinstance(actors, dict):
+        raise ValueError("actors must be an object")
+    for aid, actor in actors.items():
+        if not isinstance(aid, str) or not aid or not isinstance(actor, dict):
+            raise ValueError("invalid actor")
+        if not isinstance(actor.get("label"), str):
+            raise ValueError("actor label required")
+        objectives = actor.get("objectives", {})
+        if not isinstance(objectives, dict):
+            raise ValueError("objectives must be an object")
+        for oid, obj in objectives.items():
+            if not oid or not isinstance(obj, dict):
+                raise ValueError("invalid objective")
+            if obj.get("key") not in s["initial"]:
+                raise ValueError("unknown objective variable")
+            if type(obj.get("threshold")) is not int:
+                raise ValueError("objective threshold must be integer")
+            if obj.get("comparison") not in ("at_least", "at_most", "equal"):
+                raise ValueError("invalid comparison")
+            if not isinstance(obj.get("description"), str):
+                raise ValueError("objective description required")
+
+def evaluate(s, values):
+    results = {}
+    for aid, actor in s.get("actors", {}).items():
+        objectives = {}
+        for oid, obj in actor.get("objectives", {}).items():
+            actual, threshold = values[obj["key"]], obj["threshold"]
+            passed = {"at_least": actual >= threshold,
+                      "at_most": actual <= threshold,
+                      "equal": actual == threshold}[obj["comparison"]]
+            objectives[oid] = {"description": obj["description"],
+                               "actual": actual, "threshold": threshold,
+                               "met": passed}
+        results[aid] = {"label": actor["label"], "objectives": objectives}
+    return results
