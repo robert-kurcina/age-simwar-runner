@@ -19,3 +19,4 @@ jobs:
           python runner.py scenarios/demo.json checkpoint.json --turns 1
       - run: python demo.py
       - run: python library_service.py
+      - run: python campaign.py campaigns/civic-recovery/campaign.json --validate
