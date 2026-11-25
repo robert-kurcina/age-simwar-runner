@@ -1,28 +1,27 @@
 # Development plan
 
-## DONE (merged and CI verified)
-- Deterministic scenario execution, historical milestone checks, checkpoint persistence and replay.
-- Actor objectives, filtered observations and report delays.
+## DONE — deterministic administrative prototype (PRs #1–12)
+- Scenario configuration, clock, scheduled updates and milestone checks.
+- Checkpoint v2 persistence, replay and read-only inspection.
+- Actor objectives, filtered observations and deterministic report delays.
 - Administrative request validation, persistence and bounded review.
-- Checkpoint versioning and read-only inspection.
-- Python 3.10 and 3.12 CI; 33 tests passed at PR #11.
-- Metadata separation under 00_Meta.
-
-- Consolidated repeatable library demonstration (PR #9 passed CI and merged).
-
-- Read-only interpretation exchange (PR #10 merged after CI).
-
-- External scenario configuration documentation and validation-only CLI (PR #11 merged after CI).
+- Repeatable library demonstration and manual CLI workflow.
+- Read-only interpretation exchange and completed-session comparison.
+- Python 3.10 and 3.12 CI: 35 tests and demonstration passed at PR #12.
+- Metadata under 00_Meta.
 
 ## WIP
-- Manual administrative interaction workflow and read-only comparison of completed sessions.
+- Prototype closeout and scope documentation (PR #13).
 
-## NEXT
-- Review the limited prototype against its acceptance criteria; explicitly distinguish it from a completed simulation engine.
+## NEXT — functional development, in a non-military example
+- Demonstrate an actual administrative outcome dependent on a human-submitted request, with an explicit rule, resource constraint and recorded consequence. Compare identical initial conditions with and without the request.
+- Evaluate the resulting behavior before extending the model; preserve failed milestone checks rather than forcing outcomes.
+- Evaluate optional read-only local LLM summarization, separately from state authority. Verify with a real model before claiming integration.
 
 ## DEFERRED
-- AGE/AIGen integration contracts, more elaborate observation models, migration, UI and multi-agent frameworks.
-- Private scenario integration, subject to separate scope review.
+- AGE/AIGen integration contracts; richer observation models; migration; UI; multi-agent frameworks.
+- Private scenario integration and original historical reconstruction objective are not delivered by this prototype.
+- Autonomous decision-making and general causal adjudication are not implemented.
 
 ## REJECTED
 - Generated prose as state authority.
