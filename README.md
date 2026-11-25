@@ -7,3 +7,5 @@ Experimental script-first scenario execution component. Python 3.10+; no depende
 `python -m unittest -v`
 
 See [architecture](docs/architecture.md) and [plan](PLAN.md). Public synthetic scenarios only; private scenario packages stay external.
+
+Development provenance and LLM guidance: [00_Meta](00_Meta/).
