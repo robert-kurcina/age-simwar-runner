@@ -15,7 +15,7 @@ python runner.py scenarios/demo.json checkpoint.json --inspect --actor maintenan
 python runner.py scenarios/demo.json checkpoint.json --turns 1
 ```
 
-The library sees delayed availability reports while maintenance sees current values. Requests are recorded but do not execute effects. The referee owns the checkpoint; actor output is a logical projection, not access control. Use a fresh path for another run. Unsupported checkpoint versions and changed scenarios are rejected.
+The library sees delayed availability reports while maintenance sees current values. Requests are recorded and reviewed in submission order, subject to administrative review capacity. Review is a disposition, not fulfillment of the requested work. The referee owns the checkpoint; actor output is a logical projection, not access control. Use a fresh path for another run. Unsupported checkpoint versions and changed scenarios are rejected.
 
 ## Verification
 
