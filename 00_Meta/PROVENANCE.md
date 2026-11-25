@@ -11,3 +11,7 @@ Record subsequent material design decisions, source provenance suitable for publ
 ## Increment 2
 
 Foundation PR merged by owner. Added descriptive actor objective reporting and CI configuration; no autonomous decision policy. Local checkout was blocked by DNS/network access. CI execution must be verified before merge. Checkpoint schema change intentionally requires recreation of old prototype saves.
+
+## Increment 3
+
+PR #2 merged; both Python matrix jobs passed. Added default-deny actor observation projection and tests, without introducing autonomous decision-making. Observation views do not establish access control over files. No private data included.
