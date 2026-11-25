@@ -31,5 +31,29 @@
       "key": "available_rooms",
       "equals": 5
     }
-  ]
+  ],
+  "actors": {
+    "library": {
+      "label": "Library administration",
+      "objectives": {
+        "access": {
+          "description": "Restore five available rooms",
+          "key": "available_rooms",
+          "comparison": "at_least",
+          "threshold": 5
+        }
+      }
+    },
+    "maintenance": {
+      "label": "Maintenance department",
+      "objectives": {
+        "inspection": {
+          "description": "Keep at least two rooms available",
+          "key": "available_rooms",
+          "comparison": "at_least",
+          "threshold": 2
+        }
+      }
+    }
+  }
 }

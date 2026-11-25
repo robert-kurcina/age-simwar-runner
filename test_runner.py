@@ -39,6 +39,18 @@ class RunnerTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify_checkpoint(self.s, a)
 
+    def test_actor_objectives(self):
+        a = initialize(self.s)
+        b = advance(self.s, a)
+        self.assertFalse(a["actors"]["library"]["objectives"]["access"]["met"])
+        self.assertTrue(b["actors"]["library"]["objectives"]["access"]["met"])
+        verify_checkpoint(self.s, b)
+
+    def test_unknown_objective_variable(self):
+        self.s["actors"]["library"]["objectives"]["access"]["key"] = "missing"
+        with self.assertRaises(ValueError):
+            initialize(self.s)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):
