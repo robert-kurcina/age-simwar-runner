@@ -5,14 +5,15 @@
 - Actor objectives, filtered observations and report delays.
 - Administrative request validation, persistence and bounded review.
 - Checkpoint versioning and read-only inspection.
-- Python 3.10 and 3.12 CI; 27 unit tests passed at PR #8.
+- Python 3.10 and 3.12 CI; 28 tests passed at PR #9.
 - Metadata separation under 00_Meta.
 
+- Consolidated repeatable library demonstration (PR #9 passed CI and merged).
+
 ## WIP
-- Consolidated repeatable library demonstration and acceptance verification.
+- Read-only interpretation exchange for synthetic administrative observations; response validation without state authority.
 
 ## NEXT
-- Bounded LLM interpretation of synthetic administrative observations, without state authority.
 - External scenario configuration documentation and usability.
 - Interactive administrative sessions and comparative reporting.
 

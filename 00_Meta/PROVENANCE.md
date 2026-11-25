@@ -39,3 +39,7 @@ PR #7 passed both Python CI jobs and was merged by the integration. Added bounde
 ## Increment 9
 
 PR #8 merged after both Python CI jobs passed. Consolidated the public library scenario into a repeatable referee demonstration, with temporary checkpoint round trips and a single acceptance test. Compressed the active plan around functional deliverables. CI pending; no new world-state semantics or private data.
+
+## Increment 10
+
+PR #9 passed both Python CI jobs and was merged by the integration. Added a read-only prompt/response exchange for the public library demonstration, including packet binding and explicit non-authoritative commentary status. Three regression tests added; CI pending. No live model invocation or factual verification is claimed.
