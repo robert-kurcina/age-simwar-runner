@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "id": "community-assistance",
+  "turn_minutes": 360,
+  "end_minute": 720,
+  "initial": {
+    "households_assisted": 0
+  },
+  "events": [
+    {
+      "id": "scheduled-progress",
+      "minute": 360,
+      "key": "households_assisted",
+      "delta": 20
+    }
+  ],
+  "constraints": [
+    {
+      "minute": 720,
+      "key": "households_assisted",
+      "equals": 20
+    }
+  ],
+  "actors": {
+    "coordinator": {
+      "label": "Civic coordinator",
+      "visible_keys": [
+        "households_assisted"
+      ],
+      "objectives": {
+        "completion": {
+          "description": "Meet illustrative service milestone",
+          "key": "households_assisted",
+          "comparison": "at_least",
+          "threshold": 20
+        }
+      }
+    }
+  }
+}
