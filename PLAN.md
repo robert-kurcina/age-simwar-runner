@@ -5,6 +5,7 @@
 - Deterministic clock, scheduled observations, numeric state updates, invariant checks.
 - Atomic checkpoint persistence and scenario fingerprint.
 - Synthetic non-military demonstration.
+- Dedicated 00_Meta directory for provenance and LLM guidance.
 
 ## WIP
 - Run acceptance tests and review first PR.
