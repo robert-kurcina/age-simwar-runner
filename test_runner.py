@@ -251,6 +251,34 @@ class RunnerTest(unittest.TestCase):
         self.assertTrue(result["constraints_passed"])
         self.assertTrue(result["final_objectives"]["library"]["objectives"]["access"]["met"])
 
+    def test_interpretation_packet_is_actor_local(self):
+        from interpretation import interpretation_packet, prompt
+        state = advance(self.s, initialize(self.s))
+        original = copy.deepcopy(state)
+        packet = interpretation_packet(state, "library")
+        self.assertEqual(packet["observation"]["reports"]["available_rooms"]["value"], 2)
+        self.assertNotIn("inspection_notes", prompt(packet))
+        self.assertNotIn("maintenance", prompt(packet))
+        self.assertNotIn("available_requests", packet["observation"])
+        self.assertEqual(state, original)
+
+    def test_interpretation_response_is_commentary_only(self):
+        from interpretation import interpretation_packet, validate_response
+        packet = interpretation_packet(initialize(self.s), "library")
+        response = {"packet_id": packet["packet_id"], "summary": "Availability is unknown."}
+        self.assertEqual(validate_response(packet, response)["authority"], "unverified_commentary")
+        for bad in [{**response, "action": "request_room_inspection"},
+                    {**response, "packet_id": "wrong"},
+                    {**response, "summary": ""}]:
+            with self.assertRaises(ValueError):
+                validate_response(packet, bad)
+
+    def test_interpretation_rejects_non_demo_checkpoint(self):
+        from interpretation import interpretation_packet
+        self.s["id"] = "other"
+        with self.assertRaises(ValueError):
+            interpretation_packet(initialize(self.s), "library")
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):
