@@ -2,6 +2,8 @@
 
 Experimental script-first scenario execution component. Python 3.10+; no dependencies.
 
+**Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Request reviews change administrative dispositions only. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
+
 ## Demonstration
 
 Run `python demo.py` for a repeatable referee-side report using temporary checkpoints. The manual workflow below permits individual actor requests and inspection.
