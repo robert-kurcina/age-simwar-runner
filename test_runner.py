@@ -343,6 +343,48 @@ class RunnerTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 run_library(bad)
 
+    def test_campaign_catalog(self):
+        from campaign import load_campaign
+        root = Path(__file__).parent / "campaigns/civic-recovery"
+        data = load_campaign(root / "campaign.json")
+        entries = [entry for group in data["groups"] for entry in group["scenarios"]]
+        self.assertEqual(len(entries), 3)
+        for entry in entries:
+            scenario = json.loads((root / entry["file"]).read_text())
+            state = initialize(scenario)
+            while state["minute"] < scenario["end_minute"]:
+                state = advance(scenario, state)
+            verify_checkpoint(scenario, state)
+            self.assertTrue(all(c["passed"] for c in state["checks"]))
+
+    def test_campaign_invalid_references(self):
+        from campaign import load_campaign
+        import tempfile
+        import shutil
+        source = Path(__file__).parent / "campaigns/civic-recovery"
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "campaign"
+            shutil.copytree(source, root)
+            path = root / "campaign.json"
+            original = json.loads(path.read_text())
+            for kind in ("duplicate", "missing_file", "missing_dependency", "cycle", "escape"):
+                data = copy.deepcopy(original)
+                first = data["groups"][0]["scenarios"][0]
+                last = data["groups"][-1]["scenarios"][0]
+                if kind == "duplicate":
+                    data["groups"][0]["scenarios"].append(first)
+                elif kind == "missing_file":
+                    first["file"] = "absent.json"
+                elif kind == "missing_dependency":
+                    last["prerequisites"] = ["absent"]
+                elif kind == "cycle":
+                    first["prerequisites"] = [last["id"]]
+                else:
+                    first["file"] = "../outside.json"
+                path.write_text(json.dumps(data))
+                with self.subTest(kind=kind), self.assertRaises(ValueError):
+                    load_campaign(path)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):
