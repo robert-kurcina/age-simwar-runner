@@ -18,3 +18,4 @@ jobs:
           python runner.py scenarios/demo.json checkpoint.json --turns 1
           python runner.py scenarios/demo.json checkpoint.json --turns 1
       - run: python demo.py
+      - run: python library_service.py

@@ -323,6 +323,26 @@ class RunnerTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "scenario revision mismatch"):
             compare(revised, b, b)
 
+    def test_library_request_dependent_outcome(self):
+        from library_service import comparison
+        result = comparison()
+        self.assertEqual(result["additional_open_rooms"], 2)
+        self.assertFalse(result["baseline"]["milestone"]["passed"])
+        self.assertTrue(result["requested"]["milestone"]["passed"])
+        self.assertEqual(result["requested"]["timeline"][0]["open_rooms"], [1])
+        self.assertEqual(result["requested"]["timeline"][0]["pending_requests"], 1)
+
+    def test_library_duplicate_and_invalid_requests(self):
+        from library_service import run_library
+        result = run_library([1, 1, 2])
+        self.assertEqual(result["open_rooms"], [1, 2])
+        self.assertEqual([r["result"] for r in result["ledger"]],
+                         ["inspection_completed", "already_open", "inspection_completed"])
+        self.assertEqual(run_library([2])["open_rooms"], [2])
+        for bad in [[True], [3], "1"]:
+            with self.assertRaises(ValueError):
+                run_library(bad)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):

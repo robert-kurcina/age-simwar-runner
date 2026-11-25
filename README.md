@@ -49,6 +49,16 @@ python comparison.py scenarios/demo.json baseline.json alternative.json
 
 The comparison is read-only and requires completed checkpoints from the same scenario revision. It reports actual state, milestone results, objective status and administrative request counts. Differences are descriptive, not evidence of causation.
 
+## Request-dependent service example
+
+Run `python library_service.py` to compare two identical synthetic library
+service-desk setups with and without inspection requests. Two closed study
+rooms and one inspection slot per shift are assumed; a successful inspection
+releases the requested room. This is a separate, deliberately domain-specific
+example, not a general runner action effect or a historical model.
+
+Use `python library_service.py --room 1 --room 2` for a custom request sequence.
+
 ## Verification
 
 `python -m unittest -v`
