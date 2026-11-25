@@ -1,5 +1,4 @@
 """Scenario-owned actor metadata and descriptive objective evaluation."""
-import copy
 
 def validate_actors(s):
     actors = s.get("actors", {})
