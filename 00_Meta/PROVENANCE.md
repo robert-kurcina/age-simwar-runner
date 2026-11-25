@@ -23,3 +23,7 @@ PR #3 passed both Python CI jobs and was merged by the integration using a pinne
 ## Increment 5
 
 PR #4 merged by the integration after both CI jobs passed. Added a durable administrative request ledger, replay checks, CLI submission and actor-owned request projections. Records do not execute actions or modify scenario values. Three tests added; CI verification pending. Old prototype checkpoints require recreation.
+
+## Increment 6
+
+PR #5 passed both Python CI jobs and was merged by the integration. Added deterministic historical observation projections and three regression tests, including objective side-channel prevention. No private data or military decision model included. CI pending.

@@ -62,7 +62,7 @@ class RunnerTest(unittest.TestCase):
         self.assertNotIn("ledger", library)
         self.assertNotIn("checks", library)
         self.assertNotIn("actors", library)
-        library["objectives"]["access"]["met"] = False
+        library["objectives"]["access"]["met"] = True
         self.assertTrue(state["actors"]["library"]["objectives"]["access"]["met"])
 
     def test_hidden_objective_is_not_a_side_channel(self):
@@ -74,6 +74,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_default_deny_and_unknown_actor(self):
         del self.s["actors"]["library"]["visible_keys"]
+        self.s["actors"]["library"].pop("report_delay_minutes", None)
         state = initialize(self.s)
         self.assertEqual(observe(self.s, state, "library")["values"], {})
         with self.assertRaises(ValueError):
@@ -146,6 +147,35 @@ class RunnerTest(unittest.TestCase):
             restored = json.loads(path.read_text())
             verify_checkpoint(self.s, restored)
             self.assertEqual(state, restored)
+
+    def test_delayed_reports_and_objectives(self):
+        a = initialize(self.s)
+        view = observe(self.s, a, "library")
+        self.assertEqual(view["reports"]["available_rooms"], {"status": "unknown"})
+        self.assertNotIn("available_rooms", view["values"])
+        self.assertNotIn("access", view["objectives"])
+        b = advance(self.s, a)
+        view = observe(self.s, b, "library")
+        self.assertEqual(b["values"]["available_rooms"], 5)
+        self.assertEqual(view["values"]["available_rooms"], 2)
+        self.assertEqual(view["reports"]["available_rooms"]["as_of_minute"], 300)
+        self.assertEqual(view["reports"]["available_rooms"]["status"], "stale")
+        self.assertFalse(view["objectives"]["access"]["met"])
+        self.assertTrue(b["actors"]["library"]["objectives"]["access"]["met"])
+        c = advance(self.s, b)
+        self.assertEqual(observe(self.s, c, "library")["values"]["available_rooms"], 5)
+
+    def test_current_report(self):
+        state = advance(self.s, initialize(self.s))
+        view = observe(self.s, state, "maintenance")
+        self.assertEqual(view["reports"]["available_rooms"]["status"], "current")
+        self.assertEqual(view["values"]["available_rooms"], 5)
+
+    def test_invalid_delay(self):
+        for bad in [{"available_rooms": -1}, {"inspection_notes": 10}, {"available_rooms": True}]:
+            self.s["actors"]["library"]["report_delay_minutes"] = bad
+            with self.assertRaises(ValueError):
+                initialize(self.s)
 
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))

@@ -46,7 +46,10 @@
       },
       "visible_keys": [
         "available_rooms"
-      ]
+      ],
+      "report_delay_minutes": {
+        "available_rooms": 60
+      }
     },
     "maintenance": {
       "label": "Maintenance department",

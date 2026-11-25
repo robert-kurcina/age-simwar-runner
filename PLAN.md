@@ -14,12 +14,14 @@
 
 - Administrative request catalog, actor-bound validation and detached registration records (PR #4 merged after CI).
 
+- Durable administrative request ledger and replay verification (PR #5 merged after CI).
+
 ## WIP
-- Durable administrative request ledger and replay verification.
-- Next: observation timestamps and non-military demonstration improvements.
+- Timestamped administrative observations and knowledge-consistent objective reporting.
+- Next: improve checkpoint schema and non-military demonstration usability.
 
 ## DEFERRED
-- AGE/AIGen versioned integration contracts; actor cognition; delayed or uncertain observation models; branching; resource and relationship models.
+- AGE/AIGen versioned integration contracts; actor cognition; uncertain observation models; branching; resource and relationship models.
 - Private scenario integration, separately authorized.
 - UI, multi-agent frameworks, probabilistic domain models.
 
