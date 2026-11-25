@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import tempfile
 from actors import validate_actors, evaluate
+from observations import validate_views, observe
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -25,6 +26,7 @@ def validate(s):
     if not isinstance(initial, dict) or not all(integer(v) for v in initial.values()):
         raise ValueError("initial values must be integers")
     validate_actors(s)
+    validate_views(s)
     ids = set()
     for e in s["events"]:
         if not isinstance(e["id"], str) or e["id"] in ids:
@@ -101,11 +103,14 @@ def main():
     p.add_argument("scenario", type=Path)
     p.add_argument("checkpoint", type=Path)
     p.add_argument("--turns", type=int, default=1)
+    p.add_argument("--actor", help="Print only this actor’s observation; checkpoint remains referee-only")
     args = p.parse_args()
     if args.turns < 0:
         p.error("turns must be nonnegative")
     s = json.loads(args.scenario.read_text())
     state = initialize(s)
+    if args.actor is not None and args.actor not in s.get("actors", {}):
+        p.error("unknown actor")
     if args.checkpoint.exists():
         state = json.loads(args.checkpoint.read_text())
         verify_checkpoint(s, state)
@@ -114,6 +119,9 @@ def main():
             break
         state = advance(s, state)
     save(args.checkpoint, state)
+    if args.actor is not None:
+        print(json.dumps(observe(s, state, args.actor), indent=2))
+        return 0  # do not leak private historical constraint status via exit code
     print(json.dumps(state, indent=2))
     return 0 if all(c["passed"] for c in state["checks"]) else 1
 
