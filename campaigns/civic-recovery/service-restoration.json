@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "id": "service-restoration",
+  "turn_minutes": 360,
+  "end_minute": 720,
+  "initial": {
+    "open_service_centers": 0
+  },
+  "events": [
+    {
+      "id": "scheduled-progress",
+      "minute": 360,
+      "key": "open_service_centers",
+      "delta": 2
+    }
+  ],
+  "constraints": [
+    {
+      "minute": 720,
+      "key": "open_service_centers",
+      "equals": 2
+    }
+  ],
+  "actors": {
+    "coordinator": {
+      "label": "Civic coordinator",
+      "visible_keys": [
+        "open_service_centers"
+      ],
+      "objectives": {
+        "completion": {
+          "description": "Meet illustrative service milestone",
+          "key": "open_service_centers",
+          "comparison": "at_least",
+          "threshold": 2
+        }
+      }
+    }
+  }
+}

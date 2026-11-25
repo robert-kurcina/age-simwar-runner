@@ -6,11 +6,12 @@
 - Standalone request-dependent library service example (PR #14 merged; 37 tests passed in Python 3.10 and 3.12).
 - Existing examples are regression fixtures, not the product objective.
 
+- Campaign-oriented reset (PR #15 merged after CI).
+
 ## WIP
-- Campaign-oriented development reset: this plan.
+- P0 campaign catalog: implementation, three synthetic scenario files and validation tests; awaiting CI.
 
 ## NEXT (ordered, with acceptance criteria)
-1. Campaign catalog: local manifest listing scenario groups, scenario IDs, relative scenario references, geographic scope and optional prerequisite IDs. Add a CLI that lists and validates the catalog. Acceptance: a public synthetic civic-recovery campaign contains at least three distinct scenarios; duplicate IDs and missing references are reported. No shared mutable campaign state yet.
 2. Playable civilian recovery vertical slice: integrate a narrowly scoped, human-directed public-service restoration rule with the existing runner, rather than extending the standalone example. Acceptance: two human choices lead to different service outcomes under identical initial conditions, persisted and replay-verified, with resource accounting and actor-visible reporting.
 3. Scenario variety: add a humanitarian assistance scenario and a civic negotiation scenario in the public synthetic campaign. Acceptance: each has distinct objectives and completion criteria, executes using shared chronology and persistence; no duplicated runner.
 4. Campaign continuity: explicitly export approved civilian recovery outcomes and import them into a later scenario. Acceptance: two completed sessions can yield distinct valid starting conditions; provenance identifies the source session and variables. Independent starts remain supported.

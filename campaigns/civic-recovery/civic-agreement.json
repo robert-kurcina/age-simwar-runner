@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "id": "civic-agreement",
+  "turn_minutes": 360,
+  "end_minute": 720,
+  "initial": {
+    "participating_councils": 0
+  },
+  "events": [
+    {
+      "id": "scheduled-progress",
+      "minute": 360,
+      "key": "participating_councils",
+      "delta": 3
+    }
+  ],
+  "constraints": [
+    {
+      "minute": 720,
+      "key": "participating_councils",
+      "equals": 3
+    }
+  ],
+  "actors": {
+    "coordinator": {
+      "label": "Civic coordinator",
+      "visible_keys": [
+        "participating_councils"
+      ],
+      "objectives": {
+        "completion": {
+          "description": "Meet illustrative service milestone",
+          "key": "participating_councils",
+          "comparison": "at_least",
+          "threshold": 3
+        }
+      }
+    }
+  }
+}

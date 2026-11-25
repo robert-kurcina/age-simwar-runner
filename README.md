@@ -4,6 +4,25 @@ Experimental script-first scenario execution component. Python 3.10+; no depende
 
 **Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Request reviews change administrative dispositions only. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
 
+## Campaign catalog
+
+List or validate a local campaign without starting a session:
+
+```sh
+python campaign.py campaigns/civic-recovery/campaign.json
+python campaign.py campaigns/civic-recovery/campaign.json --validate
+python runner.py campaigns/civic-recovery/service-restoration.json service.json --turns 2
+```
+
+A version-1 manifest has id, title and groups. Each group has id, title and
+scenarios. Each scenario entry has id (matching the referenced scenario),
+title, scope, file (relative to the manifest directory) and optional
+prerequisites (scenario IDs). IDs are unique within their respective
+campaign namespaces. Missing references and cycles are rejected.
+Prerequisites express suggested continuity, not enforced locks or state transfer.
+The three bundled scenarios are scheduled-event baselines, not yet
+request-dependent simulations.
+
 ## Demonstration
 
 Run `python demo.py` for a repeatable referee-side report using temporary checkpoints. The manual workflow below permits individual actor requests and inspection.
