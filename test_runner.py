@@ -179,7 +179,7 @@ class RunnerTest(unittest.TestCase):
 
     def test_checkpoint_version_and_identity(self):
         state = initialize(self.s)
-        for version in [None, True, 2]:
+        for version in [None, True, 1, 3]:
             bad = copy.deepcopy(state)
             bad["checkpoint_version"] = version
             with self.assertRaisesRegex(ValueError, "unsupported checkpoint version"):
@@ -206,6 +206,35 @@ class RunnerTest(unittest.TestCase):
                 capture_output=True, text=True, check=True)
             self.assertEqual(json.loads(result.stdout)["turn"], 0)
             self.assertEqual(path.read_bytes(), before)
+
+    def test_bounded_review_resolution(self):
+        a = initialize(self.s)
+        b = submit_request(self.s, a, "library", {"action": "request_room_inspection"})
+        b = submit_request(self.s, b, "maintenance", {"action": "request_maintenance_review"})
+        c = advance(self.s, b)
+        self.assertEqual(b["requests"][0]["status"], "validated_request")
+        self.assertEqual(c["requests"][0]["status"], "reviewed")
+        self.assertEqual(c["requests"][0]["reviewed_minute"], 360)
+        self.assertEqual(c["requests"][1]["status"], "validated_request")
+        self.assertEqual(c["values"], advance(self.s, a)["values"])
+        verify_checkpoint(self.s, c)
+        d = advance(self.s, c)
+        self.assertEqual(d["requests"][1]["reviewed_minute"], 720)
+        self.assertEqual(advance(self.s, d), d)
+        verify_checkpoint(self.s, d)
+
+    def test_zero_review_capacity(self):
+        self.s["administrative_reviews_per_turn"] = 0
+        a = submit_request(self.s, initialize(self.s), "library", {"action": "request_room_inspection"})
+        b = advance(self.s, a)
+        self.assertEqual(b["requests"][0]["status"], "validated_request")
+        verify_checkpoint(self.s, b)
+
+    def test_review_capacity_validation(self):
+        for value in [-1, True, 1.5]:
+            self.s["administrative_reviews_per_turn"] = value
+            with self.assertRaises(ValueError):
+                initialize(self.s)
 
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
