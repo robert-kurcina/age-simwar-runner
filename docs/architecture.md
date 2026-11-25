@@ -1,30 +1,22 @@
 # Execution boundary
 
-The runner is a prototype of session execution, not the authority for world generation or domain rules. External scenario data is pinned by hash. Domain rules and cognition may later enter through versioned adapters; neither is implemented in this increment.
+## Current implementation
 
-Contract v1: relative integer minutes, integer state variables, scheduled additive updates, exact-value milestone checks. At a shared timestamp, updates execute in file order before checks. Failed checks are recorded, never repaired by forcing the expected value. Turn intervals are open at start and closed at end. Checkpoints replay from the pinned input to detect inconsistency. This is single-writer local persistence, not an authenticated ledger or multi-user service.
+The runner is a deterministic session execution prototype, not a validated predictive model. The public example is synthetic library reopening. No private corpus material is included.
 
-The public example concerns library reopening. No private scenario material is included.
+- Scenario contract v1: relative integer minutes, integer state variables, scheduled additive updates and exact-value milestone checks. At a shared timestamp, updates execute in file order before checks. Failed checks are recorded, never forced to pass.
+- Turn intervals are open at the start and closed at the end. Checkpoint format v2 pins the scenario by digest and replays submitted requests and scheduled events to detect inconsistency. Unsupported checkpoint versions and changed scenario revisions are rejected.
+- Actor objectives are descriptive threshold comparisons, evaluated against actual state for the referee and reported values for the actor. Visibility defaults to none. Report delays reconstruct historical values; observations before minute zero are unknown. Delayed reports are not necessarily inaccurate.
+- Administrative requests are actor-bound, validated, persisted and reviewed in submission order within a configured per-turn capacity. Review records a disposition, not fulfillment. Requests do not change scenario values or scheduled events. Actor projections omit global sequence numbers.
+- The interpretation exchange is limited to the bundled synthetic library scenario. It exports actor-local reports and validates separately generated summary structure and packet identity, not factual accuracy. Commentary never enters adjudication.
+- Read-only inspection and comparison verify checkpoints before reporting. Comparison requires completed sessions of the same scenario revision. Differences are descriptive, not causal claims.
 
-Run: python runner.py scenarios/demo.json checkpoint.json --turns 2
+## Limits
+
+The CLI is a trusted referee process, not an authenticated multi-user service. Actor projections are logical information separation, not filesystem access control. Checkpoint replay is a consistency check, not proof of authorship. The implementation lacks autonomous actor decisions, action-dependent world-variable changes, general causal adjudication, stochastic resolution, live model invocation and historical reconstruction.
+
+See [scenario format](scenario-format.md) for configuration and [plan](../PLAN.md) for outstanding work. Do not equate prototype acceptance with completion of the original simulation objective.
+
+Run: python demo.py
+
 Test: python -m unittest -v
-
-Limitations: scheduled events only, no causal model, no hidden state or autonomous actor decisions, no stochastic resolution, no LLM. Checkpoint replay is linear in elapsed turns; acceptable for this prototype. A domain-specific adapter must not be confused with a validated real-world predictive model.
-
-Optional `actors` maps IDs to labels and independent descriptive objectives. Each objective references an existing numeric state variable, an integer threshold, a description, and a comparison (`at_least`, `at_most`, `equal`). Evaluation is read-only, derived at initialization and turn boundaries, and never feeds back into event scheduling. This is objective reporting, not an actor policy or decision optimizer. Existing v1 scenario files remain readable; old checkpoints require recreation because their derived actor field differs.
-
-Actor observations are explicit allowlist projections of current values and only those own objectives whose referenced variable is visible. Missing allowlist means no visible values. They exclude the full event ledger, constraint checks and other actors. CLI --actor prints this projection; the checkpoint and scenario files remain referee-only. This is logical separation, not filesystem access control or simulated intelligence acquisition. Actor observations have no effect on world state. Private state must not be supplied to an actor-facing model.
-
-Administrative request contract: the optional action_catalog declares named requests with a description and permitted actor IDs. A trusted caller supplies the actor identity separately from the proposed action. The validator rejects unknown actions, actor overrides and extra fields; the observation view includes only the actor's permitted requests. Registration returns a detached timestamped record and does not mutate or execute simulation state. Durable request queues and domain-specific execution are outside this increment. No real-world military decision or targeting model is implemented.
-
-Durable administrative requests: `submit_request` first validates the checkpoint, then appends an actor-bound record with a sequential ID and turn/minute. Replay reconstructs the submitted request records in turn order alongside scheduled events; metadata discrepancies fail verification. The ledger is not authenticated and cannot prove the original identity of a submitter. Requests remain non-executing records. Actor projections expose only their own requests, omitting global sequence numbers to avoid leaking other actors’ request counts. CLI example: `python runner.py scenarios/demo.json checkpoint.json --actor library --request request_room_inspection --turns 0`. Old checkpoints without the request ledger must be recreated.
-
-Observation chronology: optional `report_delay_minutes` maps visible keys to nonnegative integer delays. The actor sees the committed value as of current minute minus delay, reconstructed from the initial value and event ledger. Before minute zero that key is unknown. Reports include age and as-of time; stale means delayed, not necessarily incorrect. Actor objective reports are evaluated from observed values only, with unknown operands omitted. Referee objectives remain based on actual state. This is a deterministic historical projection for the synthetic administrative example, not a model of intelligence collection, military decision-making or misinformation.
-
-Checkpoint format version 1 is now explicit and separate from the scenario fingerprint. Unsupported or unversioned saves are rejected before replay, not silently upgraded. Scenario revisions and replay inconsistency are separate errors. The --inspect command reads and validates an existing checkpoint without advancing, submitting requests or writing the file. CLI remains a trusted referee process.
-
-Administrative review: an optional nonnegative integer administrative_reviews_per_turn specifies how many pending administrative requests can be marked reviewed at the end of each turn, in submission order. Review records the time of disposition but does not fulfill the request or alter world variables. A zero capacity leaves requests pending. Replay derives dispositions from original submissions; no actor can supply a disposition. Checkpoint version 2 distinguishes these semantics from earlier saves. Unreviewed requests may remain at session end.
-
-The interpretation exchange is limited to the bundled synthetic library scenario. It verifies a checkpoint, derives an actor-local report, omits available requests and binds the exported report to a packet digest. A separately generated summary is checked for structure, length and packet identity only. It is not a validated fact, actor policy or input to adjudication. No network transport is required and no private scenario is accepted by this interface.
-
-Completed-session comparison verifies both checkpoints against the same scenario before reporting final values, milestone counts, objective statuses and request counts. Only numeric state and request count differences are calculated. No cross-revision equivalence or causal inference is claimed. Manual interaction remains through the trusted referee CLI.
