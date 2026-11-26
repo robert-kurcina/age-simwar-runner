@@ -2,6 +2,7 @@
 from html import escape
 from private_play import briefing
 from game_map import projection, render_map
+from image_map import projection as image_projection
 
 LABELS = {
     "households_assisted": "Households assisted",
@@ -40,7 +41,7 @@ def snapshot(session):
             "elapsed_minutes": current["elapsed_minutes"], "complete": current["complete"],
             "continued": current["continued"], "metrics": metrics,
             "objectives": current["objectives"], "calibration": current["calibration"],
-            "map": projection(session)}
+            "map": projection(session), "image_map": image_projection(session)}
 
 
 def chart(points):
@@ -90,7 +91,7 @@ article > svg{{width:100%;height:auto;display:block}}li{{margin:8px 0}}
 </style><main><header><small>AGE SIMWAR · READ-ONLY SESSION SNAPSHOT</small>
 <h1>{esc(data['title'])}</h1><p>{esc(data['perspective'])} · {esc(data['date'])} · Turn {data['turn']} · {'Complete' if data['complete'] else 'In progress'}</p>
 <p class="muted">{esc(data['calibration'])}</p></header>
-{render_map(data["map"])}
+{render_map(data["map"], image_projection(session, include_image=True))}
 <section class="grid" aria-label="Observed resources">{''.join(cards) or '<p>No visible resource reports.</p>'}</section>
 <article><h2>Objectives</h2><ul>{goals or '<li>No configured objectives.</li>'}</ul></article>
 </main></html>"""

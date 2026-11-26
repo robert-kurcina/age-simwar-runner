@@ -55,11 +55,11 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
 - Optional LLM narrative briefings merged (PR #39). Structured observations remain authoritative; live inference unverified.
 - Scenario-authored hypothetical presets merged (PR #40). Private scenario configurations verified in private CI; presets bind to base spec digest and session.
-- Existing private geographic assets inventoried by reference; raster registration and temporal applicability remain unverified.
+- Existing private geographic assets inventoried by reference, including all fourteen Near Melanesia artwork files; raster registration and temporal applicability remain unverified.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 - Private continuity merged after CI (PR #44); linked private recovery verified with standard and limited-resource configurations, persistence and completed-session reporting. Independent branches are not pooled.
-- Actor-visible resource dashboard and observed-history export merged after CI (PR #45). Standalone HTML is a read-only session snapshot, not a live browser game. Optional Leaflet map export implemented, pending CI; actual browser inspection and source-qualified private map configuration remain outstanding. External map services require explicit user activation.
+- Actor-visible resource dashboard and observed-history export merged after CI (PR #45). Standalone HTML is a read-only session snapshot, not a live browser game. Optional Leaflet map export merged after CI (PR #46); private Fiji map configuration merged. Actual browser inspection remains outstanding. Standalone pinned PNG image mode implemented, pending CI; no geographic registration implied. External map services require explicit user activation.
 
 ## NEXT (ordered, with acceptance criteria)
 

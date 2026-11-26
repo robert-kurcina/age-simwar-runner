@@ -156,6 +156,10 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
     map_config = reviewed_map(entry, compiled, spec["effective_date"])
     if map_config is not None:
         header["game_map"] = map_config
+    from image_map import resolve as resolve_image_map
+    image_config = resolve_image_map(entry, compiled, spec["effective_date"], owners)
+    if image_config is not None:
+        header["image_map"] = image_config
     if link is not None:
         header["continuity"] = link
     if shared:
