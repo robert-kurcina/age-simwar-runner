@@ -24,3 +24,13 @@ Pass `--variation variation.json` to the compiler CLI. A variation contains vers
 ## Narrative evidence
 
 Optional evidence_refs maps IDs to references containing owner, revision, path (Markdown), heading (unique exact ATX heading), reviewed_for (scenario date), and classification (canonical or historical). At least one numeric or narrative reference is required. The compiler records file and section digests, not prose. The review date is a human assertion of relevance, not proof that the section describes that date. Evidence does not populate numeric values or validate the historical accuracy of scenario literals; maintain scenario assumptions separately. Evidence staleness is reported with an evidence: prefix. Duplicate headings fail. No automatic prose interpretation.
+
+## Connector-backed pinned sources
+
+The owner allowlist also accepts an inline connector export instead of a local Git root. For each required reference, the trusted facilitator retrieves the exact repository file at its full commit SHA using the authenticated connector, requesting base64 bytes and the returned Git blob SHA. Remove base64 line wrapping only (do not rewrite source text). Supply the actual bytes in a private owners JSON file:
+
+```json
+{"example":{"kind":"connector-export-v1","files":[{"revision":"<40-character commit SHA>","path":"facts.json","blob_sha":"<returned 40-character blob SHA>","content_base64":"<exact base64 bytes>"}]}}
+```
+
+Use the existing compiler, private start, participant profile and image-map entry points. Each owner may use either a local Git root or a connector export. Missing/duplicate revision-path bindings and byte/hash mismatches fail closed. Snapshot formats and content/section digests remain identical. This is a trusted facilitator transport, not a cryptographic proof of a commit's tree membership: the connector supplies the commit/path binding, and the runtime independently checks the blob bytes. Never manufacture a blob SHA from altered text or use a mutable branch in place of the requested revision. Connector exports have no local HEAD; stale_dependencies explicitly rejects them rather than pretending freshness. Keep exports private and temporary; do not publish them or embed them in public bundles. Large or unavailable assets remain a transfer limitation.
