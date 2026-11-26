@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 from actors import validate_actors, evaluate
 from observations import validate_views, observe
-from actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule
+from actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules
 
 CHECKPOINT_VERSION = 2
 
@@ -22,7 +22,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -61,6 +61,7 @@ def validate(s):
         if not integer(c["minute"]) or not 0 < c["minute"] <= s["end_minute"]:
             raise ValueError("constraint outside horizon")
     validate_service_rule(s)
+    validate_civic_rules(s)
 
 def initialize(s):
     validate(s)

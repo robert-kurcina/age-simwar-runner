@@ -443,6 +443,50 @@ class RunnerTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             initialize(s)
 
+    def test_assistance_outcomes_and_exhaustion(self):
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/community-assistance.json").read_text())
+        s["initial"]["aid_packages"] = 1
+        a = initialize(s)
+        b = a
+        for _ in range(2):
+            b = submit_request(s, b, "coordinator", {"action": "deliver_aid"})
+        for _ in range(2):
+            a, b = advance(s, a), advance(s, b)
+        self.assertEqual(a["values"]["households_assisted"], 20)
+        self.assertEqual(b["values"], {"households_assisted": 30, "aid_packages": 0})
+        self.assertEqual(b["requests"][1]["fulfillment"], "insufficient_packages")
+        self.assertTrue(observe(s, b, "coordinator")["objectives"]["completion"]["met"])
+        verify_checkpoint(s, b)
+
+    def test_agreement_independent_consent_and_duplicate(self):
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/civic-agreement.json").read_text())
+        a = initialize(s)
+        with self.assertRaises(ValueError):
+            submit_request(s, a, "council_a", {"action": "join_council_b"})
+        a = submit_request(s, a, "council_a", {"action": "join_council_a"})
+        a = submit_request(s, a, "council_a", {"action": "join_council_a"})
+        b = advance(s, a)
+        self.assertEqual(b["values"]["participating_councils"], 1)
+        self.assertEqual(b["requests"][1]["fulfillment"], "already_joined")
+        self.assertFalse(observe(s, b, "council_a")["objectives"]["agreement"]["met"])
+        self.assertNotIn("council_b_joined", observe(s, b, "council_a")["values"])
+        c = submit_request(s, b, "council_b", {"action": "join_council_b"})
+        c = advance(s, c)
+        self.assertEqual(c["values"]["participating_councils"], 2)
+        self.assertTrue(observe(s, c, "council_a")["objectives"]["agreement"]["met"])
+        self.assertTrue(observe(s, c, "council_b")["objectives"]["consent"]["met"])
+        verify_checkpoint(s, c)
+
+    def test_civic_rule_validation(self):
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/civic-agreement.json").read_text())
+        s["action_catalog"]["join_council_a"]["actors"] = ["council_b"]
+        with self.assertRaises(ValueError):
+            initialize(s)
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/community-assistance.json").read_text())
+        s["events"].append({"id": "invalid", "minute": 360, "key": "aid_packages", "delta": -3})
+        with self.assertRaises(ValueError):
+            initialize(s)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):

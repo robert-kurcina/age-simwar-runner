@@ -4,37 +4,58 @@
   "turn_minutes": 360,
   "end_minute": 720,
   "initial": {
-    "participating_councils": 0
+    "participating_councils": 0,
+    "council_a_joined": 0,
+    "council_b_joined": 0
   },
-  "events": [
-    {
-      "id": "scheduled-progress",
-      "minute": 360,
-      "key": "participating_councils",
-      "delta": 3
-    }
-  ],
-  "constraints": [
-    {
-      "minute": 720,
-      "key": "participating_councils",
-      "equals": 3
-    }
-  ],
+  "events": [],
+  "constraints": [],
   "actors": {
-    "coordinator": {
-      "label": "Civic coordinator",
+    "council_a": {
+      "label": "Council A",
       "visible_keys": [
-        "participating_councils"
+        "participating_councils",
+        "council_a_joined"
       ],
       "objectives": {
-        "completion": {
-          "description": "Meet illustrative service milestone",
+        "agreement": {
+          "description": "Both councils participate",
           "key": "participating_councils",
           "comparison": "at_least",
-          "threshold": 3
+          "threshold": 2
         }
       }
+    },
+    "council_b": {
+      "label": "Council B",
+      "visible_keys": [
+        "participating_councils",
+        "council_b_joined"
+      ],
+      "objectives": {
+        "consent": {
+          "description": "Council B independently consents",
+          "key": "council_b_joined",
+          "comparison": "equal",
+          "threshold": 1
+        }
+      }
+    }
+  },
+  "civic_agreement": true,
+  "administrative_reviews_per_turn": 2,
+  "action_catalog": {
+    "join_council_a": {
+      "description": "Council A consents to the agreement",
+      "actors": [
+        "council_a"
+      ]
+    },
+    "join_council_b": {
+      "description": "Council B consents to the agreement",
+      "actors": [
+        "council_b"
+      ]
     }
   }
 }

@@ -2,7 +2,7 @@
 
 Experimental script-first scenario execution component. Python 3.10+; no dependencies.
 
-**Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Request reviews change administrative dispositions only. The synthetic service-restoration scenario additionally supports a bounded request-dependent civilian outcome. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
+**Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Review-only requests change administrative dispositions; opt-in civilian fixtures can additionally produce bounded request-dependent outcomes. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
 
 ## Campaign catalog
 
@@ -20,7 +20,7 @@ title, scope, file (relative to the manifest directory) and optional
 prerequisites (scenario IDs). IDs are unique within their respective
 campaign namespaces. Missing references and cycles are rejected.
 Prerequisites express suggested continuity, not enforced locks or state transfer.
-Two bundled scenarios remain scheduled-event baselines. Service restoration supports one additional center per reviewed request, consuming one finite credit.
+All three campaign scenarios now have bounded human-directed choices: restoration credits, assistance packages, and independent council consent.
 
 ## Playable civilian restoration
 
@@ -33,6 +33,16 @@ python comparison.py campaigns/civic-recovery/service-restoration.json baseline.
 ```
 
 The baseline opens two centers; one reviewed restoration request opens a third and spends one credit. These are illustrative quantities, not empirical estimates.
+
+## Assistance and agreement
+
+```sh
+python runner.py campaigns/civic-recovery/community-assistance.json aid.json --actor coordinator --request deliver_aid --turns 2
+python runner.py campaigns/civic-recovery/civic-agreement.json agreement.json --actor council_a --request join_council_a --turns 1
+python runner.py campaigns/civic-recovery/civic-agreement.json agreement.json --actor council_b --request join_council_b --turns 1
+```
+
+Each council controls its own consent. Duplicate consent does not add another participant. The fixture does not model autonomous negotiation.
 
 ## Demonstration
 
@@ -64,7 +74,7 @@ The first command emits a prompt with a packet ID. A separately operated languag
 
 ## External scenarios
 
-See [scenario configuration](docs/scenario-format.md). Use `python runner.py path/to/scenario.json --validate` before starting a local session. The supported contract is scheduled events, administrative review and the opt-in synthetic restoration rule.
+See [scenario configuration](docs/scenario-format.md). Use `python runner.py path/to/scenario.json --validate` before starting a local session. The supported contract is scheduled events, administrative review and three opt-in synthetic civilian rules.
 
 ## Compare completed sessions
 

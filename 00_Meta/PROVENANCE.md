@@ -79,3 +79,7 @@ The author requested alignment of the plan and provenance with the original mult
 ## Integrated civilian restoration slice
 
 Added an opt-in synthetic public-service rule to the shared runner: one reviewed restoration request consumes one finite credit and opens one additional service center. Baseline scheduled progress remains independent. Review and fulfillment are separate, and both effects enter the replayed ledger before same-boundary milestone checks. Four regression tests authored; execution pending CI. Illustrative quantities are not empirical assumptions. No private content or new autonomous policies.
+
+## Civilian scenario variety
+
+PR #19 passed both Python CI versions and was merged. The next increment adds a finite aid allocation fixture and independently controlled council consent fixture to the same runner, with three regression tests authored and CI pending. All quantities and identities are synthetic. Council consent is human-directed, not autonomous negotiation. No private material or general-purpose rule language introduced.

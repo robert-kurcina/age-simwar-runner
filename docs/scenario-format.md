@@ -28,9 +28,11 @@ Optional fields:
   (at_least, at_most, equal) and integer threshold. Visibility defaults
   to none. Report delays default to zero and apply only to visible keys.
 - action_catalog: map of administrative request names to description and
-  allowed actors. Requests are recorded; only the opt-in restoration rule can fulfill a request.
+  allowed actors. Requests are recorded; only the opt-in civilian rules can fulfill a request.
 - administrative_reviews_per_turn: nonnegative integer, default zero.
 - service_restoration: optional literal true, enabling the synthetic public-service rule. Requires nonnegative integer open_service_centers and restoration_credits and a restore_service_center action. Scheduled events cannot change credits or close centers. Each reviewed restoration request spends one credit and opens one center, or records insufficient_credits. Effects occur at the turn boundary after scheduled updates and before checks. Other requests remain review-only.
+- community_assistance: optional literal true. Requires nonnegative households_assisted and aid_packages, and deliver_aid action. Each reviewed request uses one package and adds ten assisted households; exhaustion is recorded separately. Scheduled events cannot change packages or decrease assisted households.
+- civic_agreement: optional literal true. Requires participating_councils and binary council_a_joined/council_b_joined state; join_council_a and join_council_b must be exclusively controlled by their respective councils. Consent adds one participant once. Scheduled events cannot alter consent flags or decrease participants. All quantities are synthetic.
 
 Validate a scenario without creating a checkpoint:
 
