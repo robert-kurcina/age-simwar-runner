@@ -15,10 +15,13 @@ def derive(catalog, entry, spec, compiled, previous):
     if h["campaign"] != catalog["id"] or h["catalog_digest"] != digest(catalog):
         raise ValueError("campaign revision mismatch")
     rule = entry.get("carry_from")
-    if (not isinstance(rule, dict) or set(rule) != {"scenario", "variables", "reason"}
+    if (not isinstance(rule, dict) or set(rule) != {"scenario", "variables", "reason", "source_spec_digest", "target_spec_digest"}
             or rule["scenario"] != source["id"] or source["id"] == target["id"]
             or not isinstance(rule["reason"], str) or not rule["reason"].strip()):
         raise ValueError("no approved private continuity mapping")
+    if (rule["source_spec_digest"] != h["compiled"]["spec_digest"]
+            or rule["target_spec_digest"] != compiled["spec_digest"]):
+        raise ValueError("continuity specification revision mismatch")
     # Only carry complete, same-unit civilian accounting pairs. Never carry
     # consent, map dissimilar resources, or reset half of a finite ledger.
     keys = set(source["initial"])
