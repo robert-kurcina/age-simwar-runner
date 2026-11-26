@@ -71,3 +71,7 @@ PR #15 passed both Python CI jobs and merged. Added local campaign catalog, thre
 ## Post-stabilization interface decision
 
 PR #16 passed both Python CI jobs and merged; 39 tests verified. Author requested ChatGPT-native MCP plugin development only after stabilization of the current engine. Added a deferred implementation phase with deployment and actual invocation acceptance criteria. No runtime change or hosting decision made.
+
+## Campaign scope clarification (2026-11-25)
+
+The author requested alignment of the plan and provenance with the original multi-stage, multi-scenario campaign concept. Repository inspection confirmed that the active catalog contains only three synthetic civilian scenarios. The existing generic catalog supports groups, scenario arrays and descriptive prerequisites; actor metadata supports distinct objective thresholds and observation views. It does not yet provide causal campaign state transfer or autonomous actor policy. The revised plan separates the reusable runner, public synthetic verification fixtures and private campaign specifications; preserves multiple participant perspectives and asymmetric outcome criteria as product requirements; and retains the existing supported execution and deferred-work boundaries. Original private stage names, roster and detailed objectives are deliberately not reproduced here under the repository's private-content rule. Recovery of the complete original specification remains unverified. Documentation only; no runtime change or new test result claimed.
