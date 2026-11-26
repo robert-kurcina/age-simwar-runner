@@ -151,3 +151,10 @@ Acceptance: a reproducible civilian experiment compares reviewed scenarios and p
 
 ## Execution discipline
 Each development increment must complete an acceptance criterion or a concrete implementation step toward it, or explicitly document a blocker. Update this file after each increment. Review verification appropriate to the change before merging: direct review for documentation and inventory, targeted execution/regression tests for code. Do not count an unverified branch as done.
+
+## CURRENT INCREMENT — Chat checkpoint handoff (PR pending)
+
+- Implemented a standalone, portable, revision-bound JSON session handoff in `chat_handoff.py` (export, verify and restore), including embedded scenario, deterministic checkpoint verification, session/scenario/payload digests and exclusive restore-path creation. Public fixture regression tests added in `test_chat_handoff.py`.
+- Limitations: commit SHA is operator supplied and is **not cryptographically attested** to the loaded code; SHA-256 hashes are integrity checks, not authenticity signatures. Private sources and canonical artwork are not included. Cross-conversation persistence is not demonstrated until an actual handoff is uploaded and restored in a fresh Chat runtime.
+- Verification: source syntax checked independently; repository integration tests and CI still need to run. Do not mark NEXT 1–4 as accepted on this basis.
+- Next: verify public CI, qualify exact-file transfer into the Chat Python environment, execute a supported scenario using actual engine code, and demonstrate export/import plus source-qualified private continuation. Avoid further frontend work until Chat gameplay works.
