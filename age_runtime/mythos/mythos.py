@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -243,7 +243,8 @@ def resolve_dxd(state, rules, action):
     progression_dm = -(state["progression"]["stage"] - 1) if "progression" in state and spec["attribute"] == "POW" else 0
     emotional_dm = dxd_commitment.modifier(pc, action)
     leverage_dm = dxd_commitment.leverage(state, action)
-    components = [context_dm, emotional_dm, -leverage_dm if interaction != "pivotal" else 0, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
+    character_hook_dm = action.get("character_hook", {}).get("dm", 0)
+    components = [character_hook_dm, context_dm, emotional_dm, -leverage_dm if interaction != "pivotal" else 0, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
     net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"] - sum(x["penalty"] for x in contextual)
@@ -300,7 +301,7 @@ def resolve_dxd(state, rules, action):
                         "condition_penalty_dice": condition, "relationship": hook,
                         **({"emotional_commitment": emotional_dm, "commitment_leverage": leverage_dm} if "commitments" in pc else {}),
                         "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
-                        "gathered": gathered, **({"contextual": contextual, "npc_gathered": npc_gathered} if "character_profiles" in state else {}), "net_bonus": bonus, "net_penalty": penalty,
+                        "gathered": gathered, **({"character_hook": copy.deepcopy(action["character_hook"])} if "character_hook" in action else {}), **({"contextual": contextual, "npc_gathered": npc_gathered} if "character_profiles" in state else {}), "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
                         "initial_result": first, "inspired": inspired is not None,
                         "result": result})
@@ -416,7 +417,8 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
 def step(state, action, proposal=None, commitment=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
-    request, nomination = nominations.split(proposal)
+    request, _ = hooks.split(proposal)
+    request, nomination = nominations.split(request)
     a = next((a for a in options(state, rules) if a["id"] == action), None)
     if request is not None and action.startswith("beat:"):
         a = beats.compile_beat(state, rules, request)
@@ -499,8 +501,12 @@ def step(state, action, proposal=None, commitment=None):
         npc["last_contact"] = state["time"]
     success = True
     if "test" in a:
+        pacing.reconcile_scene(state, rules)
+        a = hooks.apply(state, rules, a)
         success = resolve_dxd(state, rules, a)
     primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
+    if primary_result is not None and rules.get("automatic_emphasis"):
+        hooks.record(state, a, state["dxd"]["tests"][-1])
     if commitment is not None:
         entry = dxd_commitment.record(state, a, primary_result)
         dxd_context.acquire_commitment_disability(state["dxd"], entry)
@@ -713,6 +719,9 @@ def view(state):
     if "activity" in state["dxd"]:
         clock = state["dxd"]["activity"]
         scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "overdue_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}
+    if rules.get("automatic_emphasis"):
+        scene_view["character_emphasis_xp"] = state["dxd"].get("xp", 0)
+        scene_view["latest_emphasis_award"] = next((copy.deepcopy(e) for e in reversed(state["dxd"].get("emphasis_awards", [])) if e["turn"] == state["turn"]), None)
     return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
@@ -778,6 +787,8 @@ def gm_context(state):
                 "favor": pc["favor"],
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
                 "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
+                "character_hooks": {a["id"]: h for a in legal if (h := hooks.offers(state, rules, a))},
+                "character_emphasis_xp": pc.get("xp", 0),
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
