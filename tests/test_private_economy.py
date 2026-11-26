@@ -3,7 +3,8 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from age_runtime.core.private_play import start, update, briefing, perspectives, model_packet, model_choice, verify
+from age_runtime.core.private_play import start, update, briefing, perspectives, model_packet, model_choice, verify, pending_factions, resolve_turn
+from age_runtime.core.runner import digest
 from tests.test_model_factions import scenario
 
 class PrivateEconomyTests(unittest.TestCase):
@@ -41,14 +42,40 @@ class PrivateEconomyTests(unittest.TestCase):
                 start(path, s["id"], "council", owners)
             a = start(path, s["id"], "other", owners)
             self.assertEqual(briefing(a)["projects"], [])
+            support = briefing(a)["strategic_support"]
+            self.assertEqual(support["capacity_options"], {})
+            self.assertEqual(support["project_assessments"], [])
+            self.assertEqual(pending_factions(a), ["council"])
             with self.assertRaises(ValueError):
                 update(a, turns=1)
             packet = model_packet(a, "council")
             self.assertEqual(packet["observation"]["projects"][0]["need"], 3)
-            b = model_choice(a, "council", {"packet_id": packet["packet_id"], "action": "recruit"})
+            support = packet["observation"]["strategic_support"]
+            self.assertEqual(support["project_assessments"][0]["bottleneck"]["shortfall"], 1)
+            self.assertEqual(support["capacity_options"]["recruit"]["cost"], 1)
+            self.assertEqual(support["capacity_options"]["recruit"]["if_fulfilled"]["bottleneck"]["outcome"], "clear")
+            response = {"packet_id": packet["packet_id"], "action": "recruit"}
+            before = digest(a)
+            for revision, responses in (("stale", {"council": response}),
+                                        (before, {}),
+                                        (before, {"council": {"packet_id": "bad", "action": "recruit"}})):
+                with self.assertRaises(ValueError):
+                    resolve_turn(a, revision, responses)
+                self.assertEqual(digest(a), before)
+            resolved = resolve_turn(a, before, {"council": response})
+            b = model_choice(a, "council", response)
+            self.assertEqual(pending_factions(b), [])
+            self.assertEqual(resolve_turn(b, digest(b), {}), resolved)
             c = model_choice(a, "council", {"packet_id": packet["packet_id"], "action": None})
             b, c = update(b, turns=1), update(c, turns=1)
+            self.assertEqual(b, resolved)
             self.assertEqual(briefing(b)["reports"]["stage"]["value"], 1)
+            self.assertEqual(briefing(b)["strategic_support"]["report_changes"]["stage"]["delta"], 1)
+            self.assertNotIn("credits", briefing(b)["strategic_support"]["report_changes"])
+            self.assertEqual(briefing(b)["strategic_support"]["latest_project_results"], [])
+            after = model_packet(b, "council")["observation"]["strategic_support"]
+            self.assertFalse(after["capacity_options"]["recruit"]["currently_feasible"])
+            self.assertEqual(after["capacity_options"]["recruit"]["reason"], "insufficient_resources")
             self.assertEqual(briefing(c)["reports"]["stage"]["value"], 0)
             self.assertNotIn("credits", briefing(b)["reports"])
             self.assertEqual(briefing(b)["own_requests"], [])
