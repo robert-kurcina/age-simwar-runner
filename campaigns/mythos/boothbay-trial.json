@@ -1,5 +1,5 @@
 {
-  "version": 15,
+  "version": 16,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -10,7 +10,8 @@
     "Harbor Diner",
     "Sailor's Rest Boarding House",
     "Creek Inlet South",
-    "Lighthouse (Western Point)"
+    "Lighthouse (Western Point)",
+    "Devil's Throat Sea Caves"
   ],
   "actions": [
     {
@@ -137,8 +138,11 @@
       "grant": [
         "written_account"
       ],
-      "requires_flags": [
-        "badge"
+      "requires_any_flags": [
+        "badge",
+        "paperwork",
+        "tide_clue",
+        "water_warning"
       ]
     },
     {
@@ -348,6 +352,110 @@
       "concern_always": {
         "fatigue": 1
       }
+    },
+    {
+      "id": "compare_almanac",
+      "label": "Compare the tide almanac with the waterfront evidence",
+      "minutes": 15,
+      "requires_any_flags": [
+        "badge",
+        "tide_clue",
+        "dock_access"
+      ],
+      "grant": [
+        "tide_window_known"
+      ],
+      "discovery": "The Portland tide almanac identifies true low tide at 2:14 AM; the waterfront cave entrance may be accessible then."
+    },
+    {
+      "id": "examine_inlet",
+      "label": "Examine the unusual growth at the inlet from dry ground",
+      "location": "Creek Inlet South",
+      "minutes": 30,
+      "requires_any_flags": [
+        "journal",
+        "tide_clue",
+        "water_warning"
+      ],
+      "grant": [
+        "water_risk_known"
+      ],
+      "discovery": "Violet kelp grows at the inlet; crabs are moving landward."
+    },
+    {
+      "id": "inspect_cave_entrance",
+      "label": "Inspect Devil's Throat at low tide without entering",
+      "location": "Devil's Throat Sea Caves",
+      "minutes": 15,
+      "requires_flags": [
+        "tide_window_known"
+      ],
+      "available_from": "1927-10-14T02:00:00",
+      "available_until": "1927-10-14T02:30:00",
+      "grant": [
+        "cave_observed"
+      ],
+      "discovery": "At low tide the entrance to Devil's Throat is exposed."
+    },
+    {
+      "id": "wait_for_tide",
+      "label": "Wait at the waterfront until the low-tide access window",
+      "location": "Harbor Docks",
+      "until": "1927-10-14T02:00:00",
+      "requires_flags": [
+        "tide_window_known"
+      ],
+      "available_until": "1927-10-14T02:00:00"
+    },
+    {
+      "id": "check_lighthouse_water",
+      "label": "Inspect the lighthouse's protected freshwater well",
+      "location": "Lighthouse (Western Point)",
+      "minutes": 45,
+      "requires_any_flags": [
+        "water_warning",
+        "water_risk_known"
+      ],
+      "grant": [
+        "well_known"
+      ],
+      "discovery": "The lighthouse freshwater well is protected by copper piping."
+    },
+    {
+      "id": "recheck_luggage",
+      "label": "Re-examine the luggage using the evidence already collected",
+      "location": "Sailor's Rest Boarding House",
+      "minutes": 45,
+      "requires_any_flags": [
+        "badge",
+        "tide_clue",
+        "water_warning"
+      ],
+      "requires_used": [
+        "inspect_room"
+      ],
+      "excludes_flags": [
+        "paperwork"
+      ],
+      "grant": [
+        "paperwork"
+      ],
+      "discovery": "A second examination of the abandoned suitcase reveals census paperwork."
+    },
+    {
+      "id": "confirm_precaution",
+      "label": "Return to Eleanor to confirm the warning arrangements",
+      "location": "Harbor Diner",
+      "minutes": 30,
+      "requires_flags": [
+        "local_warning",
+        "evening_warning"
+      ],
+      "grant": [
+        "warning_confirmed"
+      ],
+      "discovery": "Eleanor confirms that she has begun warning people she trusts; their safety is not established.",
+      "npc": "eleanor"
     }
   ],
   "resources": {
@@ -362,12 +470,23 @@
     {
       "id": "evening",
       "at": "1927-10-13T18:00:00",
-      "observation": "Evening settles over Boothbay; the harbor grows quiet."
+      "observation": "Evening settles over Boothbay; the harbor grows quiet.",
+      "grant": [
+        "evening_warning"
+      ]
     },
     {
       "id": "second_day",
       "at": "1927-10-14T06:00:00",
       "observation": "A new day begins. The morning light returns to the harbor."
+    },
+    {
+      "id": "midnight_patrols",
+      "at": "1927-10-14T00:00:00",
+      "grant": [
+        "patrol_risk"
+      ],
+      "observation": "It is midnight; moving toward the lighthouse now risks encountering patrols."
     }
   ],
   "ending_text": {
@@ -595,5 +714,30 @@
       }
     },
     "traits": {}
+  },
+  "scene": {
+    "locations": {
+      "Harbor Docks": "Fishing boats crowd the waterfront. Tide pools lie near the shore.",
+      "Harbor Diner": "The diner is a gathering place for local conversation.",
+      "Sailor's Rest Boarding House": "The boarding house provides lodging; the census taker's abandoned luggage is here.",
+      "Creek Inlet South": "The inlet lies beside the retired fisherman's shack.",
+      "Lighthouse (Western Point)": "The lighthouse has a shortwave radio and a freshwater well.",
+      "Devil's Throat Sea Caves": "The sea cave entrance is exposed at low tide."
+    },
+    "pressure": [
+      {
+        "flag": "tide_window_known",
+        "text": "The almanac gives a low tide of 2:14 AM on the coming night. Access is time-sensitive."
+      },
+      {
+        "flag": "water_risk_known",
+        "text": "Unusual kelp and the accounts you have collected give you reason to be cautious around harbor water."
+      },
+      {
+        "flag": "patrol_risk",
+        "text": "After midnight, patrols are a concern on the approach to the lighthouse."
+      }
+    ],
+    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated."
   }
 }
