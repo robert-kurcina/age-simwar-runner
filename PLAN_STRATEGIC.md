@@ -27,7 +27,49 @@ Author-approved target lengths: 6 (Short), 12 (Standard) or 24 (Extended) Critic
 
 DONE (mechanical, PR #102): implemented optional game length and replayable Critical Decision records within the existing request ledger. Private start supports --game-length; commit-decision binds to the current session revision and records a confirmed order or deliberate abstention. Counts are derived and actor-local; ordinary requests and model decisions do not increment them. Focused tests and CI passed (45881735000, 45881734972); experiential pacing qualification remains WIP. Use stable identity and explicit significance classification; avoid duplicate counts for follow-through. Keep the fictional clock, scenario deadlines and autonomous faction decisions independent. Do not invent pressure, force a decision, or terminate the game solely because the target is reached. Validate pacing in actual play before imposing further rules. Preserve existing fixed-interval mechanical fixtures; the Fiji 12-week test is not automatically a qualified 12-Critical-Decision game.
 
-## NEXT — lean implementation sequence
+## NEXT — Conflagration faction configuration (P1; current strategic priority)
+
+Author direction (2026-11-26): establish relevant national and institutional factions for each campaign phase, with dated phase-specific configurations. Prioritize content over generic engine expansion. This section supersedes earlier NEXT entries where they conflict; retain earlier checkpoints as development history.
+
+### Verified campaign inventory
+
+Source: [vault-sh44ser PR #979](https://github.com/robert-kurcina/vault-sh44ser/pull/979), current read-only inventory at `tools/simwar/private-campaigns/conflagration-inventory.json`. Eight groups, six registered illustrative scenarios in four groups. Presentation order is not chronological prerequisite order: periods overlap. The private Fallout coalition draft is not registered. Candidate national assignments below are proposals, not an approved roster; recover prior author-approved assignments and check dated national histories before finalizing.
+
+| Group | Period | Registered scenarios | Candidate configuration focus (not approved roster) |
+|---|---|---:|---|
+| Hexaday | 2003 | 0 | Historical national/institutional context and civilian continuity; catalog-only, no operational strike simulation |
+| Disaster Response | 2003 onward | 3 | Fiji and other surviving administrations; emergency services and relief |
+| Fallout | 2003–2006 | 0 | Shanter, Fiji, Vanuatu; regional cooperation and survival |
+| Mainlander Ingress / Invasion | 2003–2006 | 0 | Island administrations and refugee representative institutions; reception, relief and lawful claims |
+| Early Reconstruction — RWF | Late 2003–2009 | 1 | RWF and surviving partner administrations; funding and reconstruction |
+| Purge | Late 2008–2009 | 0 | Dated surviving administrations, Adherents and civilian institutions; protection, reconciliation and legal recovery |
+| Agreement | 2009–2010 | 1 | Religious and national delegations and surviving administrations; diplomacy and consent |
+| Reconstruction | 2010–2013+ | 1 | Dated successor nations and institutions; economic and service recovery |
+
+### Configuration contract
+
+- Stable faction identity where historically warranted; distinct successor entities when continuity is not established. Use dated names, governance, geography, leadership and relevant native properties from pinned SH44SER evidence. Do not back-project 2044 national metrics, institutional membership, technologies or borders. Unknown is not zero; do not fill gaps as canon.
+- A phase/scenario configuration binds that identity to an effective date, known context, authority, motivation, asymmetric objectives, available resources, relevant project axes, legal actions, and visibility/report delays. Use qualitative context except for properties needed for adjudication. Reuse existing organization profiles, actor strategy, objectives, compiler and state. No universal national rating table, duplicated mutable stocks, or new mandatory schema.
+- Keep three variation dimensions separate: historical phase (dated facts/conditions), player perspective (same scenario, eligible human faction; other factions independently modeled), hypothetical scenario variants (reviewed assumptions, e.g. resources or reporting latency, never overrides of canonical facts). Freeze compiled configuration and selected perspective before start. Do not duplicate an entire scenario per player perspective unless a real rule difference requires it.
+- Outcome criteria are faction-specific and may overlap; avoid forced historical outcomes, universal alignment scores or mandatory zero-sum victory. Divergent exercise outcomes do not edit canon.
+- Continuity within matching projects is mechanically qualified by PR #131 (Tests 45902970747, bundle 45902970730). Cross-phase transitions require explicit review of persistent identities, compatible units and causal relevance; do not blindly copy all stocks, projects, commitments or ratings into a new historical baseline.
+- Keep all actual private scenario content/configuration in authorized private storage. SH44SER remains read-only; only generic plan, mechanics and tooling belong in public runner. Durable private storage decision remains open; do not migrate/delete vault files prematurely.
+
+### Ordered work and exit criteria
+
+| Order | Priority/status | Deliverable | Exit evidence |
+|---|---|---|---|
+| 1 | P1 NEXT | Recover prior approved nation/faction roster and reconcile all eight groups against pinned histories; mark candidate, approved, excluded and unknown separately. | Dated roster with exact source references and unresolved identity questions. |
+| 2 | P1 PENDING | Build minimal phase-specific faction configurations, starting with the existing Fallout coalition and then supported civilian/institutional episodes. | Compiled organization context, asymmetric objectives and only necessary native properties; facts distinguished from assumptions. |
+| 3 | P1 PENDING | Enable eligible human perspective selection and independent model factions from one scenario definition. | Same opening conditions across perspectives; exactly one human for private economy play; no actor impersonation or hidden data leakage. Existing fixed-human adapter limitation must be addressed only as needed. |
+| 4 | P1 PENDING | Define reviewed phase/scenario variants, objective conditions and outcome dimensions. | Frozen configuration, no canonical overrides, materially different legal choices and replay-verified outcomes. |
+| 5 | P1 PENDING | Compile authorized private packages and qualify representative episodes mechanically; register only reviewed executable scenarios. | Pinned source bytes verified; valid opening/terminal states, divergent routes and actor-local observations. Catalog-only groups remain catalog-only until supported. |
+| 6 | P2 PENDING | Explicit cross-phase continuity where useful, distinct from same-project continuation. | Verified source/target identity, dates, units, provenance and approved carry rules; no accidental inheritance. |
+| 7 | P1 DEFERRED | Actual author-led gameplay acceptance, at author's request. | Actual feedback on consequential decisions, pacing, independent behavior and completion; not replaced by CI. |
+
+Event Generator remains WIP on its preserved isolated branch (source review only, 2 commits ahead / 109 behind at latest comparison). Do not rebase, merge or extend it before qualification. Further generic mechanics are deferred unless a concrete faction/scenario requirement justifies them. Narrative work remains independent.
+
+## Earlier foundation — lean implementation sequence
 
 | Step | Deliverable | Exit test |
 |---|---|---|
@@ -35,7 +77,7 @@ DONE (mechanical, PR #102): implemented optional game length and replayable Crit
 | 2 | DONE (PR #83, both CI workflows passed): native Shortfall bands and bounded weekly project progression using existing state and ledger; deterministic delay policy, no character tests. | A project can progress, stall or change scope; resource guards and replay hold. |
 | 3 | DONE (PRs #85–86, CI passed): funded capacity decisions and actor-local model choice/abstention. Private adapter now wired; live model qualification pending. | Unsupported effects are rejected; independent decisions and ignored events remain consistent. |
 | 4 | DONE (mechanical): preserve Fiji recovery as a regression fixture. Vault #993 and #995 (runs 45873529443, 45882376581) verified contrasting outcomes, portable source equivalence, exact replay, actor visibility and independent partner abstention. WIP (P1): qualify compelling strategic gameplay separately. | Author-led play with consequential alternatives, evolving circumstances and justified pacing; no forced decision quota. |
-| 5 | PENDING (P2): Carry forward only consequential faction conditions, commitments and resources into a successor scenario; qualify reviewed scenario generation and public/private ZIP delivery. | Meaningful campaign continuity, frozen configuration, correct visibility and verified execution. |
+| 5 | DONE (mechanical, PR #131) for same-project private continuity; PENDING (P2) for explicit cross-phase continuity and reviewed scenario generation/delivery. | Meaningful campaign continuity, frozen configuration, correct visibility and verified execution. |
 
 Keep existing civic fixtures for regression. Do not build another generic campaign before the SH44SER vertical slice unless a concrete test requires it. Conflagration inventory remains partial; qualify supported civilian/institutional content only. Add bounded Sarna Len content later using native DXD. Great War and Solo City are supporting sources, not additional engines to port.
 
@@ -58,13 +100,13 @@ Author-approved design direction: factions pursue their own asymmetric goals, wi
 | P1 | DONE (mechanical) | PR #112 transfer test passed; 166/167 regression tests passed, narrative forced sleep remains failing (45894866993, 45894866919). |
 | P1 | DONE (mechanical) | PR #113 agreement test passed; 167/168 regression tests passed, narrative forced sleep failed (45895154813, 45895154664). |
 | P1 | WIP | Opt-in runtime bilateral negotiation using reviewed transfer IDs, proposal/counter/accept/reject, expiry and atomic settlement. Actor-local projections, revision-bound player command and model choice/replay integrated. Focused tests added; CI pending. |
-| P1 | NEXT | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
+| P1 | WIP (isolated; qualification pending) | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
 | P1 | PENDING | Dramatic decision presentation and downstream reassessment; qualify divergent outcomes in author-led play. |
 | P2 | DEFERRED | Additional mechanics absent a demonstrated scenario requirement. |
 
 The referee interprets goal interactions from actor-visible circumstances. Do not persist a universal alignment matrix or infer private motivations as public fact. Priority order guides qualitative judgment, not a numerical utility function. Existing objectives retain their independent observed success criteria. Factions may achieve overlapping objectives; no required zero-sum winner.
 
-## NEXT — Fallout Period coalition consim
+## Existing vertical slice — Fallout Period coalition consim
 
 Selected for design review: the Shanter–Fiji–Vanuatu Coalition (2003–2006), canonically described in [Reconstruction Period Milestones](https://github.com/robert-kurcina/vault-sh44ser/blob/c918766d434453644a137cfadfa901f4a8be96b5/01_Foundations/02_History/05_Reconstruction_Period_Milestones.md), heading "Shanter-Fiji-Vanuatu Coalition". Use a bounded episode rather than simulate the entire period. The existing Fiji recovery fixtures remain regression references.
 

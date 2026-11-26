@@ -39,7 +39,9 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 - DONE: Fear! Boothbay v15, Castine v8 and Ram Island v3, shared bounded DXD, derived Attributes, Concerns, Favor, Inspiration, Morale and Psychology. PR #78 tests and bundle CI passed (45814058341, 45814058241). Player-led Boothbay Chat trial completed with negative gameplay feedback; execution verified, experiential qualification WIP. PR #79 inline icons merged. See [DXD migration](docs/dxd-migration.md).
 - DONE: scripted Fiji 12-turn strategic alternatives, resource guards, actor visibility and exact replay (vault-sh44ser #993, run 45873529443; export step failed separately).
 - DONE (mechanical): strategic decision support and one-turn resolution (#97), connector source adapter (#99), Critical Decision pacing (#102; CI 45881735000/45881734972), and actual private portable scenario qualification (vault #995, run 45882376581, artifact 15147307624). Fiji is a mechanical regression fixture, not the standard consim design.
-- WIP (P1): strategic experiential qualification and dependency ownership migration. Keep private material in authorized storage; migrate generic SimWar-specific tools out of SH44SER only after a verified replacement. Do not expand mechanics merely to hit a decision quota.
+- DONE (mechanical): strategic cooperation and negotiation (#124, #126), consequential diplomatic decisions (#127), and bounded same-project strategic continuity (#131; Tests 45902970747 and bundle 45902970730).
+- NEXT (P1 strategic): establish dated faction configurations across the eight verified Conflagration campaign groups, recover the previously approved roster, and prioritize representative scenario content over generic engine expansion. Keep historical phase, player perspective and hypothetical variations distinct. See [strategic plan](PLAN_STRATEGIC.md).
+- WIP (P1): strategic experiential qualification (author-led testing deferred at author request) and dependency ownership migration. Keep private material in authorized storage; migrate generic SimWar-specific tools out of SH44SER only after a verified replacement. Do not expand mechanics merely to hit a decision quota.
 - DEFERRED (P2): first bounded Sarna Len scenario, until the narrative foundation is qualified.
 
 ## Development phases and immediate priorities
@@ -48,7 +50,7 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 |---|---|---|
 | Shared foundation | DONE for existing verified capabilities; WIP for demonstrated gaps | Shared authoritative runtime, source bindings, replay and delivery. Evolve as gameplay experiments require. |
 | [Narrative sub-game](PLAN_NARRATIVE.md) | WIP (P1) | GM-directed, character-scale gameplay; qualify Boothbay, then other Fear! scenarios. |
-| [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; qualify SH44SER recovery and meaningful independent faction decisions. |
+| [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; establish phase-specific Conflagration factions and qualify meaningful independent faction decisions. |
 | Full-stack service | DEFERRED (P3) | Final experimental phase; see the last section of this plan. |
 
 Narrative and strategic phases run concurrently, not sequentially. Each has its own plan, priorities and acceptance criteria; neither must wait for the other to finish. Both exercise one shared engine and feed lessons back into AGE. Coordinate changes to shared contracts and regression-test both modes when affected. Prioritize the smallest useful vertical slices independently; shared blockers take precedence when they actually impede play. ChatGPT gameplay acceptance is the joint exit gate of these concurrent phases, not a separate infrastructure project. Record actual player feedback separately from deterministic execution and CI results.
