@@ -130,6 +130,48 @@ def fulfill_civic_request(s, state, record, end):
         record["fulfillment"] = "joined"
 
 
+def validate_transfers(s):
+    """Reviewed voluntary transfers between distinct civilian investment stocks."""
+    if "resource_transfers" not in s:
+        return
+    transfers = s["resource_transfers"]
+    if not isinstance(transfers, dict) or not transfers or not s.get("economy_projects"):
+        raise ValueError("resource transfers require economy projects")
+    projects = {p["id"]: p for p in s["economy_projects"]}
+    owners = {}
+    for a in s.get("capacity_actions", {}).values():
+        owners.setdefault(a["resource"], set()).add(projects[a["project"]]["participant"])
+    for name, t in transfers.items():
+        if (not isinstance(t, dict) or set(t) != {"source", "destination", "amount"}
+                or name not in s.get("action_catalog", {}) or name in s.get("capacity_actions", {})):
+            raise ValueError("invalid transfer definition")
+        source, destination, amount = t["source"], t["destination"], t["amount"]
+        if (not isinstance(source, str) or not isinstance(destination, str)
+                or source == destination or len(owners.get(source, set())) != 1
+                or len(owners.get(destination, set())) != 1
+                or owners[source] == owners[destination]
+                or type(amount) is not int or amount <= 0):
+            raise ValueError("transfer requires distinct owned stocks and positive amount")
+        donor = next(iter(owners[source]))
+        if s["action_catalog"][name]["actors"] != [donor]:
+            raise ValueError("only donor may authorize transfer")
+
+
+def fulfill_transfer(s, state, record, minute):
+    t = s.get("resource_transfers", {}).get(record["action"])
+    if t is None:
+        return
+    v = state["values"]
+    if v[t["source"]] < t["amount"]:
+        record["fulfillment"] = "insufficient_resources"
+        return
+    for key, delta in ((t["source"], -t["amount"]), (t["destination"], t["amount"])):
+        v[key] += delta
+        state["ledger"].append({"id": "transfer:" + str(record["sequence"]) + ":" + key,
+                                "minute": minute, "key": key, "delta": delta, "value": v[key]})
+    record["fulfillment"] = "transferred"
+
+
 def resolve_reviews(s, state, end):
     """Review pending administrative requests FIFO within a fixed capacity.
 
@@ -146,6 +188,7 @@ def resolve_reviews(s, state, end):
             fulfill_service_request(s, state, record, end)
             fulfill_civic_request(s, state, record, end)
             fulfill_capacity_action(s, state, record, end)
+            fulfill_transfer(s, state, record, end)
             capacity -= 1
 
 def available_requests(s, actor_id):
