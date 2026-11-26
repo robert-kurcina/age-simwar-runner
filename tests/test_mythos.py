@@ -40,7 +40,7 @@ class MythosTrialTests(unittest.TestCase):
                 v = mythos.act(p, "observe", v["revision"])
             self.assertEqual(v["turn"], 20)
             self.assertIsNone(v["ending"])
-            self.assertEqual(v["pacing"]["committed_decisions"], 0)
+            self.assertEqual(v["pacing"]["completed_spotlights"], 0)
             v = mythos.act(p, "depart", v["revision"])
             self.assertEqual(v["ending"]["reason"], "depart")
             self.assertEqual(v["choices"], [])
@@ -548,23 +548,52 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(spatial.route(cfg, docks, cave, "1927-10-14T02:00:00", ["tide_window_known"])["minutes"], 10)
         self.assertIsNotNone(spatial.route(cfg, cave, docks, "1927-10-14T03:00:00", []))
 
-    def test_decisions_are_advisory_idempotent_and_replayed(self):
+    def test_spotlight_lifecycle_advisory_and_replayed(self):
         s = mythos.initial("boothbay", 42)
-        d = {"id": "watch_harbor", "label": "Keep watching the harbor"}
-        s = mythos.step(s, "observe", d)
-        s = mythos.step(s, "observe", d)
-        self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 1)
-        self.assertEqual(s["turn"], 2)
-        self.assertEqual(s["time"], "1927-10-13T08:20:00")
+        start = s["time"]
+        s = mythos.narrative_step(s, {"kind": "open", "id": "journal", "label": "Understand the fisherman's account"})
+        self.assertEqual(s["time"], start)
+        self.assertEqual(s["turn"], 0)
+        s = mythos.step(s, "observe")
+        s = mythos.step(s, "move:Creek Inlet South")
+        self.assertEqual(s["pacing"]["scene"], "inlet_inquiry")
+        self.assertEqual(s["pacing"]["current"], "journal")
+        self.assertEqual(len(s["pacing"]["spotlights"][0]["activities"]), 2)
+        before = (s["time"], s["turn"], mythos.digest(s["dxd"]))
+        s = mythos.narrative_step(s, {"kind": "complete", "id": "journal"})
+        self.assertEqual((s["time"], s["turn"], mythos.digest(s["dxd"])), before)
+        self.assertEqual(mythos.view(s)["pacing"]["completed_spotlights"], 1)
+        with self.assertRaises(ValueError):
+            mythos.narrative_step(s, {"kind": "complete", "id": "journal"})
+        with self.assertRaises(ValueError):
+            mythos.narrative_step(s, {"kind": "open", "id": "journal", "label": "Duplicate"})
+        for n in range(24):
+            key = "trial_" + str(n)
+            s = mythos.narrative_step(s, {"kind": "open", "id": key, "label": "Synthetic character exchange"})
+            s = mythos.narrative_step(s, {"kind": "complete", "id": key})
+        self.assertEqual(mythos.view(s)["pacing"]["completed_spotlights"], 25)
+        self.assertEqual(mythos.view(s)["pacing"]["remaining_spotlights"], 0)
+        self.assertIsNone(s["ending"])
+        mythos.verify(s)
+
+    def test_scene_eligibility_and_abandoned_spotlight(self):
+        s = mythos.initial("boothbay", 42)
         before = mythos.digest(s)
         with self.assertRaises(ValueError):
-            mythos.step(s, "observe", {"id": "watch_harbor", "label": "Different commitment"})
+            mythos.narrative_step(s, {"kind": "scene", "id": "official_attention"})
         self.assertEqual(mythos.digest(s), before)
-        for n in range(24):
-            s = mythos.step(s, "observe", {"id": "trial_" + str(n), "label": "Synthetic decision " + str(n)})
-        self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 25)
-        self.assertEqual(mythos.view(s)["pacing"]["remaining_decisions"], 0)
-        self.assertIsNone(s["ending"])
+        s = mythos.narrative_step(s, {"kind": "open", "id": "inquiries", "label": "Follow the evidence"})
+        s = mythos.step(s, "talk_eleanor")
+        self.assertEqual(s["pacing"]["scene"], "town_inquiry")
+        s = mythos.step(s, "visit_elias")
+        s = mythos.step(s, "inspect_room")
+        self.assertIn("official_attention", mythos.view(s)["pacing"]["scene"]["eligible_frames"])
+        before = (s["time"], s["turn"], mythos.digest(s["dxd"]))
+        s = mythos.narrative_step(s, {"kind": "scene", "id": "official_attention"})
+        self.assertEqual((s["time"], s["turn"], mythos.digest(s["dxd"])), before)
+        self.assertEqual(s["pacing"]["current"], "inquiries")
+        s = mythos.narrative_step(s, {"kind": "abandon", "id": "inquiries"})
+        self.assertEqual(mythos.view(s)["pacing"]["completed_spotlights"], 0)
         mythos.verify(s)
 
     def test_second_resolution_and_beat_metadata(self):
@@ -581,18 +610,20 @@ class MythosTrialTests(unittest.TestCase):
             self.assertEqual(s["time"], "1927-10-13T08:00:10")
             self.assertEqual(mythos.view(s)["pacing"]["interval_seconds"], 10)
             self.assertEqual(mythos.view(s)["pacing"]["narrative_beats"], 1)
-            self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 0)
+            self.assertEqual(mythos.view(s)["pacing"]["completed_spotlights"], 0)
             mythos.verify(s)
 
-    def test_authored_commitment_groups_and_deadline(self):
+    def test_tide_spotlight_and_deadline(self):
         for seed in range(30):
             s = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
             if "badge" not in s["flags"]:
                 continue
             s = mythos.step(s, "compare_almanac")
+            s = mythos.narrative_step(s, {"kind": "open", "id": "tide", "label": "Investigate the tidal cave"})
             s = mythos.step(s, "wait_for_tide")
             s = mythos.step(s, "inspect_cave_entrance")
-            self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 1)
+            s = mythos.narrative_step(s, {"kind": "complete", "id": "tide"})
+            self.assertEqual(mythos.view(s)["pacing"]["completed_spotlights"], 1)
             mythos.verify(s)
             break
         else:
@@ -607,10 +638,11 @@ class MythosTrialTests(unittest.TestCase):
         self.assertGreater(s["turn"], 20)
         mythos.verify(s)
 
-    def test_supported_critical_decision_budgets(self):
+    def test_supported_spotlight_budgets(self):
         from age_runtime.mythos import pacing
+        _, rules = mythos.load("boothbay")
         for target in (6, 12, 24):
-            self.assertEqual(pacing.initial({"target_decisions": target})["target"], target)
+            self.assertEqual(pacing.initial({"target_spotlights": target}, rules["scene"], rules["start_location"])["target"], target)
         with self.assertRaises(ValueError):
-            pacing.initial({"target_decisions": 20})
-        self.assertEqual(mythos.view(mythos.initial("boothbay", 42))["pacing"]["target_decisions"], 24)
+            pacing.initial({"target_spotlights": 20}, rules["scene"], rules["start_location"])
+        self.assertEqual(mythos.view(mythos.initial("boothbay", 42))["pacing"]["target_spotlights"], 24)
