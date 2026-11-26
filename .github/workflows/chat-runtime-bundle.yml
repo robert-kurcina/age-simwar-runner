@@ -1,0 +1,51 @@
+name: Chat runtime bundle
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test pinned source
+        run: python -m unittest discover -v
+      - name: Verify public scenario and handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          revision="$(git rev-parse HEAD)"
+          python play.py start campaigns/civic-recovery/campaign.json service-restoration "$work/opening.json"
+          cp "$work/opening.json" "$work/session.json"
+          python play.py submit "$work/session.json" restore_service_center --actor coordinator
+          python play.py advance "$work/session.json" --actor coordinator
+          python chat_handoff.py export "$work/session.json" "$work/handoff.json" --engine-revision "$revision"
+          python chat_handoff.py restore "$work/handoff.json" "$work/restored.json" --engine-revision "$revision"
+          cmp <(python -m json.tool --sort-keys "$work/session.json") <(python -m json.tool --sort-keys "$work/restored.json")
+          python play.py finish "$work/restored.json" --actor coordinator
+          python play.py inspect "$work/restored.json" --actor coordinator
+          python play.py start campaigns/civic-recovery/campaign.json community-assistance "$work/linked.json" --from-session "$work/restored.json"
+          python play.py inspect "$work/linked.json" --actor coordinator
+      - name: Export exact tracked public source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/chat-bundle"
+          revision="$(git rev-parse HEAD)"
+          git archive --format=zip --prefix=age-simwar-runner/ --output="$RUNNER_TEMP/chat-bundle/runner-source.zip" "$revision"
+          printf '%s\n' "$revision" > "$RUNNER_TEMP/chat-bundle/ENGINE_REVISION.txt"
+          cd "$RUNNER_TEMP/chat-bundle"
+          sha256sum runner-source.zip > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chat-runtime-${{ github.sha }}
+          path: ${{ runner.temp }}/chat-bundle/
+          if-no-files-found: error
+          retention-days: 14
