@@ -58,10 +58,12 @@ def current(state):
 
 def control(state, rules, request):
     """Pacing-only transition: no clock, test or mechanical turn effects."""
-    if "pacing" not in state or state["ending"]:
+    if "pacing" not in state or not isinstance(request, dict):
         raise ValueError("narrative control unavailable")
     p = state["pacing"]
     kind = request.get("kind")
+    if state["ending"] and kind not in ("complete", "abandon"):
+        raise ValueError("only closing an active Spotlight is allowed after ending")
     if kind == "scene" and set(request) == {"kind", "id"}:
         change_scene(state, rules, request["id"])
     elif kind == "open" and set(request) == {"kind", "id", "label"}:
