@@ -47,3 +47,28 @@ class MythosTrialTests(unittest.TestCase):
         s["discoveries"].append("invented")
         with self.assertRaisesRegex(ValueError, "replay"):
             mythos.verify(s)
+
+    def test_resources_and_recovery(self):
+        s = mythos.initial("boothbay", 42)
+        for _ in range(4):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["fatigue"], 1)
+        s = mythos.step(s, "buy_meal")
+        self.assertEqual(s["resources"]["cash_cents"], 2125)
+        self.assertEqual(s["fatigue"], 0)
+        for _ in range(2):
+            s = mythos.step(s, "use_flask")
+        self.assertEqual(s["resources"]["flask_servings"], 0)
+        with self.assertRaises(ValueError):
+            mythos.step(s, "use_flask")
+        mythos.verify(s)
+
+    def test_scores_and_inventory_projection(self):
+        s = mythos.initial("boothbay", 42)
+        v = mythos.view(s)
+        self.assertFalse(any(x.startswith(("$", "Flask")) for x in v["inventory"]))
+        self.assertEqual(v["resources"]["cash_cents"], 2200)
+        s = mythos.step(s, "depart")
+        self.assertEqual(s["ending"]["scores"]["Self Preserved"], 10.0)
+        self.assertEqual(s["ending"]["scores"]["Truth Preserved"], 1.0)
+        mythos.verify(s)
