@@ -28,7 +28,7 @@ def load_campaign(path):
         if not isinstance(group["scenarios"], list) or not group["scenarios"]:
             raise ValueError("group requires scenarios")
         for entry in group["scenarios"]:
-            if not isinstance(entry, dict) or not {"id", "title", "scope", "file"} <= entry.keys() or entry.keys() - {"id", "title", "scope", "file", "prerequisites"}:
+            if not isinstance(entry, dict) or not {"id", "title", "scope", "file"} <= entry.keys() or entry.keys() - {"id", "title", "scope", "file", "prerequisites", "carry_from"}:
                 raise ValueError("invalid scenario entry fields")
             if not all(nonempty(entry[k]) for k in ("id", "title", "scope", "file")):
                 raise ValueError("invalid scenario entry")
@@ -52,6 +52,24 @@ def load_campaign(path):
     for sid, deps in scenarios.items():
         if any(dep not in scenarios for dep in deps):
             raise ValueError("missing prerequisite: " + sid)
+    entries = {e["id"]: e for g in data["groups"] for e in g["scenarios"]}
+    for sid, entry in entries.items():
+        if "carry_from" not in entry:
+            continue
+        rule = entry["carry_from"]
+        if not isinstance(rule, dict) or set(rule) != {"scenario", "variables"}:
+            raise ValueError("invalid continuity mapping")
+        source = rule["scenario"]
+        if not isinstance(source, str) or source not in scenarios[sid]:
+            raise ValueError("continuity source must be a prerequisite")
+        variables = rule["variables"]
+        if not isinstance(variables, dict) or not variables or not all(
+                nonempty(k) and nonempty(v) for k, v in variables.items()):
+            raise ValueError("invalid continuity variables")
+        a = json.loads((root / entries[source]["file"]).read_text())
+        b = json.loads((root / entry["file"]).read_text())
+        if any(k not in b["initial"] or v not in a["initial"] for k, v in variables.items()):
+            raise ValueError("unknown continuity variable")
     visiting, visited = set(), set()
     def visit(sid):
         if sid in visiting:
