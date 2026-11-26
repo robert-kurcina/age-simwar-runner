@@ -58,6 +58,10 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if rules.get("demeanor"):
+        state["relationship_changes"] = []
+    if rules.get("opposition"):
+        state["opposition"] = {"marks": 0, "resolved": False}
     if "progression" in rules:
         state["progression"] = {"stage": rules["progression"]["initial_stage"],
                                 "arrested": False, "changes": []}
@@ -118,7 +122,8 @@ def resolve_dxd(state, rules, action):
     other = [x["dm"] for key in ("trait", "explicit", "interdisciplinary") for x in gathered[key]]
     mods = dxd_modifiers.totals(gathered)
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
-    hook = 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0
+    hook = (state["relationships"].get(action.get("npc"), 0) if rules.get("demeanor") and spec["attribute"] == "PRE"
+            else 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0)
     cue = spec.get("inspiration")
     inspiration_dm = dxd_inspiration.applicable_dm(pc["inspirations"], [cue["tag"]] if cue else [])
     policy = cfg["favor"]
@@ -171,6 +176,51 @@ def resolve_dxd(state, rules, action):
                         "result": result})
     return result["passed"]
 
+DEMEANORS = ("Violent", "Hatred", "Disrespect", "Untrusting", "Dislike", "Guarded",
+             "Neutral", "Like", "Respect", "Loyal", "Trust", "Charmed", "Reverence")
+
+def change_demeanor(state, key, delta):
+    """Bound ordinary persistent changes in rolling fictional-time windows.
+
+    Month is interpreted as 30 days. Temporary changes and exceptional
+    rulings are deliberately not supported by this first implementation.
+    """
+    now = datetime.fromisoformat(state["time"])
+    history = [e for e in state["relationship_changes"] if e["npc"] == key]
+    def recent(days):
+        return [e["delta"] for e in history
+                if now - datetime.fromisoformat(e["at"]) < timedelta(days=days)]
+    week, month = recent(7), recent(30)
+    if delta > 0:
+        delta = min(delta, max(0, 3 - sum(max(0, x) for x in month)))
+        if any(x < 0 for x in month):
+            delta = min(delta, max(0, 1 - sum(max(0, x) for x in week)))
+    elif delta < 0:
+        delta = -min(3, -delta + int(bool(history and history[-1]["delta"] > 0)),
+                     max(0, 3 + sum(min(0, x) for x in week)))
+    old = state["relationships"][key]
+    new = max(-6, min(6, old + delta))
+    if new != old:
+        state["relationships"][key] = new
+        state["relationship_changes"].append({"npc": key, "at": state["time"], "delta": new - old})
+
+def advance_opposition(state, rules, action, success):
+    """A single authored pressure clock; no duplicate exposure roll."""
+    cfg = rules.get("opposition")
+    if not cfg:
+        return
+    clock = state["opposition"]
+    if clock["resolved"]:
+        return
+    amount = action.get("opposition_marks", 0)
+    if not success:
+        amount += action.get("opposition_failure_marks", 0)
+    clock["marks"] = min(cfg["segments"], clock["marks"] + amount)
+    if clock["marks"] == cfg["segments"]:
+        clock["resolved"] = True
+        state["flags"].append(cfg["grant"])
+        state["observations"].append(cfg["observation"])
+
 def step(state, action):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
@@ -208,7 +258,19 @@ def step(state, action):
             if flag not in state["flags"]:
                 state["flags"].append(flag)
         for key, delta in a.get("relationship", {}).items():
-            state["relationships"][key] = max(0, min(5, state["relationships"][key] + delta))
+            if rules.get("demeanor"):
+                change_demeanor(state, key, delta)
+            else:
+                state["relationships"][key] = max(0, min(5, state["relationships"][key] + delta))
+    if not success and rules.get("demeanor"):
+        for key, delta in a.get("relationship_failure", {}).items():
+            change_demeanor(state, key, delta)
+    for flag in a.get("grant_failure", []) if not success else []:
+        if flag not in state["flags"]:
+            state["flags"].append(flag)
+    if not success and a.get("failure_observation"):
+        state["observations"].append(a["failure_observation"])
+    advance_opposition(state, rules, a, success)
     effects = a.get("success" if success else "failure", {})
     for key, delta in effects.items():
         state[key] = max(0, min(5, state[key] + delta))
@@ -243,13 +305,14 @@ def step(state, action):
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
     state["history"].append(action)
-    if a.get("terminal") or state["turn"] >= rules["max_turns"] or not options(state, rules):
-        state["ending"] = {"reason": action if a.get("terminal") else "limit",
+    terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
+    if terminal or state["turn"] >= rules["max_turns"] or not options(state, rules):
+        state["ending"] = {"reason": action if terminal else "limit",
                            "evidence_count": len(state["discoveries"]),
                            **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
                                "account_prepared": "written_account", "account_relayed": "account_relayed",
                                "account_entrusted": "account_entrusted"}).items()},
-                           "epilogue": rules["ending_text"][action if a.get("terminal") else "limit"],
+                           "epilogue": rules["ending_text"][action if terminal else "limit"],
                            "scores": scores(state, action)}
     return state
 
@@ -338,8 +401,9 @@ def view(state):
             for x in state["dxd"]["inspirations"] if x["turn"] == state["turn"]
             and x["source"] == "authored"), None),
         "contacts": [{"name": p["name"], "role": p["public_role"],
+                      **({"demeanor": DEMEANORS[state["relationships"][nid] + 6]} if rules.get("demeanor") else {}),
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
-                     for p in state["npcs"].values() if p["encounters"]],
+                     for nid, p in state["npcs"].items() if p["encounters"]],
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
                           fear=dxd_morale.describe(state["dxd"]["morale"])),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,

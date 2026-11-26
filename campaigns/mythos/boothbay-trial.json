@@ -1,5 +1,5 @@
 {
-  "version": 16,
+  "version": 17,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -66,7 +66,12 @@
           "memory": "You recall that listening carefully is part of your work as a reporter.",
           "consequence": "meaningful"
         }
-      }
+      },
+      "relationship_failure": {
+        "eleanor": -1
+      },
+      "failure_observation": "Eleanor becomes more guarded.",
+      "opposition_marks": 1
     },
     {
       "id": "inspect_room",
@@ -92,7 +97,8 @@
       },
       "concern_failure": {
         "stress": 3
-      }
+      },
+      "opposition_marks": 1
     },
     {
       "id": "visit_elias",
@@ -125,7 +131,12 @@
       },
       "concern_failure": {
         "stress": 3
-      }
+      },
+      "relationship_failure": {
+        "elias": -1
+      },
+      "failure_observation": "Elias declines to share his journal for now.",
+      "opposition_marks": 1
     },
     {
       "id": "report",
@@ -203,9 +214,6 @@
       "requires_flags": [
         "eleanor_account"
       ],
-      "requires_relationship": {
-        "eleanor": 1
-      },
       "discovery": "Eleanor describes disturbing physical changes in her brother before he vanished.",
       "grant": [
         "water_warning"
@@ -221,7 +229,6 @@
         "skill": "Interview",
         "npc_attribute": "POW",
         "significance": "important",
-        "relationship_bonus": "eleanor",
         "decision": true,
         "inspiration": {
           "tag": "interview",
@@ -238,7 +245,12 @@
           "consequence": "meaningful"
         },
         "reaction": "Eleanor's account leaves you shaken; you need a moment to collect your thoughts."
-      }
+      },
+      "relationship_failure": {
+        "eleanor": -1
+      },
+      "failure_observation": "Eleanor becomes more guarded.",
+      "opposition_marks": 1
     },
     {
       "id": "read_journal",
@@ -312,7 +324,17 @@
           "memory": "You remember your responsibility as a journalist to communicate what you have learned.",
           "consequence": "meaningful"
         }
-      }
+      },
+      "terminal_on_success": true,
+      "failure_observation": "The keeper declines to relay your account; you must find another way to preserve it.",
+      "grant_failure": [
+        "relay_refused"
+      ],
+      "excludes_flags": [
+        "police_attention",
+        "patrol_risk"
+      ],
+      "available_until": "1927-10-14T00:00:00"
     },
     {
       "id": "leave_copy",
@@ -440,7 +462,8 @@
       "grant": [
         "paperwork"
       ],
-      "discovery": "A second examination of the abandoned suitcase reveals census paperwork."
+      "discovery": "A second examination of the abandoned suitcase reveals census paperwork.",
+      "opposition_marks": 1
     },
     {
       "id": "confirm_precaution",
@@ -456,6 +479,95 @@
       ],
       "discovery": "Eleanor confirms that she has begun warning people she trusts; their safety is not established.",
       "npc": "eleanor"
+    },
+    {
+      "id": "speak_burroughs",
+      "label": "Speak with Chief Burroughs about the inquiries",
+      "location": "Harbor Docks",
+      "minutes": 30,
+      "npc": "burroughs",
+      "requires_flags": [
+        "police_attention"
+      ],
+      "grant": [
+        "police_clearance"
+      ],
+      "discovery": "Burroughs accepts your explanation for now, but advises you to leave town.",
+      "relationship": {
+        "burroughs": 1
+      },
+      "relationship_failure": {
+        "burroughs": -1
+      },
+      "grant_failure": [
+        "police_refusal"
+      ],
+      "failure_observation": "Burroughs refuses to accept your explanation and warns against further inquiries.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "important",
+        "decision": true
+      }
+    },
+    {
+      "id": "relay_after_pressure",
+      "label": "Seek the lighthouse radio despite the opposition",
+      "location": "Lighthouse (Western Point)",
+      "minutes": 90,
+      "requires_flags": [
+        "written_account"
+      ],
+      "requires_any_flags": [
+        "police_attention",
+        "patrol_risk"
+      ],
+      "grant": [
+        "account_relayed"
+      ],
+      "terminal": true,
+      "terminal_on_success": true,
+      "discovery": "The keeper confirms that your account has been relayed; no response has arrived.",
+      "failure_observation": "The approach is obstructed; your account has not been relayed.",
+      "concern_failure": {
+        "fatigue": 2,
+        "stress": 3
+      },
+      "test": {
+        "attribute": "REF",
+        "tn": 10,
+        "significance": "critical",
+        "decision": true
+      }
+    },
+    {
+      "id": "relay_with_clearance",
+      "label": "Ask the lighthouse keeper to relay your account after speaking with the Chief",
+      "location": "Lighthouse (Western Point)",
+      "minutes": 90,
+      "requires_flags": [
+        "written_account",
+        "police_clearance"
+      ],
+      "excludes_flags": [
+        "patrol_risk"
+      ],
+      "available_until": "1927-10-14T00:00:00",
+      "grant": [
+        "account_relayed"
+      ],
+      "terminal": true,
+      "terminal_on_success": true,
+      "discovery": "The keeper confirms that your account has been relayed; no response has arrived.",
+      "failure_observation": "The keeper declines to relay the account.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "tn": 7,
+        "significance": "critical",
+        "decision": true
+      }
     }
   ],
   "resources": {
@@ -464,7 +576,8 @@
   },
   "relationships": {
     "eleanor": 0,
-    "elias": 0
+    "elias": 0,
+    "burroughs": -1
   },
   "events": [
     {
@@ -493,7 +606,9 @@
     "transmit_account": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved.",
     "leave_copy": "A trusted local has accepted your account. Whether it survives is uncertain.",
     "depart": "You leave Boothbay with whatever evidence you have gathered.",
-    "limit": "Your allotted investigation time has ended; the remaining uncertainties are unresolved."
+    "limit": "Your allotted investigation time has ended; the remaining uncertainties are unresolved.",
+    "relay_after_pressure": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved.",
+    "relay_with_clearance": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved."
   },
   "npcs": {
     "eleanor": {
@@ -513,6 +628,13 @@
       "known_topics": [
         "journal"
       ],
+      "reference_rating": 3
+    },
+    "burroughs": {
+      "source_name": "Chief Burroughs",
+      "public_role": "Police Chief",
+      "location": "Harbor Docks",
+      "known_topics": [],
       "reference_rating": 3
     }
   },
@@ -568,10 +690,8 @@
         "POW": 10,
         "STR": 9,
         "FOR": 8
-      }
-    },
-    "inactive_major_attributes": {
-      "Chief Burroughs": {
+      },
+      "burroughs": {
         "CCA": 9,
         "RCA": 9,
         "REF": 8,
@@ -581,7 +701,9 @@
         "POW": 10,
         "STR": 10,
         "FOR": 10
-      },
+      }
+    },
+    "inactive_major_attributes": {
       "Mayor Gilman": {
         "CCA": 7,
         "RCA": 7,
@@ -661,23 +783,6 @@
           "FOR": 8
         }
       },
-      "Chief Burroughs": {
-        "stature": 51,
-        "build": 54,
-        "trade": "Warrior",
-        "affinity": "POW",
-        "attribute_rolls": {
-          "CCA": 9,
-          "RCA": 9,
-          "REF": 8,
-          "INT": 8,
-          "KNO": 8,
-          "PRE": 9,
-          "POW": 10,
-          "STR": 10,
-          "FOR": 10
-        }
-      },
       "Mayor Gilman": {
         "stature": 50,
         "build": 52,
@@ -711,6 +816,23 @@
           "STR": 8,
           "FOR": 8
         }
+      },
+      "burroughs": {
+        "stature": 51,
+        "build": 54,
+        "trade": "Warrior",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 9,
+          "RCA": 9,
+          "REF": 8,
+          "INT": 8,
+          "KNO": 8,
+          "PRE": 9,
+          "POW": 10,
+          "STR": 10,
+          "FOR": 10
+        }
       }
     },
     "traits": {}
@@ -736,8 +858,18 @@
       {
         "flag": "patrol_risk",
         "text": "After midnight, patrols are a concern on the approach to the lighthouse."
+      },
+      {
+        "flag": "police_attention",
+        "text": "Your inquiries have attracted official attention. You can explain yourself, seek another route, or leave."
       }
     ],
-    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated."
+    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated."
+  },
+  "demeanor": true,
+  "opposition": {
+    "segments": 3,
+    "grant": "police_attention",
+    "observation": "Word of your inquiries has spread. A uniformed officer asks you to speak with Chief Burroughs."
   }
 }

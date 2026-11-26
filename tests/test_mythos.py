@@ -216,7 +216,7 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(set(s["dxd"]["attributes"]), expected)
         for npc in s["npcs"].values():
             self.assertEqual(set(npc["dxd_attributes"]), expected)
-        self.assertEqual(len(s["dxd"]["inactive_major_attributes"]), 3)
+        self.assertEqual(len(s["dxd"]["inactive_major_attributes"]), 2)
         for record in s["dxd"]["inactive_major_attributes"].values():
             self.assertEqual(set(record), expected)
         self.assertEqual(mythos.view(s)["contacts"], [])
@@ -482,3 +482,26 @@ class MythosTrialTests(unittest.TestCase):
             break
         else:
             self.fail("No alternate luggage route")
+
+    def test_boothbay_opposition_and_demeanor(self):
+        s = mythos.initial("boothbay", 42)
+        for action in ("talk_eleanor", "visit_elias", "inspect_room"):
+            s = mythos.step(s, action)
+        self.assertIn("police_attention", s["flags"])
+        self.assertTrue(s["opposition"]["resolved"])
+        self.assertIn("speak_burroughs", [a["id"] for a in mythos.view(s)["choices"]])
+        s = mythos.step(s, "speak_burroughs")
+        self.assertIn("police_clearance" if s["last_result"]["success"] else "police_refusal", s["flags"])
+        self.assertTrue(any(c["name"] == "Chief Burroughs" and "demeanor" in c for c in mythos.view(s)["contacts"]))
+        mythos.verify(s)
+
+    def test_demeanor_limits(self):
+        s = mythos.initial("boothbay", 42)
+        for _ in range(5):
+            mythos.change_demeanor(s, "eleanor", 1)
+        self.assertEqual(s["relationships"]["eleanor"], 3)
+        for _ in range(5):
+            mythos.change_demeanor(s, "eleanor", -1)
+        self.assertEqual(s["relationships"]["eleanor"], 0)
+        mythos.change_demeanor(s, "eleanor", 1)
+        self.assertEqual(s["relationships"]["eleanor"], 0)
