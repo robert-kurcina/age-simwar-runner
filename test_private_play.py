@@ -33,7 +33,10 @@ class PrivatePlayTest(unittest.TestCase):
                     "action_catalog": {"deliver_aid": {"description": "Deliver relief", "actors": ["relief"]}}}}
             save(root / "spec.json", spec)
             entry = {"id": "external-relief", "title": "Relief", "spec": "spec.json",
-                     "status": "verified-illustrative-pilot"}
+                     "status": "verified-illustrative-pilot", "briefing_context": [
+                         {"id": "relief-context", "summary": "Synthetic civilian relief is underway.",
+                          "evidence": "context", "actors": ["relief"], "known_from": "2000-01-01",
+                          "reviewed_for": "2000-01-01"}]}
             catalog = {"version": 1, "id": "external", "groups": [
                 {"id": "recovery", "status": "supported-pilot", "scenarios": [entry]},
                 {"id": "archive", "status": "catalog-only", "scenarios": []}]}
@@ -44,6 +47,12 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(perspectives(path, "external-relief", owners), [{"id": "relief", "label": "Relief"}])
             with self.assertRaises(ValueError):
                 start(path, "external-relief", "unknown", owners)
+            entry["briefing_context"][0]["known_from"] = "2000-01-02"
+            save(path, catalog)
+            with self.assertRaisesRegex(ValueError, "future context"):
+                start(path, "external-relief", "relief", owners)
+            entry["briefing_context"][0]["known_from"] = "2000-01-01"
+            save(path, catalog)
             session = start(path, "external-relief", "relief", owners)
             self.assertNotIn("aid_packages", view(session)["observation"]["values"])
             opening = briefing(session)
@@ -51,6 +60,9 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(opening["date"], "2000-01-01")
             self.assertNotIn("aid_packages", opening["reports"])
             self.assertNotIn("compiled", opening)
+            self.assertEqual(opening["context"][0]["id"], "relief-context")
+            self.assertEqual(opening["context"][0]["classification"], "canonical")
+            self.assertNotIn("path", opening["context"][0])
             session = update(session, "deliver_aid", 1)
             self.assertEqual(briefing(session)["kind"], "turn")
             self.assertEqual(briefing(session)["elapsed_minutes"], 60)
@@ -61,6 +73,7 @@ class PrivatePlayTest(unittest.TestCase):
             session = verify(json.loads((root / "session.json").read_text()))
             session = update(session, "deliver_aid", 2)
             self.assertTrue(view(session)["complete"])
+            self.assertEqual(briefing(session)["context"], opening["context"])
             self.assertEqual(view(session)["observation"]["values"]["households_assisted"], 15)
             session["header"]["actor"] = "other"
             with self.assertRaises(ValueError):
