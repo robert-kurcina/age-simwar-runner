@@ -166,15 +166,23 @@ def derive(attributes, body):
             "physicality": max(result["STR"], siz),
             "resistance": 3 + 4 * siz // 3}
 
+# Universal Table scalar values, indices 1 through 19.
+SCALARS = (12, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 400, 500, 600, 800)
+
+def sleep_limit_hours(fortitude, weariness=0):
+    """DXD Book VII: Scalar(FOR minus raw Weariness, min Index 1) minus 5."""
+    if type(fortitude) is not int or not 1 <= fortitude <= len(SCALARS):
+        raise ValueError("FOR outside supported scalar range")
+    if type(weariness) is not int or weariness < 0:
+        raise ValueError("invalid Weariness")
+    return SCALARS[max(1, fortitude - weariness) - 1] - 5
+
 def physical_properties(a, stature, body):
     """Ordinary human baseline; no implicit PML, ancestry or injury modifiers."""
     dxd.validate_attributes(a)
     for_dm = dxd.attribute_dm(a["FOR"])
-    # Universal Table scalar values, indices 1 through 19.
-    scalars = (12, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 400, 500, 600, 800)
-    if not 1 <= a["FOR"] <= len(scalars):
-        raise ValueError("FOR outside supported scalar range")
-    scalar = scalars[a["FOR"] - 1]
+    baseline_sleep_limit = sleep_limit_hours(a["FOR"])
+    scalar = SCALARS[a["FOR"] - 1]
     lift = a["SIZ"] + a["STR"] // 2 - 9
     shoulder = max(a["STR"], a["SIZ"]) - 9
     carry = min(a["STR"], shoulder) - 3
@@ -194,4 +202,4 @@ def physical_properties(a, stature, body):
             "maximum_burden": {k: v + 5 + for_dm for k, v in basic.items()},
             "jump": {"upward": upward, "broad": upward + stature // 10,
                      "downward": max(a["MOV"] - 12, upward + 3)},
-            "gasp_limit_turns": scalar - 10, "sleep_limit_hours": scalar - 5}
+            "gasp_limit_turns": scalar - 10, "sleep_limit_hours": baseline_sleep_limit}
