@@ -61,11 +61,11 @@ def compile_local(state, rules, request, npc_available):
               "activity": "active", "route": {"nodes": [loc], "seconds": 0, "minutes": 0, "terrain": []},
               "local_capability": kind}
     if kind in ("build_rapport",):
-        action.update(npc=target, test={"attribute": "PRE", "skill": "Interview",
+        action.update(npc=target, test={"attribute": "PRE", "skill": "Persuade" if "Persuade" in state["dxd"]["skills"] else "Interview",
                     "interaction": "ordinary", "tn": 7, "significance": "minor", "decision": True},
                     concern_failure={"stress": 1})
     else:
-        action["test"] = {"attribute": "INT", "skill": "Investigation", "tn": 7,
+        action["test"] = {"attribute": "INT", "skill": "Investigate" if "Investigate" in state["dxd"]["skills"] else "Investigation", "tn": 7,
                           "significance": "minor", "decision": False}
         action["concern_failure"] = {"fatigue": 1}
     return action
