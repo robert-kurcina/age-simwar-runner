@@ -1,206 +1,57 @@
-# Development plan
+# Development plan — playable, consistent games
 
-## Product scope and delivery boundaries
+## Goal
 
-The runner is a reusable script-first, multi-scenario, multi-perspective simulation component of AGE, not a library workflow product. Distinguish three deliverables: (1) the generic execution engine, (2) the public synthetic campaign used to validate supported behavior, and (3) externally maintained private campaign specifications. Private canon, scenario rosters and source material must not be published here.
+Run a complete scenario in one ordinary ChatGPT conversation, using either an authorized GitHub connector or an uploaded standalone ZIP. ChatGPT interprets decisions and presents narrative or staff briefings; the Python runtime validates and commits state. The same frozen scenario, engine revision, seed and resolved inputs must reproduce the same mechanical results across independent runs. Different player choices may produce different outcomes. Dialogue wording need not be identical.
 
-Campaigns may contain multiple stages, each with multiple scenarios, different participant identities (including nations and factions), distinct starting conditions and asymmetric outcome criteria. Scenarios may be independent, parallel or linked by explicit approved continuity mappings; catalog prerequisites alone do not transfer state. Preserve scenario-specific objectives without assuming that every outcome is zero-sum. These are product requirements, not claims of existing implementation. Recover the original private campaign specification externally before claiming its roster or objectives are complete.
+Keep Python and JSON, existing strategic and Mythos engines, and existing CLI entry points. No new platform architecture unless actual gameplay exposes a concrete need. Supported execution remains bounded fictional investigation and civilian/institutional simulation; no operational military targeting or predictive claims.
 
-The public civilian fixtures are a means to verify causal consequences, persistence and interpretation; their content is not the definition of the generic campaign catalog. Keep the existing supported execution scope and deferred-work boundaries below.
+## Status at reset (2026-11-26)
 
-## Product direction — corpus-first player experience
+DONE on main: four public strategic fixtures, Boothbay trial, actor observations/objectives, resource accounting, scheduled events, time, checkpoint/replay, source compiler, campaign discovery, Chat launch guidance, runtime ZIP workflow, repository organization. PR #62 tests and bundle CI passed. PR #56 closed as superseded. Earlier private CI verified bounded recovery fixtures against pinned revisions; current-main private Chat gameplay and standalone upload need qualification.
 
-The intended product is corpus-grounded SH44SER campaign play, with a reusable runner underneath. Public civilian fixtures establish software correctness; do not continue adding fixture mechanics merely to increase test counts. Use real-world model knowledge as background, verified external sources where material, and canonical divergence records as authoritative setting overrides. A model's pretrained knowledge is not a verified historical database. Later-era figures must not be back-projected. Runtime outcomes belong to a session timeline, not canonical source files.
+WIP: PR #63 common descriptive scenario profiles and presentation guidance; PR #64 dated participant compilation and source audit. Both branch test and bundle workflows passed, but neither is merged. Retain their small useful changes; consolidate before further expansion.
 
-Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/): scenario discovery, perspective selection, concise opening/turn briefings, configurable information presentation, session resumption and model independence. Do not copy proprietary scenario text or infer correctness from competitor marketing. Preserve deterministic state ownership and source references. Supported executable scope remains civilian recovery, institutional coordination and retrospective historical context; no operational military targeting, escalation or casualty optimization.
+Imported, not playable: Castine and Ram Island. Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
 
-## EXECUTION MODES — author-approved Chat-first delivery
+## NEXT — five milestones
 
-1. Primary: ordinary ChatGPT Chat within a single conversation, launched by the README prompt. Assume the user's active GitHub Connector is configured and authorized for the runner and relevant private repositories. Retrieve pinned runner and authorized scenario inputs, run the existing Python engine in the available execution environment, and present actor-visible briefings, decisions, resource summaries and actual rendered visuals. No always-running process or cross-conversation persistence required.
-2. Alternative: ChatGPT Work for larger analysis and extended tasks, using the same engine and checkpoint contract.
-3. Alternative: local CLI/browser and optional LM Studio / GPT-OSS inference. Preserve existing verified implementations; further browser features are not the primary delivery gate.
-4. Deferred: hosted browser application, GitHub Pages deployment and MCP integration, only if a demonstrated requirement remains after Chat qualification.
+| Milestone | Deliverable | Exit test |
+|---|---|---|
+| 1. Participants | Stable dated faction and NPC definitions, native attributes, motivations, resources, knowledge and relationships as relevant. Freeze these with scenario initialization. | Two independent runs start with identical participant records; bounded participant decisions obey recorded constraints. |
+| 2. Events | Extend the existing scheduler with only the persistent conditions, milestones, dependencies and background changes required by a real scenario. Initialize prior history from reviewed dated conditions; advance eligible events when game time advances. | An ignored event still progresses; no duplicate effects; replay matches; alternate player choices affect only supported consequences. |
+| 3. Geography and time | Stable location IDs, parent/route relationships and travel or reporting delays where they affect play; reuse existing maps and clocks. | Travel, event timing and visible map/observations agree; no contradictory locations or invented time advances. |
+| 4. Scenario generation | Let ChatGPT propose a bounded configuration using existing supported rules. Validate, review and freeze it before play. Preserve unknowns and source dates. | A generated configuration launches through actual Python, rejects unsupported actions and reaches a meaningful end. |
+| 5. Gameplay qualification | Complete narrative and strategic scenarios in ordinary Chat, including ZIP launch and authorized private content. | Same seed and resolved inputs replay exactly; different choices produce legitimate different results; player views do not disclose hidden state. |
 
-ChatGPT interprets player intent and explains results; the verified Python engine owns state and adjudication. A model-generated state block, conversational memory, or a generated UI interaction alone is not evidence of engine execution. Keep private canonical inputs and session files access-controlled; never commit private state or artwork to the public runner. No remote service, custom plugin, local model, or additional browser framework is required for the initial Chat vertical slice.
+Milestones are ordered by dependency, not separate infrastructure projects. Use a playable vertical slice for each increment. Prefer extending an existing module over adding a new abstraction. Stop adding mechanics when the selected scenario is sufficiently playable.
 
-## DONE
-- Deterministic scheduled-event runner, actor reports, checkpoints and replay.
-- Administrative request ledger, review capacity, read-only interpretation exchange and completed-session comparison.
-- Standalone request-dependent library service example (PR #14 merged; 37 tests passed in Python 3.10 and 3.12).
-- Existing examples are regression fixtures, not the product objective.
+## Practical content queue
 
-- Campaign-oriented reset (PR #15 merged after CI).
+- First: improve Boothbay and convert Castine/Ram Island as close-up tests; avoid reproducing the entire AIMythos ruleset.
+- In parallel where useful: use an existing civilian scenario to exercise participant behavior and persistent background events.
+- Then qualify one authorized SH44SER recovery scenario in ordinary Chat; retain Conflagration inventory without claiming unsupported scenarios are playable.
+- Add one bounded Sarna Len scenario only after useful source mappings and applicable DXD rules are established. Great War and Solo City are supporting sources, not additional engines to port.
+- Distribute verified public standalone ZIP; produce private SH44SER and Conflagration-only packages when their supported content is ready. Keep private material out of public artifacts.
 
-- P0 campaign catalog: three synthetic scenario files and catalog validation (PR #16 merged; 39 tests passed on Python 3.10 and 3.12).
+## Consistency contract
 
-- P1 integrated civilian restoration rule, resource accounting, actor-visible fulfillment, replay and comparison (PR #19 merged after Python 3.10/3.12 CI success).
+A scenario needs only six logical components: scenario metadata/objectives, participants, locations, events, rules and mutable session state. These may be ordinary JSON records in existing files. Separate fixed source facts from dated initialization, hypothetical assumptions and runtime changes. Preserve native units and unknown values. Use stable IDs, source revisions and explicit visibility. Persist a detail when it affects future decisions or continuity; purely descriptive prose need not be simulated.
 
-- P2 distinct playable synthetic assistance and agreement scenarios (PR #20 merged after successful CI).
+Mechanical repeatability requires identical configuration, engine revision, seed and resolved inputs, including any model-proposed participant decisions. For independent runs without recorded model decisions, use bounded deterministic/seeded policies where required. Behavioral consistency means respecting motivations, capabilities and constraints, not producing identical dialogue.
 
-- P3 mapped campaign continuity, provenance verification and multiple-scenario stage support (PR #21 merged after successful CI).
+Use vault-age as terminology/design reference, not an implementation checklist. Its Property Sheets map to existing JSON records; scope facets to scenario metadata; TickPolicy to existing clocks; event generators to bounded tables if needed; durable semantic facts to simple validated records. Source owners remain authoritative: SH44SER for its setting, vault-sarnalen/DXD for Sarna Len, Great War and Solo City for applicable specialized material. Do not infer full DXD attributes from compressed MEST/Solo City values or back-project later national metrics.
 
-- ADR-001 merged in PR #22 after successful CI.
-- Local pinned structured source compiler (PR #23 merged after successful CI).
+## Verification and delivery
 
-- Bounded civilian scenario variation overlays (PR #24 merged after successful CI).
+Run existing regression tests plus focused scenario tests; no new test framework. Demonstrate a full game before claiming playable. Test same-input replay, alternative decisions, independent perspectives, ignored events, repeated NPC encounters, resource exhaustion, and time-limit/early endings where supported. Confirm actual Python execution and actor-visible output; do not substitute generated prose for adjudication. Keep session files within the thread; cross-thread persistence is optional.
 
-- Unified local campaign CLI and linked end-to-end workflow (PR #25 merged after successful CI).
+CI success is evidence of CI execution, not independent Chat play or private integration. Earlier local qualification claims in historical plans are retained as historical statements, not independently reverified in this reset.
 
-- Pinned Markdown evidence references (PR #26 merged after successful CI).
+## DEFERRED / NON-GOALS
 
-- External private civilian recovery pilot compiled and replayed successfully in private CI against the pinned source and runner revisions. Narrative references resolved; illustrative resource accounting and objectives verified.
+Full AGE platform, universal rules DSL/AGEScript, full CAL/LMS-Graph, distributed partitions, PACE, Storygen integration, autonomous multi-agent platform, continuous global simulation, databases, microservices, multiplayer branching, hosted browser/MCP, exhaustive geographic or historical calibration, full native ruleset ports, mandatory cross-thread persistence. Existing optional interfaces remain intact; no further work unless a demonstrated gameplay need warrants it.
 
-- Configurable finite civilian assistance demand and per-package yield (PR #29 merged after successful CI). Existing scenarios retain their original behavior.
+## History
 
-- External private recovery pilot finite-demand deployment and four supply sensitivity cases verified by private CI. Hypothetical parameters remain uncalibrated.
-
-## WIP
-- Private campaign inventory merged after direct source-reference review; stage discovery metadata established, original scenario roster still incomplete.
-- Private launcher and actor-visible briefing packets merged after successful CI; actual private launcher integration verified.
-- Reviewed perspective-specific context binding merged and actual private briefing verified (PR #34 and private integration). Index metadata discovery utility merged; actual index query remains unverified.
-- Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Shared human participation for civic agreement merged after CI (PR #42). Third private scenario verified in private CI. Local referee handoff is explicit, and each participant controls its own consent. No autonomous consent or remote multiplayer authorization.
-- Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
-- Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
-- Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
-- Optional LLM narrative briefings merged (PR #39). Structured observations remain authoritative; live inference unverified.
-- Scenario-authored hypothetical presets merged (PR #40). Private scenario configurations verified in private CI; presets bind to base spec digest and session.
-- Existing private geographic assets inventoried by reference, including all fourteen Near Melanesia artwork files; raster registration and temporal applicability remain unverified.
-- Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
-
-- Private continuity merged after CI (PR #44); linked private recovery verified with standard and limited-resource configurations, persistence and completed-session reporting. Independent branches are not pooled.
-- Actor-visible resource dashboard and observed-history export merged after CI (PR #45). Standalone HTML is a read-only session snapshot, not a live browser game. Optional Leaflet map export merged after CI (PR #46); private Fiji map configuration merged. Direct screenshot inspection remains outstanding. Standalone pinned PNG image mode merged after CI (PR #47); private reference gallery merged. Actor-filtered image annotations with authored hex identifiers merged after CI (PR #48). Private gallery and dashboard browser smoke checks passed after runner compatibility correction; direct screenshot review, actual private pixel control points and live tiles remain outstanding. External map services require explicit user activation.
-
-- Post-Agreement civilian service recovery verified privately; five illustrative scenarios across four groups.
-- Shared framework-independent loading UI (SVG spinner, suspense skeleton, accessible busy state, reduced-motion, timeout and retry) merged after CI (PR #49) for actual map library/artwork/tile loading. Apply the same pattern to scenario/session loads, confirmed requests and narrative generation when asynchronous gameplay UI is implemented. Do not insert artificial delays or replace already available observations.
-
-- Local single-session browser gameplay adapter merged after CI (PR #50): existing verified session, explicit request confirmation, one-turn adjudication, autosave, revision-bound requests, loopback-only HTTP and shared loading indicator. This is a trusted local single-writer interface, not remote multiplayer or deployment. Browser transition verification and scenario selection remain outstanding; these are alternative-mode improvements, not Chat delivery prerequisites.
-
-## NEXT (ordered, with acceptance criteria)
-
-1. Qualify the README launch prompt from ordinary Chat with an active authorized GitHub Connector. Retrieve the exact runner archive and discover supported campaign manifests; verify revision and archive integrity, transfer the files, and use the original Python engine. Public runtime transfer and gameplay have been demonstrated; verify the prompt-driven launch and private source transfer without requiring manual file handling.
-2. Complete an authorized private scenario within one conversation, including actor/preset selection, opening briefing, confirmed decisions, actual engine adjudication, resource history and final outcome. Exercise one rejected/stale request and linked continuation where supported. Retain verified checkpoints within the conversation without mandatory export/download/upload.
-3. Present actual actor-visible map/dashboard output in Chat, using existing engine rendering, structured observations and authorized artwork. Keep narrative and adjudication distinct; do not substitute invented maps, state or rules. Qualify only presentation necessary for the selected scenario.
-4. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries; do not invent canon or block playability on exhaustive calibration.
-5. Close the primary delivery plan after single-conversation prompt-to-play acceptance. Optional Work, local model/browser, hosting, MCP and automated scenario exploration remain independent later work, not release gates.
-
-## CHAT GAMEPLAY CONTRACT — primary delivery acceptance
-
-- Startup: follow the README launch prompt using the active GitHub Connector; identify the authorized campaign, scenario, perspective and preset. Pin engine/source revisions, materialize actual files, verify provenance and initialize through existing Python entry points. Present actor-visible objectives, reports, resources and permissible actions.
-- Turn: translate player intent into an allowed request, clarify material ambiguity, obtain explicit confirmation (an explicit confirmed instruction is sufficient), bind it to the current checkpoint revision and execute through the original engine. Advance only when requested. Shared participants control their own consent.
-- Output: present actual engine results, observation timestamps, pending requests, remaining options and distinct narrative. Do not expose hidden state or unauthorized private material. Label illustrative quantities and unknowns.
-- Session: keep verified checkpoints and prior state available within the same conversation. Verify before each mutation. Downloads, uploads, checkpoint export and cross-conversation restoration are optional, not acceptance requirements.
-- Failure: if source transfer, revision verification, Python execution or session access fails, identify the blocker and stop adjudication. If runtime resets, use existing verified files if available; otherwise offer optional handoff or restart. Never reconstruct the engine in prose or claim unexecuted results.
-- Acceptance: a user with an authorized active GitHub Connector launches from the README prompt and completes a supported private scenario in a single ordinary Chat conversation using the original Python engine, with verified state and actor-visible results. No extra hosted service, new API or mandatory manual file handling.
-
-## SOURCE-REFERENCE ARCHITECTURE (author-approved)
-
-See [ADR-001](docs/adr/001-canonical-source-references.md). The world-building repository remains authoritative; the runner must not manually duplicate canon. Private package references, source qualification, compilation and generated session snapshots remain separate from public fixtures.
-
-1. Qualify the existing corpus ownership map, identifiers, temporal coverage and machine-readable data before choosing an extraction mechanism. Recover the private campaign inventory externally.
-2. Define a minimal reference contract (repository identity, revision, path, stable entity/field selector, effective date, provenance classification); use an explicit allowlist of source owners. Do not require a new national database.
-3. Implement a local, read-only reference resolver and compiler against synthetic fixtures first. Acceptance: deterministic compilation, explicit failures for missing or ambiguous fields, temporal mismatch, stale source detection and immutable pinned snapshots. No network or private repository dependency in public CI.
-4. Extend the verified private civilian pilot with reviewed numerical inputs only when evidence is sufficient. Keep authored facts in their existing authoritative homes; store only simulation-specific assumptions in the private package. Do not claim predictive accuracy from successful compilation.
-
-## GAMEPLAY MAP AND VISUALIZATION — shared engine-derived presentation (author-approved)
-
-Use minimum sufficient geographic fidelity for informed gameplay. One shared lightweight Leaflet renderer; interchangeable permitted basemap tiles, SVG and GeoJSON overlays, and optional H3 geographic indexing only where useful. Existing canonical raster and hex maps remain authoritative for fictional geography; preserve their identifiers rather than replacing them with H3 cells. No mandatory ArcGIS SDK, dedicated GIS database, comprehensive GIS pipeline or terrain reconstruction.
-
-1. Define scenario region, initial zoom, permitted basemap, source-qualified locations and applicable overlays in configuration. Inventory existing private map artwork and register it with verified control points where needed. Retain a local image-map option when geographic registration is unnecessary.
-2. Export actor-visible resource balances, observed trends, objective progress and knowledge timestamps from the existing engine. Render a concise resource dashboard from actual session data.
-3. Implement the shared map canvas with pan, zoom, layer toggles, geographic location selection, basic geographic distance measurement and SVG/GeoJSON annotations. Demonstrate actual browser rendering with real tiles and source attribution, not archive photographs or generated mockups.
-4. Add optional simplified terrain presentation from available, appropriately dated geographic sources and canonical artwork. Use broad land-cover, relief and water classes, keep unknown terrain unknown, and distinguish modern reference imagery from historical conditions. Avoid unnecessary raster processing; terrain presentation is not a new adjudication rule.
-5. Add optional H3 indexing if a supported scenario needs geographic aggregation; retain existing authored hex maps independently. Display supported civilian service locations, relationships, and resource information through actor-visible overlays. Use the same read-only contracts for eventual MCP delivery.
-
-Acceptance: actual engine-derived scenario visuals and resource information from a private session, deliverable in Chat. Existing browser rendering remains an alternative; live tiles, selectable overlays and geographic registration are required only where a supported scenario needs them. Keep private artwork local/access-controlled and comply with tile provider attribution and use restrictions. Do not introduce operational military logistics or targeting tooling. No mandatory cloud GIS, new elevation model, bathymetric reconstruction or comprehensive digital twin.
-
-## DEFERRED OPTIONAL — ChatGPT-native MCP plugin (previously approved; not a Chat prerequisite)
-
-Do not begin plugin development until ordinary Chat gameplay acceptance is satisfied and a concrete requirement warrants an external service. Optional local model connectivity is not a release gate unless separately required. Keep GitHub as source control; do not migrate the engine to JavaScript or require a browser UI merely for plugin integration.
-
-1. Verify current ChatGPT custom plugin eligibility, MCP transport and authentication requirements, and select a suitable executable hosting environment. GitHub Pages alone cannot host executable MCP functions.
-2. Expose read-only campaign listing and session inspection for the existing civilian synthetic campaign through a minimal MCP adapter. Verify actual invocation from ChatGPT.
-3. Expose bounded human-directed civilian session operations only after validating authorization, input contracts, session isolation, persistence and retry safety. The Python engine remains authoritative; ChatGPT interpretation is not authoritative state.
-4. Verify end-to-end use, including resuming a session and exporting results. Keep private campaign material external and access-controlled; do not publish it to the public repository.
-5. Consider GitHub Pages for optional documentation or reports only. No mandatory browser frontend or local installation in the remote-hosted configuration.
-
-Acceptance: a user can operate a supported civilian campaign from ChatGPT through the deployed plugin, with the same verified engine behavior as the CLI. Hosting and account eligibility must be demonstrated, not assumed.
-
-## LATE PRIORITY — Automated Scenario Exploration (author-approved)
-
-After supported scenario configurations, interactive gameplay and private continuity are stable, add an optional research mode for civilian recovery and institutional coordination. This milestone must not displace current Chat gameplay qualification or source-qualified scenario coverage.
-
-1. Establish deterministic civilian participant baselines and explicit experiment assumptions before adding model-generated behavior.
-2. Explore reviewed civilian resource, service-capacity, reporting-delay and institutional cooperation variations using isolated sessions and the existing adjudication engine.
-3. Add optional LLM-controlled civilian participants with separate actor-visible context, constrained existing actions, and recorded model configuration and decisions. No unrestricted state mutation or inferred consent.
-4. Where justified, introduce seeded uncertainty distributions with documented assumptions; compare outcomes, sensitivity, and failure modes against deterministic baselines. Repeated model outputs are not independent empirical observations.
-5. Report conditional outcome distributions, uncertainty, and limitations; retain session provenance and replay. Do not treat frequency as calibrated historical probability or automatically revise canon.
-
-Acceptance: a reproducible civilian experiment compares reviewed scenarios and participant policies, with outcome summaries clearly distinguished from verified facts. Operational military targeting, escalation, casualty optimization and autonomous combat decision support remain outside executable scope.
-
-## DEFERRED
-- Private campaign content belongs in an external private package, not this public repository. Recover its original stage and scenario inventory, participant perspectives, chronology, objectives and continuity requirements from authorized private sources; record unknowns rather than inventing canon.
-- Historical reconstruction may be represented by documented milestones and retrospective civilian consequences; no operational military escalation, targeting, or optimization of casualties.
-- Hosted deployment, further standalone browser UX, autonomous actor policy, general causal inference, AGE/AIGen integration, rich UI and stochastic models are not primary delivery requirements. Reassess only after the civilian vertical slice works.
-
-## REJECTED
-- Counting repeated plans, additional isolated demonstrations or documentation-only changes as functional implementation.
-- Publishing private corpus material.
-- Generated prose as authoritative state or unrestricted runtime-generated rules.
-- New infrastructure without a demonstrated scenario requirement.
-
-## Execution discipline
-Each development increment must complete an acceptance criterion or a concrete implementation step toward it, or explicitly document a blocker. Update this file after each increment. Review verification appropriate to the change before merging: direct review for documentation and inventory, targeted execution/regression tests for code. Do not count an unverified branch as done.
-
-## DONE — Chat checkpoint handoff (PR #52 merged)
-
-- Implemented a standalone, portable, revision-bound JSON session handoff in `chat_handoff.py` (export, verify and restore), including embedded scenario, deterministic checkpoint verification, session/scenario/payload digests and exclusive restore-path creation. Public fixture regression tests added in `test_chat_handoff.py`.
-- Limitations: commit SHA is operator supplied and is **not cryptographically attested** to the loaded code; SHA-256 hashes are integrity checks, not authenticity signatures. Private sources and canonical artwork are not included. Cross-conversation persistence is optional and is not a primary delivery requirement.
-- Verification: PR #52 test workflow 45760047208 succeeded on Python 3.10 and 3.12. Do not mark NEXT 1–4 as accepted on this basis.
-- Next: verify public CI, qualify exact-file transfer into the Chat Python environment, execute a supported scenario using actual engine code, and demonstrate export/import plus source-qualified private continuation. Avoid further frontend work until Chat gameplay works.
-
-## DONE — Offline Chat runtime transfer (PR #53 merged)
-
-- Direct Git clone in Chat's Python container failed with DNS resolution error. GitHub connector file reads and Actions remain accessible.
-- Added a GitHub Actions workflow to test the pinned source, exercise a public opening/submit/advance/handoff/restore/finish/linked continuation, and export an exact tracked-source ZIP with revision and SHA-256 manifest. No private source or session is included. Artifact delivery is an explicit manual download/upload fallback; connector-to-runtime byte transfer is not assumed.
-- PR #53 workflow 45760207089 succeeded. Artifact 15089157126 was downloaded through the GitHub connector directly into ordinary Chat's execution container. Inner source archive SHA-256 verified; pinned source revision 4b6d58600be0fbf778b39f69665f601ff2e05fa5 (PR synthetic merge, not main). All 68 tests passed locally in Chat. Public service-restoration opening checkpoint initialized, actor observation inspected and portable opening handoff exported through the actual CLI. No manual upload required for this public artifact.
-- NEXT 1 partially qualified: ordinary Chat engine execution and initial checkpoint verified for public fixture; private source transfer and actual player-confirmed turn remain pending. Visual acceptance remains pending; separate-conversation resumption is no longer a release gate.
-
-## Author-approved scope refinement — single-thread prompt-to-play
-
-- README.md is the primary user launch guide and facilitator contract. Presume the GitHub Connector is active, configured and authorized; runtime execution must still be verified.
-- The public fixture was subsequently played through its final turn in Chat, as reported in the development conversation. A separate-conversation handoff test reproduced state but did not invoke the original engine; it is not authoritative execution evidence. Cross-thread persistence is explicitly removed from acceptance by the author, not declared verified.
-- Retain checkpoint and archive features already implemented; reject further mandatory resume-package or persistence infrastructure. Focus on private prompt-driven execution and gameplay presentation.
-
-## WIP — Mythos conversion (author-approved)
-
-- Preserve all five AIMythos JSON sources and exact provenance before repository retirement. Dagon Basic differences still require review.
-- Add framework-aware public catalog and separate bounded Boothbay investigation trial without altering strategic runner contracts. Trial uses authored character attributes, seeded 2D6, elapsed time, limited evidence discovery, replay, revision-bound actions and ending. Trial opening, action durations and thresholds are provisional adaptations; not full AIMythos compliance.
-- Next: qualify CI and actual Chat gameplay, implement only missing mechanics needed for substantive Boothbay play (inventory changes, character conditions, NPC interactions, scored outcomes), then adapt Castine and Ram Island. Keep their catalog status imported until executable. Update standalone launch guide and qualify extracted ZIP. Continue private Conflagration packaging separately. No universal engine rewrite.
-
-### Boothbay trial v2 — proposed
-
-- Add bounded sanity/fatigue conditions and modifiers, cash/flask consumption, rest and meal choices, visible descriptors and three provisional ending metrics. Conditions and resource costs live in the trial overlay. Fatigue cadence and score rubric are illustrative, not faithful reproduction of all AIMythos rules. No automatic publication or actual containment is inferred from a written account; containment points are a trial proxy only.
-- Existing v1 sessions require restart because replay pins the rules digest. Existing strategic sessions unaffected.
-- Next: verify CI, qualify actual Chat play, add scenario-specific NPC and earned revelation progression and improve ending semantics before expanding to Castine/Ram Island. No additional infrastructure.
-
-### Boothbay trial v3 — proposed
-
-- Conditional NPC conversations and relationships, earned clue flags, once-only timed observations and distinct account preparation, relay, custody and departure endings. Failed relay does not count as successful delivery; writing or relaying evidence is not itself containment. Rules and epilogue prose are provisional adaptations. Restart v2 sessions after update.
-- Next: verify CI and actual end-to-end Chat play; review narrative pacing and outcome fidelity. Adapt Castine and Ram Island using the same mechanism rather than inventing new subsystems. Preserve original source configurations.
-
-### Boothbay v3 execution qualification
-
-- PR #59 workflows 45767452752 and 45767452737 passed. Downloaded artifact 15092004707; verified inner source checksum and extracted revision 9877441da087316389950f321ea8c2bbf9bfc4a0 (PR synthetic merge). Local Chat runtime passed all 76 tests, including eight Mythos tests. Actual game.py CLI completed an eight-action seeded Boothbay route and inspect reproduced final state. This is scripted execution evidence, not human-directed narrative acceptance.
-- Pacing issue: successful route concludes at 16:30 on the first day, before scheduled evening events. Trial scoring may exceed original authored scenario maxima; retain explicit provisional status. Next prioritize playable narrative qualification and configuration-driven Castine/Ram Island conversion, not new subsystems.
-- Standalone launch guide from PR #56 is not present on main at this review; reconcile packaging branch before claiming automated standalone distribution complete.
-
-## DONE — Repository organization (PR #61 merged)
-
-- Runtime implementation moved into `age_runtime/{core,interfaces,mythos,examples}`; tests moved into `tests/`. Keep existing root launch commands and private-import compatibility. Scenario data paths remain stable. Consolidate facilitator guidance under `00_Meta/CHAT_GAMEPLAY.md` and technical CLI reference under `docs/cli.md`.
-- PR #61 regression workflow 45792445758 and runtime bundle workflow 45792445696 passed; main merge acfbb818a1ac0443a6a5272a8840db3457a6a4a5 confirmed. Private integration remains independently qualified against its pinned revision; do not claim latest compatibility until tested.
-
-## WIP — Clear launch and standalone distribution
-
-- README is a player-first launch guide with separate connected and offline prompts, current campaign availability, distribution status and developer references. LLM-specific instructions remain in 00_Meta.
-- Incorporate the useful standalone guide and extracted-package smoke test from unmerged PR #56 into current main architecture. Bundle workflow includes START_HERE.md and tests the extracted source, including actual Mythos CLI start, action and inspect. CI and independent Chat upload qualification pending; no claim that private archives exist.
-- Next: qualify standalone artifact, convert Castine and Ram Island, then private SH44SER and Conflagration packaging. Reconcile superseded PR #56 after verification. Do not expand engine architecture unnecessarily.
+Previous detailed plan remains available at [the pinned pre-reset revision](https://github.com/robert-kurcina/age-simwar-runner/blob/f7d9dba6dcc3db29b3c1c2eb0c36224c10f3e5ef/PLAN.md). Architecture references: [ADR-001](docs/adr/001-canonical-source-references.md), [vault-age](https://github.com/robert-kurcina/vault-age/tree/ed080124bb28a3ebb65b80eadbadfb4420de4f73). Update this plan only when milestones, evidence or priorities change.
