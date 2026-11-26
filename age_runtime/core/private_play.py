@@ -400,6 +400,10 @@ def main(argv=None):
     decision.add_argument("--intent", required=True)
     decision.add_argument("--action")
     decision.add_argument("--revision", required=True)
+    negotiation = commands.add_parser("negotiate")
+    negotiation.add_argument("session", type=Path)
+    negotiation.add_argument("proposal", type=Path)
+    negotiation.add_argument("--revision", required=True)
     pending = commands.add_parser("pending-factions")
     pending.add_argument("session", type=Path)
     turn = commands.add_parser("resolve-turn")
@@ -445,6 +449,10 @@ def main(argv=None):
             result = view(session)
         elif a.command == "commit-decision":
             session = record_decision(read(a.session), a.revision, a.decision_id, a.intent, a.action)
+            save(a.session, session)
+            result = briefing(session)
+        elif a.command == "negotiate":
+            session = negotiate(read(a.session), a.revision, read(a.proposal))
             save(a.session, session)
             result = briefing(session)
         elif a.command == "pending-factions":
