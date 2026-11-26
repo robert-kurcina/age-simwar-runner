@@ -87,3 +87,7 @@ PR #19 passed both Python CI versions and was merged. The next increment adds a 
 ## Campaign continuity increment
 
 PR #20 merged after successful CI. Implemented explicit catalog-approved copy mappings between completed synthetic civilian sessions and derived starting scenarios. Transition records pin catalog, source scenario, source checkpoint, destination template and derived scenario digests, and can be recomputed from source files. The trusted referee supplies source artifacts; hashes establish consistency, not authenticity or recursively verified ancestry. A second scenario in the public services stage exercises catalog grouping. Transferred values are contextual observations, not new causal modifiers. Two regression tests authored; CI pending. No private canon included. Initial submission failed with a connector disconnect; retry used sequential commits.
+
+## Canonical source reference decision
+
+PR #21 passed CI and merged. The author approved single-source canonical ownership, reference-first scenario definitions and generated, revision-pinned runtime snapshots. Public runner ADR records the generic contract; private corpus inspection and private scenario data remain outside this repository. No compiler or source extraction is claimed in this documentation increment. Existing corpus ownership and temporal distinctions must be respected; no new national database or manual canonical copies are required.
