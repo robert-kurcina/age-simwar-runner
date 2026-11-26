@@ -199,8 +199,14 @@ Each development increment must complete an acceptance criterion or a concrete i
 - Runtime implementation moved into `age_runtime/{core,interfaces,mythos,examples}`; tests moved into `tests/`. Keep existing root launch commands and private-import compatibility. Scenario data paths remain stable. Consolidate facilitator guidance under `00_Meta/CHAT_GAMEPLAY.md` and technical CLI reference under `docs/cli.md`.
 - PR #61 regression workflow 45792445758 and runtime bundle workflow 45792445696 passed; main merge acfbb818a1ac0443a6a5272a8840db3457a6a4a5 confirmed. Private integration remains independently qualified against its pinned revision; do not claim latest compatibility until tested.
 
-## WIP — Clear launch and standalone distribution
+## DONE — Clear launch and standalone distribution (PR #62 merged)
 
 - README is a player-first launch guide with separate connected and offline prompts, current campaign availability, distribution status and developer references. LLM-specific instructions remain in 00_Meta.
-- Incorporate the useful standalone guide and extracted-package smoke test from unmerged PR #56 into current main architecture. Bundle workflow includes START_HERE.md and tests the extracted source, including actual Mythos CLI start, action and inspect. CI and independent Chat upload qualification pending; no claim that private archives exist.
+- Incorporate the useful standalone guide and extracted-package smoke test from unmerged PR #56 into current main architecture. Bundle workflow includes START_HERE.md and tests the extracted source, including actual Mythos CLI start, action and inspect. PR #62 workflows 45793282391 and 45793282476 passed; PR #56 closed as superseded. Independent Chat upload qualification pending; no claim that private archives exist.
 - Next: qualify standalone artifact, convert Castine and Ram Island, then private SH44SER and Conflagration packaging. Reconcile superseded PR #56 after verification. Do not expand engine architecture unnecessarily.
+
+## WIP — Common scenario profiles and generation
+
+- Author supplied three versions of the same strategic prompt differing principally in selected perspective; extract reusable presentation and design principles without copying operational military scenario content. Keep one scenario per setting, multiple actor perspectives, fixed or action-dependent clocks, separate expected and maximum durations, independent outcomes and presentation profiles.
+- Add `game.py describe` read-only normalized profiles from existing public configurations, strategic staff-briefing and settings design presets, and LLM generation guidance under 00_Meta. Profiles derive actual horizons rather than applying nominal 6/12/24-turn presets. No new resolution mechanics or automatic generation claimed. Tests pending CI.
+- Next: implement a validated generated-scenario vertical slice with existing supported civilian rules, including finite duration, resource checks and deterministic replay. Then extend persistent event lifecycle and participant behavior using bounded civilian fixtures. Avoid universal DSL and unnecessary infrastructure. Castine/Ram Island conversion and private archive delivery remain pending.
