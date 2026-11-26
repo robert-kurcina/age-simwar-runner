@@ -1,7 +1,7 @@
 """Scenario-authored hypothetical variants; never override referenced facts."""
 from copy import deepcopy
 import re
-from runner import digest, validate
+from age_runtime.core.runner import digest, validate
 
 
 def options(entry):

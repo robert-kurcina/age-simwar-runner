@@ -1,7 +1,7 @@
 """Read-only proposal exchange for supported civilian player requests."""
 import json
-from runner import digest
-from private_play import briefing, verify, update
+from age_runtime.core.runner import digest
+from age_runtime.core.private_play import briefing, verify, update
 
 
 def packet(session, instruction):
