@@ -6,6 +6,42 @@ from age_runtime.core.runner import digest
 from age_runtime.core.source_compiler import checked_date
 
 
+
+def economy_signature(s):
+    """Conservative continuation: same projects, owners, units and accounting."""
+    projects = {p["id"]: p for p in s["economy_projects"]}
+    stocks = {}
+    for action in s["capacity_actions"].values():
+        stocks.setdefault(action["resource"], set()).add(projects[action["project"]]["participant"])
+    if any(len(owners) != 1 for owners in stocks.values()):
+        raise ValueError("ambiguous continuity stock ownership")
+    keys = set(stocks)
+    for p in projects.values():
+        keys.update(p[k] for k in ("progress", "delay", "complications"))
+        keys.update(a["key"] for a in p["axes"])
+    return keys, projects, stocks
+
+
+def continuity_keys(source, target):
+    if "economy_projects" in source or "economy_projects" in target:
+        if "economy_projects" not in source or "economy_projects" not in target:
+            raise ValueError("continuity mechanics mismatch")
+        a, b = economy_signature(source), economy_signature(target)
+        if a != b or set(source["actors"]) != set(target["actors"]):
+            raise ValueError("continuity requires identical project accounting and stock owners")
+        if any(source["actors"][k]["label"] != target["actors"][k]["label"] for k in source["actors"]):
+            raise ValueError("continuity requires stable faction identities")
+        if a[0] != set(source["initial"]) or a[0] != set(target["initial"]):
+            raise ValueError("continuity requires complete project accounting only")
+        return a[0]
+    keys = set(source["initial"])
+    eligible = ({"households_assisted", "aid_packages"},
+                {"open_service_centers", "restoration_credits"})
+    if keys not in eligible or keys != set(target["initial"]):
+        raise ValueError("continuity requires a complete same-unit civilian accounting pair")
+    return keys
+
+
 def derive(catalog, entry, spec, compiled, previous):
     from age_runtime.core.private_play import verify
     verify(previous)
@@ -22,15 +58,10 @@ def derive(catalog, entry, spec, compiled, previous):
     if (rule["source_spec_digest"] != h["compiled"]["spec_digest"]
             or rule["target_spec_digest"] != compiled["spec_digest"]):
         raise ValueError("continuity specification revision mismatch")
-    # Only carry complete, same-unit civilian accounting pairs. Never carry
-    # consent, map dissimilar resources, or reset half of a finite ledger.
-    keys = set(source["initial"])
-    eligible = ({"households_assisted", "aid_packages"},
-                {"open_service_centers", "restoration_credits"})
-    if (keys not in eligible or keys != set(target["initial"])
-            or rule["variables"] != {k: k for k in keys}
-            or keys & set(compiled["dependencies"])):
-        raise ValueError("continuity requires a complete same-unit civilian accounting pair")
+    # Carry complete accounting sets, never orders, consent or arbitrary keys.
+    keys = continuity_keys(source, target)
+    if rule["variables"] != {k: k for k in keys} or keys & set(compiled["dependencies"]):
+        raise ValueError("continuity requires complete literal same-unit accounting")
     if source.get("assistance_capacity") != target.get("assistance_capacity"):
         raise ValueError("continuity requires the same assistance catchment assumptions")
     if source.get("community_assistance") != target.get("community_assistance") or source.get("service_restoration") != target.get("service_restoration"):
