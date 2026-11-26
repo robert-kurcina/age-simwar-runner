@@ -46,3 +46,7 @@ Checkpoints pin the scenario content by digest. Changing scenario data requires
 a new checkpoint; no automatic migration is performed. The interpretation
 exchange remains restricted to the bundled library demonstration. Actor
 projections are not filesystem access control.
+
+### Optional finite civilian assistance capacity
+
+For community_assistance scenarios, assistance_capacity may contain household_limit and households_per_package, both positive integers. The initial assisted count cannot exceed the limit. In this mode, scheduled household increments are rejected: only reviewed aid requests increase assistance. Each successful request spends one abstract package and assists up to its configured yield or the remaining unmet demand, whichever is smaller. No package is spent when demand is already met. Without the optional configuration, legacy behavior is unchanged. Values represent scenario assumptions, not empirically established capacities.
