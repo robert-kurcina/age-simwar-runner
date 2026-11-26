@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -343,40 +343,6 @@
       }
     }
   ],
-  "conditions": {
-    "sanity": [
-      "Steady",
-      "Uneasy",
-      "Shaken",
-      "Frayed",
-      "Unraveling",
-      "Shattered"
-    ],
-    "fatigue": [
-      "Rested",
-      "Tired",
-      "Weary",
-      "Exhausted",
-      "Spent",
-      "Catatonic"
-    ],
-    "sanity_dm": [
-      0,
-      -1,
-      -2,
-      -2,
-      -3,
-      -4
-    ],
-    "fatigue_dm": [
-      0,
-      -1,
-      -2,
-      -3,
-      -4,
-      -5
-    ]
-  },
   "resources": {
     "cash_cents": 2200,
     "flask_servings": 2

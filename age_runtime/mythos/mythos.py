@@ -2,7 +2,6 @@
 import copy
 import hashlib
 import json
-import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
@@ -49,13 +48,14 @@ def npc_profiles(story, rules):
 
 def initial(sid, seed):
     story, rules = load(sid)
+    if rules.get("resolution") != "dxd":
+        raise ValueError("unsupported narrative resolver")
     state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
             "time": rules["start"], "location": rules["start_location"], "turn": 0,
             "inventory": story["protagonist"]["starting_inventory"],
             "attributes": story["protagonist"]["default_attributes"],
             "discoveries": [], "used": [], "history": [], "ending": None,
-            "resources": copy.deepcopy(rules["resources"]), "sanity": 0,
-            "fatigue": 0, "containment": 0, "last_result": None,
+            "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if rules.get("resolution") == "dxd":
@@ -167,17 +167,6 @@ def step(state, action):
     success = True
     if "test" in a:
         success = resolve_dxd(state, rules, a)
-    elif "attribute" in a:
-        rng = random.Random(digest([state["seed"], state["turn"]]))
-        total = (rng.randint(1, 6) + rng.randint(1, 6)
-                 + state["attributes"][a["attribute"]]
-                 + rules["conditions"]["sanity_dm"][state["sanity"]]
-                 + rules["conditions"]["fatigue_dm"][state["fatigue"]])
-        tn = a["tn"]
-        if "disclosure" in a:
-            cfg = rules["npcs"][a["npc"]]
-            tn += npc["attributes"]["Willpower"] - cfg["reference_rating"]
-        success = total >= tn
     if success:
         if "disclosure" in a:
             npc["disclosed"].append(a["disclosure"])
@@ -196,8 +185,6 @@ def step(state, action):
         dxd_conditions.add(concerns, **a.get("concern_always", {}))
         dxd_conditions.add(concerns, **a.get("concern_success" if success else "concern_failure", {}))
         dxd_conditions.recover(concerns, a["minutes"], **a.get("recovery", {}))
-    elif state["turn"] % 4 == 0 and action not in rules.get("recovery_actions", ("rest_room", "buy_meal")):
-        state["fatigue"] = min(5, state["fatigue"] + 1)
     for event in rules.get("events", []):
         if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
             state["events_seen"].append(event["id"])
@@ -226,7 +213,7 @@ def scores(state, action):
         self_preserved = max(10, 100 - 12 * concern["stress"]
                              - 6 * concern["fatigue"] - 6 * concern["weariness"])
     else:
-        self_preserved = max(10, 100 - 12 * state["sanity"] - 6 * state["fatigue"])
+        raise ValueError("unsupported narrative resolver")
     contained = min(100, 10 + 18 * state["containment"])
     return {"Truth Preserved": truth / 10, "Self Preserved": self_preserved / 10,
             "Horror Contained": contained / 10}
@@ -248,9 +235,7 @@ def view(state):
         "contacts": [{"name": p["name"], "role": p["public_role"],
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for p in state["npcs"].values() if p["encounters"]],
-        "condition": (dxd_conditions.describe(state["dxd"]["concerns"]) if "dxd" in state else
-                      {"sanity": rules["conditions"]["sanity"][state["sanity"]],
-                       "fatigue": rules["conditions"]["fatigue"][state["fatigue"]]}),
+        "condition": dxd_conditions.describe(state["dxd"]["concerns"]),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
         "choices": [{"id": a["id"], "label": a["label"]} for a in options(state, rules)]}
 

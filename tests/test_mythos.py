@@ -55,7 +55,7 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
         s = mythos.step(s, "buy_meal")
         self.assertEqual(s["resources"]["cash_cents"], 2125)
-        self.assertEqual(s["fatigue"], 0)
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
         for _ in range(2):
             s = mythos.step(s, "use_flask")
         self.assertEqual(s["resources"]["flask_servings"], 0)
@@ -266,3 +266,24 @@ class MythosTrialTests(unittest.TestCase):
             break
         original = mythos.step(mythos.initial("boothbay", 42), "inspect_docks")
         mythos.verify(original)
+
+    def test_castine_dxd_profiles_and_sanctuary(self):
+        from age_runtime.core import dxd, dxd_conditions
+        s = mythos.initial("castine", 42)
+        self.assertEqual(set(s["dxd"]["attributes"]), set(dxd.ATTRIBUTES))
+        self.assertEqual(len(s["dxd"]["inactive_major_attributes"]), 2)
+        for npc in s["npcs"].values():
+            self.assertEqual(set(npc["dxd_attributes"]), set(dxd.ATTRIBUTES))
+        self.assertNotIn("sanity", mythos.view(s)["condition"])
+        self.assertNotIn("prepare_case", [x["id"] for x in mythos.view(s)["choices"]])
+        for seed in range(100):
+            a = mythos.step(mythos.initial("castine", seed), "secure_estate")
+            if "sanctuary" in a["flags"]:
+                self.assertEqual(a["discoveries"], [])
+                self.assertNotIn("prepare_case", [x["id"] for x in mythos.view(a)["choices"]])
+                self.assertEqual(a["dxd"]["tests"][0]["inputs"]["tn"], 7)
+                a = mythos.step(a, "rest_estate")
+                mythos.verify(a)
+                break
+        else:
+            self.fail("No sanctuary route")
