@@ -1,0 +1,19 @@
+# Fear! character design standard (trial)
+
+Use DXD Book III's five-stage sequence for the PC and consequential principal NPCs. Minor characters use minimal profiles, developed and retained when relevant. Curate established adults from scenario biographies rather than randomly regenerating their identity. Unknown personal details remain null until grounded and committed; do not infer ancestry, religion, sex or gender from names. The original scenario is narrative source authority; executable profiles are explicit adaptations.
+
+| Stage | Fear! properties |
+|---|---|
+| Background | Origin region/settlement, current residence, age group/age, demographics, heritage, social rank, personality, formative event, Disabilities, beliefs. |
+| Intrinsics | Earth Human baseline, nine curated non-derived Attributes and three derived compatibility Attributes, Trade, Profession, Wealth Rank. |
+| Proficiencies | Native Skills, Abilities, Talents and languages with Levels and required specializations. |
+| Properties | Existing body profile indices, derived dimensions, movement, physical properties, Concern capacities. |
+| Utilities | Name/identity, equipment, Relationships, other established assets. |
+
+Use a small provisional Social Rank convention: 0 marginalized/dependent, 1 ordinary worker or resident, 2 established professional or proprietor, 3 locally prominent official or professional, 4 local civic elite; higher ranks only when a scenario supports them. Rank is scoped standing, not universal obedience or a proxy for ethnicity. Institutional authority is separate. Wealth Rank is a provisional economic standing index; actual cash is independent. No Sarna Len wealth generation table or conversion to currency is implied. Use broad existing Trade categories when a sensible fit exists; specific Profession is historical. Do not mechanically award Sarna Len Trade benefits. Earth Human is a baseline, not a fictional Sarna Len lineage. PML, spells and magic items remain absent unless supported; derived ZED is retained solely for current runtime compatibility.
+
+Source: [DXD Book III](https://github.com/robert-kurcina/vault-sarnalen/blob/main/book-rewrite/02_Master_Manuscript_Entries/03_Character_Creation.md), [Book IV](https://github.com/robert-kurcina/vault-sarnalen/blob/main/book-rewrite/02_Master_Manuscript_Entries/04_Character_Options.md), [Book II](https://github.com/robert-kurcina/vault-sarnalen/blob/main/book-rewrite/02_Master_Manuscript_Entries/02_DXD_Core_Rules.md#SL_594_gathering_dms).
+
+Use actual native effects: Investigate finds difficult clues; Persuade advances claims; Suss detects lies/bluffs or interprets unfamiliar social meaning, not general visual acuity; Reasoning requires adequate information; Grit modifies Resilience and Morale, and ignores initial Fear tokens; Discipline concerns self-control. Gossip has native culture/duration constraints, not a universal interview bonus. Addict > Drunkard and contextual Emotional are recorded; full trigger/Discipline/status procedures remain pending. Do not automatically equate PTSD with cowardice or Phobia. No arbitrary NPC modifiers or blanket Skill bonuses. Use existing modifier gathering, named owned sources, applicable context and native diminishing Levels/explicit effects. A profile is not proof every mechanical effect is implemented.
+
+Boothbay v31 retains existing Investigate 2/Persuade 1 numerical levels (renamed from legacy aliases), adds provisional biography-grounded Skills and profiles for six principal characters. Body/Attribute records remain authoritative, not duplicated. Profile metadata such as unknown languages or wealth/standing is descriptive until an applicable mechanic exists. Major NPCs that are not yet active remain non-interactable. Complete mechanical chargen, training expenditure, native Addict/Emotional triggers, wider NPC Skill opposition and automatic trait applicability are pending. No source corpus edits.

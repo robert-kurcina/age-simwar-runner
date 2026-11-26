@@ -45,6 +45,14 @@ def main():
     propose.add_argument("approach")
     propose.add_argument("--intent", required=True)
     propose.add_argument("--revision", required=True)
+    commit = sub.add_parser("commit")
+    commit.add_argument("session", type=Path)
+    commit.add_argument("action")
+    commit.add_argument("context")
+    commit.add_argument("--vignette", required=True)
+    commit.add_argument("--revision", required=True)
+    commit.add_argument("--approach")
+    commit.add_argument("--intent")
     control = sub.add_parser("narrative")
     control.add_argument("session", type=Path)
     control.add_argument("kind", choices=("scene", "open", "complete", "abandon"))
@@ -70,6 +78,12 @@ def main():
     elif args.command == "propose":
         request = {"action": args.action, "approach": args.approach, "intent": args.intent}
         result = mythos.act(args.session, args.action, args.revision, request)
+    elif args.command == "commit":
+        if bool(args.approach) != bool(args.intent):
+            p.error("--approach and --intent must be supplied together")
+        proposal = {"action": args.action, "approach": args.approach, "intent": args.intent} if args.approach else None
+        result = mythos.act(args.session, args.action, args.revision, proposal,
+                            {"context": args.context, "level": 1, "vignette": args.vignette})
     elif args.command == "memory":
         result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
     elif args.command == "narrative":

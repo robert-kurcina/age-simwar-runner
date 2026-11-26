@@ -16,7 +16,7 @@ def specification(kind, trigger):
     return {"attribute": "POW", "tn": 7, "fixed_dm": -3,
             "decision": True, "significance": "important"}
 
-def apply(state, concerns, *, kind, trigger, result, event, turn):
+def apply(state, concerns, *, kind, trigger, result, event, turn, grit=0):
     specification(kind, trigger)
     if any(x["event"] == event for x in state["events"]):
         raise ValueError("Morale event already resolved")
@@ -28,7 +28,7 @@ def apply(state, concerns, *, kind, trigger, result, event, turn):
         if kind == "bravery":
             state["fear"] = max(state["fear"], 1)
         elif kind == "fear":
-            state["fear"] = max(state["fear"], min(CAP[kind], state["fear"] + gained))
+            state["fear"] = max(state["fear"], min(CAP[kind], state["fear"] + max(0, gained - grit)))
         # Shock contributes Stress; its explicit immediate effect is hesitation.
         # Do not manufacture Fear tokens merely because a Shock Test failed.
     record = {"event": event, "turn": turn, "kind": kind, "trigger": trigger,
