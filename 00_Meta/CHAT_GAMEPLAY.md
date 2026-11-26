@@ -30,6 +30,10 @@ Read the bundled Boothbay story_config privately as the GM's outline: protagonis
 
 Use the engine-returned contact Demeanor labels to guide dialogue, not to reveal hidden NPC motives or promise compliance. Investigative inquiries can draw official attention; after the recorded intervention, Chief Burroughs becomes an available contact and relay routes change. Narrate only recorded interventions and outcomes. A failed relay attempt no longer necessarily ends play; departure or another supported route remains possible. The clock and specific intervention are provisional AGE scenario adaptations. Do not claim full native Interaction Tests, temporary Demeanor, physical patrol combat or infection are implemented. Restart v16 sessions.
 
+### Boothbay v18 — spatial authority
+
+Use the engine's scene zone, routes, local cues and contact projection. Choices include destination, total minutes and travel minutes; the script calculates route, time, terrain and tidal gates. A player may move independently using an offered move action, or choose a supported interaction that includes travel. Do not narrate travel or NPC relocation before the engine commits it. Chief Burroughs becomes eligible at the docks or diner only after official attention; the first accepted encounter anchors him at one location. Never depict him at both or introduce him in other zones. The cave node is an exterior observation point, not cave entry. Its approach has a timed gate and retreat remains possible. The topology, timing and encounter sites are provisional, not surveyed geography. Route preference overrides and arbitrary encounter placement remain unsupported. Restart v17 sessions.
+
 ## Strategic presentation
 
 Use `python game.py describe <campaign> <scenario>` to inspect the public profile. For strategic scenarios, follow `frameworks/strategic/presentation.json` and [scenario generation guidance](SCENARIO_GENERATION.md): present actual player results, known participant developments, assessment and legal options. Never fabricate missing choices or actor actions to fill a menu. The presentation profile does not change adjudication or turn sequencing.
