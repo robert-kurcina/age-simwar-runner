@@ -46,7 +46,7 @@ def recover(state, minutes, *, safe=False, restful=False):
     fatigue = minutes // 10 * rr if minutes >= 10 else minutes
     state["fatigue"] = max(0, state["fatigue"] - fatigue)
     if safe:
-        state["stress"] = max(0, state["stress"] - minutes // 10 * rr)
+        state["stress"] = max(state.get("min_stress", 0), state["stress"] - minutes // 10 * rr)
     state["weariness"] = max(0, state["weariness"] - minutes // 60 * rr)
 
 def describe(state):
