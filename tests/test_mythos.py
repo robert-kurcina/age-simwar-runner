@@ -724,7 +724,7 @@ class MythosTrialTests(unittest.TestCase):
         for seed in range(100):
             concerns = copy.deepcopy(pc["concerns"])
             c.add(concerns, weariness=concerns["capacity"]["endurance"] * 2)
-            clock = c.activity_initial(attrs, awake_seconds=7 * 3600)
+            clock = c.activity_initial(attrs, awake_seconds=45 * 3600)
             elapsed = c.advance_activity(concerns, clock, 10800, "active", seed=seed, attributes=attrs)
             if clock["pending_sleep_seconds"] != 0:
                 continue
