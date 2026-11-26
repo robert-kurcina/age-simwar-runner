@@ -172,6 +172,82 @@ def fulfill_transfer(s, state, record, minute):
     record["fulfillment"] = "transferred"
 
 
+def agreement_actions(s):
+    return {action for a in s.get("agreements", {}).values()
+            for action in a["consent"].values()}
+
+
+def validate_agreements(s):
+    if "agreements" not in s:
+        return
+    agreements = s["agreements"]
+    if not isinstance(agreements, dict) or not agreements or not s.get("resource_transfers"):
+        raise ValueError("agreements require reviewed resource transfers")
+    used = set(s.get("capacity_actions", {})) | set(s["resource_transfers"])
+    for aid, a in agreements.items():
+        if (not isinstance(aid, str) or not aid.strip() or not isinstance(a, dict)
+                or set(a) != {"description", "consent", "transfers", "due_minute"}):
+            raise ValueError("invalid agreement definition")
+        if not isinstance(a["description"], str) or not a["description"].strip():
+            raise ValueError("agreement description required")
+        consent, transfers, due = a["consent"], a["transfers"], a["due_minute"]
+        if (not isinstance(consent, dict) or len(consent) != 2
+                or not isinstance(transfers, list) or not transfers
+                or any(not isinstance(t, str) or t not in s["resource_transfers"] for t in transfers)
+                or len(set(transfers)) != len(transfers)
+                or type(due) is not int or not 0 < due <= s["end_minute"]
+                or due % s["turn_minutes"]):
+            raise ValueError("invalid agreement terms")
+        for actor, action in consent.items():
+            if (actor not in s["actors"] or not isinstance(action, str) or action in used
+                    or s["action_catalog"].get(action, {}).get("actors") != [actor]):
+                raise ValueError("agreement consent must be independently authorized")
+            used.add(action)
+        owners = {}
+        projects = {p["id"]: p for p in s["economy_projects"]}
+        for cap in s["capacity_actions"].values():
+            owners[cap["resource"]] = projects[cap["project"]]["participant"]
+        for name in transfers:
+            t = s["resource_transfers"][name]
+            if {owners[t["source"]], owners[t["destination"]]} != set(consent):
+                raise ValueError("agreement transfer must involve its two parties")
+
+
+def resolve_agreements(s, state, minute):
+    """One-shot, all-or-nothing settlement of reviewed mutual consent.
+
+    Ordinary orders resolve first. No balance reservation or forced debt.
+    A shortfall is a recorded default, never an invented negative balance.
+    """
+    for aid, a in s.get("agreements", {}).items():
+        if minute != a["due_minute"]:
+            continue
+        signed = sorted(actor for actor, action in a["consent"].items()
+                        if any(r["actor"] == actor and r["action"] == action
+                               and r["status"] == "reviewed"
+                               for r in state["requests"]))
+        outcome = {"id": aid, "minute": minute, "consenting": signed, "status": "not_agreed"}
+        if len(signed) == len(a["consent"]):
+            debits, changes = {}, {}
+            for name in a["transfers"]:
+                t = s["resource_transfers"][name]
+                source, destination, amount = t["source"], t["destination"], t["amount"]
+                debits[source] = debits.get(source, 0) + amount
+                changes[source] = changes.get(source, 0) - amount
+                changes[destination] = changes.get(destination, 0) + amount
+            if any(state["values"][k] < n for k, n in debits.items()):
+                outcome["status"] = "defaulted"
+            else:
+                for key, delta in sorted(changes.items()):
+                    if not delta:
+                        continue
+                    state["values"][key] += delta
+                    state["ledger"].append({"id": "agreement:" + aid + ":" + key,
+                        "minute": minute, "key": key, "delta": delta, "value": state["values"][key]})
+                outcome["status"] = "fulfilled"
+        state["agreement_results"].append(outcome)
+
+
 def resolve_reviews(s, state, end):
     """Review pending administrative requests FIFO within a fixed capacity.
 
@@ -189,6 +265,8 @@ def resolve_reviews(s, state, end):
             fulfill_civic_request(s, state, record, end)
             fulfill_capacity_action(s, state, record, end)
             fulfill_transfer(s, state, record, end)
+            if record["action"] in agreement_actions(s):
+                record["fulfillment"] = "consent_recorded"
             capacity -= 1
 
 def available_requests(s, actor_id):
