@@ -5,7 +5,8 @@
   "end_minute": 720,
   "initial": {
     "households_assisted": 0,
-    "aid_packages": 2
+    "aid_packages": 2,
+    "open_service_centers": 0
   },
   "events": [
     {
@@ -21,7 +22,8 @@
       "label": "Civic coordinator",
       "visible_keys": [
         "households_assisted",
-        "aid_packages"
+        "aid_packages",
+        "open_service_centers"
       ],
       "objectives": {
         "completion": {
