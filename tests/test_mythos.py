@@ -664,3 +664,77 @@ class MythosTrialTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 mythos.narrative(path, {"kind": "open", "id": "new", "label": "New focus"}, v["revision"])
             self.assertEqual(mythos.inspect(path), v)
+
+    def test_sleep_room_replays_and_advances_events(self):
+        s = mythos.initial("boothbay", 42)
+        s = mythos.step(s, "move:Sailor's Rest Boarding House")
+        self.assertEqual(s["dxd"]["activity"]["limit_seconds"], 45 * 3600)
+        s = mythos.step(s, "sleep_room")
+        self.assertEqual(s["time"], "1927-10-13T17:10:00")
+        self.assertEqual(s["dxd"]["activity"]["status"], "awake")
+        self.assertEqual(s["dxd"]["activity"]["awake_seconds"], 0)
+        self.assertEqual(s["resources"]["cash_cents"], 2050)
+        mythos.verify(s)
+
+    def test_interrupted_sleep_and_early_waking(self):
+        from unittest.mock import patch
+        import copy
+        story, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        rules["events"].append({"id": "test_interrupt", "at": "1927-10-13T10:10:00",
+                                "observation": "A disturbance interrupts sleep.",
+                                "interrupt_activity": True,
+                                "locations": ["Sailor's Rest Boarding House"]})
+        with patch.object(mythos, "load", return_value=(story, rules)):
+            s = mythos.initial("boothbay", 42)
+            s = mythos.step(s, "move:Sailor's Rest Boarding House")
+            s = mythos.step(s, "sleep_room")
+            self.assertEqual(s["time"], "1927-10-13T10:10:00")
+            self.assertEqual(s["last_result"]["interrupted"], "event")
+            self.assertEqual(s["dxd"]["activity"]["sleep_seconds"], 7200)
+            self.assertEqual({x["id"] for x in mythos.view(s)["choices"]}, {"continue_sleep", "wake_early"})
+            s = mythos.step(s, "continue_sleep")
+            self.assertEqual(s["time"], "1927-10-13T17:10:00")
+            self.assertEqual(s["dxd"]["activity"]["status"], "awake")
+            self.assertEqual(s["resources"]["cash_cents"], 2050)
+            mythos.verify(s)
+
+    def test_activity_fractional_recovery_and_deprivation(self):
+        from age_runtime.core import dxd_conditions as c
+        s = mythos.initial("boothbay", 42)["dxd"]
+        concerns, attrs = s["concerns"], s["attributes"]
+        c.add(concerns, fatigue=5, stress=8, weariness=5)
+        clock = c.activity_initial(45)
+        for seconds in (30, 30):
+            c.advance_activity(concerns, clock, seconds, "rest", attributes=attrs)
+        self.assertEqual(concerns["fatigue"], 4)
+        self.assertEqual(concerns["stress"], 8)
+        c.advance_activity(concerns, clock, 600, "quiet", safe=True, attributes=attrs)
+        self.assertLess(concerns["stress"], 8)
+        clock = c.activity_initial(1)
+        w = concerns["weariness"]
+        c.advance_activity(concerns, clock, 7200, "active", attributes=attrs)
+        self.assertEqual(concerns["weariness"], w + 1)
+
+    def test_forced_sleep_checks_and_waking(self):
+        from age_runtime.core import dxd_conditions as c
+        import copy
+        pc = mythos.initial("boothbay", 42)["dxd"]
+        attrs = pc["attributes"]
+        for seed in range(100):
+            concerns = copy.deepcopy(pc["concerns"])
+            c.add(concerns, weariness=concerns["capacity"]["endurance"] * 2)
+            clock = c.activity_initial(1)
+            elapsed = c.advance_activity(concerns, clock, 10800, "active", seed=seed, attributes=attrs)
+            if clock["pending_sleep_seconds"] != 0:
+                continue
+            self.assertLess(elapsed, 10800)
+            self.assertFalse(clock["checks"][0]["result"]["passed"])
+            c.begin_sleep(concerns, clock, attrs)
+            needed = clock["required_sleep_seconds"]
+            c.advance_activity(concerns, clock, needed, "sleep", attributes=attrs)
+            self.assertTrue(c.wake(concerns, clock, attrs, seed=seed))
+            self.assertEqual(clock["awake_seconds"], 0)
+            break
+        else:
+            self.fail("No forced sleep case")
