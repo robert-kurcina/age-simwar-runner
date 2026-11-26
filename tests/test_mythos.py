@@ -445,3 +445,40 @@ class MythosTrialTests(unittest.TestCase):
             break
         else:
             self.fail("No committed Inspiration found")
+
+    def test_boothbay_scene_and_alternative_leads(self):
+        for seed in range(30):
+            s = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
+            if "badge" not in s["flags"]:
+                continue
+            self.assertIn("compare_almanac", [a["id"] for a in mythos.view(s)["choices"]])
+            s = mythos.step(s, "compare_almanac")
+            self.assertTrue(mythos.view(s)["scene"]["pressure"])
+            self.assertNotIn("inspect_cave_entrance", [a["id"] for a in mythos.view(s)["choices"]])
+            s = mythos.step(s, "wait_for_tide")
+            self.assertEqual(s["time"], "1927-10-14T02:00:00")
+            s = mythos.step(s, "inspect_cave_entrance")
+            self.assertIn("cave_observed", s["flags"])
+            self.assertNotIn("primary_threat", str(mythos.view(s)))
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No badge route")
+
+    def test_boothbay_second_search_not_unconditional(self):
+        s = mythos.initial("boothbay", 42)
+        self.assertNotIn("recheck_luggage", [a["id"] for a in mythos.view(s)["choices"]])
+        for seed in range(60):
+            s = mythos.step(mythos.initial("boothbay", seed), "inspect_room")
+            if "paperwork" in s["flags"]:
+                continue
+            s = mythos.step(s, "inspect_docks")
+            if "badge" not in s["flags"]:
+                continue
+            s = mythos.step(s, "recheck_luggage")
+            self.assertIn("paperwork", s["flags"])
+            self.assertNotIn("recheck_luggage", [a["id"] for a in mythos.view(s)["choices"]])
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No alternate luggage route")
