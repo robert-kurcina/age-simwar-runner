@@ -20,7 +20,7 @@ title, scope, file (relative to the manifest directory) and optional
 prerequisites (scenario IDs). IDs are unique within their respective
 campaign namespaces. Missing references and cycles are rejected.
 Prerequisites express suggested continuity, not enforced locks. Optional carry_from mappings explicitly transfer approved values when requested by the referee.
-All three campaign scenarios now have bounded human-directed choices: restoration credits, assistance packages, and independent council consent.
+Three of the four campaign scenarios have bounded human-directed choices: restoration credits, assistance packages, and independent council consent.
 
 ## Playable civilian restoration
 
@@ -121,3 +121,31 @@ Development provenance and LLM guidance: [00_Meta](00_Meta/).
 ## Pinned source compilation
 
 See [source compiler](docs/source-compiler.md). A trusted local operator can resolve reviewed structured initial-state values from allowlisted Git repositories and produce a standalone scenario plus provenance snapshot. Existing runner and checkpoint formats are unchanged.
+
+## Unified campaign workflow
+
+Use `play.py` for trusted local operation of the bundled civilian campaign. Each session bundle includes a pinned scenario, checkpoint and optional incoming transition. No separate transition export is needed for this workflow. Run from the repository root using fresh session paths:
+
+```sh
+python play.py list campaigns/civic-recovery/campaign.json
+python play.py start campaigns/civic-recovery/campaign.json service-restoration service-session.json
+python play.py inspect service-session.json --actor coordinator
+python play.py submit service-session.json restore_service_center --actor coordinator
+python play.py advance service-session.json --actor coordinator
+python play.py finish service-session.json
+python play.py report service-session.json
+python play.py start campaigns/civic-recovery/campaign.json community-assistance aid-session.json --from-session service-session.json
+python play.py submit aid-session.json deliver_aid --actor coordinator
+python play.py finish aid-session.json
+python play.py start campaigns/civic-recovery/campaign.json civic-agreement agreement-session.json --from-session aid-session.json
+python play.py submit agreement-session.json join_council_a --actor council_a
+python play.py advance agreement-session.json
+python play.py submit agreement-session.json join_council_b --actor council_b
+python play.py finish agreement-session.json
+python play.py report agreement-session.json
+python play.py start campaigns/civic-recovery/campaign.json service-restoration baseline-session.json
+python play.py finish baseline-session.json
+python play.py compare baseline-session.json service-session.json
+```
+
+Use inspect for read-only resumption; submit records a request without advancing. Finish advances the remaining scheduled turns without additional requests. Actor projection is not an authorization boundary: the local referee owns all session bundles. Concurrent writers are unsupported. Retain previous session bundles and catalog revisions for complete transition re-verification; embedded transition checks alone do not prove recursive lineage. This CLI is limited to the four supported civilian fixture identities; compiler variations remain standalone and are not integrated into campaign continuity.
