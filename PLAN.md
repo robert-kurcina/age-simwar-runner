@@ -8,6 +8,12 @@ Campaigns may contain multiple stages, each with multiple scenarios, different p
 
 The public civilian fixtures are a means to verify causal consequences, persistence and interpretation; their content is not the definition of the generic campaign catalog. Keep the existing supported execution scope and deferred-work boundaries below.
 
+## Product direction — corpus-first player experience
+
+The intended product is corpus-grounded SH44SER campaign play, with a reusable runner underneath. Public civilian fixtures establish software correctness; do not continue adding fixture mechanics merely to increase test counts. Use real-world model knowledge as background, verified external sources where material, and canonical divergence records as authoritative setting overrides. A model's pretrained knowledge is not a verified historical database. Later-era figures must not be back-projected. Runtime outcomes belong to a session timeline, not canonical source files.
+
+Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/): scenario discovery, perspective selection, concise opening/turn briefings, configurable information presentation, session resumption and model independence. Do not copy proprietary scenario text or infer correctness from competitor marketing. Preserve deterministic state ownership and source references. Supported executable scope remains civilian recovery, institutional coordination and retrospective historical context; no operational military targeting, escalation or casualty optimization.
+
 ## DONE
 - Deterministic scheduled-event runner, actor reports, checkpoints and replay.
 - Administrative request ledger, review capacity, read-only interpretation exchange and completed-session comparison.
@@ -37,12 +43,21 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - Configurable finite civilian assistance demand and per-package yield (PR #29 merged after successful CI). Existing scenarios retain their original behavior.
 
+- External private recovery pilot finite-demand deployment and four supply sensitivity cases verified by private CI. Hypothetical parameters remain uncalibrated.
+
 ## WIP
-- External private recovery pilot updated to exercise finite demand and hypothetical supply sensitivity. Private CI pending; no empirical calibration claim.
+- Refocus on corpus-first playable experience.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
-1. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
+
+1. Recover the original private campaign inventory from authorized sources; record stage/scenario identities, chronology, perspective labels and provenance without inventing missing entries. Keep unsupported scenarios catalog-only. Acceptance: private catalog distinguishes documented, provisional and unsupported entries; no private content in public repo.
+2. Deliver a private-compatible player setup and session launcher for supported civilian scenarios: select scenario and perspective, inspect opening briefing, resume pinned state, list permitted requests, submit and advance. Reuse compiler and runner; avoid a second engine. Acceptance: one private source-referenced scenario operates through the same interface as the public fixture.
+3. Add model-independent read-only briefing packets from actor-visible observations and approved source context. Include date, objectives, known/unknown conditions and available civilian requests. Separate private referee material from player context. Acceptance: no hidden-state leakage and no model output accepted as state.
+4. Offer natural-language civilian request interpretation as a proposal mapped to an existing action ID, requiring explicit player confirmation. Unknown or ambiguous requests fail safely. Acceptance: demonstrated local model invocation if available, with deterministic manual fallback.
+5. Add named information-presentation presets and reviewed civilian scenario variants; pin configuration per session. Difficulty and realism labels must describe actual implemented differences, not cosmetic toggles or accuracy claims. Acceptance: compare documented variants without changing base canon.
+6. Demonstrate complete private campaign workflow for supported scenarios, including resumption, reporting and authorized continuity. Do not block playable UX on exhaustive historical calibration; label uncertainty explicitly.
+7. Reassess MCP delivery after the local workflow is demonstrated; preserve the existing authorization and hosting requirements.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 
@@ -51,7 +66,7 @@ See [ADR-001](docs/adr/001-canonical-source-references.md). The world-building r
 1. Qualify the existing corpus ownership map, identifiers, temporal coverage and machine-readable data before choosing an extraction mechanism. Recover the private campaign inventory externally.
 2. Define a minimal reference contract (repository identity, revision, path, stable entity/field selector, effective date, provenance classification); use an explicit allowlist of source owners. Do not require a new national database.
 3. Implement a local, read-only reference resolver and compiler against synthetic fixtures first. Acceptance: deterministic compilation, explicit failures for missing or ambiguous fields, temporal mismatch, stale source detection and immutable pinned snapshots. No network or private repository dependency in public CI.
-4. Validate one private civilian recovery scenario with reviewed historical/canonical inputs and scenario-specific overlays. Keep authored facts in their existing authoritative homes; store only simulation-specific assumptions in the private package. Do not claim predictive accuracy from successful compilation.
+4. Extend the verified private civilian pilot with reviewed numerical inputs only when evidence is sufficient. Keep authored facts in their existing authoritative homes; store only simulation-specific assumptions in the private package. Do not claim predictive accuracy from successful compilation.
 
 ## POST-STABILIZATION — ChatGPT-native MCP plugin (author-approved)
 
