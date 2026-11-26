@@ -148,3 +148,60 @@ class ModelFactionTests(unittest.TestCase):
         invalid["action_catalog"]["share"]["actors"] = ["other"]
         with self.assertRaises(ValueError):
             initialize(invalid)
+
+
+    def test_mutual_agreement_settlement_and_default(self):
+        from copy import deepcopy
+        s = scenario()
+        s["administrative_reviews_per_turn"] = 2
+        s["initial"].update(other_credits=0, other_labor=2, other_stage=0,
+                            other_delay=0, other_complications=0)
+        s["actors"]["other"]["visible_keys"] = ["other_credits", "other_labor",
+                                               "other_stage", "other_delay", "other_complications"]
+        s["economy_projects"].append({"id": "other_repair", "participant": "other",
+            "need": 3, "axes": [{"axis": "labor", "key": "other_labor"}],
+            "stages": 2, "progress": "other_stage", "delay": "other_delay",
+            "complications": "other_complications"})
+        s["action_catalog"].update(other_recruit={"description": "Improve own labor", "actors": ["other"]},
+                                   share={"description": "Transfer one credit to other", "actors": ["council"]})
+        s["capacity_actions"]["other_recruit"] = {"project": "other_repair",
+            "capacity": "other_labor", "resource": "other_credits", "cost": 1}
+        s["resource_transfers"] = {"share": {"source": "credits", "destination": "other_credits", "amount": 1}}
+        s["initial"]["other_credits"] = 1
+        s["action_catalog"].update(return_credit={"description": "Return one credit", "actors": ["other"]},
+                                   sign_a={"description": "Consent to exchange", "actors": ["council"]},
+                                   sign_b={"description": "Consent to exchange", "actors": ["other"]})
+        s["resource_transfers"]["return_credit"] = {"source": "other_credits", "destination": "credits", "amount": 1}
+        s["agreements"] = {"exchange": {"description": "Reciprocal credit commitment",
+            "consent": {"council": "sign_a", "other": "sign_b"},
+            "transfers": ["share", "return_credit"], "due_minute": 2 * s["turn_minutes"]}}
+        def step(state, model, human=None):
+            packet = faction_packet(s, state, "council")
+            state = accept_faction_choice(s, state, "council", packet,
+                        {"packet_id": packet["packet_id"], "action": model})
+            if human:
+                state = submit_request(s, state, "other", {"action": human})
+            return advance(s, state)
+        opening = initialize(s)
+        both = step(opening, "sign_a", "sign_b")
+        self.assertEqual(observe(s, both, "other")["strategic_support"]["agreements"]["exchange"]["status"], "committed")
+        self.assertEqual(both["values"]["credits"], 1)
+        fulfilled = step(both, None)
+        self.assertEqual(fulfilled["agreement_results"][0]["status"], "fulfilled")
+        defaulted = step(both, "recruit")
+        self.assertEqual(defaulted["agreement_results"][0]["status"], "defaulted")
+        self.assertEqual(defaulted["values"]["other_credits"], 1)
+        self.assertEqual(defaulted["values"]["credits"], 0)
+        declined = step(step(opening, "sign_a"), None)
+        self.assertEqual(declined["agreement_results"][0]["status"], "not_agreed")
+        for state in (fulfilled, defaulted, declined):
+            verify_checkpoint(s, state)
+        self.assertEqual(defaulted, step(step(opening, "sign_a", "sign_b"), "recruit"))
+        invalid = deepcopy(s)
+        invalid["agreements"]["exchange"]["consent"]["other"] = "sign_a"
+        with self.assertRaises(ValueError):
+            initialize(invalid)
+        invalid = deepcopy(s)
+        invalid["agreements"]["exchange"]["due_minute"] = 1
+        with self.assertRaises(ValueError):
+            initialize(invalid)
