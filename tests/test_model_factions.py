@@ -51,3 +51,45 @@ class ModelFactionTests(unittest.TestCase):
         b["requests"][0]["origin"] = "player"
         with self.assertRaises(ValueError):
             verify_checkpoint(s,b)
+
+
+    def test_asymmetric_priorities_and_delayed_goal_reports(self):
+        s = scenario()
+        a = s["actors"]["council"]
+        a["objectives"] = {
+            "repair": {"description": "Restore service", "key": "stage",
+                       "comparison": "at_least", "threshold": 2},
+            "reserve": {"description": "Retain funds", "key": "credits",
+                        "comparison": "at_least", "threshold": 1}}
+        a["strategy"] = {"motivation": "Prioritize service continuity",
+                         "priorities": ["repair", "reserve"]}
+        other = s["actors"]["other"]
+        other["visible_keys"] = ["stage"]
+        other["report_delay_minutes"] = {"stage": 10080}
+        other["objectives"] = {"wait": {"description": "Delay commitment",
+                              "key": "stage", "comparison": "at_most", "threshold": 0}}
+        other["strategy"] = {"motivation": "Protect institutional autonomy",
+                             "priorities": ["wait"]}
+        state = initialize(s)
+        packet = faction_packet(s, state, "council")
+        own = packet["observation"]["faction_strategy"]
+        self.assertEqual([g["id"] for g in own["goals"]], ["repair", "reserve"])
+        self.assertNotIn("Protect institutional autonomy", str(packet))
+        visible = observe(s, state, "other")["faction_strategy"]
+        self.assertIsNone(visible["goals"][0]["observed_result"])
+        self.assertNotIn("Prioritize service continuity", str(visible))
+        chosen = accept_faction_choice(s, state, "council", packet,
+                   {"packet_id": packet["packet_id"], "action": "recruit"})
+        after = advance(s, chosen)
+        next_packet = faction_packet(s, after, "council")
+        self.assertFalse(next_packet["observation"]["faction_strategy"]["goals"][1]["observed_result"]["met"])
+        self.assertTrue(observe(s, after, "other")["faction_strategy"]["goals"][0]["observed_result"]["met"])
+        verify_checkpoint(s, after)
+        for priorities in ([], ["repair"], ["reserve", "reserve"], ["repair", "unknown"]):
+            a["strategy"]["priorities"] = priorities
+            with self.assertRaises(ValueError):
+                initialize(s)
+        a["strategy"]["priorities"] = ["repair", "reserve"]
+        a["visible_keys"].remove("credits")
+        with self.assertRaises(ValueError):
+            initialize(s)
