@@ -41,6 +41,39 @@ def record(state, action, outcome):
     concerns["min_stress"] = concerns.get("min_stress", 0) + 1
     dxd_conditions.add(concerns, stress=max(0, concerns["min_stress"] - concerns["stress"]))
     entry = dict(request, turn=state["turn"], at=state["time"], action=action["id"],
-                 stress_cost=stress, emotional_disability=bool(outcome["dof"]))
+                 stress_cost=stress, emotional_disability=bool(outcome["dof"]),
+                 witnessed_by=[action["npc"]], demeanor_at_commitment=None)
     pc["commitments"].append(entry)
     return entry
+
+def effective_demeanor(state, npc, action=None):
+    """Session-limited overlay; floor EC/2 because fractional DMs are not used.
+
+    A persistent relationship change supersedes the overlay. Never mutate
+    the baseline, and never improve a neutral or positive relationship.
+    """
+    base = state["relationships"].get(npc, 0)
+    if base >= 0:
+        return base
+    if action and action.get("commitment") and action.get("npc") == npc:
+        return min(0, base + action["commitment"]["level"] // 2)
+    for entry in state["dxd"].get("commitments", []):
+        if entry["context"] == npc and entry.get("demeanor_at_commitment") == base:
+            return min(0, base + entry["level"] // 2)
+    return base
+
+def leverage(state, action):
+    """Only authored opposition that invokes a witnessed, matching context."""
+    if action.get("commitment") or not action.get("test", {}).get("commitment_leverage"):
+        return 0
+    npc = action.get("npc")
+    if not npc or not action["test"].get("interaction"):
+        return 0
+    return max((entry["level"] for entry in state["dxd"].get("commitments", [])
+                if entry["context"] == npc and npc in entry.get("witnessed_by", [])
+                and entry["turn"] < state["turn"]), default=0)
+
+def supersede_demeanor(state, npc):
+    for entry in state["dxd"].get("commitments", []):
+        if entry["context"] == npc:
+            entry["demeanor_at_commitment"] = None
