@@ -3,7 +3,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from unittest.mock import patch
-from local_model import endpoint, propose
+from age_runtime.interfaces.local_model import endpoint, propose
 
 
 class LocalModelTest(unittest.TestCase):
@@ -32,8 +32,8 @@ class LocalModelTest(unittest.TestCase):
             worker = threading.Thread(target=server.serve_forever, daemon=True)
             worker.start()
             try:
-                with patch("local_model.packet", return_value={"packet_id": "test"}), \
-                     patch("local_model.validate_proposal", return_value={"status": "requires_confirmation"}) as validator:
+                with patch("age_runtime.interfaces.local_model.packet", return_value={"packet_id": "test"}), \
+                     patch("age_runtime.interfaces.local_model.validate_proposal", return_value={"status": "requires_confirmation"}) as validator:
                     result = propose({}, "deliver aid", "test-model",
                                      "http://127.0.0.1:%s/v1" % server.server_port)
                     validator.assert_called_once()

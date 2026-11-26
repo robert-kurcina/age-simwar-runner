@@ -5,7 +5,7 @@ import sys
 import tempfile
 import unittest
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "campaigns/civic-recovery/campaign.json"
 
 

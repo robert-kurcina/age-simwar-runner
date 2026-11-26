@@ -1,8 +1,8 @@
 import tempfile
 import unittest
 from pathlib import Path
-import game
-import mythos
+import age_runtime.mythos.game as game
+import age_runtime.mythos.mythos as mythos
 
 class MythosTrialTests(unittest.TestCase):
     def test_catalog(self):

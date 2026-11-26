@@ -3,11 +3,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import chat_handoff
-from play import start, update
+import age_runtime.core.chat_handoff as chat_handoff
+from age_runtime.core.play import start, update
 
 REV = '51b44e167905a0d0ec8b556c2791edd49c57b85a'
-MANIFEST = Path(__file__).resolve().parent / 'campaigns/civic-recovery/campaign.json'
+MANIFEST = Path(__file__).resolve().parents[1] / 'campaigns/civic-recovery/campaign.json'
 
 
 class HandoffTests(unittest.TestCase):

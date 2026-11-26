@@ -1,13 +1,13 @@
 """Explicit, referee-approved private civilian continuity; no implicit transfers."""
 from copy import deepcopy
 from datetime import timedelta
-from continuity import transfer_values
-from runner import digest
-from source_compiler import checked_date
+from age_runtime.core.continuity import transfer_values
+from age_runtime.core.runner import digest
+from age_runtime.core.source_compiler import checked_date
 
 
 def derive(catalog, entry, spec, compiled, previous):
-    from private_play import verify
+    from age_runtime.core.private_play import verify
     verify(previous)
     h = previous["header"]
     source = h["compiled"]["scenario"]

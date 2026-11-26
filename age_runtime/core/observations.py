@@ -1,7 +1,7 @@
 """Read-only actor projections. Full checkpoints are referee-only."""
 from copy import deepcopy
-from actions import available_requests
-from actors import evaluate
+from age_runtime.core.actions import available_requests
+from age_runtime.core.actors import evaluate
 
 def validate_views(s):
     for actor in s.get("actors", {}).values():

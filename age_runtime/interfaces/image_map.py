@@ -6,7 +6,7 @@ from copy import deepcopy
 import re
 import struct
 from pathlib import PurePosixPath
-from source_compiler import git, checked_date
+from age_runtime.core.source_compiler import git, checked_date
 
 
 def resolve(entry, compiled, date, owners):

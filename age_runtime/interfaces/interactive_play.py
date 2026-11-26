@@ -1,10 +1,10 @@
 """Interactive local terminal interface over the existing private session API."""
 import json
 from pathlib import Path
-from private_play import inventory, perspectives, available_presets, select, switch_perspective, start, verify, read, briefing, update
-from player_requests import packet, confirm
-from local_model import propose
-from runner import save, digest
+from age_runtime.core.private_play import inventory, perspectives, available_presets, select, switch_perspective, start, verify, read, briefing, update
+from age_runtime.core.player_requests import packet, confirm
+from age_runtime.interfaces.local_model import propose
+from age_runtime.core.runner import save, digest
 
 
 def choose(items, label, ask, emit):
@@ -95,7 +95,7 @@ def run(path, manifest=None, owners=None, model=None,
             before = digest(session)
             try:
                 if command == "narrative" and model:
-                    from narrative import narrate
+                    from age_runtime.interfaces.narrative import narrate
                     comment = narrate(session, model, base)
                     emit("Unverified model commentary:")
                     emit(comment["summary"])

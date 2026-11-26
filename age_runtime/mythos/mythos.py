@@ -5,9 +5,9 @@ import json
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
-from runner import save
+from age_runtime.core.runner import save
 
-ROOT = Path(__file__).resolve().parent / "campaigns" / "mythos"
+ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()

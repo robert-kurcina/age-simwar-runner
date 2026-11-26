@@ -2,8 +2,8 @@
 import json
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
-from source_compiler import parse_json
-from player_requests import packet, prompt, validate_proposal
+from age_runtime.core.source_compiler import parse_json
+from age_runtime.core.player_requests import packet, prompt, validate_proposal
 
 
 class NoRedirect(HTTPRedirectHandler):
