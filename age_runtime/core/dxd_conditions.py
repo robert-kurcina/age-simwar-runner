@@ -73,7 +73,8 @@ def activity_initial(attributes, awake_seconds=0):
             "sleep_episode": 0, "early_stress": 0}
 
 def refresh_sleep_limit(state, clock, attributes):
-    clock["limit_seconds"] = sleep_limit_hours(attributes["FOR"], state["weariness"]) * 3600
+    d = degrees(state)
+    clock["limit_seconds"] = sleep_limit_hours(attributes["FOR"], d["weariness"], d["stress"]) * 3600
     if clock["status"] != "awake" or clock["awake_seconds"] <= clock["limit_seconds"]:
         clock["overdue_seconds"] = 0
 
@@ -124,9 +125,13 @@ def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", at
         # Preserve fractional progress only while the same recovery mode applies.
         if clock["activity"] != activity:
             clock["remainder"].pop("weariness", None)
-        # Weariness recovery can change the limit; stop at that exact boundary.
+        # Recovery can change either Degree and therefore the Sleep Limit.
         if quiet:
             chunk = min(chunk, 3600 - clock["remainder"].get("weariness", 0))
+        if quiet and safe:
+            chunk = min(chunk, 600 - clock["remainder"].get("stress", 0))
+        if activity == "restorative":
+            chunk = min(chunk, 3600 - clock["remainder"].get("restorative", 0))
         fatigue = _interval(clock, "fatigue", chunk, 60, quiet)
         stress = _interval(clock, "stress", chunk, 600, quiet and safe) * rr
         weariness = _interval(clock, "weariness", chunk, 3600, quiet) * weariness_rate
