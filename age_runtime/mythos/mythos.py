@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -333,7 +333,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             break
     return reason
 
-def finish_activity(state, rules, action, a, success, reason=None):
+def finish_activity(state, rules, action, a, success, reason=None, proposal=None):
     state["last_result"] = {"action": action, "success": success}
     if reason:
         state["last_result"]["interrupted"] = reason
@@ -344,7 +344,7 @@ def finish_activity(state, rules, action, a, success, reason=None):
         dxd_conditions.refresh_sleep_limit(pc["concerns"], pc["activity"], pc["attributes"])
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
-    state["history"].append(action)
+    state["history"].append(action if proposal is None else {"proposal": copy.deepcopy(proposal)})
     if not options(state, rules):
         state["ending"] = {"reason": "limit", "evidence_count": len(state["discoveries"]),
                            **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
@@ -353,12 +353,16 @@ def finish_activity(state, rules, action, a, success, reason=None):
                            "epilogue": rules["ending_text"]["limit"], "scores": scores(state, action)}
     return state
 
-def step(state, action):
+def step(state, action, proposal=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
     a = next((a for a in options(state, rules) if a["id"] == action), None)
     if a is None:
         raise ValueError("action unavailable")
+    if proposal is not None:
+        a = proposals.compile_action(state, rules, proposal, [a])
+        if a["id"] != action:
+            raise ValueError("proposal action mismatch")
     elapsed = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
@@ -371,7 +375,7 @@ def step(state, action):
             reason = activity_segment(state, rules, a["route"]["seconds"], "travel")
             if reason:
                 # No partial edge position is modeled: retain the last anchored node.
-                return finish_activity(state, rules, action, a, False, reason)
+                return finish_activity(state, rules, action, a, False, reason, proposal)
         else:
             advance_events(state, rules, arrival)
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
@@ -381,7 +385,7 @@ def step(state, action):
         if (any(f in state["flags"] for f in a.get("excludes_flags", []))
                 or not all(f in state["flags"] for f in a.get("requires_flags", []))
                 or not npc_available(state, rules, a)):
-            return finish_activity(state, rules, action, a, False, "availability_changed")
+            return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
         mode = a.get("activity", "active")
         if action == "sleep_room":
             for key, amount in a.get("cost", {}).items():
@@ -402,9 +406,9 @@ def step(state, action):
             dxd_morale.calm(pc["morale"], safe=False, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
             return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
         if reason:
-            return finish_activity(state, rules, action, a, False, reason)
+            return finish_activity(state, rules, action, a, False, reason, proposal)
         if any(f in state["flags"] for f in a.get("excludes_flags", [])):
-            return finish_activity(state, rules, action, a, False, "availability_changed")
+            return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
         if "progression" in state or "pacing" in rules:
             advance_events(state, rules, elapsed)
@@ -483,13 +487,17 @@ def step(state, action):
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
+    if proposal is not None:
+        result = state["dxd"]["tests"][-1]["result"]
+        state["last_result"]["adjudication"] = {k: result[k] for k in ("passed", "dos", "dof", "margin")}
+        state["last_result"]["approach"] = proposal["approach"]
     if "spatial" in rules and a["route"]["seconds"]:
         state["last_result"]["transition"] = state["transitions"][-1]
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
-    state["history"].append(action)
+    state["history"].append(action if proposal is None else {"proposal": copy.deepcopy(proposal)})
     terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
     if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
         state["ending"] = {"reason": action if terminal else "limit",
@@ -580,10 +588,10 @@ def verify(state):
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
-        if not isinstance(entry, str):
+        if isinstance(entry, dict) and "narrative" in entry:
             replay = narrative_step(replay, entry["narrative"])
             continue
-        replay = step(replay, entry)
+        replay = step(replay, entry["proposal"]["action"], entry["proposal"]) if isinstance(entry, dict) else step(replay, entry)
         while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
             e = edits[cursor]
             apply_memory(replay, e["event"], e["memory"])
@@ -638,12 +646,12 @@ def inspect(path):
     verify(state)
     return view(state)
 
-def act(path, action, revision):
+def act(path, action, revision, proposal=None):
     state = read(path)
     verify(state)
     if digest(state) != revision:
         raise ValueError("stale session revision")
-    state = step(state, action)
+    state = step(state, action, proposal)
     verify(state)
     save(path, state)
     return view(state)
