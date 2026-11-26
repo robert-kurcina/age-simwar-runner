@@ -16,7 +16,7 @@ class ScenarioProfileTests(unittest.TestCase):
         self.assertNotIn("ending_text", p)
 
     def test_imported_and_unknown(self):
-        self.assertIsNone(profile("mythos", "castine")["duration"])
+        self.assertIsNone(profile("mythos", "ram-island")["duration"])
         with self.assertRaises(ValueError):
             profile("../mythos", "boothbay")
         with self.assertRaises(ValueError):

@@ -10,9 +10,9 @@ Keep Python and JSON, existing strategic engine and narrative execution loop, an
 
 DONE on main: four public strategic fixtures, Boothbay trial, actor observations/objectives, resource accounting, scheduled events, time, checkpoint/replay, source compiler, campaign discovery, Chat launch guidance, runtime ZIP workflow, repository organization. PR #62 tests and bundle CI passed. PR #56 closed as superseded. Earlier private CI verified bounded recovery fixtures against pinned revisions; current-main private Chat gameplay and standalone upload need qualification.
 
-DONE: PR #66 merged scenario/participant profiles; combined Tests 45801596447 and Chat runtime bundle 45801596576 passed. WIP milestone 1: Boothbay v4 binds active NPCs to native authored records, records encounters and earned disclosures, and uses authored Willpower for a provisional disclosure threshold adjustment. CI pending; v3 checkpoints require restart. Next: qualify actual play and extend to Castine rather than creating another participant engine.
+DONE: PR #66 merged scenario/participant profiles; combined Tests 45801596447 and Chat runtime bundle 45801596576 passed. WIP milestone 1: Boothbay v4 binds active NPCs to native authored records, records encounters and earned disclosures, and uses authored Willpower for a provisional disclosure threshold adjustment. PR #67 merged; v3 checkpoints require restart.
 
-PR #68 Castine trial remains open. Imported on main, not playable: Castine and Ram Island. WIP: bounded DXD Test kernel (not yet wired into gameplay); see [DXD migration](docs/dxd-migration.md). Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
+PR #68 merged Castine trial v1 using the existing NPC, event and conclusion mechanics; actual Chat qualification remains pending. Imported, not playable: Ram Island. WIP: bounded DXD Test kernel (not yet wired into gameplay); see [DXD migration](docs/dxd-migration.md). Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
 
 ## NEXT — five milestones
 
