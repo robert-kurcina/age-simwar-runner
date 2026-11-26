@@ -205,3 +205,59 @@ class ModelFactionTests(unittest.TestCase):
         invalid["agreements"]["exchange"]["due_minute"] = 1
         with self.assertRaises(ValueError):
             initialize(invalid)
+
+
+    def test_runtime_negotiation_counter_and_settlement(self):
+        from age_runtime.core.runner import negotiate, digest
+        s = scenario()
+        s["administrative_reviews_per_turn"] = 2
+        s["initial"].update(other_credits=0, other_labor=2, other_stage=0,
+                            other_delay=0, other_complications=0)
+        s["actors"]["other"]["visible_keys"] = ["other_credits", "other_labor",
+                                               "other_stage", "other_delay", "other_complications"]
+        s["economy_projects"].append({"id": "other_repair", "participant": "other",
+            "need": 3, "axes": [{"axis": "labor", "key": "other_labor"}],
+            "stages": 2, "progress": "other_stage", "delay": "other_delay",
+            "complications": "other_complications"})
+        s["action_catalog"].update(other_recruit={"description": "Improve own labor", "actors": ["other"]},
+                                   share={"description": "Transfer one credit to other", "actors": ["council"]})
+        s["capacity_actions"]["other_recruit"] = {"project": "other_repair",
+            "capacity": "other_labor", "resource": "other_credits", "cost": 1}
+        s["resource_transfers"] = {"share": {"source": "credits", "destination": "other_credits", "amount": 1}}
+        s["dynamic_negotiation"] = True
+        opening = initialize(s)
+        due = 2 * s["turn_minutes"]
+        offer = {"kind": "propose", "id": "offer", "recipient": "council",
+                 "transfers": ["share"], "due_minute": due}
+        offered = negotiate(s, opening, "other", digest(opening), offer)
+        self.assertEqual(offered["values"], opening["values"])
+        self.assertEqual(observe(s, offered, "other")["negotiation"]["proposals"][0]["status"], "proposed")
+        with self.assertRaises(ValueError):
+            negotiate(s, offered, "other", digest(offered), {"kind": "accept", "id": "offer"})
+        with self.assertRaises(ValueError):
+            negotiate(s, offered, "other", digest(opening), offer)
+        packet = faction_packet(s, offered, "council")
+        counter = {"kind": "counter", "id": "counter", "parent": "offer",
+                   "recipient": "other", "transfers": ["share"], "due_minute": due}
+        countered = accept_faction_choice(s, offered, "council", packet,
+                     {"packet_id": packet["packet_id"], "action": counter})
+        self.assertEqual(countered["negotiations"]["offer"]["status"], "countered")
+        self.assertEqual(countered["negotiations"]["counter"]["status"], "proposed")
+        accepted = negotiate(s, countered, "other", digest(countered),
+                             {"kind": "accept", "id": "counter"})
+        self.assertEqual(accepted["values"], opening["values"])
+        state = advance(s, accepted)
+        p = faction_packet(s, state, "council")
+        state = accept_faction_choice(s, state, "council", p,
+                                     {"packet_id": p["packet_id"], "action": None})
+        final = advance(s, state)
+        self.assertEqual(final["negotiations"]["counter"]["status"], "fulfilled")
+        self.assertEqual((final["values"]["credits"], final["values"]["other_credits"]), (0, 1))
+        verify_checkpoint(s, final)
+        rejected = negotiate(s, countered, "other", digest(countered),
+                             {"kind": "reject", "id": "counter"})
+        self.assertEqual(rejected["negotiations"]["counter"]["status"], "rejected")
+        verify_checkpoint(s, rejected)
+        bad = dict(offer, transfers=["unknown"])
+        with self.assertRaises(ValueError):
+            negotiate(s, opening, "other", digest(opening), bad)
