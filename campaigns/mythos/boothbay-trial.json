@@ -80,7 +80,7 @@
     },
     {
       "id": "report",
-      "label": "Prepare a written account for outside readers",
+      "label": "Prepare a written account of your findings",
       "location": "Lighthouse (Western Point)",
       "minutes": 60,
       "requires": 2,
@@ -88,6 +88,9 @@
       "success": {},
       "grant": [
         "written_account"
+      ],
+      "requires_flags": [
+        "badge"
       ]
     },
     {
@@ -211,9 +214,7 @@
       ],
       "discovery": "The keeper confirms the account has been relayed; no response has arrived.",
       "terminal": true,
-      "success": {
-        "containment": 1
-      }
+      "success": {}
     },
     {
       "id": "leave_copy",
@@ -273,7 +274,6 @@
     "eleanor": 0,
     "elias": 0
   },
-  "flags": [],
   "events": [
     {
       "id": "evening",
@@ -283,7 +283,7 @@
     {
       "id": "second_day",
       "at": "1927-10-14T06:00:00",
-      "observation": "A new day begins. The investigation has not escaped the notice of the town."
+      "observation": "A new day begins. The morning light returns to the harbor."
     }
   ],
   "ending_text": {
