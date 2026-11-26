@@ -1,8 +1,7 @@
 {
-  "version": 18,
+  "version": 19,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
-  "max_turns": 20,
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
   "start_location": "Harbor Docks",
   "locations": [
@@ -38,7 +37,8 @@
       },
       "concern_failure": {
         "stress": 3
-      }
+      },
+      "interval_seconds": 3600
     },
     {
       "id": "talk_eleanor",
@@ -71,7 +71,8 @@
         "eleanor": -1
       },
       "failure_observation": "Eleanor becomes more guarded.",
-      "opposition_marks": 1
+      "opposition_marks": 1,
+      "interval_seconds": 600
     },
     {
       "id": "inspect_room",
@@ -98,7 +99,8 @@
       "concern_failure": {
         "stress": 3
       },
-      "opposition_marks": 1
+      "opposition_marks": 1,
+      "interval_seconds": 3600
     },
     {
       "id": "visit_elias",
@@ -136,7 +138,8 @@
         "elias": -1
       },
       "failure_observation": "Elias declines to share his journal for now.",
-      "opposition_marks": 1
+      "opposition_marks": 1,
+      "interval_seconds": 3600
     },
     {
       "id": "report",
@@ -154,14 +157,17 @@
         "paperwork",
         "tide_clue",
         "water_warning"
-      ]
+      ],
+      "interval_seconds": 3600
     },
     {
       "id": "depart",
       "label": "End the investigation and leave town",
       "location": "Harbor Docks",
       "minutes": 60,
-      "terminal": true
+      "terminal": true,
+      "critical_decision": "leave_boothbay",
+      "interval_seconds": 3600
     },
     {
       "id": "buy_meal",
@@ -176,7 +182,8 @@
       "recovery": {
         "restful": true,
         "safe": false
-      }
+      },
+      "interval_seconds": 3600
     },
     {
       "id": "rest_room",
@@ -191,7 +198,8 @@
       "recovery": {
         "restful": true,
         "safe": false
-      }
+      },
+      "interval_seconds": 3600
     },
     {
       "id": "use_flask",
@@ -204,7 +212,8 @@
       "success": {},
       "concern_success": {
         "fatigue": 1
-      }
+      },
+      "interval_seconds": 600
     },
     {
       "id": "follow_eleanor",
@@ -250,7 +259,8 @@
         "eleanor": -1
       },
       "failure_observation": "Eleanor becomes more guarded.",
-      "opposition_marks": 1
+      "opposition_marks": 1,
+      "interval_seconds": 3600
     },
     {
       "id": "read_journal",
@@ -279,7 +289,8 @@
       },
       "concern_success": {
         "stress": 3
-      }
+      },
+      "interval_seconds": 3600
     },
     {
       "id": "warn_eleanor",
@@ -297,7 +308,9 @@
         "containment": 2
       },
       "discovery": "Eleanor agrees to warn people she trusts about the unusual conditions.",
-      "npc": "eleanor"
+      "npc": "eleanor",
+      "critical_decision": "local_precaution",
+      "interval_seconds": 600
     },
     {
       "id": "transmit_account",
@@ -334,7 +347,9 @@
         "police_attention",
         "patrol_risk"
       ],
-      "available_until": "1927-10-14T00:00:00"
+      "available_until": "1927-10-14T00:00:00",
+      "critical_decision": "relay_evidence",
+      "interval_seconds": 3600
     },
     {
       "id": "leave_copy",
@@ -350,7 +365,9 @@
       ],
       "terminal": true,
       "discovery": "Eleanor accepts a copy of the account for safekeeping.",
-      "npc": "eleanor"
+      "npc": "eleanor",
+      "critical_decision": "entrust_evidence",
+      "interval_seconds": 3600
     },
     {
       "id": "clear_dock_obstruction",
@@ -373,7 +390,8 @@
       ],
       "concern_always": {
         "fatigue": 1
-      }
+      },
+      "interval_seconds": 600
     },
     {
       "id": "compare_almanac",
@@ -387,7 +405,8 @@
       "grant": [
         "tide_window_known"
       ],
-      "discovery": "The Portland tide almanac identifies true low tide at 2:14 AM; the waterfront cave entrance may be accessible then."
+      "discovery": "The Portland tide almanac identifies true low tide at 2:14 AM; the waterfront cave entrance may be accessible then.",
+      "interval_seconds": 600
     },
     {
       "id": "examine_inlet",
@@ -402,7 +421,8 @@
       "grant": [
         "water_risk_known"
       ],
-      "discovery": "Violet kelp grows at the inlet; crabs are moving landward."
+      "discovery": "Violet kelp grows at the inlet; crabs are moving landward.",
+      "interval_seconds": 600
     },
     {
       "id": "inspect_cave_entrance",
@@ -417,7 +437,9 @@
       "grant": [
         "cave_observed"
       ],
-      "discovery": "At low tide the entrance to Devil's Throat is exposed."
+      "discovery": "At low tide the entrance to Devil's Throat is exposed.",
+      "critical_decision": "investigate_tidal_cave",
+      "interval_seconds": 600
     },
     {
       "id": "wait_for_tide",
@@ -427,7 +449,9 @@
       "requires_flags": [
         "tide_window_known"
       ],
-      "available_until": "1927-10-14T02:00:00"
+      "available_until": "1927-10-14T02:00:00",
+      "critical_decision": "investigate_tidal_cave",
+      "interval_seconds": 3600
     },
     {
       "id": "check_lighthouse_water",
@@ -441,7 +465,8 @@
       "grant": [
         "well_known"
       ],
-      "discovery": "The lighthouse freshwater well is protected by copper piping."
+      "discovery": "The lighthouse freshwater well is protected by copper piping.",
+      "interval_seconds": 600
     },
     {
       "id": "recheck_luggage",
@@ -463,7 +488,8 @@
         "paperwork"
       ],
       "discovery": "A second examination of the abandoned suitcase reveals census paperwork.",
-      "opposition_marks": 1
+      "opposition_marks": 1,
+      "interval_seconds": 600
     },
     {
       "id": "confirm_precaution",
@@ -478,7 +504,8 @@
         "warning_confirmed"
       ],
       "discovery": "Eleanor confirms that she has begun warning people she trusts; their safety is not established.",
-      "npc": "eleanor"
+      "npc": "eleanor",
+      "interval_seconds": 600
     },
     {
       "id": "speak_burroughs",
@@ -513,7 +540,9 @@
       "excludes_flags": [
         "police_clearance",
         "police_refusal"
-      ]
+      ],
+      "critical_decision": "answer_authorities",
+      "interval_seconds": 600
     },
     {
       "id": "relay_after_pressure",
@@ -543,7 +572,9 @@
         "tn": 10,
         "significance": "critical",
         "decision": true
-      }
+      },
+      "critical_decision": "relay_evidence",
+      "interval_seconds": 3600
     },
     {
       "id": "relay_with_clearance",
@@ -571,7 +602,9 @@
         "tn": 7,
         "significance": "critical",
         "decision": true
-      }
+      },
+      "critical_decision": "relay_evidence",
+      "interval_seconds": 3600
     },
     {
       "id": "speak_burroughs_diner",
@@ -606,7 +639,9 @@
       "excludes_flags": [
         "police_clearance",
         "police_refusal"
-      ]
+      ],
+      "critical_decision": "answer_authorities",
+      "interval_seconds": 600
     }
   ],
   "resources": {
@@ -916,7 +951,7 @@
         "text": "Your inquiries have attracted official attention. You can explain yourself, seek another route, or leave."
       }
     ],
-    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration. The cave node denotes an exterior observation point; retreat is unrestricted and interior entry remains unsupported."
+    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration. The cave node denotes an exterior observation point; retreat is unrestricted and interior entry remains unsupported. v19: 20 advisory Critical Decisions, authored decision identities and optional GM classification; mechanical actions no longer end the game at 20. Default observation 10 minutes. Existing fictional deadline retained."
   },
   "demeanor": true,
   "opposition": {
@@ -1037,5 +1072,9 @@
       }
     ],
     "provenance": "Provisional AGE topology and travel costs, not surveyed historical geography. The tidal gate governs access to an exterior cave observation point, not entry into the cave; retreat from that exterior point remains possible."
-  }
+  },
+  "pacing": {
+    "target_decisions": 20
+  },
+  "observe_minutes": 10
 }
