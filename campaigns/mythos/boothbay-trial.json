@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -268,6 +268,20 @@
       "terminal": true,
       "discovery": "Eleanor accepts a copy of the account for safekeeping.",
       "npc": "eleanor"
+    },
+    {
+      "id": "clear_dock_obstruction",
+      "label": "Move a loose obstruction to examine the waterfront more closely",
+      "location": "Harbor Docks",
+      "minutes": 30,
+      "test": {
+        "attribute": "STR",
+        "tn": 7,
+        "significance": "minor"
+      },
+      "grant": [
+        "dock_access"
+      ]
     }
   ],
   "conditions": {
@@ -354,12 +368,20 @@
   "setting": "Fear!",
   "resolution": "dxd",
   "dxd": {
-    "provenance": "Provisional AGE adaptation; native Mythos values retained separately.",
+    "provenance": "Provisional explicit AGE character adaptations, not canonical conversion. Combat and physical ratings reflect broad source capability descriptions; unspecified size and luck use neutral or provisional ordinary human-scale indices. No inference of weight or supernatural powers.",
     "attributes": {
+      "CCA": 8,
+      "RCA": 8,
+      "REF": 7,
       "INT": 9,
       "KNO": 8,
       "PRE": 8,
-      "POW": 9
+      "POW": 9,
+      "STR": 6,
+      "FOR": 7,
+      "MOV": 7,
+      "SIZ": 7,
+      "ZED": 7
     },
     "skills": {
       "Investigation": 2,
@@ -377,14 +399,76 @@
     },
     "npc_attributes": {
       "eleanor": {
+        "CCA": 6,
+        "RCA": 6,
+        "REF": 8,
         "INT": 8,
+        "KNO": 7,
         "PRE": 9,
-        "POW": 8
+        "POW": 8,
+        "STR": 6,
+        "FOR": 7,
+        "MOV": 7,
+        "SIZ": 7,
+        "ZED": 7
       },
       "elias": {
+        "CCA": 8,
+        "RCA": 7,
+        "REF": 7,
         "INT": 9,
+        "KNO": 9,
         "PRE": 7,
-        "POW": 10
+        "POW": 10,
+        "STR": 9,
+        "FOR": 8,
+        "MOV": 6,
+        "SIZ": 8,
+        "ZED": 7
+      }
+    },
+    "inactive_major_attributes": {
+      "Chief Burroughs": {
+        "CCA": 9,
+        "RCA": 9,
+        "REF": 8,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 9,
+        "POW": 10,
+        "STR": 10,
+        "FOR": 10,
+        "MOV": 8,
+        "SIZ": 9,
+        "ZED": 7
+      },
+      "Mayor Gilman": {
+        "CCA": 7,
+        "RCA": 7,
+        "REF": 7,
+        "INT": 9,
+        "KNO": 9,
+        "PRE": 10,
+        "POW": 11,
+        "STR": 7,
+        "FOR": 8,
+        "MOV": 7,
+        "SIZ": 7,
+        "ZED": 7
+      },
+      "Mrs. Croft": {
+        "CCA": 7,
+        "RCA": 6,
+        "REF": 7,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 9,
+        "POW": 10,
+        "STR": 8,
+        "FOR": 8,
+        "MOV": 7,
+        "SIZ": 8,
+        "ZED": 7
       }
     }
   },

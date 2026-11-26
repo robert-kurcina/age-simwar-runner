@@ -2,11 +2,19 @@
 from random import Random
 
 STANDARD_TNS = (4, 7, 10, 13, 16, 19, 22, 25, 28, 37, 46)
+ATTRIBUTES = ("CCA", "RCA", "REF", "INT", "KNO", "PRE", "POW", "STR", "FOR", "MOV", "SIZ", "ZED")
 
 def _int(value, name, minimum=None):
     if type(value) is not int or (minimum is not None and value < minimum):
         raise ValueError("invalid " + name)
     return value
+
+def validate_attributes(record):
+    """Full major-character record for the supported ordinary index range."""
+    if not isinstance(record, dict) or set(record) != set(ATTRIBUTES):
+        raise ValueError("complete twelve-Attribute DXD record required")
+    for key in ATTRIBUTES:
+        _int(record[key], key, 1)
 
 def attribute_dm(raw):
     """Ordinary attribute indices; neutral 7, symmetric steps away from 7."""

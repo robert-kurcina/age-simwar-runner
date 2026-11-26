@@ -208,3 +208,27 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["dxd"]["favor"], 3)
         self.assertEqual(s["fatigue"], 0)
         mythos.verify(s)
+
+    def test_full_dxd_character_records_and_physical_test(self):
+        from age_runtime.core import dxd
+        s = mythos.initial("boothbay", 42)
+        expected = set(dxd.ATTRIBUTES)
+        self.assertEqual(set(s["dxd"]["attributes"]), expected)
+        for npc in s["npcs"].values():
+            self.assertEqual(set(npc["dxd_attributes"]), expected)
+        self.assertEqual(len(s["dxd"]["inactive_major_attributes"]), 3)
+        for record in s["dxd"]["inactive_major_attributes"].values():
+            self.assertEqual(set(record), expected)
+        self.assertEqual(mythos.view(s)["contacts"], [])
+        s = mythos.step(s, "clear_dock_obstruction")
+        record = s["dxd"]["tests"][-1]
+        self.assertEqual(record["components"]["attribute"], dxd.attribute_dm(s["dxd"]["attributes"]["STR"]))
+        self.assertEqual(s["discoveries"], [])
+        self.assertEqual(s["dxd"]["favor"], 3)
+        mythos.verify(s)
+        self.assertNotIn("inactive_major_attributes", str(mythos.view(s)))
+        with self.assertRaises(ValueError):
+            dxd.validate_attributes({"INT": 9})
+        bad = dict(s["dxd"]["attributes"], SIZ=True)
+        with self.assertRaises(ValueError):
+            dxd.validate_attributes(bad)

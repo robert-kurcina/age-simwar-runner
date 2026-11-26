@@ -60,10 +60,23 @@ def initial(sid, seed):
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if rules.get("resolution") == "dxd":
         cfg = rules["dxd"]
+        dxd.validate_attributes(cfg["attributes"])
+        for record in cfg["npc_attributes"].values():
+            dxd.validate_attributes(record)
+        for record in cfg.get("inactive_major_attributes", {}).values():
+            dxd.validate_attributes(record)
+        active_names = {p["name"] for p in state["npcs"].values()}
+        authored_names = {p["name"] for p in story["antagonists"]["key_npcs"]}
+        inactive_names = set(cfg.get("inactive_major_attributes", {}))
+        if (set(cfg["npc_attributes"]) != set(state["npcs"])
+                or active_names & inactive_names
+                or active_names | inactive_names != authored_names):
+            raise ValueError("DXD major NPC coverage mismatch")
         state["dxd"] = {"attributes": copy.deepcopy(cfg["attributes"]),
                         "skills": copy.deepcopy(cfg["skills"]),
                         "favor": cfg["favor"]["initial"], "tests": [],
-                        "exertion_minutes": 0}
+                        "exertion_minutes": 0,
+                        "inactive_major_attributes": copy.deepcopy(cfg.get("inactive_major_attributes", {}))}
         for nid, profile in state["npcs"].items():
             profile["dxd_attributes"] = copy.deepcopy(cfg["npc_attributes"][nid])
     return state
