@@ -58,16 +58,16 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Existing private geographic assets inventoried by reference; raster registration and temporal applicability remain unverified.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
-- Private continuity implementation pending CI: explicit same-unit civilian accounting mappings, completed source checkpoints, pinned source/target specifications, chronological guard, separate derived session; actual private linked workflow still pending.
+- Private continuity merged after CI (PR #44); linked private recovery verified with standard and limited-resource configurations, persistence and completed-session reporting. Independent branches are not pooled.
+- Actor-visible resource dashboard and observed-history export implemented; CI pending. Standalone HTML is a read-only session snapshot, not a live browser game. Geographic renderer and actual browser inspection remain outstanding.
 
 ## NEXT (ordered, with acceptance criteria)
 
-1. Verify private continuity with one source-linked follow-on exercise and a completed-session report. Retain source and target specification digests; transfer only explicitly approved same-unit civilian accounting pairs, with no consent transfer. Acceptance: linked execution, resumption, replay and provenance verified privately; independent branches are not pooled.
-2. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries. Do not invent canon or block playability on exhaustive calibration.
-3. Deliver the Gameplay Map and Visualization milestone below, starting with session-derived resource views and an actual lightweight browser map.
-4. Qualify optional live local model inference and reviewed context discovery. Manual gameplay remains available; model connectivity is not a release gate.
-5. Deliver the post-stabilization MCP milestone below.
-6. Implement late-priority Automated Scenario Exploration only after the supported interactive workflow is stable.
+1. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries. Do not invent canon or block playability on exhaustive calibration.
+2. Deliver the Gameplay Map and Visualization milestone below, starting with session-derived resource views and an actual lightweight browser map.
+3. Qualify optional live local model inference and reviewed context discovery. Manual gameplay remains available; model connectivity is not a release gate.
+4. Deliver the post-stabilization MCP milestone below.
+5. Implement late-priority Automated Scenario Exploration only after the supported interactive workflow is stable.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 
