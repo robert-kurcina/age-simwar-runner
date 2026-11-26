@@ -125,7 +125,7 @@ def resolve_evidence(ref, owners):
 
 
 def compile_scenario(spec, owners):
-    if not isinstance(spec, dict) or not {"version", "effective_date", "scenario", "initial_refs"} <= set(spec) or set(spec) - {"version", "effective_date", "scenario", "initial_refs", "evidence_refs"}:
+    if not isinstance(spec, dict) or not {"version", "effective_date", "scenario", "initial_refs"} <= set(spec) or set(spec) - {"version", "effective_date", "scenario", "initial_refs", "evidence_refs", "faction_profiles"}:
         raise ValueError("invalid compiler specification")
     if type(spec["version"]) is not int or spec["version"] != VERSION:
         raise ValueError("unsupported compiler specification")
@@ -151,6 +151,9 @@ def compile_scenario(spec, owners):
         value, provenance = resolve_reference(ref, owners, effective)
         scenario["initial"][key] = value
         dependencies[key] = provenance
+    if "faction_profiles" in spec:
+        from age_runtime.core.participants import bind_factions
+        bind_factions(scenario, spec["faction_profiles"], owners, spec["effective_date"])
     validate(scenario)
     return {"version": VERSION, "spec_digest": digest(spec),
             "scenario_digest": digest(scenario), "dependencies": dependencies,

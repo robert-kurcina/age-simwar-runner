@@ -33,7 +33,7 @@ External standards are optional semantic references, not required schemas: W3C O
 
 | Step | Deliverable | Exit test |
 |---|---|---|
-| 1 | Use dated collective faction records and relevant native properties; bind only necessary facts to existing engine state. | Faction context and authority are consistent; no invented canon or individual-agent model. |
+| 1 | WIP: optional dated organization context bound to existing actors using the participant compiler; no duplicate mutable stocks. Fiji pilot needs only its existing relief objective, aid resources and dated history. | Faction context and authority are consistent; no invented canon or individual-agent model. |
 | 2 | Implement the bounded native Economy Design bottleneck procedure and necessary persistent consequences using existing events and accounting. | A project can progress, stall or change scope; resource guards and replay hold. |
 | 3 | Support constrained LLM-proposed faction decisions, preserving exact accepted inputs. | Unsupported effects are rejected; independent decisions and ignored events remain consistent. |
 | 4 | Extend one authorized SH44SER civilian recovery scenario into a substantial strategic game; add location, timing and reporting details only where needed. Target 12–24 Turns if useful, not a quota. | Complete actual Chat play with alternative outcomes and exact replay. |

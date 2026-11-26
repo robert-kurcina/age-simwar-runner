@@ -238,6 +238,7 @@ def briefing(session):
         "reports": observation["reports"],
         "own_requests": observation["own_requests"],
         "available_requests": observation["available_requests"],
+        **({"faction_context": observation["faction_context"]} if "faction_context" in observation else {}),
         "context": context,
         "context_status": "reviewed perspective summaries" if context else "source references pinned; player-safe narrative not yet supplied",
         "calibration": "illustrative scenario assumptions; not a historical forecast"

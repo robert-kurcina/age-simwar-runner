@@ -41,6 +41,7 @@ def observe(s, state, actor_id):
         if obj["key"] in values}}
     observed_objectives = evaluate({"actors": {actor_id: observed_actor}}, values)[actor_id]["objectives"]
     return {
+        **({"faction_context": deepcopy(actor["faction_context"]["profile"])} if "faction_context" in actor else {}),
         "actor": actor_id,
         "minute": state["minute"],
         "turn": state["turn"],
