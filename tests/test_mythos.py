@@ -729,7 +729,7 @@ class MythosTrialTests(unittest.TestCase):
             if clock["pending_sleep_seconds"] != 0:
                 continue
             self.assertLess(elapsed, 10800)
-            self.assertFalse(clock["checks"][0]["result"]["passed"])
+            self.assertFalse(clock["checks"][-1]["result"]["passed"])
             c.begin_sleep(concerns, clock, attrs)
             needed = clock["required_sleep_seconds"]
             c.advance_activity(concerns, clock, needed, "sleep", attributes=attrs)
@@ -789,3 +789,56 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(e["dice"], 3)
         self.assertEqual(e["checks"][0]["kind"], "overflow")
         mythos.verify(s)
+
+    def test_gm_context_separate_and_bounded(self):
+        s = mythos.initial("boothbay", 42)
+        public = mythos.view(s)
+        packet = mythos.gm_context(s)
+        self.assertEqual(packet["audience"], "gm_only")
+        self.assertEqual(packet["player_surface"]["revision"], public["revision"])
+        self.assertNotIn("referee", public)
+        self.assertNotIn("official_attention", str(public["event_pressure"]))
+        self.assertIn("official_attention", [x["id"] for x in packet["referee"]["clocks"]])
+        self.assertEqual(packet["referee"]["participants"], [])
+        self.assertIn("watch_patterns", packet["referee"]["approaches"]["inspect_docks"])
+        s = mythos.step(s, "move:Harbor Diner")
+        packet = mythos.gm_context(s)
+        self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
+        self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
+
+    def test_proposal_reuses_authority_and_replays(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "inspect_docks", "approach": "watch_patterns",
+                   "intent": "Watch the fishermen and inspect the exposed waterfront."}
+        result = mythos.step(s, "inspect_docks", request)
+        self.assertEqual(result["turn"], 1)
+        self.assertEqual(result["dxd"]["tests"][0]["gathered"]["attribute"][0]["name"], "REF")
+        self.assertEqual(result["history"][-1], {"proposal": request})
+        self.assertEqual(result["last_result"]["approach"], "watch_patterns")
+        self.assertIn("dos", result["last_result"]["adjudication"])
+        self.assertEqual(result["used"], ["inspect_docks"])
+        mythos.verify(result)
+        with self.assertRaises(ValueError):
+            mythos.step(result, "inspect_docks", request)
+
+    def test_invalid_proposals_leave_state_unchanged(self):
+        s = mythos.initial("boothbay", 42)
+        before = mythos.digest(s)
+        request = {"action": "inspect_docks", "approach": "watch_patterns", "intent": "Look carefully."}
+        for invalid in (dict(request, grant=["invented"]), dict(request, approach="invented"),
+                        dict(request, action="read_journal"), dict(request, intent="")):
+            with self.assertRaises(ValueError):
+                mythos.step(s, "inspect_docks", invalid)
+        self.assertEqual(mythos.digest(s), before)
+
+    def test_proposal_revision_and_checkpoint(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "session.json"
+            v = mythos.start("boothbay", path, 42)
+            request = {"action": "inspect_docks", "approach": "watch_patterns",
+                       "intent": "Inspect through patient observation."}
+            with self.assertRaisesRegex(ValueError, "stale"):
+                mythos.act(path, "inspect_docks", "stale", request)
+            self.assertEqual(mythos.inspect(path), v)
+            v = mythos.act(path, "inspect_docks", v["revision"], request)
+            self.assertEqual(mythos.inspect(path), v)
