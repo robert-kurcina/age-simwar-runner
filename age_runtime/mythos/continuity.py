@@ -14,6 +14,8 @@ def validate(rules):
         for carrier in cfg["carriers"]:
             if carrier["action"] not in actions:
                 raise ValueError("unknown carrier action")
+            if any(npc not in rules["npcs"] or flag not in actions[carrier["action"]].get("requires_flags", []) for npc, flag in carrier.get("access_carriers", {}).items()):
+                raise ValueError("invalid carrier access dependency")
             if not set(cfg["flags"]) & set(actions[carrier["action"]].get("grant", [])):
                 raise ValueError("carrier does not establish function")
 
@@ -33,6 +35,8 @@ def projection(state, rules, legal):
         for c in cfg["carriers"]:
             action = next(a for a in rules["actions"] if a["id"] == c["action"])
             unavailable = (action.get("npc") is not None and blocked(state, rules["npcs"][action["npc"]]))
+            unavailable = unavailable or any(blocked(state, rules["npcs"][key]) and flag not in state["flags"]
+                for key, flag in c.get("access_carriers", {}).items())
             spent = action["id"] in state["used"] and not action.get("repeatable")
             status = "blocked" if unavailable else "spent" if spent else "ready" if action["id"] in choices else "conditional"
             carriers.append({"action": action["id"], "kind": c["kind"], "status": status})
