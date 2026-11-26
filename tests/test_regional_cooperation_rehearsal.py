@@ -137,5 +137,46 @@ class RegionalCooperationRehearsal(unittest.TestCase):
         self.assertEqual(state, initialize(self.s))
 
 
+
+    def test_consequential_negotiation_is_one_atomic_decision(self):
+        state = initialize(self.s)
+        command = {"kind": "propose", "id": "critical-aid", "recipient": "east",
+                   "transfers": ["central_support_east"], "due_minute": self.s["turn_minutes"]}
+        revision = digest(state)
+        decided = commit_decision(self.s, state, "central", revision, "aid-commitment",
+                                  "Commit scarce funds to eastern recovery",
+                                  negotiation_command=command)
+        self.assertEqual(state, initialize(self.s))
+        self.assertEqual(decided["values"], state["values"])
+        self.assertEqual(decided["negotiations"]["critical-aid"]["status"], "proposed")
+        self.assertEqual(len(decided["requests"]), 1)
+        self.assertEqual(decided["requests"][0]["status"], "negotiated")
+        self.assertEqual(observe(self.s, decided, "central")["decision_pacing"]["count"], 1)
+        verify_checkpoint(self.s, decided)
+        for invalid in (
+            lambda: commit_decision(self.s, state, "central", revision, "mixed", "Invalid",
+                                    "central_invest", negotiation_command=command),
+            lambda: commit_decision(self.s, decided, "central", revision, "stale", "Invalid",
+                                    negotiation_command=command),
+            lambda: commit_decision(self.s, state, "east", revision, "model", "Invalid",
+                                    negotiation_command=command),
+            lambda: commit_decision(self.s, decided, "central", digest(decided), "aid-commitment",
+                                    "Duplicate", negotiation_command=command),
+        ):
+            with self.assertRaises(ValueError):
+                invalid()
+        accepted = self.choose(decided, "east", {"kind": "accept", "id": "critical-aid"})
+        accepted = self.choose(accepted, "west", None)
+        resolved = advance(self.s, accepted)
+        self.assertEqual(resolved["values"]["east_credits"], 1)
+        self.assertEqual(resolved["negotiations"]["critical-aid"]["status"], "fulfilled")
+        self.assertEqual(observe(self.s, resolved, "central")["decision_pacing"]["count"], 1)
+        verify_checkpoint(self.s, resolved)
+        tampered = copy.deepcopy(resolved)
+        tampered["requests"][0]["negotiation"]["due_minute"] *= 2
+        with self.assertRaises(ValueError):
+            verify_checkpoint(self.s, tampered)
+
+
 if __name__ == "__main__":
     unittest.main()
