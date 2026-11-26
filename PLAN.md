@@ -187,3 +187,9 @@ Each development increment must complete an acceptance criterion or a concrete i
 
 - Conditional NPC conversations and relationships, earned clue flags, once-only timed observations and distinct account preparation, relay, custody and departure endings. Failed relay does not count as successful delivery; writing or relaying evidence is not itself containment. Rules and epilogue prose are provisional adaptations. Restart v2 sessions after update.
 - Next: verify CI and actual end-to-end Chat play; review narrative pacing and outcome fidelity. Adapt Castine and Ram Island using the same mechanism rather than inventing new subsystems. Preserve original source configurations.
+
+### Boothbay v3 execution qualification
+
+- PR #59 workflows 45767452752 and 45767452737 passed. Downloaded artifact 15092004707; verified inner source checksum and extracted revision 9877441da087316389950f321ea8c2bbf9bfc4a0 (PR synthetic merge). Local Chat runtime passed all 76 tests, including eight Mythos tests. Actual game.py CLI completed an eight-action seeded Boothbay route and inspect reproduced final state. This is scripted execution evidence, not human-directed narrative acceptance.
+- Pacing issue: successful route concludes at 16:30 on the first day, before scheduled evening events. Trial scoring may exceed original authored scenario maxima; retain explicit provisional status. Next prioritize playable narrative qualification and configuration-driven Castine/Ram Island conversion, not new subsystems.
+- Standalone launch guide from PR #56 is not present on main at this review; reconcile packaging branch before claiming automated standalone distribution complete.
