@@ -1,5 +1,6 @@
 """Trusted local referee CLI for supported civilian campaign sessions."""
 import argparse
+import sys
 import json
 from pathlib import Path
 import re
@@ -96,6 +97,9 @@ def view(session, actor=None):
 
 
 def main():
+    if sys.argv[1:2] == ['private']:
+        from private_play import main as private_main
+        return private_main(sys.argv[2:])
     p = argparse.ArgumentParser(description=__doc__)
     commands = p.add_subparsers(dest="command", required=True)
     ls = commands.add_parser("list")
