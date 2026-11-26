@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -405,19 +405,21 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
 def step(state, action, proposal=None, commitment=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
+    request, nomination = nominations.split(proposal)
     a = next((a for a in options(state, rules) if a["id"] == action), None)
-    if proposal is not None and action.startswith("beat:"):
-        a = beats.compile_beat(state, rules, proposal)
-    elif proposal is not None and action.startswith("local:"):
-        a = proposals.compile_local(state, rules, proposal, npc_available)
+    if request is not None and action.startswith("beat:"):
+        a = beats.compile_beat(state, rules, request)
+    elif request is not None and action.startswith("local:"):
+        a = proposals.compile_local(state, rules, request, npc_available)
     elif a is None:
         raise ValueError("action unavailable")
-    elif proposal is not None:
-        a = proposals.compile_action(state, rules, proposal, [a])
+    elif request is not None:
+        a = proposals.compile_action(state, rules, request, [a])
         if a["id"] != action:
             raise ValueError("proposal action mismatch")
     if a["id"] != action:
         raise ValueError("proposal action mismatch")
+    a = nominations.apply(state, rules, a, nomination)
     if commitment is not None:
         dxd_commitment.validate(state, rules, a, commitment)
         a = dict(a, commitment=copy.deepcopy(commitment))
@@ -760,6 +762,7 @@ def gm_context(state):
                 "character_profile": copy.deepcopy(state.get("character_profiles", {}).get("pc")),
                 "favor": pc["favor"],
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
+                "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])

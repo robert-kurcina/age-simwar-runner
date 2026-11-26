@@ -1038,3 +1038,43 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn(name, s["dxd"]["traits"])
         social = {"npc": "eleanor", "test": {"interaction": "ordinary"}}
         self.assertEqual(dxd_context.effects(s, social, social["test"])[0][0]["name"], name)
+
+    def test_contextual_nomination_replay_and_rejection(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "inspect_docks", "approach": "systematic_search",
+                   "intent": "Search the docks.", "nomination": {"skills": ["Grit"], "traits": [], "basis": "Persistence."}}
+        before = mythos.digest(s)
+        with self.assertRaises(ValueError):
+            mythos.step(s, request["action"], request)
+        self.assertEqual(mythos.digest(s), before)
+        from age_runtime.mythos import nominations
+        _, rules = mythos.load("boothbay")
+        a = {"id": "read_journal", "test": {"attribute": "KNO", "skill": "Investigate"}}
+        n = {"skills": ["Reasoning"], "traits": [], "basis": "Interpret the recorded evidence."}
+        with self.assertRaises(ValueError):
+            nominations.apply(s, rules, a, n)
+        s["flags"].append("journal")
+        compiled = nominations.apply(s, rules, a, n)
+        self.assertEqual(compiled["test"]["additional_skills"], ["Reasoning"])
+        self.assertNotIn("additional_skills", a["test"])
+        for bad in (["Reasoning", "Reasoning"], ["Grit"], ["Invented"]):
+            with self.assertRaises(ValueError):
+                nominations.apply(s, rules, a, dict(n, skills=bad))
+        with self.assertRaises(ValueError):
+            nominations.apply(s, rules, a, dict(n, dm=100))
+
+    def test_nomination_committed_history(self):
+        for seed in range(20):
+            s = mythos.step(mythos.initial("boothbay", seed), "visit_elias")
+            if "journal" in s["flags"]:
+                break
+        else:
+            self.fail("No journal access")
+        req = {"action": "read_journal", "approach": "cross_reference",
+               "intent": "Interpret the recorded evidence.",
+               "nomination": {"skills": ["Reasoning"], "traits": [],
+                              "basis": "Independently interpret the documented pattern."}}
+        after = mythos.step(s, req["action"], req)
+        self.assertEqual(after["history"][-1]["proposal"], req)
+        self.assertEqual(after["dxd"]["tests"][-1]["gathered"]["skill"][-1]["name"], "Reasoning")
+        mythos.verify(after)

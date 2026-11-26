@@ -45,6 +45,7 @@ def main():
     propose.add_argument("approach")
     propose.add_argument("--intent", required=True)
     propose.add_argument("--revision", required=True)
+    propose.add_argument("--nomination", type=Path)
     commit = sub.add_parser("commit")
     commit.add_argument("session", type=Path)
     commit.add_argument("action")
@@ -53,6 +54,7 @@ def main():
     commit.add_argument("--revision", required=True)
     commit.add_argument("--approach")
     commit.add_argument("--intent")
+    commit.add_argument("--nomination", type=Path)
     control = sub.add_parser("narrative")
     control.add_argument("session", type=Path)
     control.add_argument("kind", choices=("scene", "open", "complete", "abandon"))
@@ -77,11 +79,17 @@ def main():
         result = mythos.inspect_gm(args.session)
     elif args.command == "propose":
         request = {"action": args.action, "approach": args.approach, "intent": args.intent}
+        if args.nomination is not None:
+            request["nomination"] = json.loads(args.nomination.read_text(encoding="utf-8"))
         result = mythos.act(args.session, args.action, args.revision, request)
     elif args.command == "commit":
         if bool(args.approach) != bool(args.intent):
             p.error("--approach and --intent must be supplied together")
         proposal = {"action": args.action, "approach": args.approach, "intent": args.intent} if args.approach else None
+        if args.nomination is not None:
+            if proposal is None:
+                p.error("--nomination requires an approach and intent")
+            proposal["nomination"] = json.loads(args.nomination.read_text(encoding="utf-8"))
         result = mythos.act(args.session, args.action, args.revision, proposal,
                             {"context": args.context, "level": 1, "vignette": args.vignette})
     elif args.command == "memory":
