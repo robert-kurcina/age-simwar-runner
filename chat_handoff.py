@@ -4,6 +4,7 @@ Integrity detects accidental changes, not hostile tampering. The included scenar
 and session may contain private information: keep the bundle access-controlled.
 """
 import argparse
+import copy
 import json
 import re
 from pathlib import Path
@@ -19,6 +20,7 @@ def package(session, engine_revision):
     if not isinstance(engine_revision, str) or not SHA.fullmatch(engine_revision):
         raise ValueError('engine revision must be a pinned 40-character git commit SHA')
     verify_session(session)
+    session = copy.deepcopy(session)
     payload = {'engine_revision': engine_revision, 'session': session,
                'session_digest': digest(session),
                'scenario_digest': digest(session['scenario'])}
