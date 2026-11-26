@@ -37,6 +37,11 @@ def main():
         if cmd == "act":
             q.add_argument("action")
             q.add_argument("--revision", required=True)
+    memory = sub.add_parser("memory")
+    memory.add_argument("session", type=Path)
+    memory.add_argument("event")
+    memory.add_argument("--text", required=True)
+    memory.add_argument("--revision", required=True)
     args = p.parse_args()
     if args.command == "list":
         result = catalog()
@@ -46,6 +51,8 @@ def main():
         result = mythos.start(args.scenario, args.session, args.seed)
     elif args.command == "inspect":
         result = mythos.inspect(args.session)
+    elif args.command == "memory":
+        result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
     else:
         result = mythos.act(args.session, args.action, args.revision)
     print(json.dumps(result, indent=2))

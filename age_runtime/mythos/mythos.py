@@ -78,7 +78,7 @@ def initial(sid, seed):
             raise ValueError("DXD major NPC coverage mismatch")
         state["dxd"] = {"attributes": derived["pc"]["attributes"], "body": derived["pc"],
                         "skills": copy.deepcopy(cfg["skills"]), "traits": copy.deepcopy(cfg.get("traits", {})),
-                        "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [], "morale": dxd_morale.initial(),
+                        "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [], "memory_edits": [], "morale": dxd_morale.initial(),
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
@@ -152,7 +152,8 @@ def resolve_dxd(state, rules, action):
                 consequence=cue["consequence"], maximum=policy["maximum"],
                 extra_base=favor)):
         inspired = {"turn": state["turn"], "action": action["id"],
-                    "tag": cue["tag"], "memory": cue["memory"]}
+                    "tag": cue["tag"], "memory": cue["memory"],
+                    "basis": cue["memory"], "source": "authored"}
         pc["inspirations"].append(inspired)
         retry = dict(args, base=3)
         result = dxd.test(digest(seed_parts + ["inspiration"]), **retry)
@@ -287,11 +288,36 @@ def scores(state, action):
     return {"Truth Preserved": truth / 10, "Self Preserved": self_preserved / 10,
             "Horror Contained": contained / 10}
 
+def apply_memory(state, event, memory):
+    """Enrich a committed Inspiration's wording, never its mechanics.
+
+    Only the latest Turn's already-triggered Inspiration is eligible.
+    Wording is untrusted narrative input, not a source of new facts.
+    """
+    if not isinstance(event, str) or not isinstance(memory, str):
+        raise ValueError("invalid memory input")
+    memory = memory.strip()
+    if not 1 <= len(memory) <= 280 or any(ord(ch) < 32 or ord(ch) == 127 for ch in memory):
+        raise ValueError("memory must be one short printable paragraph")
+    pc = state["dxd"]
+    found = [x for x in pc["inspirations"] if x["turn"] == state["turn"] and x["action"] == event]
+    if len(found) != 1 or found[0]["source"] != "authored":
+        raise ValueError("no eligible unedited Inspiration")
+    found[0]["memory"] = memory
+    found[0]["source"] = "model"
+    pc["memory_edits"].append({"turn": state["turn"], "event": event, "memory": memory})
+
 def verify(state):
     replay = initial(state["scenario"], state["seed"])
+    edits = state["dxd"]["memory_edits"]
+    cursor = 0
     for action in state["history"]:
         replay = step(replay, action)
-    if replay != state:
+        while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
+            e = edits[cursor]
+            apply_memory(replay, e["event"], e["memory"])
+            cursor += 1
+    if cursor != len(edits) or replay != state:
         raise ValueError("session replay mismatch")
 
 def view(state):
@@ -301,6 +327,9 @@ def view(state):
         "resources": state["resources"],
         "setting": rules.get("setting", "Fear!"),
         "memories": [x["memory"] for x in state.get("dxd", {}).get("inspirations", [])],
+        "memory_prompt": next(({"event": x["action"], "basis": x["basis"]}
+            for x in state["dxd"]["inspirations"] if x["turn"] == state["turn"]
+            and x["source"] == "authored"), None),
         "contacts": [{"name": p["name"], "role": p["public_role"],
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for p in state["npcs"].values() if p["encounters"]],
@@ -327,6 +356,16 @@ def act(path, action, revision):
     if digest(state) != revision:
         raise ValueError("stale session revision")
     state = step(state, action)
+    verify(state)
+    save(path, state)
+    return view(state)
+
+def enrich_memory(path, event, memory, revision):
+    state = read(path)
+    verify(state)
+    if digest(state) != revision:
+        raise ValueError("stale session revision")
+    apply_memory(state, event, memory)
     verify(state)
     save(path, state)
     return view(state)

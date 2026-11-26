@@ -410,3 +410,38 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["progression"]["stage"], 2)
         self.assertEqual(len(s["progression"]["changes"]), 1)
         self.assertIn("spring_contact", s["flags"])
+
+    def test_contextual_inspiration_enrichment_and_replay(self):
+        # Locate a genuine triggered Inspiration through committed actions.
+        for seed in range(200):
+            s = mythos.initial("ram-island", seed)
+            for _ in range(8):
+                s = mythos.step(s, "observe")
+            s = mythos.step(s, "inspect_reflections")
+            if "physical_record" not in s["flags"]:
+                continue
+            s = mythos.step(s, "find_journal")
+            if "journal_found" not in s["flags"]:
+                continue
+            s = mythos.step(s, "compare_journal")
+            prompt = mythos.view(s)["memory_prompt"]
+            if prompt is None:
+                continue
+            original_tests = __import__("copy").deepcopy(s["dxd"]["tests"])
+            original_concerns = __import__("copy").deepcopy(s["dxd"]["concerns"])
+            original_tag = s["dxd"]["inspirations"][-1]["tag"]
+            text = "You recall the discipline of enduring difficult circumstances during the war."
+            mythos.apply_memory(s, prompt["event"], text)
+            self.assertEqual(s["dxd"]["tests"], original_tests)
+            self.assertEqual(s["dxd"]["concerns"], original_concerns)
+            self.assertEqual(s["dxd"]["inspirations"][-1]["tag"], original_tag)
+            self.assertEqual(mythos.view(s)["memories"][-1], text)
+            self.assertIsNone(mythos.view(s)["memory_prompt"])
+            with self.assertRaises(ValueError):
+                mythos.apply_memory(s, prompt["event"], text)
+            mythos.verify(s)
+            s = mythos.step(s, "observe")
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No committed Inspiration found")
