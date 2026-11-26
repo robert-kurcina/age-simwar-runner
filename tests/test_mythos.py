@@ -1037,7 +1037,7 @@ class MythosTrialTests(unittest.TestCase):
         name = "[Emotional > Commitment: eleanor]"
         self.assertIn(name, s["dxd"]["traits"])
         social = {"npc": "eleanor", "test": {"interaction": "ordinary"}}
-        self.assertEqual(dxd_context.effects(s, social, social["test"])[0][0]["name"], name)
+        self.assertEqual(dxd_context.effects(s, social, dict(social["test"], attribute="PRE"))[0][0]["name"], name)
 
     def test_contextual_nomination_replay_and_rejection(self):
         s = mythos.initial("boothbay", 42)
@@ -1093,4 +1093,39 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(p.soft_limit(3, {"KNO": 7, "INT": 9}, 3, True), 5)
         with self.assertRaises(ValueError):
             p.attribute_quote("INT", 3, 4)
+        mythos.verify(s)
+
+    def test_native_disability_mission_check_and_recovery(self):
+        from age_runtime.core import dxd_context, dxd_conditions
+        from random import Random
+        outcomes = set()
+        for seed in range(20):
+            s = mythos.initial("boothbay", seed)
+            pc = s["dxd"]
+            outcomes.add(pc["addicted"])
+            self.assertEqual(pc["addicted"], not pc["addiction_check"]["result"]["passed"])
+            self.assertEqual(pc["concerns"]["restorative_stress_penalty"], 1)
+            self.assertEqual(pc["favor"], 3)
+            mythos.verify(s)
+        self.assertEqual(outcomes, {True, False})
+        s = mythos.initial("boothbay", 42)
+        s["dxd"]["addicted"] = True
+        self.assertEqual(dxd_context.effects(s, {}, {"attribute": "POW", "morale_event": "shock"})[1], 1)
+        self.assertEqual(dxd_context.effects(s, {}, {"attribute": "RCA", "test_kind": "combat_hit"})[0][0]["penalty"], 1)
+        s["resources"]["flask_servings"] = 0
+        self.assertEqual(dxd_context.effects(s, {}, {"attribute": "KNO", "context_tags": ["sad"]})[0][0]["penalty"], 1)
+        self.assertEqual(dxd_context.effects(s, {}, {"attribute": "KNO"})[0], [])
+        pc = s["dxd"]
+        concerns = pc["concerns"]
+        concerns["stress"] = 9
+        dxd_conditions.advance_activity(concerns, pc["activity"], 3600, "restorative",
+                                        seed="audit", attributes=pc["attributes"])
+        self.assertEqual(concerns["stress"], 9 - max(0, Random("audit:restorative:0").randint(1, 6) - 1))
+
+    def test_fast_track_audit_derived(self):
+        s = mythos.initial("boothbay", 42)
+        audit = s["character_profiles"]["pc"]["proficiencies"]["progression"]["fast_track_audit"]
+        self.assertEqual(audit["skill_cost_total"], 32)
+        self.assertEqual(audit["unallocated_budget"], 8)
+        self.assertEqual(s["character_profiles"]["pc"]["proficiencies"]["progression"]["skillpoints"], 0)
         mythos.verify(s)

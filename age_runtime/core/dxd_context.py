@@ -3,6 +3,26 @@
 No sentiment inference, arbitrary numerical GM inputs, or universal skill
 bonuses. The one-session Emotional disability limit is per owned trait.
 """
+from age_runtime.core import dxd
+
+def initialize(state):
+    """One independent mission-start Discipline Test; no Favor or forced action."""
+    pc = state["dxd"]
+    trait = pc["traits"].get("[Addict > Drunkard]")
+    if not trait:
+        return
+    level = trait["level"]
+    dm = dxd.attribute_dm(pc["attributes"]["POW"]) + pc["skills"].get("Discipline", 0)
+    result = dxd.test(f"{state['seed']}:mission:drunkard", tn=7, dm=dm, penalty=level)
+    pc["addicted"] = not result["passed"]
+    pc["addiction_check"] = {"trait": "[Addict > Drunkard]", "level": level, "result": result}
+    refresh_recovery(pc)
+
+def refresh_recovery(pc):
+    # Only the native 1D/hour restorative reduction, not RR recovery.
+    pc["concerns"]["restorative_stress_penalty"] = sum(
+        t["level"] for n, t in pc["traits"].items() if n.startswith("[Emotional > "))
+
 def effects(state, action, spec):
     pc = state["dxd"]
     if "character_profiles" not in state:
@@ -13,11 +33,17 @@ def effects(state, action, spec):
     for name, trait in pc["traits"].items():
         level = trait["level"] if isinstance(trait, dict) else trait
         if name == "[Addict > Drunkard]":
-            # Native morale bonus only in established Addicted status.
-            # Mission-start Discipline and other addiction effects are separate.
             if pc.get("addicted") and spec.get("morale_event"):
                 dm += level
                 entries.append({"name": name, "dm": level, "penalty": 0})
+            elif pc.get("addicted") and spec.get("test_kind") in ("combat_hit", "initiative"):
+                entries.append({"name": name, "dm": 0, "penalty": level})
+            # Emotional triggers require explicit authored/approved context,
+            # never inferred mood. Access is actual carried supply.
+            if (spec["attribute"] in ("KNO", "PRE") and
+                    set(spec.get("context_tags", [])) & {"sad", "lonely", "angry", "bored"}
+                    and state["resources"].get("flask_servings", 0) == 0):
+                entries.append({"name": name, "dm": 0, "penalty": level})
         elif name.startswith("[Emotional > "):
             topic = trait.get("context")
             if not spec.get("interaction") or not topic:
@@ -45,3 +71,4 @@ def acquire_commitment_disability(pc, entry):
         name = "[Emotional > Commitment: " + entry["context"] + "]"
         pc["traits"][name] = {"level": 1, "explicit_only": True,
                               "penalty_per_level": 1, "context": "npc:" + entry["context"]}
+        refresh_recovery(pc)

@@ -90,3 +90,19 @@ def describe(profile, careers):
         {"profession": c["profession"], **qualification(prof["skills"], careers[c["profession"]], c["attained_rank"])}
         for c in intrinsic.get("prior_careers", [])]
     return result
+
+def audit_skills(profile, skill_im):
+    """Recompute the Skill-only fast-track ledger, never credit spendable SP."""
+    prof = profile["proficiencies"]
+    budget = fast_track_budget(profile["background"]["age_years"],
+                               profile["intrinsics"]["professional_rank"])
+    costs = []
+    for name, value in sorted(prof["skills"].items()):
+        im = skill_im[name.split(" > ", 1)[0]]
+        n = level(value)
+        costs.append({"name": name, "level": n, "im": im,
+                      "cost": cumulative_cost(im, n)})
+    total = sum(c["cost"] for c in costs)
+    return {"skill_costs": costs, "skill_cost_total": total,
+            "bonus_skillpoint_budget": budget, "unallocated_budget": budget - total,
+            "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"}

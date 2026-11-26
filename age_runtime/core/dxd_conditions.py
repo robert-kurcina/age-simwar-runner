@@ -138,7 +138,8 @@ def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", at
         restorative = _interval(clock, "restorative", chunk, 3600, activity == "restorative")
         for _ in range(restorative):
             n = clock.get("restorative_rolls", 0)
-            stress += Random(f"{seed}:restorative:{n}").randint(1, 6)
+            stress += max(0, Random(f"{seed}:restorative:{n}").randint(1, 6)
+                          - state.get("restorative_stress_penalty", 0))
             clock["restorative_rolls"] = n + 1
         state["fatigue"] = max(0, state["fatigue"] - fatigue)
         state["stress"] = max(state.get("min_stress", 0), state["stress"] - stress)

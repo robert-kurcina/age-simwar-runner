@@ -111,3 +111,7 @@ For a supported approach, consult private `referee.modifier_nominations`. When t
 ### Boothbay v34 — experienced professionals
 
 Consult private character profile qualification and career history; use actual owned Skills, not generic rank bonuses. Former Warrior/Veteran competence does not confer active military authority. Ages/ranks and career lists are curated Fear! adaptations. PML is inapplicable. Skill-only fast-track audit is not spendable XP or Skillpoints. No live promotion or training command; do not award advancement through prose. Restart older Boothbay sessions.
+
+### Boothbay v35 — native Disabilities
+
+The mission-start Discipline result and Addicted status are in private referee context. Do not force drinking or infer mood. Apply only supported authored Test contexts and actual resource state. Addicted status is a game mechanic, not a clinical diagnosis. Emotional Disability reduces hourly restorative Stress dice; do not double-charge RR recovery. Skill-only fast-track audit is derived and not spendable. Restart prior Boothbay sessions.

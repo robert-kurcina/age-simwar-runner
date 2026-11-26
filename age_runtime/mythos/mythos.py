@@ -76,6 +76,9 @@ def initial(sid, seed):
             careers = rules["dxd"]["professional_progression"]["careers"]
             for profile in state["character_profiles"].values():
                 profile["proficiencies"]["qualification"] = dxd_progression.describe(profile, careers)
+                im = rules["dxd"]["professional_progression"].get("skill_im")
+                if im is not None:
+                    profile["proficiencies"]["progression"]["fast_track_audit"] = dxd_progression.audit_skills(profile, im)
     if "pacing" in rules:
         state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:
@@ -115,6 +118,8 @@ def initial(sid, seed):
             state["dxd"]["commitments"] = []
         if "character_profiles" in state:
             state["dxd"]["concerns"]["capacity"]["resilience"] += state["dxd"]["skills"].get("Grit", 0)
+            if rules.get("native_disabilities"):
+                dxd_context.initialize(state)
         if "activity" in rules:
             state["dxd"]["activity"] = dxd_conditions.activity_initial(derived["pc"]["attributes"], rules["activity"]["initial_awake_seconds"])
         for nid, profile in state["npcs"].items():
@@ -764,6 +769,8 @@ def gm_context(state):
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
                 "traits": copy.deepcopy(pc["traits"]),
                 "character_profile": copy.deepcopy(state.get("character_profiles", {}).get("pc")),
+                "addiction_check": copy.deepcopy(pc.get("addiction_check")),
+                "addicted": pc.get("addicted", False),
                 "favor": pc["favor"],
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
                 "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
