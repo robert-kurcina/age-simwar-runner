@@ -260,6 +260,7 @@ def briefing(session):
         "objectives": {oid: {"description": obj["description"],
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
+        **({"negotiation": observation["negotiation"]} if "negotiation" in observation else {}),
         **({"faction_strategy": observation["faction_strategy"]} if "faction_strategy" in observation else {}),
         **({"project_results": observation["project_results"]} if "project_results" in observation else {}),
         **({"strategic_support": observation["strategic_support"]} if "strategic_support" in observation else {}),
@@ -313,6 +314,16 @@ def record_decision(session, revision, decision_id, intent, action=None):
     return verify({**session, "state": result})
 
 
+def negotiate(session, revision, command):
+    from age_runtime.core.runner import negotiate as apply_negotiation
+    verify(session)
+    if revision != digest(session):
+        raise ValueError("stale session revision")
+    h, state = session["header"], session["state"]
+    result = apply_negotiation(h["compiled"]["scenario"], state, h["actor"], digest(state), command)
+    return verify({**session, "state": result})
+
+
 def pending_factions(session):
     """Referee-only exchange routing; do not expose this as a player report."""
     verify(session)
@@ -334,6 +345,11 @@ def resolve_turn(session, revision, responses):
         raise ValueError("session ended")
     if not isinstance(responses, dict) or set(responses) != set(pending_factions(session)):
         raise ValueError("exact pending faction responses required")
+    # All model choices are prepared against the opening actor packets.
+    # A negotiation may change a later actor packet, so require sequential
+    # exchange for dynamic negotiations instead of accepting stale responses.
+    if session["header"]["compiled"]["scenario"].get("dynamic_negotiation"):
+        raise ValueError("dynamic negotiation requires sequential model-choice exchange before advance")
     result = session
     for actor in pending_factions(session):
         result = model_choice(result, actor, responses[actor])
