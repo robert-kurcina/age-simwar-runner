@@ -646,3 +646,21 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             pacing.initial({"target_spotlights": 20}, rules["scene"], rules["start_location"])
         self.assertEqual(mythos.view(mythos.initial("boothbay", 42))["pacing"]["target_spotlights"], 24)
+
+    def test_terminal_spotlight_and_revision(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "session.json"
+            v = mythos.start("boothbay", path, 42)
+            old = v["revision"]
+            v = mythos.narrative(path, {"kind": "open", "id": "exit", "label": "Withdraw"}, old)
+            with self.assertRaisesRegex(ValueError, "stale"):
+                mythos.act(path, "depart", old)
+            v = mythos.act(path, "depart", v["revision"])
+            at = v["time"]
+            v = mythos.narrative(path, {"kind": "complete", "id": "exit"}, v["revision"])
+            self.assertEqual(v["time"], at)
+            self.assertEqual(v["pacing"]["completed_spotlights"], 1)
+            self.assertEqual(v["ending"]["reason"], "depart")
+            with self.assertRaises(ValueError):
+                mythos.narrative(path, {"kind": "open", "id": "new", "label": "New focus"}, v["revision"])
+            self.assertEqual(mythos.inspect(path), v)
