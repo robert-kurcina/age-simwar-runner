@@ -47,7 +47,8 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 
 ## WIP
 - Private campaign inventory merged after direct source-reference review; stage discovery metadata established, original scenario roster still incomplete.
-- Private launcher implemented for finite civilian assistance, including actor selection, pinned compiled snapshot, actor-visible observations and resume. Targeted CI and actual private integration pending.
+- Private launcher passed runner CI and merged (PR #32); actual private integration staged in the existing private workflow.
+- Actor-visible opening and turn briefing packets implemented; targeted verification pending. Curated player-safe canonical narrative retrieval remains outstanding.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)

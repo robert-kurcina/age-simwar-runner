@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from private_play import inventory, perspectives, start, update, view, verify
+from private_play import inventory, perspectives, start, update, view, verify, briefing
 from runner import save
 
 
@@ -46,7 +46,14 @@ class PrivatePlayTest(unittest.TestCase):
                 start(path, "external-relief", "unknown", owners)
             session = start(path, "external-relief", "relief", owners)
             self.assertNotIn("aid_packages", view(session)["observation"]["values"])
+            opening = briefing(session)
+            self.assertEqual(opening["kind"], "opening")
+            self.assertEqual(opening["date"], "2000-01-01")
+            self.assertNotIn("aid_packages", opening["reports"])
+            self.assertNotIn("compiled", opening)
             session = update(session, "deliver_aid", 1)
+            self.assertEqual(briefing(session)["kind"], "turn")
+            self.assertEqual(briefing(session)["elapsed_minutes"], 60)
             save(root / "session.json", session)
             # Resume without the source files or inventory.
             path.unlink()

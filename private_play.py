@@ -2,6 +2,7 @@
 import argparse
 import json
 from pathlib import Path
+from datetime import timedelta
 from source_compiler import parse_json, compile_scenario, checked_date
 from runner import initialize, verify_checkpoint, submit_request, advance, digest, save
 from observations import observe
@@ -101,6 +102,33 @@ def view(session):
             "observation": observe(s, session["state"], h["actor"])}
 
 
+def briefing(session):
+    """Actor-visible facts only; never expose source excerpts or full checkpoints."""
+    current = view(session)
+    h = session["header"]
+    observation = current["observation"]
+    s = h["compiled"]["scenario"]
+    actor = s["actors"][h["actor"]]
+    start_date = checked_date(h["effective_date"])
+    elapsed = observation["minute"]
+    return {
+        "kind": "opening" if observation["turn"] == 0 else "turn",
+        "campaign": current["campaign"], "scenario": current["title"],
+        "perspective": actor["label"],
+        "date": (start_date + timedelta(days=elapsed // 1440)).isoformat(),
+        "elapsed_minutes": elapsed, "turn": observation["turn"],
+        "complete": current["complete"],
+        "objectives": {oid: {"description": obj["description"],
+                            "observed_result": observation["objectives"].get(oid)}
+                       for oid, obj in actor.get("objectives", {}).items()},
+        "reports": observation["reports"],
+        "own_requests": observation["own_requests"],
+        "available_requests": observation["available_requests"],
+        "context_status": "source references pinned; player-safe narrative not yet supplied",
+        "calibration": "illustrative scenario assumptions; not a historical forecast"
+    }
+
+
 def update(session, request=None, turns=0):
     verify(session)
     if type(turns) is not int or turns < 0:
@@ -129,7 +157,7 @@ def main(argv=None):
         if name == "start":
             sub.add_argument("actor")
             sub.add_argument("session", type=Path)
-    for name in ("inspect", "submit", "advance"):
+    for name in ("inspect", "briefing", "submit", "advance"):
         sub = commands.add_parser(name)
         sub.add_argument("session", type=Path)
         if name == "submit":
@@ -150,10 +178,10 @@ def main(argv=None):
             result = view(session)
         else:
             session = verify(read(a.session))
-            if a.command != "inspect":
+            if a.command not in ("inspect", "briefing"):
                 session = update(session, getattr(a, "request", None), getattr(a, "turns", 0))
                 save(a.session, session)
-            result = view(session)
+            result = briefing(session) if a.command == "briefing" else view(session)
     except (ValueError, KeyError, TypeError, OSError) as exc:
         p.error(str(exc))
     print(json.dumps(result, indent=2))
