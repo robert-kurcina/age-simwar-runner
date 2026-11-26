@@ -42,7 +42,7 @@ Relationships are a core gameplay surface, not a late enhancement. Track only co
 
 ## NEXT — Boothbay vertical slice first
 
-Source review for the plan is DONE; implementation audit and all subsequent work remain pending unless verified. Combine phases into small coherent PRs rather than requiring one PR per phase.
+Source review DONE. N1 source audit DONE (execution reproduction still pending): options already unlock via flags and NPC disclosures, but failed actions are consumed, relationship values clamp to 0–5 with a binary +1 hook, only two nonthreat dated observations existed in Boothbay v15, and the report required the badge. Source contains unused cave, ecology and opposition material. N2–N4/N6 WIP: v16 adds player-safe scene projection, GM protocol based on existing story_config, alternate clue prerequisites, evidence-based luggage retry, almanac/low-tide access, inlet and well observations, and warning follow-up. N7 WIP: midnight patrol pressure only, not an encounter. Native Relationships, general free-form adjudication, meaningful opposition and full qualification remain pending. Regression tests added; execution/CI not yet verified. Low-tide access window, durations and warning follow-up are explicit provisional adaptations. Existing v15 checkpoints require restart. Combine phases into small coherent PRs rather than requiring one PR per phase.
 
 | Phase | Deliverable | Exit evidence |
 |---|---|---|
