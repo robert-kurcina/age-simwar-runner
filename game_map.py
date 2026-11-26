@@ -57,14 +57,19 @@ def projection(session):
                           for item in config["locations"] if h["actor"] in item["actors"]]}
 
 
-def render_map(data):
-    if data is None:
+def render_map(data, image=None):
+    if data is None and image is None:
         return ""
+    if data is None:
+        data = {"note": "", "locations": []}
+    data = {**data, "image": image}
+    fallback = "" if image is None else ('<figure id="image-fallback"><img alt="' + escape(image["title"], quote=True) + '" style="width:100%;height:auto" src="data:image/png;base64,' + image["png_base64"] + '"><figcaption>' + escape(image["note"]) + '</figcaption></figure>')
     # JSON embedded in a script must not permit closing the script element.
     payload = json.dumps(data, ensure_ascii=True, allow_nan=False).replace("<", "\\u003c")
-    return """<article style="margin:20px 0"><h2>Geographic reference</h2>
+    return """<article style="margin:20px 0"><h2>Map reference</h2>
 <p class="muted">""" + escape(data["note"]) + """</p>
-<p>Load map to contact the external Leaflet CDN and OpenStreetMap tile service. The requested map region may be visible to those services.</p>
+""" + fallback + """
+<p>Load interactive map to contact the external Leaflet CDN. Geographic mode also requests OpenStreetMap tiles. Image mode uses embedded local artwork and no map tiles.</p>
 <button type="button" id="load-map">Load interactive map</button>
 <div id="game-map" style="height:440px;max-height:65vh;margin-top:12px;background:#e5e8eb"></div>
 <p id="map-distance" aria-live="polite">Select two named locations to measure straight-line distance.</p>
@@ -84,7 +89,18 @@ document.getElementById('load-map').addEventListener('click', function () {
  script.onerror = () => {button.disabled = false; document.getElementById('map-distance').textContent = 'Map library unavailable.';};
  script.onload = () => {
   const d = JSON.parse(document.getElementById('map-data').textContent);
-  const map = L.map('game-map', {preferCanvas:false}).setView(d.center, d.zoom);
+  const image = d.image;
+  const map = L.map('game-map', image ? {crs:L.CRS.Simple,minZoom:-6,maxZoom:3} : {preferCanvas:false});
+  if (image) {
+   const bounds = [[-image.height,0],[0,image.width]];
+   L.imageOverlay('data:image/png;base64,'+image.png_base64,bounds).addTo(map);
+   map.fitBounds(bounds);
+   document.getElementById('image-fallback').hidden = true;
+   document.getElementById('map-distance').textContent = 'Image coordinates only; geographic distances unavailable.';
+   button.hidden = true;
+   return;
+  }
+  map.setView(d.center,d.zoom);
   const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom:19
   }).addTo(map);
