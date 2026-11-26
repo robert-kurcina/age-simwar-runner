@@ -1158,3 +1158,35 @@ class MythosTrialTests(unittest.TestCase):
         mythos.change_demeanor(s, "burroughs", -1)
         self.assertIsNone(entry["demeanor_at_commitment"])
         self.assertEqual(ec.effective_demeanor(s, "burroughs"), -2)
+
+    def test_automatic_character_emphasis(self):
+        from age_runtime.mythos import hooks
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        a = next(a for a in rules["actions"] if a["id"] == "speak_burroughs")
+        self.assertIs(hooks.apply(s, rules, a), a)
+        s["flags"].append("police_attention")
+        compiled = hooks.apply(s, rules, a)
+        self.assertEqual(compiled["character_hook"]["dm"], -1)
+        self.assertNotIn("character_hook", a)
+        mythos.resolve_dxd(s, rules, compiled)
+        t = s["dxd"]["tests"][-1]
+        self.assertEqual(hooks.record(s, compiled, t), 5)
+        self.assertEqual(hooks.record(s, compiled, t), 0)
+        self.assertEqual(s["dxd"]["xp"], 5)
+        self.assertEqual(hooks.apply(s, rules, a)["character_hook"]["dm"], -1)
+        self.assertEqual(hooks.award(s, "distinct", 2, source="test"), 10)
+        self.assertEqual(hooks.award(s, "distinct2", 3, source="test"), 20)
+        self.assertEqual(s["dxd"]["xp"], 35)
+        with self.assertRaises(ValueError):
+            hooks.split({"hook": {"id": "invented"}})
+
+    def test_disability_emphasis_single_award(self):
+        from age_runtime.mythos import hooks
+        s = mythos.initial("boothbay", 42)
+        test = {"contextual": [{"name": "[Emotional > Event: War]", "penalty": 1, "dm": 0},
+                               {"name": "[Addict > Drunkard]", "penalty": 1, "dm": 0}]}
+        self.assertEqual(hooks.record(s, {}, test), 20)
+        self.assertEqual(hooks.record(s, {}, test), 0)
+        self.assertEqual(s["dxd"]["xp"], 20)
+        self.assertEqual(len(s["dxd"]["emphasis_awards"]), 1)
