@@ -59,7 +59,7 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 - Private continuity merged after CI (PR #44); linked private recovery verified with standard and limited-resource configurations, persistence and completed-session reporting. Independent branches are not pooled.
-- Actor-visible resource dashboard and observed-history export implemented; CI pending. Standalone HTML is a read-only session snapshot, not a live browser game. Geographic renderer and actual browser inspection remain outstanding.
+- Actor-visible resource dashboard and observed-history export merged after CI (PR #45). Standalone HTML is a read-only session snapshot, not a live browser game. Optional Leaflet map export implemented, pending CI; actual browser inspection and source-qualified private map configuration remain outstanding. External map services require explicit user activation.
 
 ## NEXT (ordered, with acceptance criteria)
 
