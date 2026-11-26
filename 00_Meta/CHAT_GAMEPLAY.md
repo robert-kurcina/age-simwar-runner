@@ -103,3 +103,7 @@ Player alone initiates Commitment; GM confirms familiarity with DXD, introduced 
 ### Boothbay v32 — contextual native modifiers
 
 Danger Beats use native Narrative TN conversion; pivotal Burroughs interactions use his authored Investigate Skill when evaluating the account. Do not apply every owned Skill to every Test. An explicitly chosen wartime analogy may trigger the recorded Emotional disability; subsequent context-specific Commitment disability can apply on a later Social Test, once per trait per session. Do not infer PC emotions from prose or force a declaration. Full Addiction status, Emotional cascade Stress/recovery and general modifier nomination are not implemented. Use existing supported proposals only. Restart earlier Boothbay sessions.
+
+### Boothbay v33 — contextual nominations
+
+For a supported approach, consult private `referee.modifier_nominations`. When the player's intent independently justifies an offered owned source, use `--nomination FILE.json` with `game.py propose` (or `commit` with paired approach/intent). The file contains only `skills` and `traits` arrays of names, and a brief `basis` string. Never submit numerical effects, invent a capability or use the rationale as established fictional fact. Native diminishing Levels may yield zero. The engine validates scope, flags, ownership and stacking before action time advances. Do not use this mechanism to bypass explicit Disability triggers. Restart earlier Boothbay sessions.
