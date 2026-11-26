@@ -189,7 +189,13 @@ def options(state, rules):
 
 def resolve_dxd(state, rules, action):
     """Gather only authored applicable modifiers and allocate Favor before rolling."""
-    spec = action["test"]
+    spec = copy.deepcopy(action["test"])
+    interaction = spec.get("interaction")
+    if interaction:
+        if spec["attribute"] != "PRE" or interaction not in ("ordinary", "pivotal") or action.get("npc") not in state["npcs"]:
+            raise ValueError("invalid Interaction Test")
+        if dxd.attribute_dm(state["dxd"]["attributes"]["INT"]) >= 2:
+            spec["additional_attributes"] = ["INT"]
     cfg = rules["dxd"]
     pc = state["dxd"]
     gathered = dxd_modifiers.gather(pc["attributes"], pc["skills"], pc["traits"], spec)
@@ -214,7 +220,13 @@ def resolve_dxd(state, rules, action):
     bonus = min(policy["maximum"], max(0, net))
     penalty = max(0, -net)
     args = {"favor": favor, "bonus": bonus}
-    if "npc_attribute" in spec:
+    if interaction == "pivotal":
+        npc_attrs = state["npcs"][action["npc"]]["dxd_attributes"]
+        # NPCs do not receive the PC-only additional Attribute bonus.
+        args = {"active_raw": pc["attributes"]["PRE"], "target_raw": npc_attrs["INT"],
+                "active_dm": sum(components) - dxd.attribute_dm(pc["attributes"]["PRE"]),
+                "active_bonus": bonus, "active_penalty": penalty, "active_favor": favor}
+    elif "npc_attribute" in spec:
         npc = state["npcs"][action["npc"]]
         args.update(narrative=True, dm=sum(max(0, x) for x in components),
                     adversity=sum(max(0, -x) for x in components), adversity_dice=penalty,
@@ -223,14 +235,14 @@ def resolve_dxd(state, rules, action):
     else:
         args.update(tn=spec["tn"], dm=sum(components), penalty=penalty)
     pc["favor"] -= favor
-    chance = dxd_inspiration.probability(**args)
+    chance = dxd_inspiration.opposed_probability(**args) if interaction == "pivotal" else dxd_inspiration.probability(**args)
     seed_parts = [state["seed"], state["turn"]]
     if spec.get("morale_event"):
         seed_parts.append(spec["morale_event"])
-    first = dxd.test(digest(seed_parts), **args)
+    first = (dxd.opposed if interaction == "pivotal" else dxd.test)(digest(seed_parts), **args)
     result = first
     inspired = None
-    if (not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
+    if (interaction != "pivotal" and not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
             and dxd_inspiration.eligible(chance, turn=state["turn"],
                 last_turn=pc["inspirations"][-1]["turn"] if pc["inspirations"] else None,
                 consequence=cue["consequence"], maximum=policy["maximum"],
@@ -427,6 +439,10 @@ def step(state, action, proposal=None):
     success = True
     if "test" in a:
         success = resolve_dxd(state, rules, a)
+    primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
+    if a.get("test", {}).get("interaction"):
+        # Signed margin is the Test Effect; ordinary Demeanor limits still apply.
+        change_demeanor(state, a["npc"], primary_result["margin"])
     if success:
         if a.get("arrest_progression"):
             state["progression"]["arrested"] = True
@@ -488,7 +504,7 @@ def step(state, action, proposal=None):
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
     if proposal is not None:
-        result = state["dxd"]["tests"][-1]["result"]
+        result = primary_result
         state["last_result"]["adjudication"] = {k: result[k] for k in ("passed", "dos", "dof", "margin")}
         state["last_result"]["approach"] = proposal["approach"]
     if "spatial" in rules and a["route"]["seconds"]:
