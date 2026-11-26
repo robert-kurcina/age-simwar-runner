@@ -52,7 +52,7 @@ class MythosTrialTests(unittest.TestCase):
         s = mythos.initial("boothbay", 42)
         for _ in range(8):
             s = mythos.step(s, "observe")
-        self.assertEqual(s["fatigue"], 1)
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
         s = mythos.step(s, "buy_meal")
         self.assertEqual(s["resources"]["cash_cents"], 2125)
         self.assertEqual(s["fatigue"], 0)
@@ -206,7 +206,7 @@ class MythosTrialTests(unittest.TestCase):
             s = mythos.step(s, "observe")
         self.assertEqual(s["dxd"]["tests"], [])
         self.assertEqual(s["dxd"]["favor"], 3)
-        self.assertEqual(s["fatigue"], 0)
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
         mythos.verify(s)
 
     def test_full_dxd_character_records_and_physical_test(self):
@@ -232,3 +232,13 @@ class MythosTrialTests(unittest.TestCase):
         bad = dict(s["dxd"]["attributes"], SIZ=True)
         with self.assertRaises(ValueError):
             dxd.validate_attributes(bad)
+
+    def test_boothbay_concerns_are_private_and_activity_specific(self):
+        s = mythos.initial("boothbay", 42)
+        s = mythos.step(s, "clear_dock_obstruction")
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 1)
+        s = mythos.step(s, "rest_room")
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
+        self.assertNotIn("capacity", mythos.view(s)["condition"])
+        self.assertNotIn("sanity", mythos.view(s)["condition"])
+        mythos.verify(s)

@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.core import dxd
+from age_runtime.core import dxd, dxd_conditions
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -75,7 +75,7 @@ def initial(sid, seed):
         state["dxd"] = {"attributes": copy.deepcopy(cfg["attributes"]),
                         "skills": copy.deepcopy(cfg["skills"]),
                         "favor": cfg["favor"]["initial"], "tests": [],
-                        "exertion_minutes": 0,
+                        "concerns": dxd_conditions.initial(cfg["attributes"]),
                         "inactive_major_attributes": copy.deepcopy(cfg.get("inactive_major_attributes", {}))}
         for nid, profile in state["npcs"].items():
             profile["dxd_attributes"] = copy.deepcopy(cfg["npc_attributes"][nid])
@@ -102,10 +102,9 @@ def resolve_dxd(state, rules, action):
     pc = state["dxd"]
     attr = dxd.attribute_dm(pc["attributes"][spec["attribute"]])
     skill = pc["skills"].get(spec.get("skill"), 0)
-    condition = (rules["conditions"]["sanity_dm"][state["sanity"]]
-                 + rules["conditions"]["fatigue_dm"][state["fatigue"]])
+    condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
     hook = 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0
-    components = [attr, skill, condition, hook]
+    components = [attr, skill, hook]
     policy = cfg["favor"]
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
@@ -113,16 +112,16 @@ def resolve_dxd(state, rules, action):
     if "npc_attribute" in spec:
         npc = state["npcs"][action["npc"]]
         args.update(narrative=True, dm=sum(max(0, x) for x in components),
-                    adversity=sum(max(0, -x) for x in components),
+                    adversity=sum(max(0, -x) for x in components), adversity_dice=condition,
                     npc_dm=dxd.attribute_dm(npc["dxd_attributes"][spec["npc_attribute"]])
                            + spec.get("npc_adversity", 0))
     else:
-        args.update(tn=spec["tn"], dm=sum(components))
+        args.update(tn=spec["tn"], dm=sum(components), penalty=condition)
     pc["favor"] -= favor
     result = dxd.test(digest([state["seed"], state["turn"]]), **args)
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
-                        "condition": condition, "relationship": hook}, "result": result})
+                        "condition_penalty_dice": condition, "relationship": hook}, "result": result})
     return result["passed"]
 
 def step(state, action):
@@ -173,13 +172,10 @@ def step(state, action):
     for key, delta in effects.items():
         state[key] = max(0, min(5, state[key] + delta))
     if rules.get("resolution") == "dxd":
-        if action in rules.get("recovery_actions", ("rest_room", "buy_meal")):
-            state["dxd"]["exertion_minutes"] = 0
-        else:
-            elapsed_minutes = state["dxd"]["exertion_minutes"] + a["minutes"]
-            count, remainder = divmod(elapsed_minutes, rules["fatigue_interval_minutes"])
-            state["dxd"]["exertion_minutes"] = remainder
-            state["fatigue"] = min(5, state["fatigue"] + count)
+        concerns = state["dxd"]["concerns"]
+        dxd_conditions.add(concerns, **a.get("concern_always", {}))
+        dxd_conditions.add(concerns, **a.get("concern_success" if success else "concern_failure", {}))
+        dxd_conditions.recover(concerns, a["minutes"], **a.get("recovery", {}))
     elif state["turn"] % 4 == 0 and action not in rules.get("recovery_actions", ("rest_room", "buy_meal")):
         state["fatigue"] = min(5, state["fatigue"] + 1)
     for event in rules.get("events", []):
@@ -205,7 +201,12 @@ def scores(state, action):
     # Provisional trial rubric; integer tenths avoid floating point accumulation.
     truth = min(100, 10 + 8 * len(state["discoveries"]) + (10 if "written_account" in state["flags"] else 0)
                 + (20 if "account_relayed" in state["flags"] else 15 if "account_entrusted" in state["flags"] else 0))
-    self_preserved = max(10, 100 - 12 * state["sanity"] - 6 * state["fatigue"])
+    if "dxd" in state:
+        concern = dxd_conditions.degrees(state["dxd"]["concerns"])
+        self_preserved = max(10, 100 - 12 * concern["stress"]
+                             - 6 * concern["fatigue"] - 6 * concern["weariness"])
+    else:
+        self_preserved = max(10, 100 - 12 * state["sanity"] - 6 * state["fatigue"])
     contained = min(100, 10 + 18 * state["containment"])
     return {"Truth Preserved": truth / 10, "Self Preserved": self_preserved / 10,
             "Horror Contained": contained / 10}
@@ -226,8 +227,9 @@ def view(state):
         "contacts": [{"name": p["name"], "role": p["public_role"],
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for p in state["npcs"].values() if p["encounters"]],
-        "condition": {"sanity": rules["conditions"]["sanity"][state["sanity"]],
-                      "fatigue": rules["conditions"]["fatigue"][state["fatigue"]]},
+        "condition": (dxd_conditions.describe(state["dxd"]["concerns"]) if "dxd" in state else
+                      {"sanity": rules["conditions"]["sanity"][state["sanity"]],
+                       "fatigue": rules["conditions"]["fatigue"][state["fatigue"]]}),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
         "choices": [{"id": a["id"], "label": a["label"]} for a in options(state, rules)]}
 

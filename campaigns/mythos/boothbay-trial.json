@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -19,9 +19,7 @@
       "location": "Harbor Docks",
       "minutes": 60,
       "discovery": "A census badge lies near the waterfront.",
-      "failure": {
-        "sanity": 1
-      },
+      "failure": {},
       "grant": [
         "badge"
       ],
@@ -29,7 +27,11 @@
         "attribute": "INT",
         "skill": "Investigation",
         "tn": 7,
-        "significance": "minor"
+        "significance": "minor",
+        "decision": false
+      },
+      "concern_failure": {
+        "stress": 3
       }
     },
     {
@@ -51,7 +53,8 @@
         "attribute": "PRE",
         "skill": "Interview",
         "npc_attribute": "POW",
-        "significance": "minor"
+        "significance": "minor",
+        "decision": true
       }
     },
     {
@@ -60,9 +63,7 @@
       "location": "Sailor's Rest Boarding House",
       "minutes": 60,
       "discovery": "The abandoned suitcase contains census paperwork.",
-      "failure": {
-        "sanity": 1
-      },
+      "failure": {},
       "grant": [
         "paperwork"
       ],
@@ -70,7 +71,11 @@
         "attribute": "INT",
         "skill": "Investigation",
         "tn": 7,
-        "significance": "minor"
+        "significance": "minor",
+        "decision": false
+      },
+      "concern_failure": {
+        "stress": 3
       }
     },
     {
@@ -79,9 +84,7 @@
       "location": "Creek Inlet South",
       "minutes": 90,
       "discovery": "Elias has kept a journal of unusual coastal events.",
-      "failure": {
-        "sanity": 1
-      },
+      "failure": {},
       "success": {},
       "relationship": {
         "elias": 1
@@ -96,7 +99,11 @@
         "skill": "Interview",
         "npc_attribute": "POW",
         "npc_adversity": 1,
-        "significance": "important"
+        "significance": "important",
+        "decision": true
+      },
+      "concern_failure": {
+        "stress": 3
       }
     },
     {
@@ -130,8 +137,10 @@
       "cost": {
         "cash_cents": 75
       },
-      "success": {
-        "fatigue": -2
+      "success": {},
+      "recovery": {
+        "restful": true,
+        "safe": false
       }
     },
     {
@@ -143,9 +152,10 @@
       "cost": {
         "cash_cents": 150
       },
-      "success": {
-        "fatigue": -3,
-        "sanity": -1
+      "success": {},
+      "recovery": {
+        "restful": true,
+        "safe": false
       }
     },
     {
@@ -156,8 +166,8 @@
       "cost": {
         "flask_servings": 1
       },
-      "success": {
-        "sanity": -1,
+      "success": {},
+      "concern_success": {
         "fatigue": 1
       }
     },
@@ -179,9 +189,7 @@
       "relationship": {
         "eleanor": 1
       },
-      "success": {
-        "sanity": 1
-      },
+      "success": {},
       "npc": "eleanor",
       "disclosure": "water_warning",
       "test": {
@@ -189,7 +197,11 @@
         "skill": "Interview",
         "npc_attribute": "POW",
         "significance": "important",
-        "relationship_bonus": "eleanor"
+        "relationship_bonus": "eleanor",
+        "decision": true
+      },
+      "concern_success": {
+        "stress": 3
       }
     },
     {
@@ -204,14 +216,16 @@
       "grant": [
         "tide_clue"
       ],
-      "success": {
-        "sanity": 1
-      },
+      "success": {},
       "test": {
         "attribute": "INT",
         "skill": "Investigation",
         "tn": 7,
-        "significance": "important"
+        "significance": "important",
+        "decision": false
+      },
+      "concern_success": {
+        "stress": 3
       }
     },
     {
@@ -250,7 +264,8 @@
         "attribute": "PRE",
         "skill": "Interview",
         "tn": 7,
-        "significance": "critical"
+        "significance": "critical",
+        "decision": true
       }
     },
     {
@@ -277,11 +292,15 @@
       "test": {
         "attribute": "STR",
         "tn": 7,
-        "significance": "minor"
+        "significance": "minor",
+        "decision": false
       },
       "grant": [
         "dock_access"
-      ]
+      ],
+      "concern_always": {
+        "fatigue": 1
+      }
     }
   ],
   "conditions": {
@@ -471,6 +490,5 @@
         "ZED": 7
       }
     }
-  },
-  "fatigue_interval_minutes": 240
+  }
 }
