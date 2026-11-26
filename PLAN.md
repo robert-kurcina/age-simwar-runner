@@ -49,12 +49,12 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Private campaign inventory merged after direct source-reference review; stage discovery metadata established, original scenario roster still incomplete.
 - Private launcher and actor-visible briefing packets merged after successful CI; actual private launcher integration verified.
 - Reviewed perspective-specific context binding merged and actual private briefing verified (PR #34 and private integration). Index metadata discovery utility merged; actual index query remains unverified.
-- Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Civic agreement requires separately designed human perspective participation.
+- Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Shared human participation for civic agreement implemented in private launcher; targeted CI pending. Local referee handoff is explicit, and each participant controls its own consent. No autonomous consent or remote multiplayer authorization.
 - Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
 - Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
 - Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
 - Optional LLM narrative briefings merged (PR #39). Structured observations remain authoritative; live inference unverified.
-- Scenario-authored hypothetical presets merged (PR #40). Private scenario configurations authored and pending actual execution verification; presets bind to base spec digest and session.
+- Scenario-authored hypothetical presets merged (PR #40). Private scenario configurations verified in private CI; presets bind to base spec digest and session.
 - Existing private geographic assets inventoried by reference; raster registration and temporal applicability remain unverified.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
