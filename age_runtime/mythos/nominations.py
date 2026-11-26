@@ -21,7 +21,7 @@ def offer(state, rules, action):
     skills = [n for n in cfg.get("skills", []) if n in pc["skills"]
               and n != spec.get("skill") and n not in spec.get("additional_skills", [])]
     traits = [n for n in cfg.get("traits", []) if n in pc["traits"]
-              and not pc["traits"][n].get("explicit_only", False)
+              and not (isinstance(pc["traits"][n], dict) and pc["traits"][n].get("explicit_only", False))
               and n not in spec.get("traits", [])]
     return {"skills": skills, "traits": traits}
 
