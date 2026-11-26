@@ -29,13 +29,17 @@ def initial(sid, seed):
             "attributes": story["protagonist"]["default_attributes"],
             "discoveries": [], "used": [], "history": [], "ending": None,
             "resources": copy.deepcopy(rules["resources"]), "sanity": 0,
-            "fatigue": 0, "containment": 0, "last_result": None}
+            "fatigue": 0, "containment": 0, "last_result": None,
+            "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
+            "observations": [], "events_seen": []}
 
 def options(state, rules):
     if state["ending"]:
         return []
     candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
-                  and len(state["discoveries"]) >= a.get("requires", 0)] + [
+                  and len(state["discoveries"]) >= a.get("requires", 0)
+                  and all(f in state["flags"] for f in a.get("requires_flags", []))
+                  and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":30}]
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
     return [a for a in candidates if a["minutes"] <= remaining
@@ -65,25 +69,39 @@ def step(state, action):
                  + rules["conditions"]["sanity_dm"][state["sanity"]]
                  + rules["conditions"]["fatigue_dm"][state["fatigue"]])
         success = total >= a["tn"]
-        if success:
+    if success:
+        if "discovery" in a and a["discovery"] not in state["discoveries"]:
             state["discoveries"].append(a["discovery"])
+        for flag in a.get("grant", []):
+            if flag not in state["flags"]:
+                state["flags"].append(flag)
+        for key, delta in a.get("relationship", {}).items():
+            state["relationships"][key] = max(0, min(5, state["relationships"][key] + delta))
     effects = a.get("success" if success else "failure", {})
     for key, delta in effects.items():
         state[key] = max(0, min(5, state[key] + delta))
     if state["turn"] % 4 == 0 and action not in ("rest_room", "buy_meal"):
         state["fatigue"] = min(5, state["fatigue"] + 1)
+    for event in rules.get("events", []):
+        if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
+            state["events_seen"].append(event["id"])
+            state["observations"].append(event["observation"])
     state["last_result"] = {"action": action, "success": success}
     state["history"].append(action)
     if a.get("terminal") or state["turn"] >= rules["max_turns"] or not options(state, rules):
         state["ending"] = {"reason": action if a.get("terminal") else "limit",
                            "evidence_count": len(state["discoveries"]),
-                           "account_prepared": action == "report",
+                           "account_prepared": "written_account" in state["flags"],
+                           "account_relayed": "account_relayed" in state["flags"],
+                           "account_entrusted": "account_entrusted" in state["flags"],
+                           "epilogue": rules["ending_text"][action if a.get("terminal") else "limit"],
                            "scores": scores(state, action)}
     return state
 
 def scores(state, action):
     # Provisional trial rubric; integer tenths avoid floating point accumulation.
-    truth = min(100, 10 + 15 * len(state["discoveries"]) + (25 if action == "report" else 0))
+    truth = min(100, 10 + 8 * len(state["discoveries"]) + (10 if "written_account" in state["flags"] else 0)
+                + (20 if "account_relayed" in state["flags"] else 15 if "account_entrusted" in state["flags"] else 0))
     self_preserved = max(10, 100 - 12 * state["sanity"] - 6 * state["fatigue"])
     contained = min(100, 10 + 18 * state["containment"])
     return {"Truth Preserved": truth / 10, "Self Preserved": self_preserved / 10,
@@ -98,7 +116,7 @@ def verify(state):
 
 def view(state):
     _, rules = load(state["scenario"])
-    return {k: state[k] for k in ("scenario","time","location","turn","discoveries","ending","last_result")} | {
+    return {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
         "condition": {"sanity": rules["conditions"]["sanity"][state["sanity"]],
