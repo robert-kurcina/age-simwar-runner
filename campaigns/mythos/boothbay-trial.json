@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -23,7 +23,10 @@
       "discovery": "A census badge lies near the waterfront.",
       "failure": {
         "sanity": 1
-      }
+      },
+      "grant": [
+        "badge"
+      ]
     },
     {
       "id": "talk_eleanor",
@@ -33,9 +36,13 @@
       "attribute": "Persuasion",
       "tn": 7,
       "discovery": "Eleanor says her brother disappeared last month.",
-      "success": {
-        "containment": 1
-      }
+      "success": {},
+      "relationship": {
+        "eleanor": 1
+      },
+      "grant": [
+        "eleanor_account"
+      ]
     },
     {
       "id": "inspect_room",
@@ -47,7 +54,10 @@
       "discovery": "The abandoned suitcase contains census paperwork.",
       "failure": {
         "sanity": 1
-      }
+      },
+      "grant": [
+        "paperwork"
+      ]
     },
     {
       "id": "visit_elias",
@@ -60,9 +70,13 @@
       "failure": {
         "sanity": 1
       },
-      "success": {
-        "containment": 2
-      }
+      "success": {},
+      "relationship": {
+        "elias": 1
+      },
+      "grant": [
+        "journal"
+      ]
     },
     {
       "id": "report",
@@ -70,10 +84,11 @@
       "location": "Lighthouse (Western Point)",
       "minutes": 60,
       "requires": 2,
-      "terminal": true,
-      "success": {
-        "containment": 2
-      }
+      "terminal": false,
+      "success": {},
+      "grant": [
+        "written_account"
+      ]
     },
     {
       "id": "depart",
@@ -121,6 +136,99 @@
         "sanity": -1,
         "fatigue": 1
       }
+    },
+    {
+      "id": "follow_eleanor",
+      "label": "Ask Eleanor to explain what happened to her brother",
+      "location": "Harbor Diner",
+      "minutes": 60,
+      "requires_flags": [
+        "eleanor_account"
+      ],
+      "requires_relationship": {
+        "eleanor": 1
+      },
+      "attribute": "Persuasion",
+      "tn": 7,
+      "discovery": "Eleanor describes disturbing physical changes in her brother before he vanished.",
+      "grant": [
+        "water_warning"
+      ],
+      "relationship": {
+        "eleanor": 1
+      },
+      "success": {
+        "sanity": 1
+      }
+    },
+    {
+      "id": "read_journal",
+      "label": "Read Elias's journal carefully",
+      "location": "Creek Inlet South",
+      "minutes": 60,
+      "requires_flags": [
+        "journal"
+      ],
+      "attribute": "Investigation",
+      "tn": 7,
+      "discovery": "The journal records unusual changes near the harbor and repeated references to the tide.",
+      "grant": [
+        "tide_clue"
+      ],
+      "success": {
+        "sanity": 1
+      }
+    },
+    {
+      "id": "warn_eleanor",
+      "label": "Share your findings with Eleanor and agree on a precaution",
+      "location": "Harbor Diner",
+      "minutes": 45,
+      "requires_flags": [
+        "water_warning",
+        "tide_clue"
+      ],
+      "grant": [
+        "local_warning"
+      ],
+      "success": {
+        "containment": 2
+      },
+      "discovery": "Eleanor agrees to warn people she trusts about the unusual conditions."
+    },
+    {
+      "id": "transmit_account",
+      "label": "Ask the lighthouse keeper to relay your written account",
+      "location": "Lighthouse (Western Point)",
+      "minutes": 90,
+      "requires_flags": [
+        "written_account"
+      ],
+      "attribute": "Persuasion",
+      "tn": 7,
+      "grant": [
+        "account_relayed"
+      ],
+      "discovery": "The keeper confirms the account has been relayed; no response has arrived.",
+      "terminal": true,
+      "success": {
+        "containment": 1
+      }
+    },
+    {
+      "id": "leave_copy",
+      "label": "Leave a copy of your account with Eleanor and depart",
+      "location": "Harbor Diner",
+      "minutes": 90,
+      "requires_flags": [
+        "written_account",
+        "eleanor_account"
+      ],
+      "grant": [
+        "account_entrusted"
+      ],
+      "terminal": true,
+      "discovery": "Eleanor accepts a copy of the account for safekeeping."
     }
   ],
   "conditions": {
@@ -160,5 +268,28 @@
   "resources": {
     "cash_cents": 2200,
     "flask_servings": 2
+  },
+  "relationships": {
+    "eleanor": 0,
+    "elias": 0
+  },
+  "flags": [],
+  "events": [
+    {
+      "id": "evening",
+      "at": "1927-10-13T18:00:00",
+      "observation": "Evening settles over Boothbay; the harbor grows quiet."
+    },
+    {
+      "id": "second_day",
+      "at": "1927-10-14T06:00:00",
+      "observation": "A new day begins. The investigation has not escaped the notice of the town."
+    }
+  ],
+  "ending_text": {
+    "transmit_account": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved.",
+    "leave_copy": "A trusted local has accepted your account. Whether it survives is uncertain.",
+    "depart": "You leave Boothbay with whatever evidence you have gathered.",
+    "limit": "Your allotted investigation time has ended; the remaining uncertainties are unresolved."
   }
 }
