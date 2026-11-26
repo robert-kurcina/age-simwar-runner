@@ -224,6 +224,12 @@ def main(argv=None):
             sub.add_argument("response", type=Path)
         if name == "confirm":
             sub.add_argument("--approve", required=True)
+    local = commands.add_parser("local-propose")
+    local.add_argument("session", type=Path)
+    local.add_argument("instruction")
+    local.add_argument("--model", required=True)
+    local.add_argument("--base", default="http://127.0.0.1:1234/v1")
+    local.add_argument("--output", type=Path, required=True)
     a = p.parse_args(argv)
     try:
         if a.command == "list":
@@ -236,6 +242,13 @@ def main(argv=None):
             session = start(a.inventory, a.scenario, a.actor, read(a.owners))
             save(a.session, session)
             result = view(session)
+        elif a.command == "local-propose":
+            from local_model import propose
+            if a.output.exists() or a.output.resolve() == a.session.resolve():
+                raise ValueError("response output must be a new file")
+            session = verify(read(a.session))
+            result = propose(session, a.instruction, a.model, a.base)
+            save(a.output, result["response"])
         elif a.command in ("interpret", "proposal", "confirm"):
             from player_requests import packet, prompt, validate_proposal, confirm
             session = verify(read(a.session))
