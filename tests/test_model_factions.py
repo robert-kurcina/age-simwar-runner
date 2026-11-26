@@ -93,3 +93,58 @@ class ModelFactionTests(unittest.TestCase):
         a["visible_keys"].remove("credits")
         with self.assertRaises(ValueError):
             initialize(s)
+
+
+    def test_cross_faction_transfer_changes_opportunity_and_replays(self):
+        from copy import deepcopy
+        s = scenario()
+        s["administrative_reviews_per_turn"] = 2
+        s["initial"].update(other_credits=0, other_labor=2, other_stage=0,
+                            other_delay=0, other_complications=0)
+        s["actors"]["other"]["visible_keys"] = ["other_credits", "other_labor",
+                                               "other_stage", "other_delay", "other_complications"]
+        s["economy_projects"].append({"id": "other_repair", "participant": "other",
+            "need": 3, "axes": [{"axis": "labor", "key": "other_labor"}],
+            "stages": 2, "progress": "other_stage", "delay": "other_delay",
+            "complications": "other_complications"})
+        s["action_catalog"].update(other_recruit={"description": "Improve own labor", "actors": ["other"]},
+                                   share={"description": "Transfer one credit to other", "actors": ["council"]})
+        s["capacity_actions"]["other_recruit"] = {"project": "other_repair",
+            "capacity": "other_labor", "resource": "other_credits", "cost": 1}
+        s["resource_transfers"] = {"share": {"source": "credits", "destination": "other_credits", "amount": 1}}
+        opening = initialize(s)
+        packet = faction_packet(s, opening, "council")
+        self.assertTrue(packet["observation"]["strategic_support"]["transfer_options"]["share"]["currently_feasible"])
+        self.assertEqual(observe(s, opening, "other")["strategic_support"]["transfer_options"], {})
+        with self.assertRaises(ValueError):
+            submit_request(s, opening, "other", {"action": "share"})
+        def play(action):
+            state = accept_faction_choice(s, opening, "council", packet,
+                        {"packet_id": packet["packet_id"], "action": action})
+            return advance(s, state)
+        shared, retained = play("share"), play("recruit")
+        self.assertEqual((shared["values"]["credits"], shared["values"]["other_credits"]), (0, 1))
+        self.assertEqual((retained["values"]["stage"], shared["values"]["stage"]), (1, 0))
+        self.assertTrue(observe(s, shared, "other")["strategic_support"]["capacity_options"]["other_recruit"]["currently_feasible"])
+        self.assertFalse(observe(s, retained, "other")["strategic_support"]["capacity_options"]["other_recruit"]["currently_feasible"])
+        def finish(state):
+            p = faction_packet(s, state, "council")
+            state = accept_faction_choice(s, state, "council", p, {"packet_id": p["packet_id"], "action": "share"})
+            state = submit_request(s, state, "other", {"action": "other_recruit"})
+            return advance(s, state)
+        end = finish(shared)
+        self.assertEqual(end["values"]["other_stage"], 1)
+        self.assertEqual(end["values"]["credits"], 0)
+        self.assertEqual(end["requests"][-2]["fulfillment"], "insufficient_resources")
+        self.assertEqual(end, finish(play("share")))
+        verify_checkpoint(s, end)
+        for key, value in (("amount", 0), ("amount", True), ("destination", "labor"),
+                           ("destination", "credits"), ("source", "other_credits")):
+            invalid = deepcopy(s)
+            invalid["resource_transfers"]["share"][key] = value
+            with self.assertRaises(ValueError):
+                initialize(invalid)
+        invalid = deepcopy(s)
+        invalid["action_catalog"]["share"]["actors"] = ["other"]
+        with self.assertRaises(ValueError):
+            initialize(invalid)

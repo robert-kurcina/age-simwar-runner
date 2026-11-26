@@ -68,7 +68,16 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
             if before != report["value"]:
                 changes[key] = {"status": "changed", "before": before,
                                 "value": report["value"], "delta": report["value"] - before}
-    return {"project_assessments": assessments, "capacity_options": choices,
+    transfers = {}
+    for name in requests:
+        t = s.get("resource_transfers", {}).get(name)
+        if t is not None:
+            balance = values[t["source"]]
+            transfers[name] = {"source": t["source"], "destination": t["destination"],
+                               "amount": t["amount"], "reported_balance": balance,
+                               "currently_feasible": balance >= t["amount"]}
+    return {**({"transfer_options": transfers} if "resource_transfers" in s else {}),
+            "project_assessments": assessments, "capacity_options": choices,
             "report_changes": changes,
             "pending_orders": [{k: deepcopy(v) for k, v in r.items() if k != "sequence"}
                                for r in state["requests"] if r["actor"] == actor_id

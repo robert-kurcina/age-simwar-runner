@@ -10,7 +10,7 @@ from age_runtime.core.actors import validate_actors, evaluate
 from age_runtime.core.events import validate_dependent_events, resolve_dependent_events
 from age_runtime.core.economy import validate_projects, resolve_projects, validate_capacity_actions
 from age_runtime.core.observations import validate_views, observe
-from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules
+from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -25,7 +25,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -70,14 +70,15 @@ def validate(s):
     validate_dependent_events(s)
     validate_projects(s)
     validate_capacity_actions(s)
+    validate_transfers(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
     if factions and not s.get("economy_projects"):
         raise ValueError("model factions require reviewed civilian economy projects")
     for actor in factions:
-        if any(name not in s.get("capacity_actions", {}) for name, spec in s.get("action_catalog", {}).items() if actor in spec["actors"]):
-            raise ValueError("model factions may select only supported capacity actions")
+        if any(name not in (s.get("capacity_actions", {}).keys() | s.get("resource_transfers", {}).keys()) for name, spec in s.get("action_catalog", {}).items() if actor in spec["actors"]):
+            raise ValueError("model factions may select only supported capacity or transfer actions")
 
 def initialize(s):
     validate(s)

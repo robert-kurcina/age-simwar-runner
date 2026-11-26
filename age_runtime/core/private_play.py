@@ -37,7 +37,7 @@ def supported(s):
         validate(s)
         if (s["events"] or s["constraints"] or s.get("dependent_events")
                 or not s.get("capacity_actions") or not s.get("model_factions")
-                or set(s.get("action_catalog", {})) != set(s["capacity_actions"])
+                or set(s.get("action_catalog", {})) != (set(s["capacity_actions"]) | set(s.get("resource_transfers", {})))
                 or len(set(s["actors"]) - set(s["model_factions"])) != 1
                 or s.get("administrative_reviews_per_turn", 0) < len(s["model_factions"]) + 1
                 or s["turn_minutes"] < 10080 or s["end_minute"] % s["turn_minutes"]):
