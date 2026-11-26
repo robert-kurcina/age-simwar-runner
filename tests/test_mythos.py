@@ -998,7 +998,7 @@ class MythosTrialTests(unittest.TestCase):
         pc = s["dxd"]
         self.assertEqual(len(s["character_profiles"]), 6)
         self.assertEqual(pc["skills"]["Investigate"], 2)
-        self.assertEqual(pc["skills"]["Persuade"], 1)
+        self.assertEqual(pc["skills"]["Persuade"], 2)
         self.assertIn("[Addict > Drunkard]", pc["traits"])
         self.assertEqual(pc["concerns"]["capacity"]["resilience"],
                          3 + 2 * pc["attributes"]["POW"] // 3 + pc["skills"]["Grit"])
@@ -1031,7 +1031,7 @@ class MythosTrialTests(unittest.TestCase):
         a = next(a for a in rules["actions"] if a["id"] == "speak_burroughs")
         mythos.resolve_dxd(s, rules, a)
         t = s["dxd"]["tests"][-1]
-        self.assertEqual(t["inputs"]["target_dm"], 1)
+        self.assertEqual(t["inputs"]["target_dm"], 2)
         self.assertEqual(t["npc_gathered"]["skill"][0]["name"], "Investigate")
         dxd_context.acquire_commitment_disability(s["dxd"], {"context": "eleanor", "emotional_disability": True})
         name = "[Emotional > Commitment: eleanor]"
@@ -1078,3 +1078,19 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(after["history"][-1]["proposal"], req)
         self.assertEqual(after["dxd"]["tests"][-1]["gathered"]["skill"][-1]["name"], "Reasoning")
         mythos.verify(after)
+
+    def test_fear_professional_progression(self):
+        from age_runtime.core import dxd_progression as p
+        s = mythos.initial("boothbay", 42)
+        for profile in s["character_profiles"].values():
+            q = profile["proficiencies"]["qualification"]
+            self.assertTrue(q["qualified"], q)
+            self.assertTrue(all(c["qualified"] for c in q["prior_careers"]))
+        self.assertEqual(s["character_profiles"]["pc"]["proficiencies"]["qualification"]["bonus_skillpoints"], 40)
+        self.assertEqual(p.xp_to_skillpoints(250), (2, 50))
+        self.assertEqual(p.cumulative_cost(3, 3), 18)
+        self.assertEqual(p.attribute_quote("INT", 1, 2), {"skillpoints": 14, "months": 14})
+        self.assertEqual(p.soft_limit(3, {"KNO": 7, "INT": 9}, 3, True), 5)
+        with self.assertRaises(ValueError):
+            p.attribute_quote("INT", 3, 4)
+        mythos.verify(s)
