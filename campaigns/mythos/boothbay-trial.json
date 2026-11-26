@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -28,7 +28,12 @@
         "skill": "Investigation",
         "tn": 7,
         "significance": "minor",
-        "decision": false
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your experience as a journalist reminds you to look again before drawing a conclusion.",
+          "consequence": "meaningful"
+        }
       },
       "concern_failure": {
         "stress": 3
@@ -54,7 +59,12 @@
         "skill": "Interview",
         "npc_attribute": "POW",
         "significance": "minor",
-        "decision": true
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You recall that listening carefully is part of your work as a reporter.",
+          "consequence": "meaningful"
+        }
       }
     },
     {
@@ -72,7 +82,12 @@
         "skill": "Investigation",
         "tn": 7,
         "significance": "minor",
-        "decision": false
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You recall how careful observation has served you in your work as a journalist.",
+          "consequence": "meaningful"
+        }
       },
       "concern_failure": {
         "stress": 3
@@ -100,7 +115,12 @@
         "npc_attribute": "POW",
         "npc_adversity": 1,
         "significance": "important",
-        "decision": true
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You remember the patience required when interviewing reluctant sources.",
+          "consequence": "meaningful"
+        }
       },
       "concern_failure": {
         "stress": 3
@@ -198,7 +218,12 @@
         "npc_attribute": "POW",
         "significance": "important",
         "relationship_bonus": "eleanor",
-        "decision": true
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You draw on your experience of listening to difficult accounts without interrupting.",
+          "consequence": "meaningful"
+        }
       },
       "concern_success": {
         "stress": 3
@@ -222,7 +247,12 @@
         "skill": "Investigation",
         "tn": 7,
         "significance": "important",
-        "decision": false
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You draw upon your experience examining records as a journalist.",
+          "consequence": "meaningful"
+        }
       },
       "concern_success": {
         "stress": 3
@@ -265,7 +295,12 @@
         "skill": "Interview",
         "tn": 7,
         "significance": "critical",
-        "decision": true
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You remember your responsibility as a journalist to communicate what you have learned.",
+          "consequence": "meaningful"
+        }
       }
     },
     {
@@ -293,7 +328,12 @@
         "attribute": "STR",
         "tn": 7,
         "significance": "minor",
-        "decision": false
+        "decision": false,
+        "inspiration": {
+          "tag": "physical",
+          "memory": "You draw on your experience as a veteran and concentrate on the immediate task.",
+          "consequence": "routine"
+        }
       },
       "grant": [
         "dock_access"
@@ -489,6 +529,10 @@
         "SIZ": 8,
         "ZED": 7
       }
+    },
+    "inspiration": {
+      "enabled": true,
+      "source": "AGE automatic policy; authored memory cues grounded in protagonist biography"
     }
   }
 }

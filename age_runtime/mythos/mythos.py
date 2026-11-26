@@ -6,7 +6,7 @@ import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.core import dxd, dxd_conditions
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -74,7 +74,7 @@ def initial(sid, seed):
             raise ValueError("DXD major NPC coverage mismatch")
         state["dxd"] = {"attributes": copy.deepcopy(cfg["attributes"]),
                         "skills": copy.deepcopy(cfg["skills"]),
-                        "favor": cfg["favor"]["initial"], "tests": [],
+                        "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [],
                         "concerns": dxd_conditions.initial(cfg["attributes"]),
                         "inactive_major_attributes": copy.deepcopy(cfg.get("inactive_major_attributes", {}))}
         for nid, profile in state["npcs"].items():
@@ -104,7 +104,9 @@ def resolve_dxd(state, rules, action):
     skill = pc["skills"].get(spec.get("skill"), 0)
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
     hook = 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0
-    components = [attr, skill, hook]
+    cue = spec.get("inspiration")
+    inspiration_dm = dxd_inspiration.applicable_dm(pc["inspirations"], [cue["tag"]] if cue else [])
+    components = [attr, skill, hook, inspiration_dm]
     policy = cfg["favor"]
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
@@ -118,10 +120,28 @@ def resolve_dxd(state, rules, action):
     else:
         args.update(tn=spec["tn"], dm=sum(components), penalty=condition)
     pc["favor"] -= favor
-    result = dxd.test(digest([state["seed"], state["turn"]]), **args)
+    chance = dxd_inspiration.probability(**args)
+    first = dxd.test(digest([state["seed"], state["turn"]]), **args)
+    result = first
+    inspired = None
+    if (not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
+            and dxd_inspiration.eligible(chance, turn=state["turn"],
+                last_turn=pc["inspirations"][-1]["turn"] if pc["inspirations"] else None,
+                consequence=cue["consequence"], maximum=policy["maximum"],
+                extra_base=favor)):
+        inspired = {"turn": state["turn"], "action": action["id"],
+                    "tag": cue["tag"], "memory": cue["memory"]}
+        pc["inspirations"].append(inspired)
+        retry = dict(args, base=3)
+        result = dxd.test(digest([state["seed"], state["turn"], "inspiration"]), **retry)
+        dxd_conditions.add(pc["concerns"], weariness=1)
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
-                        "condition_penalty_dice": condition, "relationship": hook}, "result": result})
+                        "condition_penalty_dice": condition, "relationship": hook,
+                        "inspiration": inspiration_dm},
+                        "probability": [chance.numerator, chance.denominator],
+                        "initial_result": first, "inspired": inspired is not None,
+                        "result": result})
     return result["passed"]
 
 def step(state, action):
@@ -224,6 +244,7 @@ def view(state):
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
         "setting": rules.get("setting", "Fear!"),
+        "memories": [x["memory"] for x in state.get("dxd", {}).get("inspirations", [])],
         "contacts": [{"name": p["name"], "role": p["public_role"],
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for p in state["npcs"].values() if p["encounters"]],

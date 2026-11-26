@@ -242,3 +242,27 @@ class MythosTrialTests(unittest.TestCase):
         self.assertNotIn("capacity", mythos.view(s)["condition"])
         self.assertNotIn("sanity", mythos.view(s)["condition"])
         mythos.verify(s)
+
+    def test_inspiration_automatic_and_replay(self):
+        import copy
+        from age_runtime.core import dxd_inspiration
+        _, rules = mythos.load("boothbay")
+        action = copy.deepcopy(next(a for a in rules["actions"] if a["id"] == "inspect_docks"))
+        action["test"]["tn"] = 16
+        for seed in range(100):
+            s = mythos.initial("boothbay", seed)
+            s["turn"] = 1
+            mythos.resolve_dxd(s, rules, action)
+            self.assertEqual(len(s["dxd"]["inspirations"]), 1)
+            self.assertEqual(s["dxd"]["concerns"]["weariness"], 1)
+            self.assertTrue(s["dxd"]["tests"][-1]["inspired"])
+            self.assertEqual(len(s["dxd"]["tests"][-1]["result"]["active"]["kept"]), 3)
+            self.assertEqual(len(s["dxd"]["tests"][-1]["initial_result"]["active"]["kept"]), 2)
+            s["turn"] = 2
+            mythos.resolve_dxd(s, rules, action)
+            self.assertEqual(len(s["dxd"]["inspirations"]), 1)
+            self.assertEqual(s["dxd"]["tests"][-1]["components"]["inspiration"], 1)
+            self.assertNotIn("probability", str(mythos.view(s)))
+            break
+        original = mythos.step(mythos.initial("boothbay", 42), "inspect_docks")
+        mythos.verify(original)
