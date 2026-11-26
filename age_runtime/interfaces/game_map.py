@@ -3,8 +3,8 @@ import json
 import math
 from html import escape
 from copy import deepcopy
-from source_compiler import checked_date
-from loading_ui import status_markup, skeleton_markup, JS
+from age_runtime.core.source_compiler import checked_date
+from age_runtime.interfaces.loading_ui import status_markup, skeleton_markup, JS
 
 
 def coords(value):

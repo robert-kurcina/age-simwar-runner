@@ -1,7 +1,7 @@
 """Optional narrative commentary; structured actor-visible briefing remains authoritative."""
 import json
-from runner import digest
-from private_play import briefing
+from age_runtime.core.runner import digest
+from age_runtime.core.private_play import briefing
 
 
 def packet(session):
@@ -32,6 +32,6 @@ def validate(exchange, response):
 
 
 def narrate(session, model, base="http://127.0.0.1:1234/v1"):
-    from local_model import complete_json
+    from age_runtime.interfaces.local_model import complete_json
     exchange = packet(session)
     return validate(exchange, complete_json(prompt(exchange), model, base, max_tokens=1024))
