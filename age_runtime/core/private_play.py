@@ -253,6 +253,7 @@ def briefing(session):
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
         **({"project_results": observation["project_results"]} if "project_results" in observation else {}),
+        **({"strategic_support": observation["strategic_support"]} if "strategic_support" in observation else {}),
         "reports": observation["reports"],
         "own_requests": observation["own_requests"],
         "available_requests": observation["available_requests"],
@@ -289,6 +290,33 @@ def model_choice(session, actor, response):
     s = session["header"]["compiled"]["scenario"]
     state = accept_faction_choice(s, session["state"], actor, packet, response)
     return verify({**session, "state": state})
+
+
+def pending_factions(session):
+    """Referee-only exchange routing; do not expose this as a player report."""
+    verify(session)
+    s = session["header"]["compiled"]["scenario"]
+    state = session["state"]
+    if state["minute"] >= s["end_minute"]:
+        return []
+    decided = {r["actor"] for r in state["requests"]
+               if r["turn"] == state["turn"] and r.get("origin") == "model"}
+    return [actor for actor in s.get("model_factions", []) if actor not in decided]
+
+
+def resolve_turn(session, revision, responses):
+    """Commit one confirmed turn atomically; missing/invalid choices never advance."""
+    verify(session)
+    if revision != digest(session):
+        raise ValueError("stale turn revision")
+    if session["state"]["minute"] >= session["header"]["compiled"]["scenario"]["end_minute"]:
+        raise ValueError("session ended")
+    if not isinstance(responses, dict) or set(responses) != set(pending_factions(session)):
+        raise ValueError("exact pending faction responses required")
+    result = session
+    for actor in pending_factions(session):
+        result = model_choice(result, actor, responses[actor])
+    return update(result, turns=1)
 
 
 def main(argv=None):
@@ -328,6 +356,12 @@ def main(argv=None):
         sub.add_argument("actor")
         if name == "faction-choice":
             sub.add_argument("response", type=Path)
+    pending = commands.add_parser("pending-factions")
+    pending.add_argument("session", type=Path)
+    turn = commands.add_parser("resolve-turn")
+    turn.add_argument("session", type=Path)
+    turn.add_argument("responses", type=Path)
+    turn.add_argument("--revision", required=True)
     dashboard = commands.add_parser("dashboard")
     dashboard.add_argument("session", type=Path)
     dashboard.add_argument("--output", type=Path)
@@ -365,6 +399,13 @@ def main(argv=None):
                             read(a.from_session) if a.from_session else None)
             save(a.session, session)
             result = view(session)
+        elif a.command == "pending-factions":
+            session = verify(read(a.session))
+            result = {"revision": digest(session), "pending": pending_factions(session)}
+        elif a.command == "resolve-turn":
+            session = resolve_turn(read(a.session), a.revision, read(a.responses))
+            save(a.session, session)
+            result = briefing(session)
         elif a.command == "faction-packet":
             result = model_packet(read(a.session), a.actor)
         elif a.command == "faction-choice":
