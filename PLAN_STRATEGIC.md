@@ -23,7 +23,7 @@ Author-approved: `robert-kurcina/vault-sh44ser` is a versioned, read-only conten
 
 ## Critical Decisions and simulation time
 
-Author-approved target lengths: 6 (Short), 12 (Standard) or 24 (Extended) Critical Decisions per game (the strategic counterpart of narrative Spot-lights). The 20-decision target is REJECTED. Select the target at scenario setup. A Critical Decision is a committed faction-level choice among consequential alternatives, including intentional inaction when it materially affects the faction's objectives. A simulation Turn is an interval for adjudication, not inherently a Critical Decision. Reading briefings, inspecting maps, discussing alternatives, clarifying intent, executing already committed orders, mechanical resolution and autonomous faction decisions do not independently consume the player's budget.
+Author-approved target lengths: 6 (Short), 12 (Standard) or 24 (Extended) Critical Decisions per game (the strategic counterpart of narrative Spot-lights). The 20-decision target is REJECTED. Select the target at scenario setup. A Critical Decision is a consequential player commitment arising from dramatic strategic tension, whose resolution can materially alter the developing situation, faction interests, relationships, obligations, capabilities or future opportunities. Deliberate inaction may qualify. Routine resource expenditure is not inherently dramatic. A simulation Turn is an interval for adjudication, not inherently a Critical Decision. Reading briefings, inspecting maps, discussing alternatives, clarifying intent, executing already committed orders, mechanical resolution and autonomous faction decisions do not independently consume the player's budget.
 
 DONE (mechanical, PR #102): implemented optional game length and replayable Critical Decision records within the existing request ledger. Private start supports --game-length; commit-decision binds to the current session revision and records a confirmed order or deliberate abstention. Counts are derived and actor-local; ordinary requests and model decisions do not increment them. Focused tests and CI passed (45881735000, 45881734972); experiential pacing qualification remains WIP. Use stable identity and explicit significance classification; avoid duplicate counts for follow-through. Keep the fictional clock, scenario deadlines and autonomous faction decisions independent. Do not invent pressure, force a decision, or terminate the game solely because the target is reached. Validate pacing in actual play before imposing further rules. Preserve existing fixed-interval mechanical fixtures; the Fiji 12-week test is not automatically a qualified 12-Critical-Decision game.
 
@@ -47,6 +47,20 @@ Keep existing civic fixtures for regression. Do not build another generic campai
 - DONE (mechanical): vault #995 exported a verified portable scenario package (artifact 15147307624, run 45882376581). Public engine and private package are independently versioned.
 - NEXT (P1): select a bounded SH44SER consim designed for meaningful faction-level interactions, informed by native properties and actual gameplay needs. Author-led qualification remains pending. Retain Fiji's existing mechanics and clock for regression.
 - DEFERRED: milestone-grant experiment on `feat/strategic-milestone-grants`; do not merge or extend solely to increase decision density. Reconsider only when a reviewed scenario requires it.
+
+## COIN-informed faction interaction foundation
+
+Author-approved design direction: factions pursue their own asymmetric goals, with alignment, neutrality or conflict arising between particular goals in context. Draw design lessons from GMT's People Power (XI), A Distant Plain (III) and Fire in the Lake (IV): distinct objectives, coupled consequences, constrained opportunities, independent actors and periodic reassessment. Do not port card decks, eligibility tracks, tactical operations, universal support ratings or non-player flowcharts.
+
+| Priority | Status | Increment |
+|---|---|---|
+| P1 | WIP | Optional actor strategy: motivation and ordered existing objective IDs, exposed through actor-local observations and model packets; validation and delayed-report tests added. |
+| P1 | NEXT | Concrete civilian cross-faction commitments and coupled effects, using existing state and replay. Demonstrate an actual trade-off rather than independent parallel projects. |
+| P1 | PENDING | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
+| P1 | PENDING | Dramatic decision presentation and downstream reassessment; qualify divergent outcomes in author-led play. |
+| P2 | DEFERRED | Additional mechanics absent a demonstrated scenario requirement. |
+
+The referee interprets goal interactions from actor-visible circumstances. Do not persist a universal alignment matrix or infer private motivations as public fact. Priority order guides qualitative judgment, not a numerical utility function. Existing objectives retain their independent observed success criteria. Factions may achieve overlapping objectives; no required zero-sum winner.
 
 ## NEXT — Fallout Period coalition consim
 
