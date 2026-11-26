@@ -111,3 +111,7 @@ PR #25 passed CI and merged. Source qualification indicates that existing narrat
 ## External pilot verification increment
 
 PR #26 passed CI and merged. An external private civilian pilot and its verification script/workflow have been staged in the private source repository. Source checkout is pinned separately from the runner and pilot revision. The verification checks deterministic compilation, checkpoint replay, and illustrative outcome differences. No private material is included here. Private workflow execution has not been observed; numerical calibration remains unverified. This is a status update, not a new runner implementation.
+
+## External pilot execution verified
+
+Private CI completed successfully; job output confirms two evidence references, deterministic compilation, replay and expected illustrative civilian outcomes with resource accounting. Zero stale references relative to the pinned source checkout; this does not establish freshness against current main. Private pilot and public status PRs merged. Numerical calibration remains false. No private identifiers or source content copied here.
