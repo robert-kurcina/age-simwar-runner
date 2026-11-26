@@ -4,7 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 from private_play import inventory, perspectives, start, update, view, verify, briefing
-from runner import save
+from runner import save, digest
+from player_requests import packet, prompt, validate_proposal, confirm
 
 
 class PrivatePlayTest(unittest.TestCase):
@@ -63,7 +64,24 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(opening["context"][0]["id"], "relief-context")
             self.assertEqual(opening["context"][0]["classification"], "canonical")
             self.assertNotIn("path", opening["context"][0])
-            session = update(session, "deliver_aid", 1)
+            exchange = packet(session, "Please deliver aid.")
+            response = {"packet_id": exchange["packet_id"], "action": "deliver_aid"}
+            original = digest(session)
+            self.assertIn("available_requests", prompt(exchange))
+            self.assertEqual(validate_proposal(session, exchange, response)["status"],
+                             "requires_confirmation")
+            self.assertEqual(digest(session), original)
+            self.assertEqual(validate_proposal(session, exchange, {**response, "action": None})["status"],
+                             "unresolved")
+            with self.assertRaises(ValueError):
+                validate_proposal(session, exchange, {**response, "action": "unsupported"})
+            with self.assertRaises(ValueError):
+                confirm(session, exchange, response, "wrong")
+            session = confirm(session, exchange, response, "deliver_aid")
+            self.assertEqual(session["state"]["values"]["households_assisted"], 0)
+            with self.assertRaisesRegex(ValueError, "stale"):
+                validate_proposal(session, exchange, response)
+            session = update(session, turns=1)
             self.assertEqual(briefing(session)["kind"], "turn")
             self.assertEqual(briefing(session)["elapsed_minutes"], 60)
             save(root / "session.json", session)
