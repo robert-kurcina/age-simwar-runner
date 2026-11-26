@@ -158,10 +158,17 @@ document.getElementById('load-map').addEventListener('click', function () {
    if(token!==attempt)return;
    if(!finished && tileLoaded===0){fail('Geographic tiles unavailable. Retry when ready.');return;}
    if(!finished)ready(tileErrors?'Map loaded; some tiles unavailable.':'Map loaded.');
-   else if(activeMap===map && tileErrors)show('ready','Some geographic tiles unavailable.');
+   else if(activeMap===map)show('ready',tileErrors?'Some geographic tiles unavailable.':'Map loaded.');
   });
-  tiles.on('loading',()=>{tileErrors=0;tileLoaded=0;if(finished && activeMap===map)show('loading','Loading map tiles…');});
-  tiles.on('load',()=>{if(finished && activeMap===map)show('ready',tileErrors?'Some geographic tiles unavailable.':'Map loaded.');});
+  let refreshTimer;
+  tiles.on('loading',()=>{
+   tileErrors=0;tileLoaded=0;
+   if(finished && activeMap===map){
+    show('loading','Loading map tiles…');clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(()=>{if(activeMap===map)show('ready','Some tiles are taking longer than expected.');},20000);
+   }
+  });
+  tiles.on('load',()=>clearTimeout(refreshTimer));
   tiles.addTo(map);
   const names = L.layerGroup().addTo(map), measurements = L.layerGroup().addTo(map);
   L.control.layers({'Reference map':tiles}, {'Named locations':names,'Measurements':measurements}).addTo(map);
