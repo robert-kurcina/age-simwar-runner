@@ -1,0 +1,549 @@
+{
+  "version": 2,
+  "setting": "Fear!",
+  "resolution": "dxd",
+  "start": "1926-08-28T08:00:00",
+  "end": "1927-03-20T23:59:00",
+  "max_turns": 20,
+  "opening": "You maintain the Ram Island light. Your logbook, the station's daily routine and your uncle's letter are familiar anchors in an increasingly unsettling isolation.",
+  "start_location": "Lighthouse Tower",
+  "locations": [
+    "Lighthouse Tower",
+    "Keeper's Cottage",
+    "Rampart Landing",
+    "Sheep Barn",
+    "Southeast Shoreline",
+    "Storage Warehouse"
+  ],
+  "observe_minutes": 14400,
+  "resources": {
+    "cash_cents": 1750
+  },
+  "relationships": {
+    "matteo": 0
+  },
+  "npcs": {
+    "matteo": {
+      "source_name": "Matteo",
+      "public_role": "Local farmer",
+      "location": "Rampart Landing",
+      "known_topics": [
+        "delivery_account"
+      ],
+      "reference_rating": 3
+    }
+  },
+  "dxd": {
+    "provenance": "Provisional ordinary-human AGE character adaptation; hidden fictional ancestry does not imply quantified supernatural abilities. Trade, body indices, nine original rolls and skills are explicit assumptions.",
+    "attributes": {
+      "CCA": 8,
+      "RCA": 8,
+      "REF": 8,
+      "INT": 9,
+      "KNO": 9,
+      "PRE": 6,
+      "POW": 8,
+      "STR": 8,
+      "FOR": 8
+    },
+    "skills": {
+      "Observation": 2,
+      "Station keeping": 2,
+      "Interview": 1
+    },
+    "traits": {},
+    "favor": {
+      "initial": 3,
+      "maximum": 1,
+      "desired": {
+        "routine": 0,
+        "minor": 0,
+        "important": 1,
+        "critical": 1
+      },
+      "emicted": true
+    },
+    "inspiration": {
+      "enabled": true
+    },
+    "npc_attributes": {
+      "matteo": {
+        "CCA": 8,
+        "RCA": 7,
+        "REF": 7,
+        "INT": 7,
+        "KNO": 7,
+        "PRE": 10,
+        "POW": 8,
+        "STR": 9,
+        "FOR": 9
+      }
+    },
+    "inactive_major_attributes": {
+      "Uncle Alistair": {
+        "CCA": 8,
+        "RCA": 8,
+        "REF": 7,
+        "INT": 9,
+        "KNO": 10,
+        "PRE": 10,
+        "POW": 11,
+        "STR": 8,
+        "FOR": 8
+      },
+      "Fisherman": {
+        "CCA": 9,
+        "RCA": 8,
+        "REF": 8,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 7,
+        "POW": 10,
+        "STR": 9,
+        "FOR": 9
+      },
+      "Lighthouse Tender Crew": {
+        "CCA": 7,
+        "RCA": 7,
+        "REF": 7,
+        "INT": 7,
+        "KNO": 7,
+        "PRE": 7,
+        "POW": 7,
+        "STR": 8,
+        "FOR": 8
+      }
+    },
+    "body_profiles": {
+      "pc": {
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 8,
+          "REF": 8,
+          "INT": 9,
+          "KNO": 9,
+          "PRE": 6,
+          "POW": 8,
+          "STR": 8,
+          "FOR": 8
+        },
+        "stature": 50,
+        "build": 51,
+        "trade": "Service",
+        "affinity": "INT"
+      },
+      "matteo": {
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 7,
+          "REF": 7,
+          "INT": 7,
+          "KNO": 7,
+          "PRE": 10,
+          "POW": 8,
+          "STR": 9,
+          "FOR": 9
+        },
+        "stature": 50,
+        "build": 52,
+        "trade": "Merchant",
+        "affinity": "PRE"
+      },
+      "Uncle Alistair": {
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 8,
+          "REF": 7,
+          "INT": 9,
+          "KNO": 10,
+          "PRE": 10,
+          "POW": 11,
+          "STR": 8,
+          "FOR": 8
+        },
+        "stature": 49,
+        "build": 50,
+        "trade": "Service",
+        "affinity": "POW"
+      },
+      "Fisherman": {
+        "attribute_rolls": {
+          "CCA": 9,
+          "RCA": 8,
+          "REF": 8,
+          "INT": 8,
+          "KNO": 8,
+          "PRE": 7,
+          "POW": 10,
+          "STR": 9,
+          "FOR": 9
+        },
+        "stature": 51,
+        "build": 53,
+        "trade": "Mariner",
+        "affinity": "POW"
+      },
+      "Lighthouse Tender Crew": {
+        "attribute_rolls": {
+          "CCA": 7,
+          "RCA": 7,
+          "REF": 7,
+          "INT": 7,
+          "KNO": 7,
+          "PRE": 7,
+          "POW": 7,
+          "STR": 8,
+          "FOR": 8
+        },
+        "stature": 50,
+        "build": 51,
+        "trade": "Mariner",
+        "affinity": "STR"
+      }
+    }
+  },
+  "actions": [
+    {
+      "id": "maintain_light",
+      "label": "Maintain the light and record the station routine",
+      "location": "Lighthouse Tower",
+      "minutes": 14400,
+      "repeatable": true,
+      "recovery": {
+        "restful": false
+      },
+      "grant": [
+        "station_record"
+      ]
+    },
+    {
+      "id": "watch_shore",
+      "label": "Observe the shoreline from a distance and record unusual activity",
+      "location": "Southeast Shoreline",
+      "minutes": 14400,
+      "grant": [
+        "shore_record"
+      ],
+      "discovery": "Repeated nighttime traces and distant sounds suggest unusual activity along the shoreline.",
+      "test": {
+        "attribute": "INT",
+        "tn": 7,
+        "skill": "Observation",
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your years keeping a careful station log remind you to look for a pattern rather than an isolated anomaly.",
+          "consequence": "meaningful"
+        }
+      }
+    },
+    {
+      "id": "inspect_reflections",
+      "label": "Examine and record changes in your appearance",
+      "location": "Keeper's Cottage",
+      "minutes": 14400,
+      "requires_flags": [
+        "winter_signs"
+      ],
+      "grant": [
+        "physical_record"
+      ],
+      "discovery": "Your records show changes in your skin and hands that cannot readily be explained.",
+      "test": {
+        "attribute": "INT",
+        "tn": 7,
+        "skill": "Observation",
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your years keeping a careful station log remind you to look for a pattern rather than an isolated anomaly.",
+          "consequence": "meaningful"
+        }
+      },
+      "morale_success": {
+        "kind": "shock",
+        "trigger": "horrifying",
+        "inspiration": {
+          "tag": "composure",
+          "memory": "You draw on your experience surviving difficult circumstances during the war.",
+          "consequence": "meaningful"
+        },
+        "reaction": "The changes in your appearance leave you shaken."
+      }
+    },
+    {
+      "id": "talk_matteo",
+      "label": "Ask Matteo during the late-autumn delivery period about the unusual parcel",
+      "location": "Rampart Landing",
+      "minutes": 7200,
+      "npc": "matteo",
+      "disclosure": "delivery_account",
+      "requires_flags": [
+        "november_delivery"
+      ],
+      "grant": [
+        "delivery_account"
+      ],
+      "discovery": "Matteo acknowledges that the unusual parcel was deliberately included in the delivery.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "minor",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You recall the patience needed to obtain a clear account from another person.",
+          "consequence": "meaningful"
+        }
+      },
+      "available_from": "1926-11-26T00:00:00",
+      "available_until": "1926-12-21T00:00:00"
+    },
+    {
+      "id": "set_aside_delivery",
+      "label": "Set aside the suspicious delivery without using its contents",
+      "location": "Storage Warehouse",
+      "minutes": 7200,
+      "requires_flags": [
+        "november_delivery"
+      ],
+      "grant": [
+        "delivery_separated"
+      ],
+      "discovery": "You have retained a record of the unusual delivery and separated it from ordinary supplies.",
+      "success": {
+        "containment": 1
+      }
+    },
+    {
+      "id": "find_journal",
+      "label": "Search the cottage for your uncle's records",
+      "location": "Keeper's Cottage",
+      "minutes": 14400,
+      "requires_flags": [
+        "physical_record"
+      ],
+      "grant": [
+        "journal_found"
+      ],
+      "discovery": "You discover your uncle's hidden journal beneath the floorboards.",
+      "test": {
+        "attribute": "INT",
+        "tn": 10,
+        "skill": "Observation",
+        "significance": "important",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your years keeping a careful station log remind you to look for a pattern rather than an isolated anomaly.",
+          "consequence": "meaningful"
+        }
+      }
+    },
+    {
+      "id": "compare_journal",
+      "label": "Compare your uncle's account with your own recorded changes",
+      "location": "Keeper's Cottage",
+      "minutes": 14400,
+      "requires_flags": [
+        "journal_found",
+        "physical_record"
+      ],
+      "grant": [
+        "ancestry_understood"
+      ],
+      "discovery": "The journal describes inherited changes matching your own observations. You understand that your uncle concealed the family's unusual ancestry.",
+      "test": {
+        "attribute": "INT",
+        "tn": 7,
+        "skill": "Observation",
+        "significance": "important",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your years keeping a careful station log remind you to look for a pattern rather than an isolated anomaly.",
+          "consequence": "meaningful"
+        }
+      },
+      "morale_success": {
+        "kind": "shock",
+        "trigger": "amazement",
+        "inspiration": {
+          "tag": "composure",
+          "memory": "You draw on your experience surviving difficult circumstances during the war.",
+          "consequence": "irreversible"
+        },
+        "reaction": "The implications of your family's history overwhelm your former understanding of yourself.",
+        "cosmic_failure": {
+          "revelation": "My family's concealed ancestry is manifesting in my own body.",
+          "disability": "Paranoid"
+        }
+      }
+    },
+    {
+      "id": "secure_refuge",
+      "label": "Arrange a protected place within the station and preserve ordinary supplies",
+      "location": "Lighthouse Tower",
+      "minutes": 14400,
+      "requires_flags": [
+        "journal_found"
+      ],
+      "grant": [
+        "sanctuary"
+      ],
+      "test": {
+        "attribute": "KNO",
+        "tn": 7,
+        "skill": "Station keeping",
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your years keeping a careful station log remind you to look for a pattern rather than an isolated anomaly.",
+          "consequence": "meaningful"
+        }
+      },
+      "success": {
+        "containment": 1
+      }
+    },
+    {
+      "id": "stabilize_condition",
+      "label": "Follow the journal's protective routine within the secured refuge",
+      "location": "Lighthouse Tower",
+      "minutes": 7200,
+      "requires_flags": [
+        "ancestry_understood",
+        "sanctuary"
+      ],
+      "grant": [
+        "stabilization_attempted"
+      ],
+      "arrest_progression": true,
+      "test": {
+        "attribute": "KNO",
+        "skill": "Station keeping",
+        "tn": 10,
+        "significance": "important",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You remember the steady discipline required to keep the station functioning in difficult weather.",
+          "consequence": "meaningful"
+        }
+      }
+    },
+    {
+      "id": "rest_station",
+      "label": "Rest within the secured station",
+      "location": "Lighthouse Tower",
+      "minutes": 14400,
+      "repeatable": true,
+      "requires_flags": [
+        "sanctuary"
+      ],
+      "recovery": {
+        "restful": true,
+        "safe": true
+      }
+    },
+    {
+      "id": "prepare_logbook",
+      "label": "Compile the logbook and supporting records into a coherent account",
+      "location": "Keeper's Cottage",
+      "minutes": 14400,
+      "requires": 2,
+      "grant": [
+        "written_account"
+      ],
+      "requires_flags": [
+        "journal_found"
+      ]
+    },
+    {
+      "id": "preserve_logbook",
+      "label": "Secure your written account and conclude the investigation",
+      "location": "Lighthouse Tower",
+      "minutes": 7200,
+      "requires_flags": [
+        "written_account",
+        "sanctuary"
+      ],
+      "grant": [
+        "account_entrusted"
+      ],
+      "terminal": true
+    },
+    {
+      "id": "request_relief",
+      "label": "Request relief at the next scheduled supply contact",
+      "location": "Rampart Landing",
+      "minutes": 7200,
+      "requires_flags": [
+        "spring_contact"
+      ],
+      "terminal": true
+    }
+  ],
+  "events": [
+    {
+      "id": "autumn",
+      "at": "1926-10-01T00:00:00",
+      "observation": "Autumn arrives. The solitude and troubling dreams have become increasingly noticeable."
+    },
+    {
+      "id": "winter",
+      "at": "1926-11-15T00:00:00",
+      "grant": [
+        "winter_signs"
+      ],
+      "observation": "Winter approaches. Unfamiliar changes in your surroundings and appearance warrant attention.",
+      "stage": 2,
+      "manifestation": "Your skin has developed persistent crystalline deposits."
+    },
+    {
+      "id": "delivery",
+      "at": "1926-11-26T00:00:00",
+      "grant": [
+        "november_delivery"
+      ],
+      "observation": "An unusual parcel arrives with the late-November delivery."
+    },
+    {
+      "id": "new_year",
+      "at": "1927-01-01T00:00:00",
+      "observation": "The new year begins. Your unexplained symptoms have become harder to dismiss.",
+      "stage": 3,
+      "manifestation": "The physical changes have become more pronounced, particularly when under strain."
+    },
+    {
+      "id": "spring",
+      "at": "1927-03-01T00:00:00",
+      "grant": [
+        "spring_contact"
+      ],
+      "observation": "A spring supply contact is approaching; you can request relief from the station.",
+      "stage": 4,
+      "manifestation": "Your sense of identity is increasingly difficult to reconcile with the changes you have recorded."
+    }
+  ],
+  "ending_flags": {
+    "account_prepared": "written_account",
+    "account_entrusted": "account_entrusted",
+    "ancestry_understood": "ancestry_understood",
+    "delivery_separated": "delivery_separated",
+    "stabilization_attempted": "stabilization_attempted"
+  },
+  "ending_text": {
+    "preserve_logbook": "Your account is secured at the station. Its discovery by others and your future remain uncertain.",
+    "request_relief": "You request relief through the supply contact. The response and your future remain uncertain.",
+    "limit": "The investigation reaches its limit. Your records and unresolved circumstances remain as they stand."
+  },
+  "progression": {
+    "initial_stage": 1,
+    "provenance": "Calendar phase interpretation of source stages; source also gives a conflicting turn-based cadence. Arrest is provisional, requires documented knowledge and sanctuary; no reversal."
+  }
+}

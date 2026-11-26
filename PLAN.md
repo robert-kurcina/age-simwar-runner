@@ -12,7 +12,7 @@ DONE on main: four public strategic fixtures, Boothbay trial, actor observations
 
 DONE: PR #66 merged scenario/participant profiles; combined Tests 45801596447 and Chat runtime bundle 45801596576 passed. WIP milestone 1: Boothbay v4 binds active NPCs to native authored records, records encounters and earned disclosures, and uses authored Willpower for a provisional disclosure threshold adjustment. PR #67 merged; v3 checkpoints require restart.
 
-PR #68 merged Castine trial v1 using the existing NPC, event and conclusion mechanics; actual Chat qualification remains pending. Imported, not playable: Ram Island. PR #69 merged bounded DXD Test kernel. WIP: Boothbay v14 integrates hidden DXD Tests, complete twelve-Attribute PC and major NPC adaptations, a bounded physical Test, finite automatic Favor, and DXD Fatigue/Stress/Weariness with derived thresholds and recovery, and automatic Inspiration at 33%/67% with three-Turn cooldown; Castine v7 migrates to the same DXD resolver; Boothbay v14 removes legacy condition configuration; derived SIZ/MOV/ZED now use explicit body and Affinity inputs; ordinary human physical baselines and Emicted Favor implemented; bounded multi-source modifier gathering integrated; bounded Morale outcomes and Boothbay Shock encounter implemented; explicit cosmic acquisition and one paired Disability kernel added (no scenario trigger yet); old narrative checkpoints require restart; CI and actual play pending. see [DXD migration](docs/dxd-migration.md). Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
+PR #68 merged Castine trial v1 using the existing NPC, event and conclusion mechanics; actual Chat qualification remains pending. Ram Island v2 bounded playable trial added; actual play qualification pending. PR #69 merged bounded DXD Test kernel. WIP: Boothbay v14 integrates hidden DXD Tests, complete twelve-Attribute PC and major NPC adaptations, a bounded physical Test, finite automatic Favor, and DXD Fatigue/Stress/Weariness with derived thresholds and recovery, and automatic Inspiration at 33%/67% with three-Turn cooldown; Castine v7 migrates to the same DXD resolver; Boothbay v14 removes legacy condition configuration; derived SIZ/MOV/ZED now use explicit body and Affinity inputs; ordinary human physical baselines and Emicted Favor implemented; bounded multi-source modifier gathering integrated; bounded Morale outcomes and Boothbay Shock encounter implemented; explicit cosmic acquisition and one paired Disability kernel added, exercised by Ram Island; old narrative checkpoints require restart; PR #77 v1 CI passed (Tests 45812489981 and bundle 45812490362); v2 calendar progression changes await CI; actual Chat qualification pending. see [DXD migration](docs/dxd-migration.md). Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
 
 ## NEXT — five milestones
 
@@ -28,7 +28,7 @@ Milestones are ordered by dependency, not separate infrastructure projects. Use 
 
 ## Practical content queue
 
-- First: qualify Boothbay v14 and Castine v7, then complete Ram Island using DXD. Preserve legacy Mythos catalog ID until migration is complete. Do not port the entire DXD ruleset.
+- First: qualify Boothbay v14 and Castine v7, and Ram Island v2 using DXD. Preserve legacy Mythos catalog ID until migration is complete. Do not port the entire DXD ruleset.
 - In parallel where useful: use an existing civilian scenario to exercise participant behavior and persistent background events.
 - Then qualify one authorized SH44SER recovery scenario in ordinary Chat; retain Conflagration inventory without claiming unsupported scenarios are playable.
 - Add one bounded Sarna Len scenario only after useful source mappings and applicable DXD rules are established. Great War and Solo City are supporting sources, not additional engines to port.
@@ -47,6 +47,10 @@ Use vault-age as terminology/design reference, not an implementation checklist. 
 Run existing regression tests plus focused scenario tests; no new test framework. Demonstrate a full game before claiming playable. Test same-input replay, alternative decisions, independent perspectives, ignored events, repeated NPC encounters, resource exhaustion, and time-limit/early endings where supported. Confirm actual Python execution and actor-visible output; do not substitute generated prose for adjudication. Keep session files within the thread; cross-thread persistence is optional.
 
 CI success is evidence of CI execution, not independent Chat play or private integration. Earlier local qualification claims in historical plans are retained as historical statements, not independently reverified in this reset.
+
+## Equipment reference (deferred until needed)
+
+Use the author-review modern equipment draft in `meta-dxd` at `a9dd1966a4a3d68db9595209c82c3664354d9176` as a working reference, not accepted canon. Fear! historical names and aliases belong to setting vocabulary and must be available in the relevant period. Map to shared abstract DXD classifications only when a scenario needs them; no additional equipment subsystem now. SH44SER retains native rules.
 
 ## DEFERRED / NON-GOALS
 

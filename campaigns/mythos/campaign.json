@@ -22,7 +22,8 @@
       "id": "ram-island",
       "title": "The Keeper at Ram Island",
       "file": "ram-island.json",
-      "status": "imported"
+      "status": "trial",
+      "rules": "ram-island-trial.json"
     }
   ],
   "setting": "Fear!"

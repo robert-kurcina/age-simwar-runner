@@ -58,6 +58,9 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if "progression" in rules:
+        state["progression"] = {"stage": rules["progression"]["initial_stage"],
+                                "arrested": False, "changes": []}
     if rules.get("resolution") == "dxd":
         cfg = rules["dxd"]
         bodies = cfg["body_profiles"]
@@ -92,10 +95,13 @@ def options(state, rules):
                   and all(f in state["flags"] for f in a.get("requires_flags", []))
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
                   and ("npc" not in a or state["npcs"][a["npc"]]["location"] == a.get("location"))
+                  and (not a.get("available_from") or state["time"] >= a["available_from"])
+                  and (not a.get("available_until") or state["time"] < a["available_until"])
                   and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
-                      {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":30}]
+                      {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
     return [a for a in candidates if a["minutes"] <= remaining
+            and (not a.get("available_until") or datetime.fromisoformat(state["time"]) + timedelta(minutes=a["minutes"]) <= datetime.fromisoformat(a["available_until"]))
             and all(state["resources"][k] >= v for k, v in a.get("cost", {}).items())]
 
 def resolve_dxd(state, rules, action):
@@ -116,7 +122,8 @@ def resolve_dxd(state, rules, action):
     emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
                                  enabled=policy.get("emicted", False))
     psychology = dxd_psychology.effects(pc["morale"], spec.get("psychology_context"))
-    components = [attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"]] + other
+    progression_dm = -(state["progression"]["stage"] - 1) if "progression" in state and spec["attribute"] == "POW" else 0
+    components = [attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
     net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"]
@@ -153,7 +160,7 @@ def resolve_dxd(state, rules, action):
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
-                        "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology},
+                        "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
                         "gathered": gathered, "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
                         "initial_result": first, "inspired": inspired is not None,
@@ -170,6 +177,8 @@ def step(state, action):
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
     state["turn"] += 1
+    if "progression" in state:
+        advance_events(state, rules, elapsed)
     state["time"] = elapsed.isoformat()
     state["location"] = a.get("location", state["location"])
     if action != "observe" and not a.get("repeatable"):
@@ -184,6 +193,9 @@ def step(state, action):
     if "test" in a:
         success = resolve_dxd(state, rules, a)
     if success:
+        if a.get("arrest_progression"):
+            state["progression"]["arrested"] = True
+            state["progression"]["changes"].append({"at": state["time"], "kind": "arrest", "stage": state["progression"]["stage"]})
         if "disclosure" in a:
             npc["disclosed"].append(a["disclosure"])
         if "discovery" in a and a["discovery"] not in state["discoveries"]:
@@ -216,11 +228,13 @@ def step(state, action):
                 event=spec["morale_event"], turn=state["turn"])
             if not reaction["passed"]:
                 state["observations"].append(hazard["reaction"])
-    for event in rules.get("events", []):
-        if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
-            state["events_seen"].append(event["id"])
-            if all(flag in state["flags"] for flag in event.get("visible_requires", [])):
-                state["observations"].append(event["observation"])
+                if "cosmic_failure" in hazard:
+                    revelation = hazard["cosmic_failure"]
+                    dxd_psychology.acquire(state["dxd"]["morale"], concerns,
+                        revelation=revelation["revelation"], understood=True, destabilized=True,
+                        disability=revelation["disability"], turn=state["turn"])
+    if "progression" not in state:
+        advance_events(state, rules, elapsed)
     state["last_result"] = {"action": action, "success": success}
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
@@ -235,6 +249,28 @@ def step(state, action):
                            "scores": scores(state, action)}
     return state
 
+def advance_events(state, rules, elapsed):
+    """Apply dated events once; long actions cannot retroactively alter earlier milestones."""
+    for event in sorted(rules.get("events", []), key=lambda e: e["at"]):
+        if event["id"] in state["events_seen"] or elapsed < datetime.fromisoformat(event["at"]):
+            continue
+        state["events_seen"].append(event["id"])
+        for flag in event.get("grant", []):
+            if flag not in state["flags"]:
+                state["flags"].append(flag)
+        progression = state.get("progression")
+        if "stage" in event:
+            if progression is None:
+                raise ValueError("stage event requires progression")
+            if not progression["arrested"] and event["stage"] > progression["stage"]:
+                progression["stage"] = event["stage"]
+                progression["changes"].append({"at": event["at"], "kind": "advance", "stage": event["stage"]})
+                state["observations"].append(event["manifestation"])
+            elif progression["arrested"]:
+                state["observations"].append("The changes previously recorded appear to have stabilized for now.")
+        if all(flag in state["flags"] for flag in event.get("visible_requires", [])):
+            state["observations"].append(event["observation"])
+
 def scores(state, action):
     # Provisional trial rubric; integer tenths avoid floating point accumulation.
     truth = min(100, 10 + 8 * len(state["discoveries"]) + (10 if "written_account" in state["flags"] else 0)
@@ -245,6 +281,8 @@ def scores(state, action):
                              - 6 * concern["fatigue"] - 6 * concern["weariness"])
     else:
         raise ValueError("unsupported narrative resolver")
+    if "progression" in state:
+        self_preserved = max(10, self_preserved - 12 * (state["progression"]["stage"] - 1))
     contained = min(100, 10 + 18 * state["containment"])
     return {"Truth Preserved": truth / 10, "Self Preserved": self_preserved / 10,
             "Horror Contained": contained / 10}
