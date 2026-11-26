@@ -52,7 +52,8 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Civic agreement requires separately designed human perspective participation.
 - Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
 - Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
-- Interactive terminal gameplay implemented over the existing private session API; targeted verification pending. Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
+- Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
+- Optional LLM narrative briefings implemented over the same local transport; targeted CI pending. Structured observations remain authoritative.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
@@ -85,6 +86,18 @@ Do not begin plugin development until the current Python/CLI engine has satisfie
 5. Consider GitHub Pages for optional documentation or reports only. No mandatory browser frontend or local installation in the remote-hosted configuration.
 
 Acceptance: a user can operate a supported civilian campaign from ChatGPT through the deployed plugin, with the same verified engine behavior as the CLI. Hosting and account eligibility must be demonstrated, not assumed.
+
+## LATE PRIORITY — Automated Scenario Exploration (author-approved)
+
+After supported scenario configurations, interactive gameplay and private continuity are stable, add an optional research mode for civilian recovery and institutional coordination. This milestone must not displace current player-facing work or block MCP delivery.
+
+1. Establish deterministic civilian participant baselines and explicit experiment assumptions before adding model-generated behavior.
+2. Explore reviewed civilian resource, service-capacity, reporting-delay and institutional cooperation variations using isolated sessions and the existing adjudication engine.
+3. Add optional LLM-controlled civilian participants with separate actor-visible context, constrained existing actions, and recorded model configuration and decisions. No unrestricted state mutation or inferred consent.
+4. Where justified, introduce seeded uncertainty distributions with documented assumptions; compare outcomes, sensitivity, and failure modes against deterministic baselines. Repeated model outputs are not independent empirical observations.
+5. Report conditional outcome distributions, uncertainty, and limitations; retain session provenance and replay. Do not treat frequency as calibrated historical probability or automatically revise canon.
+
+Acceptance: a reproducible civilian experiment compares reviewed scenarios and participant policies, with outcome summaries clearly distinguished from verified facts. Operational military targeting, escalation, casualty optimization and autonomous combat decision support remain outside executable scope.
 
 ## DEFERRED
 - Private campaign content belongs in an external private package, not this public repository. Recover its original stage and scenario inventory, participant perspectives, chronology, objectives and continuity requirements from authorized private sources; record unknowns rather than inventing canon.
