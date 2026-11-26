@@ -2,10 +2,8 @@
 import json
 import math
 from html import escape
+from copy import deepcopy
 from source_compiler import checked_date
-
-CSS = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">'
-JS = '<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>'
 
 
 def coords(value):
@@ -46,7 +44,7 @@ def reviewed_map(entry, compiled, date):
             raise ValueError("future map location")
     # All map viewport fields are assumed public to the configured actors.
     # Referee authors must not encode a hidden location in the viewport.
-    return config
+    return deepcopy(config)
 
 
 def projection(session):
