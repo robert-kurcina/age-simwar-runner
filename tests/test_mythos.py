@@ -94,6 +94,11 @@ class MythosTrialTests(unittest.TestCase):
             self.assertIn("written_account", s["flags"])
             self.assertEqual(s["containment"], 0)
             s = choose(s, "leave_copy")
+            if not s["last_result"]["success"]:
+                self.assertIsNone(s["ending"])
+                self.assertIn("account_custody_declined", s["flags"])
+                mythos.verify(s)
+                continue
             self.assertTrue(s["ending"]["account_entrusted"])
             self.assertFalse(s["ending"]["account_relayed"])
             self.assertEqual(s["ending"]["scores"]["Horror Contained"], 1.0)
@@ -859,6 +864,40 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(test["inputs"]["target_raw"], s["npcs"]["burroughs"]["dxd_attributes"]["INT"])
         self.assertIsNotNone(test["result"]["opponent"])
         mythos.verify(s)
+
+    def test_eleanor_commitments_have_consequential_outcomes(self):
+        # Isolate the authored stakes from the evidence-route RNG. Exercise
+        # real Tests and state effects for each outcome, not mocked dice.
+        _, rules = mythos.load("boothbay")
+        for action_id, success_flag, refusal_flag, prerequisites in (
+            ("warn_eleanor", "local_warning", "warning_declined",
+             ["water_warning", "tide_clue"]),
+            ("warn_from_ecology", "local_warning", "warning_declined",
+             ["water_risk_known", "ecological_tide_pattern"]),
+            ("leave_copy", "account_entrusted", "account_custody_declined",
+             ["written_account", "eleanor_account"]),
+        ):
+            seen = set()
+            for seed in range(200):
+                s = mythos.initial("boothbay", seed)
+                s["flags"].extend(prerequisites)
+                after = mythos.step(s, action_id)
+                passed = after["last_result"]["success"]
+                seen.add(passed)
+                self.assertEqual(success_flag in after["flags"], passed)
+                self.assertEqual(refusal_flag in after["flags"], not passed)
+                if action_id == "leave_copy":
+                    self.assertEqual(after["ending"] is not None, passed)
+                    if not passed:
+                        self.assertIn("written_account", after["flags"])
+                        self.assertIn("depart", [a["id"] for a in mythos.options(after, rules)])
+                else:
+                    self.assertEqual(after["containment"], 2 if passed else 0)
+                    self.assertNotIn("warning_distributed", after["flags"])
+                self.assertNotIn(action_id, [a["id"] for a in mythos.options(after, rules)])
+                if len(seen) == 2:
+                    break
+            self.assertEqual(seen, {True, False}, action_id)
 
     def test_warning_confirmation_has_bounded_followthrough(self):
         # Provisional scenario payoff: confirmation follows an independently
