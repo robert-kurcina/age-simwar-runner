@@ -50,9 +50,9 @@ class MythosTrialTests(unittest.TestCase):
 
     def test_resources_and_recovery(self):
         s = mythos.initial("boothbay", 42)
-        for _ in range(4):
+        for _ in range(8):
             s = mythos.step(s, "observe")
-        self.assertEqual(s["fatigue"], 1)
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
         s = mythos.step(s, "buy_meal")
         self.assertEqual(s["resources"]["cash_cents"], 2125)
         self.assertEqual(s["fatigue"], 0)
@@ -180,3 +180,89 @@ class MythosTrialTests(unittest.TestCase):
                 break
         else:
             self.fail("No estate access")
+
+    def test_boothbay_dxd_favor_and_replay(self):
+        a = mythos.initial("boothbay", 42)
+        self.assertEqual(a["dxd"]["favor"], 3)
+        self.assertEqual(a["dxd"]["attributes"]["INT"], 9)
+        a = mythos.step(a, "visit_elias")
+        self.assertEqual(a["dxd"]["favor"], 2)
+        t = a["dxd"]["tests"][0]
+        self.assertEqual(t["inputs"]["favor"], 1)
+        self.assertEqual(t["result"]["tn"], 10)
+        b = mythos.step(mythos.initial("boothbay", 42), "visit_elias")
+        self.assertEqual(a, b)
+        self.assertNotIn("dxd", mythos.view(a))
+        self.assertNotIn("favor", str(mythos.view(a)))
+        self.assertEqual(mythos.view(a)["setting"], "Fear!")
+        mythos.verify(a)
+        a["dxd"]["favor"] += 1
+        with self.assertRaisesRegex(ValueError, "replay"):
+            mythos.verify(a)
+
+    def test_boothbay_no_test_no_favor_cost(self):
+        s = mythos.initial("boothbay", 42)
+        for _ in range(4):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["dxd"]["tests"], [])
+        self.assertEqual(s["dxd"]["favor"], 3)
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
+        mythos.verify(s)
+
+    def test_full_dxd_character_records_and_physical_test(self):
+        from age_runtime.core import dxd
+        s = mythos.initial("boothbay", 42)
+        expected = set(dxd.ATTRIBUTES)
+        self.assertEqual(set(s["dxd"]["attributes"]), expected)
+        for npc in s["npcs"].values():
+            self.assertEqual(set(npc["dxd_attributes"]), expected)
+        self.assertEqual(len(s["dxd"]["inactive_major_attributes"]), 3)
+        for record in s["dxd"]["inactive_major_attributes"].values():
+            self.assertEqual(set(record), expected)
+        self.assertEqual(mythos.view(s)["contacts"], [])
+        s = mythos.step(s, "clear_dock_obstruction")
+        record = s["dxd"]["tests"][-1]
+        self.assertEqual(record["components"]["attribute"], dxd.attribute_dm(s["dxd"]["attributes"]["STR"]))
+        self.assertEqual(s["discoveries"], [])
+        self.assertEqual(s["dxd"]["favor"], 3)
+        mythos.verify(s)
+        self.assertNotIn("inactive_major_attributes", str(mythos.view(s)))
+        with self.assertRaises(ValueError):
+            dxd.validate_attributes({"INT": 9})
+        bad = dict(s["dxd"]["attributes"], SIZ=True)
+        with self.assertRaises(ValueError):
+            dxd.validate_attributes(bad)
+
+    def test_boothbay_concerns_are_private_and_activity_specific(self):
+        s = mythos.initial("boothbay", 42)
+        s = mythos.step(s, "clear_dock_obstruction")
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 1)
+        s = mythos.step(s, "rest_room")
+        self.assertEqual(s["dxd"]["concerns"]["fatigue"], 0)
+        self.assertNotIn("capacity", mythos.view(s)["condition"])
+        self.assertNotIn("sanity", mythos.view(s)["condition"])
+        mythos.verify(s)
+
+    def test_inspiration_automatic_and_replay(self):
+        import copy
+        from age_runtime.core import dxd_inspiration
+        _, rules = mythos.load("boothbay")
+        action = copy.deepcopy(next(a for a in rules["actions"] if a["id"] == "inspect_docks"))
+        action["test"]["tn"] = 16
+        for seed in range(100):
+            s = mythos.initial("boothbay", seed)
+            s["turn"] = 1
+            mythos.resolve_dxd(s, rules, action)
+            self.assertEqual(len(s["dxd"]["inspirations"]), 1)
+            self.assertEqual(s["dxd"]["concerns"]["weariness"], 1)
+            self.assertTrue(s["dxd"]["tests"][-1]["inspired"])
+            self.assertEqual(len(s["dxd"]["tests"][-1]["result"]["active"]["kept"]), 3)
+            self.assertEqual(len(s["dxd"]["tests"][-1]["initial_result"]["active"]["kept"]), 2)
+            s["turn"] = 2
+            mythos.resolve_dxd(s, rules, action)
+            self.assertEqual(len(s["dxd"]["inspirations"]), 1)
+            self.assertEqual(s["dxd"]["tests"][-1]["components"]["inspiration"], 1)
+            self.assertNotIn("probability", str(mythos.view(s)))
+            break
+        original = mythos.step(mythos.initial("boothbay", 42), "inspect_docks")
+        mythos.verify(original)

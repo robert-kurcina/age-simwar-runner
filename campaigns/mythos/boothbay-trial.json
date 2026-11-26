@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 8,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -18,23 +18,32 @@
       "label": "Examine the waterfront",
       "location": "Harbor Docks",
       "minutes": 60,
-      "attribute": "Investigation",
-      "tn": 7,
       "discovery": "A census badge lies near the waterfront.",
-      "failure": {
-        "sanity": 1
-      },
+      "failure": {},
       "grant": [
         "badge"
-      ]
+      ],
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your experience as a journalist reminds you to look again before drawing a conclusion.",
+          "consequence": "meaningful"
+        }
+      },
+      "concern_failure": {
+        "stress": 3
+      }
     },
     {
       "id": "talk_eleanor",
       "label": "Ask the waitress about local events",
       "location": "Harbor Diner",
       "minutes": 45,
-      "attribute": "Persuasion",
-      "tn": 7,
       "discovery": "Eleanor says her brother disappeared last month.",
       "success": {},
       "relationship": {
@@ -44,34 +53,53 @@
         "eleanor_account"
       ],
       "npc": "eleanor",
-      "disclosure": "eleanor_account"
+      "disclosure": "eleanor_account",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "minor",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You recall that listening carefully is part of your work as a reporter.",
+          "consequence": "meaningful"
+        }
+      }
     },
     {
       "id": "inspect_room",
       "label": "Examine the abandoned luggage",
       "location": "Sailor's Rest Boarding House",
       "minutes": 60,
-      "attribute": "Investigation",
-      "tn": 7,
       "discovery": "The abandoned suitcase contains census paperwork.",
-      "failure": {
-        "sanity": 1
-      },
+      "failure": {},
       "grant": [
         "paperwork"
-      ]
+      ],
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You recall how careful observation has served you in your work as a journalist.",
+          "consequence": "meaningful"
+        }
+      },
+      "concern_failure": {
+        "stress": 3
+      }
     },
     {
       "id": "visit_elias",
       "label": "Speak with the retired fisherman",
       "location": "Creek Inlet South",
       "minutes": 90,
-      "attribute": "Persuasion",
-      "tn": 10,
       "discovery": "Elias has kept a journal of unusual coastal events.",
-      "failure": {
-        "sanity": 1
-      },
+      "failure": {},
       "success": {},
       "relationship": {
         "elias": 1
@@ -80,7 +108,23 @@
         "journal"
       ],
       "npc": "elias",
-      "disclosure": "journal"
+      "disclosure": "journal",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "npc_adversity": 1,
+        "significance": "important",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You remember the patience required when interviewing reluctant sources.",
+          "consequence": "meaningful"
+        }
+      },
+      "concern_failure": {
+        "stress": 3
+      }
     },
     {
       "id": "report",
@@ -113,8 +157,10 @@
       "cost": {
         "cash_cents": 75
       },
-      "success": {
-        "fatigue": -2
+      "success": {},
+      "recovery": {
+        "restful": true,
+        "safe": false
       }
     },
     {
@@ -126,9 +172,10 @@
       "cost": {
         "cash_cents": 150
       },
-      "success": {
-        "fatigue": -3,
-        "sanity": -1
+      "success": {},
+      "recovery": {
+        "restful": true,
+        "safe": false
       }
     },
     {
@@ -139,8 +186,8 @@
       "cost": {
         "flask_servings": 1
       },
-      "success": {
-        "sanity": -1,
+      "success": {},
+      "concern_success": {
         "fatigue": 1
       }
     },
@@ -155,8 +202,6 @@
       "requires_relationship": {
         "eleanor": 1
       },
-      "attribute": "Persuasion",
-      "tn": 7,
       "discovery": "Eleanor describes disturbing physical changes in her brother before he vanished.",
       "grant": [
         "water_warning"
@@ -164,11 +209,25 @@
       "relationship": {
         "eleanor": 1
       },
-      "success": {
-        "sanity": 1
-      },
+      "success": {},
       "npc": "eleanor",
-      "disclosure": "water_warning"
+      "disclosure": "water_warning",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "important",
+        "relationship_bonus": "eleanor",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You draw on your experience of listening to difficult accounts without interrupting.",
+          "consequence": "meaningful"
+        }
+      },
+      "concern_success": {
+        "stress": 3
+      }
     },
     {
       "id": "read_journal",
@@ -178,14 +237,25 @@
       "requires_flags": [
         "journal"
       ],
-      "attribute": "Investigation",
-      "tn": 7,
       "discovery": "The journal records unusual changes near the harbor and repeated references to the tide.",
       "grant": [
         "tide_clue"
       ],
-      "success": {
-        "sanity": 1
+      "success": {},
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "important",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You draw upon your experience examining records as a journalist.",
+          "consequence": "meaningful"
+        }
+      },
+      "concern_success": {
+        "stress": 3
       }
     },
     {
@@ -214,14 +284,24 @@
       "requires_flags": [
         "written_account"
       ],
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "account_relayed"
       ],
       "discovery": "The keeper confirms the account has been relayed; no response has arrived.",
       "terminal": true,
-      "success": {}
+      "success": {},
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "tn": 7,
+        "significance": "critical",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You remember your responsibility as a journalist to communicate what you have learned.",
+          "consequence": "meaningful"
+        }
+      }
     },
     {
       "id": "leave_copy",
@@ -238,6 +318,29 @@
       "terminal": true,
       "discovery": "Eleanor accepts a copy of the account for safekeeping.",
       "npc": "eleanor"
+    },
+    {
+      "id": "clear_dock_obstruction",
+      "label": "Move a loose obstruction to examine the waterfront more closely",
+      "location": "Harbor Docks",
+      "minutes": 30,
+      "test": {
+        "attribute": "STR",
+        "tn": 7,
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "physical",
+          "memory": "You draw on your experience as a veteran and concentrate on the immediate task.",
+          "consequence": "routine"
+        }
+      },
+      "grant": [
+        "dock_access"
+      ],
+      "concern_always": {
+        "fatigue": 1
+      }
     }
   ],
   "conditions": {
@@ -319,6 +422,117 @@
         "journal"
       ],
       "reference_rating": 3
+    }
+  },
+  "setting": "Fear!",
+  "resolution": "dxd",
+  "dxd": {
+    "provenance": "Provisional explicit AGE character adaptations, not canonical conversion. Combat and physical ratings reflect broad source capability descriptions; unspecified size and luck use neutral or provisional ordinary human-scale indices. No inference of weight or supernatural powers.",
+    "attributes": {
+      "CCA": 8,
+      "RCA": 8,
+      "REF": 7,
+      "INT": 9,
+      "KNO": 8,
+      "PRE": 8,
+      "POW": 9,
+      "STR": 6,
+      "FOR": 7,
+      "MOV": 7,
+      "SIZ": 7,
+      "ZED": 7
+    },
+    "skills": {
+      "Investigation": 2,
+      "Interview": 1
+    },
+    "favor": {
+      "initial": 3,
+      "maximum": 1,
+      "desired": {
+        "routine": 0,
+        "minor": 0,
+        "important": 1,
+        "critical": 1
+      }
+    },
+    "npc_attributes": {
+      "eleanor": {
+        "CCA": 6,
+        "RCA": 6,
+        "REF": 8,
+        "INT": 8,
+        "KNO": 7,
+        "PRE": 9,
+        "POW": 8,
+        "STR": 6,
+        "FOR": 7,
+        "MOV": 7,
+        "SIZ": 7,
+        "ZED": 7
+      },
+      "elias": {
+        "CCA": 8,
+        "RCA": 7,
+        "REF": 7,
+        "INT": 9,
+        "KNO": 9,
+        "PRE": 7,
+        "POW": 10,
+        "STR": 9,
+        "FOR": 8,
+        "MOV": 6,
+        "SIZ": 8,
+        "ZED": 7
+      }
+    },
+    "inactive_major_attributes": {
+      "Chief Burroughs": {
+        "CCA": 9,
+        "RCA": 9,
+        "REF": 8,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 9,
+        "POW": 10,
+        "STR": 10,
+        "FOR": 10,
+        "MOV": 8,
+        "SIZ": 9,
+        "ZED": 7
+      },
+      "Mayor Gilman": {
+        "CCA": 7,
+        "RCA": 7,
+        "REF": 7,
+        "INT": 9,
+        "KNO": 9,
+        "PRE": 10,
+        "POW": 11,
+        "STR": 7,
+        "FOR": 8,
+        "MOV": 7,
+        "SIZ": 7,
+        "ZED": 7
+      },
+      "Mrs. Croft": {
+        "CCA": 7,
+        "RCA": 6,
+        "REF": 7,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 9,
+        "POW": 10,
+        "STR": 8,
+        "FOR": 8,
+        "MOV": 7,
+        "SIZ": 8,
+        "ZED": 7
+      }
+    },
+    "inspiration": {
+      "enabled": true,
+      "source": "AGE automatic policy; authored memory cues grounded in protagonist biography"
     }
   }
 }

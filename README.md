@@ -49,9 +49,9 @@ The updated archive includes START_HERE.md; older artifacts without it use the b
 | Civic Recovery — Service Review | Playable demonstration |
 | Civic Recovery — Community Assistance | Playable demonstration |
 | Civic Recovery — Civic Agreement | Playable demonstration |
-| Mythos — The Boothbay Incident | Playable bounded trial |
-| Mythos — The Salt-Stained Silence (Castine) | Bounded investigation trial; full source arc not implemented |
-| Mythos — The Keeper at Ram Island | Imported; not executable |
+| Fear! — The Boothbay Incident | Bounded DXD trial |
+| Fear! — The Salt-Stained Silence (Castine) | Bounded investigation trial; full source arc not implemented |
+| Fear! — The Keeper at Ram Island | Imported; not executable |
 | Conflagration / SH44SER | Private content; offline distribution pending |
 
 The live catalog is authoritative: run `python game.py list` in the extracted repository. Do not offer imported scenarios as playable.
