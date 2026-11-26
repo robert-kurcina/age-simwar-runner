@@ -33,3 +33,7 @@ A successful CI run or mechanical branch comparison is **not** experiential acce
 ## Stop conditions
 
 Stop and record BLOCKED (rather than improvise mechanics) if the required authorized scenario is unavailable, the engine fails verification, a rule necessary to resolve the player's action does not exist, hidden data would have to be exposed, or source revisions cannot be frozen. Preserve the last valid checkpoint. Narrative scenario qualification follows its own plan.
+
+## Consequential diplomatic decisions
+
+When the player explicitly commits to a consequential proposal, counteroffer, acceptance or refusal, record it as one Critical Decision and one negotiation command atomically. For private sessions use `python play.py private commit-decision SESSION DECISION_ID --intent "CONFIRMED INTENT" --negotiation COMMAND.json --revision REVISION`. Use `--action` instead for a conventional order, or neither for deliberate abstention. The two effect options are mutually exclusive. Do not submit the same negotiation separately or record an artificial abstention to count it. Ordinary negotiation remains available without advancing the pacing count. A negotiated commitment is not guaranteed settlement: the existing due date, counterparty consent and resource checks still decide the result. The LLM and player determine significance; the script validates the command and records the choice, rather than trying to infer dramatic value from command type.

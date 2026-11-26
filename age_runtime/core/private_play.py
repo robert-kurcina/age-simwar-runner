@@ -304,13 +304,13 @@ def model_choice(session, actor, response):
     return verify({**session, "state": state})
 
 
-def record_decision(session, revision, decision_id, intent, action=None):
+def record_decision(session, revision, decision_id, intent, action=None, *, negotiation_command=None):
     verify(session)
     if revision != digest(session):
         raise ValueError("stale session revision")
     h, state = session["header"], session["state"]
     result = commit_decision(h["compiled"]["scenario"], state, h["actor"],
-                             digest(state), decision_id, intent, action)
+                             digest(state), decision_id, intent, action, negotiation_command=negotiation_command)
     return verify({**session, "state": result})
 
 
@@ -398,7 +398,9 @@ def main(argv=None):
     decision.add_argument("session", type=Path)
     decision.add_argument("decision_id")
     decision.add_argument("--intent", required=True)
-    decision.add_argument("--action")
+    decision_effect = decision.add_mutually_exclusive_group()
+    decision_effect.add_argument("--action")
+    decision_effect.add_argument("--negotiation", type=Path, help="Confirmed negotiation command JSON")
     decision.add_argument("--revision", required=True)
     negotiation = commands.add_parser("negotiate")
     negotiation.add_argument("session", type=Path)
@@ -448,7 +450,8 @@ def main(argv=None):
             save(a.session, session)
             result = view(session)
         elif a.command == "commit-decision":
-            session = record_decision(read(a.session), a.revision, a.decision_id, a.intent, a.action)
+            session = record_decision(read(a.session), a.revision, a.decision_id, a.intent, a.action,
+                                      negotiation_command=read(a.negotiation) if a.negotiation else None)
             save(a.session, session)
             result = briefing(session)
         elif a.command == "negotiate":

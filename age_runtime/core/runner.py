@@ -148,17 +148,17 @@ def submit_request(s, state, actor_id, proposal):
         raise ValueError("model faction requires its own decision exchange")
     return _append_request(s, state, actor_id, proposal)
 
-def commit_decision(s, state, actor_id, revision, decision_id, intent, action=None):
-    """Record a confirmed consequential commitment, optionally with a legal order."""
+def commit_decision(s, state, actor_id, revision, decision_id, intent, action=None, *, negotiation_command=None):
+    """Record a consequential commitment with one order, negotiation or abstention."""
     verify_checkpoint(s, state)
     if digest(state) != revision:
         raise ValueError("stale decision revision")
-    result = _append_decision(s, state, actor_id, decision_id, intent, action)
+    result = _append_decision(s, state, actor_id, decision_id, intent, action, negotiation_command)
     verify_checkpoint(s, result)
     return result
 
 
-def _append_decision(s, state, actor_id, decision_id, intent, action):
+def _append_decision(s, state, actor_id, decision_id, intent, action, negotiation_command=None):
     if "game_length" not in s:
         raise ValueError("scenario has no decision pacing target")
     if actor_id not in s.get("actors", {}) or actor_id in s.get("model_factions", []):
@@ -171,7 +171,11 @@ def _append_decision(s, state, actor_id, decision_id, intent, action):
         raise ValueError("invalid decision intent")
     if any(r.get("decision_id") == decision_id and r["actor"] == actor_id for r in state["requests"]):
         raise ValueError("duplicate decision ID")
-    if action is None:
+    if negotiation_command is not None:
+        if action is not None:
+            raise ValueError("decision permits only one order or negotiation")
+        result = _append_negotiation(s, state, actor_id, negotiation_command, "critical_decision")
+    elif action is None:
         result = copy.deepcopy(state)
         result["requests"].append({"actor": actor_id, "action": None, "status": "abstained",
                                    "turn": state["turn"], "minute": state["minute"],
@@ -273,7 +277,7 @@ def verify_checkpoint(s, state):
                     raise ValueError("model negotiation requires model origin")
                 expected = _append_negotiation(s, expected, record["actor"], record["negotiation"], "negotiation")
             elif record.get("origin") == "critical_decision":
-                expected = _append_decision(s, expected, record["actor"], record["decision_id"], record["intent"], record["action"])
+                expected = _append_decision(s, expected, record["actor"], record["decision_id"], record["intent"], record["action"], record.get("negotiation"))
             else:
                 if record["actor"] in s.get("model_factions", []):
                     raise ValueError("model faction choice requires model origin")
