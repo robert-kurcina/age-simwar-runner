@@ -93,7 +93,17 @@ document.getElementById('load-map').addEventListener('click', function () {
   const map = L.map('game-map', image ? {crs:L.CRS.Simple,minZoom:-6,maxZoom:3} : {preferCanvas:false});
   if (image) {
    const bounds = [[-image.height,0],[0,image.width]];
-   L.imageOverlay('data:image/png;base64,'+image.png_base64,bounds).addTo(map);
+   const artwork = L.imageOverlay('data:image/png;base64,'+image.png_base64,bounds).addTo(map);
+   const points = L.layerGroup().addTo(map);
+   for (const item of image.annotations || []) {
+    const label = document.createElement('span');
+    label.textContent = item.label;
+    const info = document.createElement('div');
+    info.textContent = item.label + (item.hex_id ? ' · '+item.hex_id : '') + ' — ' + item.source;
+    L.circleMarker([-item.pixel[1],item.pixel[0]], {radius:7,color:'#fff',weight:2,fillColor:'#246b75',fillOpacity:1})
+      .addTo(points).bindTooltip(label).bindPopup(info);
+   }
+   L.control.layers({'Canonical artwork':artwork},{'Named locations':points}).addTo(map);
    map.fitBounds(bounds);
    document.getElementById('image-fallback').hidden = true;
    document.getElementById('map-distance').textContent = 'Image coordinates only; geographic distances unavailable.';
