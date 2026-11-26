@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
+from age_runtime.mythos import spatial
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -39,11 +40,16 @@ def npc_profiles(story, rules):
         if "npc" not in a:
             continue
         p = profiles[a["npc"]]
-        if a.get("location") != p["location"]:
+        if a.get("location") not in rules["npcs"][a["npc"]].get("eligible_locations", [p["location"]]):
             raise ValueError("NPC interaction location mismatch")
         if "disclosure" in a and (a["disclosure"] not in p["known_topics"]
                                  or a["disclosure"] not in a.get("grant", [])):
             raise ValueError("NPC disclosure must be known and granted")
+    if "spatial" in rules:
+        for nid, cfg in rules["npcs"].items():
+            allowed = cfg.get("eligible_locations", [cfg["location"]])
+            if not allowed or any(x not in rules["spatial"]["nodes"] for x in allowed) or (cfg["location"] is not None and cfg["location"] not in allowed):
+                raise ValueError("invalid NPC spatial eligibility")
     return profiles
 
 def initial(sid, seed):
@@ -58,6 +64,9 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if "spatial" in rules:
+        spatial.validate(rules["spatial"], rules["locations"])
+        state["transitions"] = []
     if rules.get("demeanor"):
         state["relationship_changes"] = []
     if rules.get("opposition"):
@@ -91,6 +100,42 @@ def initial(sid, seed):
             profile["body"] = derived[nid]
     return state
 
+def npc_available(state, rules, action):
+    if "npc" not in action:
+        return True
+    nid = action["npc"]
+    npc = state["npcs"][nid]
+    cfg = rules["npcs"][nid]
+    destination = action.get("location")
+    return (all(f in state["flags"] for f in cfg.get("requires_flags", []))
+            and destination in cfg.get("eligible_locations", [npc["location"]])
+            and (npc["location"] is None or npc["location"] == destination))
+
+def spatial_options(state, rules, candidates):
+    config = rules["spatial"]
+    now = datetime.fromisoformat(state["time"])
+    result = []
+    for action in candidates:
+        destination = action.get("location", state["location"])
+        trip = spatial.route(config, state["location"], destination, state["time"], state["flags"])
+        if trip is None:
+            continue
+        local = action["minutes"] - trip["minutes"] if "until" in action else action["minutes"]
+        if local <= 0:
+            continue
+        arrival = now + timedelta(minutes=trip["minutes"])
+        finish = arrival + timedelta(minutes=local)
+        if action.get("available_from") and arrival < datetime.fromisoformat(action["available_from"]):
+            continue
+        if action.get("available_until") and finish > datetime.fromisoformat(action["available_until"]):
+            continue
+        result.append(dict(action, minutes=trip["minutes"] + local, local_minutes=local, route=trip))
+    for trip in spatial.reachable(config, state):
+        result.append({"id": "move:" + trip["destination"], "label": "Go to " + trip["destination"],
+                       "location": trip["destination"], "minutes": trip["minutes"], "local_minutes": 0,
+                       "route": {k: v for k, v in trip.items() if k != "destination"}, "repeatable": True})
+    return result
+
 def options(state, rules):
     if state["ending"]:
         return []
@@ -101,11 +146,13 @@ def options(state, rules):
                   and all(f in state["used"] for f in a.get("requires_used", []))
                   and not any(f in state["flags"] for f in a.get("excludes_flags", []))
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
-                  and ("npc" not in a or state["npcs"][a["npc"]]["location"] == a.get("location"))
-                  and (not a.get("available_from") or state["time"] >= a["available_from"])
+                  and npc_available(state, rules, a)
+                  and ("spatial" in rules or not a.get("available_from") or state["time"] >= a["available_from"])
                   and (not a.get("available_until") or state["time"] < a["available_until"])
                   and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
+    if "spatial" in rules:
+        candidates = spatial_options(state, rules, candidates)
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
     return [a for a in candidates if 0 < a["minutes"] <= remaining
             and (not a.get("available_until") or datetime.fromisoformat(state["time"]) + timedelta(minutes=a["minutes"]) <= datetime.fromisoformat(a["available_until"]))
@@ -231,6 +278,10 @@ def step(state, action):
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
     state["turn"] += 1
+    if "spatial" in rules and a["route"]["minutes"]:
+        arrival = datetime.fromisoformat(state["time"]) + timedelta(minutes=a["route"]["minutes"])
+        advance_events(state, rules, arrival)
+        state["transitions"].append({"turn": state["turn"], "start": state["time"], "arrival": arrival.isoformat(), **a["route"]})
     if "progression" in state:
         advance_events(state, rules, elapsed)
     state["time"] = elapsed.isoformat()
@@ -241,6 +292,8 @@ def step(state, action):
         state["resources"][key] -= amount
     npc = state["npcs"].get(a.get("npc"))
     if npc is not None:
+        if npc["location"] is None:
+            npc["location"] = state["location"]
         npc["encounters"] += 1
         npc["last_contact"] = state["time"]
     success = True
@@ -279,7 +332,7 @@ def step(state, action):
         dxd_conditions.add(concerns, **a.get("concern_always", {}))
         dxd_conditions.add(concerns, **a.get("concern_success" if success else "concern_failure", {}))
         before = dxd_conditions.degrees(concerns)["stress"]
-        dxd_conditions.recover(concerns, a["minutes"], **a.get("recovery", {}))
+        dxd_conditions.recover(concerns, a.get("local_minutes", a["minutes"]), **a.get("recovery", {}))
         dxd_morale.calm(state["dxd"]["morale"], safe=a.get("recovery", {}).get("safe", False),
                         stress_degrees_removed=before - dxd_conditions.degrees(concerns)["stress"])
         if success and "morale_success" in a:
@@ -302,6 +355,8 @@ def step(state, action):
     if "progression" not in state:
         advance_events(state, rules, elapsed)
     state["last_result"] = {"action": action, "success": success}
+    if "spatial" in rules and a["route"]["minutes"]:
+        state["last_result"]["transition"] = state["transitions"][-1]
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
     state["history"].append(action)
@@ -392,6 +447,11 @@ def view(state):
     scene_view = {} if not scene else {"scene": {"description": scene["locations"].get(state["location"], ""),
         "pressure": [p["text"] for p in scene.get("pressure", []) if p["flag"] in state["flags"]],
         "cues": [a["label"] for a in options(state, rules) if a.get("location", state["location"]) == state["location"]]}}
+    if scene and "spatial" in rules:
+        config = rules["spatial"]
+        scene_view["scene"]["zone"] = config["nodes"][state["location"]]["zone"]
+        scene_view["scene"]["routes"] = [r for r in spatial.reachable(config, state) if r["minutes"] <= (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60] if not state["ending"] else []
+        scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
@@ -407,7 +467,7 @@ def view(state):
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
                           fear=dxd_morale.describe(state["dxd"]["morale"])),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
-        "choices": [{"id": a["id"], "label": a["label"]} for a in options(state, rules)]}
+        "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["minutes"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"]} if "spatial" in rules else {})} for a in options(state, rules)]}
 
 def start(sid, path, seed):
     if path.exists():
