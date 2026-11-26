@@ -4,8 +4,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from source_compiler import compile_scenario, compile_variation, stale_dependencies
-from runner import initialize, advance, verify_checkpoint, submit_request, digest
+from age_runtime.core.source_compiler import compile_scenario, compile_variation, stale_dependencies
+from age_runtime.core.runner import initialize, advance, verify_checkpoint, submit_request, digest
 
 
 class SourceCompilerTest(unittest.TestCase):
@@ -19,7 +19,7 @@ class SourceCompilerTest(unittest.TestCase):
         self.record = {"value": 2, "effective_date": "2003-04-01", "classification": "canonical"}
         self.write_source()
         self.revision = self.git("rev-parse", "HEAD").strip()
-        scenario = json.loads((Path(__file__).parent /
+        scenario = json.loads((Path(__file__).resolve().parents[1] /
             "campaigns/civic-recovery/service-restoration.json").read_text())
         del scenario["initial"]["restoration_credits"]
         self.ref = {"owner": "synthetic", "revision": self.revision, "path": "facts.json",
@@ -90,7 +90,7 @@ class SourceCompilerTest(unittest.TestCase):
             compile_scenario(self.spec, self.owners)
 
     def test_variation_preserves_base_and_replays(self):
-        from observations import observe
+        from age_runtime.core.observations import observe
         base = compile_scenario(self.spec, self.owners)
         variation = {"version": 1, "id": "limited-budget",
                      "base_digest": digest(self.spec),

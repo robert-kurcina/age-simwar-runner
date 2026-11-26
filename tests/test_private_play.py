@@ -3,9 +3,9 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from private_play import inventory, perspectives, start, update, view, verify, briefing
-from runner import save, digest
-from player_requests import packet, prompt, validate_proposal, confirm
+from age_runtime.core.private_play import inventory, perspectives, start, update, view, verify, briefing
+from age_runtime.core.runner import save, digest
+from age_runtime.core.player_requests import packet, prompt, validate_proposal, confirm
 
 
 class PrivatePlayTest(unittest.TestCase):
@@ -68,7 +68,7 @@ class PrivatePlayTest(unittest.TestCase):
                     "actors": ["relief"], "known_from": "2000-01-01", "source": "Illustrative fixture"}]}
             save(path, catalog)
             session = start(path, "external-relief", "relief", owners)
-            from visualization import snapshot, render
+            from age_runtime.interfaces.visualization import snapshot, render
             self.assertEqual(snapshot(session)["map"]["locations"][0]["id"], "local")
             self.assertNotIn("actors", snapshot(session)["map"]["locations"][0])
             self.assertIn("Load interactive map", render(session))
@@ -83,14 +83,14 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertIn('id="map-load-skeleton"', render(session))
             self.assertIn("Retry map", render(session))
             self.assertIn('aria-busy="false"', render(session))
-            from image_map import resolve as resolve_image
+            from age_runtime.interfaces.image_map import resolve as resolve_image
             bad = {**entry, "image_map": {**entry["image_map"], "reviewed_for": "2000-01-02"}}
             with self.assertRaisesRegex(ValueError, "date-specific"):
                 resolve_image(bad, session["header"]["compiled"], "2000-01-01", owners)
-            from image_map import projection as image_projection
+            from age_runtime.interfaces.image_map import projection as image_projection
             self.assertIsNone(image_projection({"header": {**session["header"], "actor": "other"}}, True))
             self.assertNotIn("Local <reference>", render(session))
-            from browser_play import apply as browser_apply, page as browser_page, server as browser_server
+            from age_runtime.interfaces.browser_play import apply as browser_apply, page as browser_page, server as browser_server
             from urllib.request import Request, urlopen
             from urllib.error import HTTPError
             from threading import Thread
@@ -136,7 +136,7 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(opening["date"], "2000-01-01")
             self.assertNotIn("aid_packages", opening["reports"])
             self.assertNotIn("compiled", opening)
-            from narrative import packet as narrative_packet, prompt as narrative_prompt, validate as validate_narrative
+            from age_runtime.interfaces.narrative import packet as narrative_packet, prompt as narrative_prompt, validate as validate_narrative
             narrative = narrative_packet(session)
             unchanged = digest(session)
             self.assertNotIn("aid_packages", narrative["briefing"]["reports"])
@@ -192,7 +192,7 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(restored["state"]["values"]["restoration_credits"], 0)
             self.assertTrue(view(restored)["complete"])
             # Interactive mode: choose scenario and actor, decline, confirm, save, resume.
-            from interactive_play import run
+            from age_runtime.interfaces.interactive_play import run
             interactive = root / "interactive.json"
             output = []
             commands = iter(["1", "1", "deliver_aid", "n", "deliver_aid", "y", "next", "quit"])
@@ -207,7 +207,7 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertTrue(view(final)["complete"])
             self.assertTrue(any("Scenario complete" in line for line in output))
             # Reviewed hypothetical presets change resources and reporting, not canon.
-            from private_play import available_presets
+            from age_runtime.core.private_play import available_presets
             entry["presets"] = {"scarce": {"label": "Scarce resources / delayed reports",
                 "reason": "Illustrative stress case", "base_spec_digest": digest(spec),
                 "resources": {"aid_packages": 1},
@@ -223,7 +223,7 @@ class PrivatePlayTest(unittest.TestCase):
             variant = update(variant, "deliver_aid", 2)
             self.assertEqual(variant["state"]["values"]["households_assisted"], 10)
             self.assertEqual(briefing(variant)["reports"]["households_assisted"]["value"], 10)
-            from visualization import snapshot, render
+            from age_runtime.interfaces.visualization import snapshot, render
             before_visual = digest(variant)
             visual = snapshot(variant)
             self.assertEqual(len(visual["metrics"]), 1)
@@ -246,7 +246,7 @@ class PrivatePlayTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 start(path, "external-relief", "relief", owners, "scarce")
             # Independent human consent within a single authoritative shared checkpoint.
-            from private_play import switch_perspective
+            from age_runtime.core.private_play import switch_perspective
             agreement = copy.deepcopy(spec)
             a = agreement["scenario"]
             a.pop("community_assistance")

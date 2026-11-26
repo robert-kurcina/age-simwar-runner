@@ -6,7 +6,7 @@ from age_runtime.core.runner import initialize, advance, submit_request, save, v
 from age_runtime.core.observations import observe
 
 def run_demo():
-    scenario = json.loads((Path(__file__).resolve().parents[2]s[2] / "scenarios/demo.json").read_text())
+    scenario = json.loads((Path(__file__).resolve().parents[2] / "scenarios/demo.json").read_text())
     state = initialize(scenario)
     state = submit_request(scenario, state, "library", {"action": "request_room_inspection"})
     state = submit_request(scenario, state, "maintenance", {"action": "request_maintenance_review"})

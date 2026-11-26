@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 import unittest
-from runner import initialize, advance, submit_request, verify_checkpoint
+from age_runtime.core.runner import initialize, advance, submit_request, verify_checkpoint
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class AssistanceCapacityTest(unittest.TestCase):

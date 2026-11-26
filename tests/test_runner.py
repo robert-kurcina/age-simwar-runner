@@ -2,13 +2,13 @@ import copy
 import json
 import unittest
 from pathlib import Path
-from runner import initialize, advance, verify_checkpoint, submit_request, save
-from observations import observe
-from actions import register_request, validate_request
+from age_runtime.core.runner import initialize, advance, verify_checkpoint, submit_request, save
+from age_runtime.core.observations import observe
+from age_runtime.core.actions import register_request, validate_request
 
 class RunnerTest(unittest.TestCase):
     def setUp(self):
-        self.s = json.loads((Path(__file__).parent / "scenarios/demo.json").read_text())
+        self.s = json.loads((Path(__file__).resolve().parents[1] / "scenarios/demo.json").read_text())
 
     def test_subturn_and_boundary(self):
         a = initialize(self.s)
@@ -198,7 +198,7 @@ class RunnerTest(unittest.TestCase):
             state = initialize(self.s)
             save(path, state)
             before = path.read_bytes()
-            root = Path(__file__).parent
+            root = Path(__file__).resolve().parents[1]
             result = subprocess.run(
                 [sys.executable, str(root / "runner.py"),
                  str(root / "scenarios/demo.json"), str(path),
@@ -237,7 +237,7 @@ class RunnerTest(unittest.TestCase):
                 initialize(self.s)
 
     def test_consolidated_demo(self):
-        from demo import run_demo
+        from age_runtime.examples.demo import run_demo
         result = run_demo()
         self.assertEqual(result, run_demo())
         self.assertEqual(result["timeline"], [
@@ -252,7 +252,7 @@ class RunnerTest(unittest.TestCase):
         self.assertTrue(result["final_objectives"]["library"]["objectives"]["access"]["met"])
 
     def test_interpretation_packet_is_actor_local(self):
-        from interpretation import interpretation_packet, prompt
+        from age_runtime.interfaces.interpretation import interpretation_packet, prompt
         state = advance(self.s, initialize(self.s))
         original = copy.deepcopy(state)
         packet = interpretation_packet(state, "library")
@@ -263,7 +263,7 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(state, original)
 
     def test_interpretation_response_is_commentary_only(self):
-        from interpretation import interpretation_packet, validate_response
+        from age_runtime.interfaces.interpretation import interpretation_packet, validate_response
         packet = interpretation_packet(initialize(self.s), "library")
         response = {"packet_id": packet["packet_id"], "summary": "Availability is unknown."}
         self.assertEqual(validate_response(packet, response)["authority"], "unverified_commentary")
@@ -274,7 +274,7 @@ class RunnerTest(unittest.TestCase):
                 validate_response(packet, bad)
 
     def test_interpretation_rejects_non_demo_checkpoint(self):
-        from interpretation import interpretation_packet
+        from age_runtime.interfaces.interpretation import interpretation_packet
         self.s["id"] = "other"
         with self.assertRaises(ValueError):
             interpretation_packet(initialize(self.s), "library")
@@ -292,7 +292,7 @@ class RunnerTest(unittest.TestCase):
     def test_validate_cli(self):
         import subprocess
         import sys
-        root = Path(__file__).parent
+        root = Path(__file__).resolve().parents[1]
         result = subprocess.run(
             [sys.executable, str(root / "runner.py"),
              str(root / "scenarios/demo.json"), "--validate"],
@@ -300,7 +300,7 @@ class RunnerTest(unittest.TestCase):
         self.assertTrue(json.loads(result.stdout)["valid"])
 
     def test_compare_completed_sessions(self):
-        from comparison import compare
+        from age_runtime.core.comparison import compare
         a = initialize(self.s)
         b = submit_request(self.s, a, "library", {"action": "request_room_inspection"})
         for _ in range(2):
@@ -313,7 +313,7 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(result["left"]["milestones"], {"passed": 2, "total": 2})
 
     def test_compare_rejects_incomplete_or_changed_scenario(self):
-        from comparison import compare
+        from age_runtime.core.comparison import compare
         a = initialize(self.s)
         b = advance(self.s, advance(self.s, a))
         with self.assertRaisesRegex(ValueError, "completed sessions"):
@@ -324,7 +324,7 @@ class RunnerTest(unittest.TestCase):
             compare(revised, b, b)
 
     def test_library_request_dependent_outcome(self):
-        from library_service import comparison
+        from age_runtime.examples.library_service import comparison
         result = comparison()
         self.assertEqual(result["additional_open_rooms"], 2)
         self.assertFalse(result["baseline"]["milestone"]["passed"])
@@ -333,7 +333,7 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(result["requested"]["timeline"][0]["pending_requests"], 1)
 
     def test_library_duplicate_and_invalid_requests(self):
-        from library_service import run_library
+        from age_runtime.examples.library_service import run_library
         result = run_library([1, 1, 2])
         self.assertEqual(result["open_rooms"], [1, 2])
         self.assertEqual([r["result"] for r in result["ledger"]],
@@ -344,8 +344,8 @@ class RunnerTest(unittest.TestCase):
                 run_library(bad)
 
     def test_campaign_catalog(self):
-        from campaign import load_campaign
-        root = Path(__file__).parent / "campaigns/civic-recovery"
+        from age_runtime.core.campaign import load_campaign
+        root = Path(__file__).resolve().parents[1] / "campaigns/civic-recovery"
         data = load_campaign(root / "campaign.json")
         entries = [entry for group in data["groups"] for entry in group["scenarios"]]
         self.assertEqual(len(entries), 4)
@@ -358,10 +358,10 @@ class RunnerTest(unittest.TestCase):
             self.assertTrue(all(c["passed"] for c in state["checks"]))
 
     def test_campaign_invalid_references(self):
-        from campaign import load_campaign
+        from age_runtime.core.campaign import load_campaign
         import tempfile
         import shutil
-        source = Path(__file__).parent / "campaigns/civic-recovery"
+        source = Path(__file__).resolve().parents[1] / "campaigns/civic-recovery"
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder) / "campaign"
             shutil.copytree(source, root)
@@ -387,8 +387,8 @@ class RunnerTest(unittest.TestCase):
 
     def test_service_restoration_causal_replay(self):
         import tempfile
-        from comparison import compare
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        from age_runtime.core.comparison import compare
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/service-restoration.json").read_text())
         a = initialize(s)
         b = submit_request(s, a, "coordinator", {"action": "restore_service_center"})
         self.assertEqual(a["values"], b["values"])
@@ -409,7 +409,7 @@ class RunnerTest(unittest.TestCase):
             verify_checkpoint(s, b)
 
     def test_service_restoration_credit_and_review_limits(self):
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/service-restoration.json").read_text())
         s["initial"]["restoration_credits"] = 1
         a = initialize(s)
         for _ in range(2):
@@ -423,7 +423,7 @@ class RunnerTest(unittest.TestCase):
         verify_checkpoint(s, c)
 
     def test_service_restoration_observation_and_boundary(self):
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/service-restoration.json").read_text())
         s["actors"]["coordinator"]["report_delay_minutes"] = {"open_service_centers": 60}
         s["constraints"] = [{"minute": 360, "key": "open_service_centers", "equals": 3}]
         a = submit_request(s, initialize(s), "coordinator", {"action": "restore_service_center"})
@@ -435,7 +435,7 @@ class RunnerTest(unittest.TestCase):
         verify_checkpoint(s, c)
 
     def test_service_rule_validation(self):
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/service-restoration.json").read_text())
         for invalid in (False, 1, "true"):
             with self.assertRaises(ValueError):
                 initialize({**s, "service_restoration": invalid})
@@ -444,7 +444,7 @@ class RunnerTest(unittest.TestCase):
             initialize(s)
 
     def test_assistance_outcomes_and_exhaustion(self):
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/community-assistance.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/community-assistance.json").read_text())
         s["initial"]["aid_packages"] = 1
         a = initialize(s)
         b = a
@@ -459,7 +459,7 @@ class RunnerTest(unittest.TestCase):
         verify_checkpoint(s, b)
 
     def test_agreement_independent_consent_and_duplicate(self):
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/civic-agreement.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/civic-agreement.json").read_text())
         a = initialize(s)
         with self.assertRaises(ValueError):
             submit_request(s, a, "council_a", {"action": "join_council_b"})
@@ -478,18 +478,18 @@ class RunnerTest(unittest.TestCase):
         verify_checkpoint(s, c)
 
     def test_civic_rule_validation(self):
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/civic-agreement.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/civic-agreement.json").read_text())
         s["action_catalog"]["join_council_a"]["actors"] = ["council_b"]
         with self.assertRaises(ValueError):
             initialize(s)
-        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/community-assistance.json").read_text())
+        s = json.loads((Path(__file__).resolve().parents[1] / "campaigns/civic-recovery/community-assistance.json").read_text())
         s["events"].append({"id": "invalid", "minute": 360, "key": "aid_packages", "delta": -3})
         with self.assertRaises(ValueError):
             initialize(s)
 
     def test_campaign_continuity_and_replay(self):
-        from continuity import export_transition, verify_transition
-        root = Path(__file__).parent / "campaigns/civic-recovery"
+        from age_runtime.core.continuity import export_transition, verify_transition
+        root = Path(__file__).resolve().parents[1] / "campaigns/civic-recovery"
         manifest = root / "campaign.json"
         s = json.loads((root / "service-restoration.json").read_text())
         a = initialize(s)
@@ -514,8 +514,8 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual(initialize(original)["values"]["open_service_centers"], 0)
 
     def test_continuity_rejects_invalid_source_and_tampering(self):
-        from continuity import export_transition, verify_transition
-        root = Path(__file__).parent / "campaigns/civic-recovery"
+        from age_runtime.core.continuity import export_transition, verify_transition
+        root = Path(__file__).resolve().parents[1] / "campaigns/civic-recovery"
         manifest = root / "campaign.json"
         s = json.loads((root / "service-restoration.json").read_text())
         a = initialize(s)
