@@ -67,6 +67,27 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(briefing(session)["kind"], "turn")
             self.assertEqual(briefing(session)["elapsed_minutes"], 60)
             save(root / "session.json", session)
+            # A distinct restoration scenario uses the same compiler and session API.
+            import copy
+            restoration = copy.deepcopy(spec)
+            s = restoration["scenario"]
+            s.pop("community_assistance")
+            s.pop("assistance_capacity")
+            s["id"] = "external-restoration"
+            s["initial"] = {"open_service_centers": 0, "restoration_credits": 2}
+            s["actors"]["relief"]["visible_keys"] = ["open_service_centers"]
+            s["service_restoration"] = True
+            s["action_catalog"] = {"restore_service_center": {"description": "Restore service", "actors": ["relief"]}}
+            save(root / "restoration.json", restoration)
+            catalog["groups"][0]["scenarios"].append({"id": s["id"], "title": "Restoration",
+                "spec": "restoration.json", "status": "reviewed-illustrative"})
+            save(path, catalog)
+            restored = start(path, s["id"], "relief", owners)
+            for _ in range(3):
+                restored = update(restored, "restore_service_center", 1)
+            self.assertEqual(view(restored)["observation"]["values"]["open_service_centers"], 2)
+            self.assertEqual(restored["state"]["values"]["restoration_credits"], 0)
+            self.assertTrue(view(restored)["complete"])
             # Resume without the source files or inventory.
             path.unlink()
             (root / "spec.json").unlink()
