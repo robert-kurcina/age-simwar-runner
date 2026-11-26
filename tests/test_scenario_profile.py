@@ -10,8 +10,8 @@ class ScenarioProfileTests(unittest.TestCase):
 
     def test_mythos(self):
         p = profile("mythos", "boothbay")
-        self.assertEqual(p["duration"]["target_decisions"], 24)
-        self.assertTrue(p["duration"]["decision_budget_advisory"])
+        self.assertEqual(p["duration"]["target_spotlights"], 24)
+        self.assertTrue(p["duration"]["spotlight_budget_advisory"])
         self.assertNotIn("max_turns", p["duration"])
         self.assertTrue(p["conclusion"]["early_termination"])
         self.assertNotIn("actions", p)
