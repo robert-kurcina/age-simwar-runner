@@ -50,7 +50,7 @@ class MythosTrialTests(unittest.TestCase):
 
     def test_resources_and_recovery(self):
         s = mythos.initial("boothbay", 42)
-        for _ in range(4):
+        for _ in range(8):
             s = mythos.step(s, "observe")
         self.assertEqual(s["fatigue"], 1)
         s = mythos.step(s, "buy_meal")
@@ -180,3 +180,31 @@ class MythosTrialTests(unittest.TestCase):
                 break
         else:
             self.fail("No estate access")
+
+    def test_boothbay_dxd_favor_and_replay(self):
+        a = mythos.initial("boothbay", 42)
+        self.assertEqual(a["dxd"]["favor"], 3)
+        self.assertEqual(a["dxd"]["attributes"]["INT"], 9)
+        a = mythos.step(a, "visit_elias")
+        self.assertEqual(a["dxd"]["favor"], 2)
+        t = a["dxd"]["tests"][0]
+        self.assertEqual(t["inputs"]["favor"], 1)
+        self.assertEqual(t["result"]["tn"], 10)
+        b = mythos.step(mythos.initial("boothbay", 42), "visit_elias")
+        self.assertEqual(a, b)
+        self.assertNotIn("dxd", mythos.view(a))
+        self.assertNotIn("favor", str(mythos.view(a)))
+        self.assertEqual(mythos.view(a)["setting"], "Fear!")
+        mythos.verify(a)
+        a["dxd"]["favor"] += 1
+        with self.assertRaisesRegex(ValueError, "replay"):
+            mythos.verify(a)
+
+    def test_boothbay_no_test_no_favor_cost(self):
+        s = mythos.initial("boothbay", 42)
+        for _ in range(4):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["dxd"]["tests"], [])
+        self.assertEqual(s["dxd"]["favor"], 3)
+        self.assertEqual(s["fatigue"], 0)
+        mythos.verify(s)

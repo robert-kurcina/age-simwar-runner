@@ -6,6 +6,7 @@ import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
+from age_runtime.core import dxd
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -48,7 +49,7 @@ def npc_profiles(story, rules):
 
 def initial(sid, seed):
     story, rules = load(sid)
-    return {"scenario": sid, "seed": seed, "source": digest([story, rules]),
+    state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
             "time": rules["start"], "location": rules["start_location"], "turn": 0,
             "inventory": story["protagonist"]["starting_inventory"],
             "attributes": story["protagonist"]["default_attributes"],
@@ -57,6 +58,15 @@ def initial(sid, seed):
             "fatigue": 0, "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if rules.get("resolution") == "dxd":
+        cfg = rules["dxd"]
+        state["dxd"] = {"attributes": copy.deepcopy(cfg["attributes"]),
+                        "skills": copy.deepcopy(cfg["skills"]),
+                        "favor": cfg["favor"]["initial"], "tests": [],
+                        "exertion_minutes": 0}
+        for nid, profile in state["npcs"].items():
+            profile["dxd_attributes"] = copy.deepcopy(cfg["npc_attributes"][nid])
+    return state
 
 def options(state, rules):
     if state["ending"]:
@@ -71,6 +81,36 @@ def options(state, rules):
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
     return [a for a in candidates if a["minutes"] <= remaining
             and all(state["resources"][k] >= v for k, v in a.get("cost", {}).items())]
+
+def resolve_dxd(state, rules, action):
+    """Gather only authored applicable modifiers and allocate Favor before rolling."""
+    spec = action["test"]
+    cfg = rules["dxd"]
+    pc = state["dxd"]
+    attr = dxd.attribute_dm(pc["attributes"][spec["attribute"]])
+    skill = pc["skills"].get(spec.get("skill"), 0)
+    condition = (rules["conditions"]["sanity_dm"][state["sanity"]]
+                 + rules["conditions"]["fatigue_dm"][state["fatigue"]])
+    hook = 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0
+    components = [attr, skill, condition, hook]
+    policy = cfg["favor"]
+    favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
+                                significance=spec["significance"], desired=policy["desired"])
+    args = {"favor": favor}
+    if "npc_attribute" in spec:
+        npc = state["npcs"][action["npc"]]
+        args.update(narrative=True, dm=sum(max(0, x) for x in components),
+                    adversity=sum(max(0, -x) for x in components),
+                    npc_dm=dxd.attribute_dm(npc["dxd_attributes"][spec["npc_attribute"]])
+                           + spec.get("npc_adversity", 0))
+    else:
+        args.update(tn=spec["tn"], dm=sum(components))
+    pc["favor"] -= favor
+    result = dxd.test(digest([state["seed"], state["turn"]]), **args)
+    pc["tests"].append({"turn": state["turn"], "action": action["id"],
+                        "inputs": args, "components": {"attribute": attr, "skill": skill,
+                        "condition": condition, "relationship": hook}, "result": result})
+    return result["passed"]
 
 def step(state, action):
     state = copy.deepcopy(state)
@@ -93,7 +133,9 @@ def step(state, action):
         npc["encounters"] += 1
         npc["last_contact"] = state["time"]
     success = True
-    if "attribute" in a:
+    if "test" in a:
+        success = resolve_dxd(state, rules, a)
+    elif "attribute" in a:
         rng = random.Random(digest([state["seed"], state["turn"]]))
         total = (rng.randint(1, 6) + rng.randint(1, 6)
                  + state["attributes"][a["attribute"]]
@@ -117,7 +159,15 @@ def step(state, action):
     effects = a.get("success" if success else "failure", {})
     for key, delta in effects.items():
         state[key] = max(0, min(5, state[key] + delta))
-    if state["turn"] % 4 == 0 and action not in rules.get("recovery_actions", ("rest_room", "buy_meal")):
+    if rules.get("resolution") == "dxd":
+        if action in rules.get("recovery_actions", ("rest_room", "buy_meal")):
+            state["dxd"]["exertion_minutes"] = 0
+        else:
+            elapsed_minutes = state["dxd"]["exertion_minutes"] + a["minutes"]
+            count, remainder = divmod(elapsed_minutes, rules["fatigue_interval_minutes"])
+            state["dxd"]["exertion_minutes"] = remainder
+            state["fatigue"] = min(5, state["fatigue"] + count)
+    elif state["turn"] % 4 == 0 and action not in rules.get("recovery_actions", ("rest_room", "buy_meal")):
         state["fatigue"] = min(5, state["fatigue"] + 1)
     for event in rules.get("events", []):
         if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
@@ -159,6 +209,7 @@ def view(state):
     return {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
+        "setting": rules.get("setting", "Fear!"),
         "contacts": [{"name": p["name"], "role": p["public_role"],
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for p in state["npcs"].values() if p["encounters"]],

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -18,23 +18,25 @@
       "label": "Examine the waterfront",
       "location": "Harbor Docks",
       "minutes": 60,
-      "attribute": "Investigation",
-      "tn": 7,
       "discovery": "A census badge lies near the waterfront.",
       "failure": {
         "sanity": 1
       },
       "grant": [
         "badge"
-      ]
+      ],
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "minor"
+      }
     },
     {
       "id": "talk_eleanor",
       "label": "Ask the waitress about local events",
       "location": "Harbor Diner",
       "minutes": 45,
-      "attribute": "Persuasion",
-      "tn": 7,
       "discovery": "Eleanor says her brother disappeared last month.",
       "success": {},
       "relationship": {
@@ -44,30 +46,38 @@
         "eleanor_account"
       ],
       "npc": "eleanor",
-      "disclosure": "eleanor_account"
+      "disclosure": "eleanor_account",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "minor"
+      }
     },
     {
       "id": "inspect_room",
       "label": "Examine the abandoned luggage",
       "location": "Sailor's Rest Boarding House",
       "minutes": 60,
-      "attribute": "Investigation",
-      "tn": 7,
       "discovery": "The abandoned suitcase contains census paperwork.",
       "failure": {
         "sanity": 1
       },
       "grant": [
         "paperwork"
-      ]
+      ],
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "minor"
+      }
     },
     {
       "id": "visit_elias",
       "label": "Speak with the retired fisherman",
       "location": "Creek Inlet South",
       "minutes": 90,
-      "attribute": "Persuasion",
-      "tn": 10,
       "discovery": "Elias has kept a journal of unusual coastal events.",
       "failure": {
         "sanity": 1
@@ -80,7 +90,14 @@
         "journal"
       ],
       "npc": "elias",
-      "disclosure": "journal"
+      "disclosure": "journal",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "npc_adversity": 1,
+        "significance": "important"
+      }
     },
     {
       "id": "report",
@@ -155,8 +172,6 @@
       "requires_relationship": {
         "eleanor": 1
       },
-      "attribute": "Persuasion",
-      "tn": 7,
       "discovery": "Eleanor describes disturbing physical changes in her brother before he vanished.",
       "grant": [
         "water_warning"
@@ -168,7 +183,14 @@
         "sanity": 1
       },
       "npc": "eleanor",
-      "disclosure": "water_warning"
+      "disclosure": "water_warning",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "important",
+        "relationship_bonus": "eleanor"
+      }
     },
     {
       "id": "read_journal",
@@ -178,14 +200,18 @@
       "requires_flags": [
         "journal"
       ],
-      "attribute": "Investigation",
-      "tn": 7,
       "discovery": "The journal records unusual changes near the harbor and repeated references to the tide.",
       "grant": [
         "tide_clue"
       ],
       "success": {
         "sanity": 1
+      },
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "important"
       }
     },
     {
@@ -214,14 +240,18 @@
       "requires_flags": [
         "written_account"
       ],
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "account_relayed"
       ],
       "discovery": "The keeper confirms the account has been relayed; no response has arrived.",
       "terminal": true,
-      "success": {}
+      "success": {},
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "tn": 7,
+        "significance": "critical"
+      }
     },
     {
       "id": "leave_copy",
@@ -320,5 +350,43 @@
       ],
       "reference_rating": 3
     }
-  }
+  },
+  "setting": "Fear!",
+  "resolution": "dxd",
+  "dxd": {
+    "provenance": "Provisional AGE adaptation; native Mythos values retained separately.",
+    "attributes": {
+      "INT": 9,
+      "KNO": 8,
+      "PRE": 8,
+      "POW": 9
+    },
+    "skills": {
+      "Investigation": 2,
+      "Interview": 1
+    },
+    "favor": {
+      "initial": 3,
+      "maximum": 1,
+      "desired": {
+        "routine": 0,
+        "minor": 0,
+        "important": 1,
+        "critical": 1
+      }
+    },
+    "npc_attributes": {
+      "eleanor": {
+        "INT": 8,
+        "PRE": 9,
+        "POW": 8
+      },
+      "elias": {
+        "INT": 9,
+        "PRE": 7,
+        "POW": 10
+      }
+    }
+  },
+  "fatigue_interval_minutes": 240
 }
