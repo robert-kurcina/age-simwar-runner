@@ -29,12 +29,22 @@ def inventory(path):
 
 
 def supported(s):
-    # This adapter admits only the existing finite civilian assistance mechanic.
-    if (s.get("community_assistance") is not True or not s.get("assistance_capacity")
-            or s.get("service_restoration") or s.get("civic_agreement")
-            or set(s["initial"]) != {"households_assisted", "aid_packages"}
-            or s["events"] or s["constraints"]
-            or set(s.get("action_catalog", {})) != {"deliver_aid"}):
+    # Reuse reviewed civilian mechanics rather than scenario-specific identities.
+    if s["events"] or s["constraints"] or s.get("civic_agreement"):
+        raise ValueError("unsupported private scenario mechanics")
+    keys = set(s["initial"])
+    requests = set(s.get("action_catalog", {}))
+    assistance = (s.get("community_assistance") is True
+                  and bool(s.get("assistance_capacity"))
+                  and not s.get("service_restoration")
+                  and keys == {"households_assisted", "aid_packages"}
+                  and requests == {"deliver_aid"})
+    restoration = (s.get("service_restoration") is True
+                   and not s.get("community_assistance")
+                   and "assistance_capacity" not in s
+                   and keys == {"open_service_centers", "restoration_credits"}
+                   and requests == {"restore_service_center"})
+    if not (assistance or restoration):
         raise ValueError("unsupported private scenario mechanics")
 
 
@@ -45,7 +55,7 @@ def select(path, scenario_id, owners):
     if len(matches) != 1:
         raise ValueError("scenario not found")
     group, entry = matches[0]
-    if entry["status"] != "verified-illustrative-pilot" or group["status"] != "supported-pilot":
+    if entry["status"] not in {"verified-illustrative-pilot", "reviewed-illustrative"} or group["status"] != "supported-pilot":
         raise ValueError("scenario is catalog-only")
     root = Path(path).resolve().parent
     spec_path = (root / entry["spec"]).resolve()
