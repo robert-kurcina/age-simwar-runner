@@ -77,12 +77,18 @@ def run(path, manifest=None, owners=None, model=None,
             actions = info["available_requests"]
             for action, item in actions.items():
                 emit(f"{action}: {item['description']}")
-            emit("Commands: action ID | next | quit" + (" | say <request>" if model else ""))
+            emit("Commands: action ID | next | quit" + (" | say <request> | narrative" if model else ""))
             command = ask("> ").strip()
             if command == "quit":
                 return
             before = digest(session)
             try:
+                if command == "narrative" and model:
+                    from narrative import narrate
+                    comment = narrate(session, model, base)
+                    emit("Unverified model commentary:")
+                    emit(comment["summary"])
+                    continue
                 if command == "next":
                     candidate = update(session, turns=1)
                 elif command in actions:
