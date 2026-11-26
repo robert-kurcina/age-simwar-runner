@@ -69,7 +69,7 @@ python game.py inspect /tmp/boothbay-session.json
 python game.py act /tmp/boothbay-session.json inspect_docks --revision <revision-from-inspect>
 ```
 
-For Chat play, use actual engine choices and current revision; present narrative and discovered facts only. Do not expose GM-only source fields, dice or attributes. Do not invent state changes. The current trial tracks time, discoveries, fixed inventory and endings, with reproducible 2D6 attribute tests. Full traits, condition changes, inventory mutation, NPC behavior, scored epilogues and custom characters remain unimplemented. Trial action durations and opening are provisional adaptations.
+For Chat play, use actual engine choices and current revision; present narrative and discovered facts only. Do not expose GM-only source fields, dice or attributes. Do not invent state changes. The current trial tracks time, discoveries, cash and flask consumption, sanity and fatigue, with reproducible 2D6 attribute tests and provisional three-metric ending scores. Full traits, general inventory changes, NPC behavior, scored narrative epilogues and custom characters remain unimplemented. Trial v2 requires a fresh session; v1 checkpoints are not migrated. Trial action durations and opening are provisional adaptations.
 
 ## Developer and local operation reference
 
