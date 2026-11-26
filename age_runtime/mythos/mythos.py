@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing
+from age_runtime.mythos import spatial, pacing, events as narrative_events
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -73,6 +73,8 @@ def initial(sid, seed):
         state["relationship_changes"] = []
     if rules.get("opposition"):
         state["opposition"] = {"marks": 0, "resolved": False}
+    if "event_clocks" in rules or "encounter_table" in rules:
+        state["narrative_events"] = narrative_events.initial(rules)
     if "progression" in rules:
         state["progression"] = {"stage": rules["progression"]["initial_stage"],
                                 "arrested": False, "changes": []}
@@ -306,7 +308,12 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
                      and start < datetime.fromisoformat(e["at"]) <= finish), key=lambda e: e["at"])
     boundaries = sorted(set([finish] + [datetime.fromisoformat(e["at"]) for e in events]))
     reason = None
-    for boundary in boundaries:
+    while cursor < finish:
+        boundary = next(b for b in boundaries if b > cursor)
+        if "narrative_events" in state:
+            interval = narrative_events.next_boundary(state, rules)
+            if interval is not None:
+                boundary = min(boundary, cursor + timedelta(seconds=interval))
         span = int((boundary - cursor).total_seconds())
         before = dxd_conditions.degrees(pc["concerns"])["stress"]
         actual = dxd_conditions.advance_activity(pc["concerns"], clock, span, mode, safe=safe,
@@ -314,6 +321,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         dxd_morale.calm(pc["morale"], safe=safe, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
         cursor += timedelta(seconds=actual)
         state["time"] = cursor.isoformat()
+        narrative_events.advance_time(state, rules, actual)
         advance_events(state, rules, cursor)
         if mode != "sleep" and clock["pending_sleep_seconds"] == 0:
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
@@ -471,6 +479,9 @@ def step(state, action):
                         disability=revelation["disability"], turn=state["turn"])
     if "progression" not in state and "pacing" not in rules:
         advance_events(state, rules, elapsed)
+    narrative_events.complete_action(state, rules, a, success, a.get("local_seconds", a["duration_seconds"]))
+    if clock:
+        dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
     if "spatial" in rules and a["route"]["seconds"]:
         state["last_result"]["transition"] = state["transitions"][-1]
@@ -593,6 +604,8 @@ def view(state):
         scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
+    if "narrative_events" in state:
+        scene_view["event_pressure"] = narrative_events.projection(state, rules)
     if "activity" in state["dxd"]:
         clock = state["dxd"]["activity"]
         scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "overdue_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}

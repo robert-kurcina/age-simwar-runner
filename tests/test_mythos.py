@@ -491,7 +491,7 @@ class MythosTrialTests(unittest.TestCase):
         for action in ("talk_eleanor", "visit_elias", "inspect_room"):
             s = mythos.step(s, action)
         self.assertIn("police_attention", s["flags"])
-        self.assertTrue(s["opposition"]["resolved"])
+        self.assertTrue(s["narrative_events"]["clocks"]["official_attention"]["resolved"])
         self.assertIn("speak_burroughs", [a["id"] for a in mythos.view(s)["choices"]])
         s = mythos.step(s, "speak_burroughs")
         self.assertIn("police_clearance" if s["last_result"]["success"] else "police_refusal", s["flags"])
@@ -738,3 +738,54 @@ class MythosTrialTests(unittest.TestCase):
             break
         else:
             self.fail("No forced sleep case")
+
+    def test_named_clocks_and_warning_progress(self):
+        from age_runtime.mythos import events
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        self.assertEqual(events.projection(s, rules)["clocks"], [])
+        events.advance_time(s, rules, 7200)
+        self.assertFalse(s["narrative_events"]["clocks"]["warning_arrangements"]["resolved"])
+        s["flags"].append("local_warning")
+        events.advance_time(s, rules, 1799)
+        self.assertEqual(events.next_boundary(s, rules), 1)
+        events.advance_time(s, rules, 1)
+        self.assertEqual(events.projection(s, rules)["clocks"][0]["marks"], 1)
+        events.advance_time(s, rules, 1800)
+        self.assertIn("warning_distributed", s["flags"])
+        before = len(s["narrative_events"]["ledger"])
+        events.advance_time(s, rules, 3600)
+        self.assertEqual(len(s["narrative_events"]["ledger"]), before)
+
+    def test_encounter_scope_and_dice(self):
+        from age_runtime.mythos import events
+        _, rules = mythos.load("boothbay")
+        for seed in range(100):
+            s = mythos.initial("boothbay", seed)
+            s["narrative_events"]["encounter"]["dice"] = 6
+            events.encounter_check(s, rules, "overflow")
+            check = s["narrative_events"]["encounter"]["checks"][-1]
+            self.assertEqual(check["severity"], max(0, check["rolls"].count(1) - check["rolls"].count(6)))
+            self.assertEqual(s["narrative_events"]["encounter"]["dice"], 3)
+            self.assertNotEqual(check["event"], "landward_crabs")
+            if check["event"]:
+                self.assertEqual(check["event"], "violet_filaments")
+                self.assertIn("filament_anomaly", s["flags"])
+                break
+        else:
+            self.fail("No eligible encounter")
+        s = mythos.initial("boothbay", seed)
+        s["location"] = "Harbor Diner"
+        s["narrative_events"]["encounter"]["dice"] = 6
+        events.encounter_check(s, rules, "overflow")
+        self.assertIsNone(s["narrative_events"]["encounter"]["checks"][-1]["event"])
+
+    def test_encounter_progress_replays(self):
+        s = mythos.initial("boothbay", 42)
+        for _ in range(18):
+            s = mythos.step(s, "observe")
+        e = s["narrative_events"]["encounter"]
+        self.assertEqual(len(e["checks"]), 1)
+        self.assertEqual(e["dice"], 3)
+        self.assertEqual(e["checks"][0]["kind"], "overflow")
+        mythos.verify(s)
