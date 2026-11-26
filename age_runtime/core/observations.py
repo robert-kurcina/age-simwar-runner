@@ -76,7 +76,20 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
             transfers[name] = {"source": t["source"], "destination": t["destination"],
                                "amount": t["amount"], "reported_balance": balance,
                                "currently_feasible": balance >= t["amount"]}
-    return {**({"transfer_options": transfers} if "resource_transfers" in s else {}),
+    agreements = {}
+    for aid, a in s.get("agreements", {}).items():
+        if actor_id not in a["consent"]:
+            continue
+        signed = sorted(actor for actor, action in a["consent"].items()
+                        if any(r["actor"] == actor and r["action"] == action
+                               and r["status"] == "reviewed" for r in state["requests"]))
+        result = next((r["status"] for r in state.get("agreement_results", []) if r["id"] == aid), None)
+        agreements[aid] = {"description": a["description"], "due_minute": a["due_minute"],
+                           "consent_action": a["consent"][actor_id], "consenting": signed,
+                           "terms": [deepcopy(s["resource_transfers"][t]) for t in a["transfers"]],
+                           "status": result or ("committed" if len(signed) == len(a["consent"]) else "awaiting_consent")}
+    return {**({"agreements": agreements} if "agreements" in s else {}),
+            **({"transfer_options": transfers} if "resource_transfers" in s else {}),
             "project_assessments": assessments, "capacity_options": choices,
             "report_changes": changes,
             "pending_orders": [{k: deepcopy(v) for k, v in r.items() if k != "sequence"}
