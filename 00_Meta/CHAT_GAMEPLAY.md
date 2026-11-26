@@ -91,3 +91,7 @@ Use `danger` from the current view/GM packet as eligible decisive objectives, no
 ### Boothbay v29 — continuity
 
 Use `referee.narrative_functions` privately to identify ready, conditional, blocked and spent carriers. Do not reveal hidden availability or carrier identities before justified discovery. Elias may withdraw at dawn; do not depict his death or revoke journal access already granted. Independent inlet/almanac inference is not his testimony. The GM may present an eligible alternative or acknowledge that no immediate route exists; conditional routes are not proven impossible. No invented witnesses, automatic rescue or reversal of committed facts. Restart older Boothbay sessions.
+
+### Boothbay v30–31 — Commitment and native profiles
+
+Player alone initiates Commitment; GM confirms familiarity with DXD, introduced local NPC, appropriate context/vignette and no invented facts. Use `python game.py commit SESSION ACTION NPC --vignette "player wording" --revision REV` (optional paired `--approach` and `--intent` for proposals). One initial Level 1 per session. Use returned effects; no invented emotions, future escalation or automatic outburst. An interrupted activity does not consume the Commitment before its Test. Private GM packet includes native Skills, Traits and curated PC profile; use only relevant owned capabilities and supported approaches. See [Fear! character design](../frameworks/mythos/CHARACTER_DESIGN.md). Do not claim that recorded Disabilities or all NPC Skills have executable triggers. Restart earlier Boothbay sessions.
