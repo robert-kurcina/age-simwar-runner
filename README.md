@@ -1,8 +1,67 @@
 # AGE SimWar Runner
 
-Experimental script-first scenario execution component. Python 3.10+; no dependencies.
+A prompt-driven scenario simulation component of AGE. Play within a single ordinary ChatGPT conversation using the GitHub Connector and the authoritative Python runner (Python 3.10+, standard library only).
 
-**Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Review-only requests change administrative dispositions; opt-in civilian fixtures can additionally produce bounded request-dependent outcomes. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
+## Quick start — play in ChatGPT
+
+### Prerequisites
+
+- Your ChatGPT account has the GitHub Connector configured and active, with access to `robert-kurcina/age-simwar-runner`.
+- The current conversation can invoke that connector and execute Python code.
+- For private campaigns, your connected account also has access to the relevant private campaign and canonical source repositories. Public fixtures require no private access.
+
+No local installation, hosted game server, MCP service, or manual checkpoint transfer is required for the intended single-conversation experience. Connector capabilities may vary by conversation; repository read access alone does not establish runtime execution capability.
+
+### Launch prompt
+
+Open a ChatGPT conversation (preferably in your AGE project), activate the GitHub Connector, and paste:
+
+```text
+Using my active GitHub Connector, retrieve robert-kurcina/age-simwar-runner
+and follow the ChatGPT gameplay instructions in its README.md.
+
+Use the authoritative Python runner in this conversation's execution
+environment. Discover available authorized campaigns, including associated
+private campaign specifications when accessible. Present their scenarios,
+participant perspectives and available presets. Let me select what to play,
+then initialize the selected scenario and present its opening briefing,
+objectives, known resources, relevant maps and permissible actions.
+
+Adjudicate all gameplay through the actual pinned Python engine. Keep
+the active session and verified checkpoints within this conversation.
+Interpret my natural-language orders, execute confirmed actions, and
+present actor-visible results and next decisions. Do not reconstruct
+simulation rules or invent engine results if execution is unavailable.
+```
+
+For a quick public demonstration, add: "Start the public Civic Recovery campaign, Service Restoration scenario, as the coordinator."
+
+### How to play
+
+After initialization, use ordinary prompts in the same conversation. For example:
+
+- "Show my objectives, resources and available actions."
+- "Allocate one restoration credit to restore a service center."
+- "Confirm that action and advance one turn."
+- "Show the resource history and current map, if available."
+- "Continue to the next linked scenario."
+
+These example orders apply only when the selected scenario supports them. ChatGPT should present available choices from that scenario, not assume that all scenarios share the same actions. Explicit confirmation of a specific action is sufficient; advance time only when requested. The session remains within this thread; downloading or uploading checkpoint files is optional.
+
+### Instructions for the ChatGPT game facilitator
+
+1. Use the active GitHub Connector to read the repository and identify an exact engine commit. Locate the successful **Chat runtime bundle** Actions artifact for that revision (prefer a main-branch run), download it through the connector into the execution environment, verify the inner archive checksum and recorded revision, and extract it into a fresh directory. Do not assume a connector file reference is already an executable local file. A PR synthetic merge revision is acceptable only when explicitly identified and used consistently.
+2. Discover campaign manifests and authorized private package references using the connector. Read required source and configuration files at pinned revisions. Transfer actual required files into the runtime; preserve source provenance. Never publish private inputs or session artifacts. Present only discovered, supported scenarios; identify unavailable content rather than inventing it.
+3. Initialize through the existing `play.py` or `play.py private` entry points as appropriate. Inspect the selected actor's observation and retain a verified opening session. The Python engine owns state; ChatGPT is the player interface and interpreter.
+4. For each turn, read and verify the active session, bind the intended action to its current revision, check permissible actions, and execute only confirmed requests. Use a fresh output checkpoint or preserve the previous checkpoint before mutation. Advance only as explicitly requested; shared participants control their own consent. Derive the displayed result from actual engine output. Keep narrative distinct from adjudication and never expose hidden actor information in player-facing reports.
+5. Continue linked scenarios through the existing continuity functions, not by manually copying values. Present engine-derived dashboards and authorized map artwork when available; label illustrative assumptions and unknowns. Keep the game moving without requiring manual file management.
+6. If actual source transfer, revision checks, Python execution or checkpoint verification fails, report the specific blocker and do not adjudicate. If the runtime resets within the thread, attempt to restore from the verified files available in that thread; if unavailable, offer a fresh start or optional file handoff. Do not simulate the engine in prose or substitute reimplemented logic. Cross-thread resumption is not a requirement.
+
+**Current status:** The public runtime archive was successfully transferred into ordinary Chat and the pinned Python engine passed 68 regression tests there. The public opening and subsequent gameplay were demonstrated; the full private campaign prompt-to-play workflow remains to be qualified. Supported executable scope is civilian recovery and institutional coordination, not operational combat adjudication or predictive historical simulation. See [PLAN.md](PLAN.md).
+
+## Developer and local operation reference
+
+The remaining sections describe alternative CLI workflows and regression fixtures. They are not prerequisites for ordinary Chat gameplay.
 
 ## Campaign catalog
 
@@ -150,7 +209,7 @@ python play.py compare baseline-session.json service-session.json
 
 Use inspect for read-only resumption; submit records a request without advancing. Finish advances the remaining scheduled turns without additional requests. Actor projection is not an authorization boundary: the local referee owns all session bundles. Concurrent writers are unsupported. Retain previous session bundles and catalog revisions for complete transition re-verification; embedded transition checks alone do not prove recursive lineage. This CLI is limited to the four supported civilian fixture identities; compiler variations remain standalone and are not integrated into campaign continuity.
 
-## Chat checkpoint handoff (trusted referee)
+## Optional checkpoint handoff (trusted referee)
 
 A verified local session can be exported as a portable, self-contained JSON handoff. Use the exact 40-character commit SHA of the engine checkout, not a branch name. Treat this as a provenance assertion from the trusted operator, not an independently attested engine binary. The session's scenario is embedded; the source catalog digest is retained. Keep private handoffs private.
 
@@ -165,4 +224,4 @@ Export validates deterministic replay. Verify and restore require matching pinne
 
 ## Offline Chat runtime transfer
 
-The **Chat runtime bundle** Actions workflow exports the tested public tracked source as an artifact containing `runner-source.zip`, `ENGINE_REVISION.txt` and `SHA256SUMS`. Download a successful **main** run's artifact, upload it to the Chat conversation, verify the archive checksum and revision, and extract into a fresh execution directory before running the existing CLI. PR runs may use a synthetic merge commit; prefer main for stable provenance. The artifact expires after 14 days. This is a manual fallback, not a claim of automatic connector-to-runtime transfer. Never include private sources or sessions in this public workflow.
+The **Chat runtime bundle** Actions workflow exports the tested public tracked source as an artifact containing `runner-source.zip`, `ENGINE_REVISION.txt` and `SHA256SUMS`. Prefer retrieving a successful **main** run's artifact directly through the GitHub Connector's artifact download capability into Chat's execution environment. Verify the archive checksum and revision and extract into a fresh execution directory. Manual download/upload is an optional fallback if direct transfer fails. PR runs may use a synthetic merge commit; prefer main for stable provenance. The artifact expires after 14 days. Direct artifact transfer has been demonstrated in ordinary Chat; availability is not guaranteed in every conversation. Never include private sources or sessions in this public workflow.
