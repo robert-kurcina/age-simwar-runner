@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "start": "1927-11-02T08:00:00",
   "end": "1927-11-03T23:59:00",
   "max_turns": 20,
@@ -12,40 +12,6 @@
     "Backwoods Shantytown",
     "Boston Brahmin Summer Estate"
   ],
-  "conditions": {
-    "sanity": [
-      "Steady",
-      "Uneasy",
-      "Shaken",
-      "Frayed",
-      "Unraveling",
-      "Shattered"
-    ],
-    "fatigue": [
-      "Rested",
-      "Tired",
-      "Weary",
-      "Exhausted",
-      "Spent",
-      "Catatonic"
-    ],
-    "sanity_dm": [
-      0,
-      -1,
-      -2,
-      -2,
-      -3,
-      -4
-    ],
-    "fatigue_dm": [
-      0,
-      -1,
-      -2,
-      -3,
-      -4,
-      -5
-    ]
-  },
   "resources": {
     "cash_cents": 3800
   },
@@ -89,24 +55,44 @@
       "label": "Examine the tide charts",
       "location": "Castine Wharf",
       "minutes": 60,
-      "attribute": "Investigation",
-      "tn": 7,
       "grant": [
         "tide_chart"
       ],
-      "discovery": "The charts indicate an unusual convergence at 3:17 AM on November 3."
+      "discovery": "The charts indicate an unusual convergence at 3:17 AM on November 3.",
+      "test": {
+        "attribute": "INT",
+        "skill": "Forensics",
+        "significance": "minor",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "Your investigative training reminds you to compare the records carefully.",
+          "consequence": "meaningful"
+        },
+        "tn": 7
+      }
     },
     {
       "id": "inspect_ledger",
       "label": "Ask to examine the store ledger",
       "location": "Higgins General Store",
       "minutes": 60,
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "ledger"
       ],
-      "discovery": "The ledger records purchases of salt blocks and kelp supplements under E. Vane."
+      "discovery": "The ledger records purchases of salt blocks and kelp supplements under E. Vane.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "significance": "minor",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You recall the importance of securing cooperation without intimidation.",
+          "consequence": "meaningful"
+        },
+        "tn": 7
+      }
     },
     {
       "id": "talk_martha",
@@ -118,29 +104,49 @@
       "requires_flags": [
         "ledger"
       ],
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "family_connection"
       ],
       "relationship": {
         "martha": 1
       },
-      "discovery": "Martha acknowledges that she is Imogen's aunt."
+      "discovery": "Martha acknowledges that she is Imogen's aunt.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "significance": "minor",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You draw on your experience listening to reluctant witnesses.",
+          "consequence": "meaningful"
+        },
+        "npc_attribute": "POW"
+      }
     },
     {
       "id": "inspect_journal",
       "label": "Search the lookout for Imogen's journal",
       "location": "Dyar Mountain Lookout",
       "minutes": 90,
-      "attribute": "Investigation",
-      "tn": 10,
       "grant": [
         "journal"
       ],
       "discovery": "You recover Imogen's hidden journal.",
-      "failure": {
-        "sanity": 1
+      "test": {
+        "attribute": "INT",
+        "skill": "Forensics",
+        "significance": "important",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You recall that overlooked evidence can change an entire case.",
+          "consequence": "meaningful"
+        },
+        "tn": 10
+      },
+      "concern_failure": {
+        "stress": 3
       }
     },
     {
@@ -153,15 +159,25 @@
       "requires_flags": [
         "family_connection"
       ],
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "father_account"
       ],
       "relationship": {
         "zebediah": 1
       },
-      "discovery": "Zebediah says he is Imogen's father and arranged her placement in Arkham."
+      "discovery": "Zebediah says he is Imogen's father and arranged her placement in Arkham.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "significance": "important",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You remember why you chose empathy over coercion in your former work.",
+          "consequence": "meaningful"
+        },
+        "npc_attribute": "POW"
+      }
     },
     {
       "id": "talk_ree",
@@ -173,27 +189,46 @@
       "requires_flags": [
         "father_account"
       ],
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "escape_account"
       ],
       "relationship": {
         "ree": 1
       },
-      "discovery": "Ree says he helped Imogen escape the institution rather than killing her."
+      "discovery": "Ree says he helped Imogen escape the institution rather than killing her.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "significance": "important",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You recall the wrongful conviction that taught you to hear a suspect's account before judging.",
+          "consequence": "meaningful"
+        },
+        "npc_attribute": "POW"
+      }
     },
     {
       "id": "secure_estate",
       "label": "Arrange a place to rest at the estate",
       "location": "Boston Brahmin Summer Estate",
       "minutes": 90,
-      "attribute": "Persuasion",
-      "tn": 7,
       "grant": [
         "sanctuary"
       ],
-      "discovery": "You arrange access to the estate as a temporary refuge."
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "significance": "minor",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You draw on your experience dealing with influential clients.",
+          "consequence": "meaningful"
+        },
+        "tn": 7
+      }
     },
     {
       "id": "rest_estate",
@@ -204,9 +239,9 @@
       "requires_flags": [
         "sanctuary"
       ],
-      "success": {
-        "fatigue": -3,
-        "sanity": -1
+      "recovery": {
+        "restful": true,
+        "safe": true
       }
     },
     {
@@ -219,12 +254,23 @@
         "escape_account",
         "sanctuary"
       ],
-      "attribute": "Persuasion",
-      "tn": 10,
       "grant": [
         "refuge_offered"
       ],
-      "discovery": "Ree agrees to consider the refuge; his ultimate decision remains uncertain."
+      "discovery": "Ree agrees to consider the refuge; his ultimate decision remains uncertain.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "significance": "important",
+        "decision": true,
+        "inspiration": {
+          "tag": "interview",
+          "memory": "You remember your determination not to abandon vulnerable people.",
+          "consequence": "meaningful"
+        },
+        "npc_attribute": "POW",
+        "npc_adversity": 2
+      }
     },
     {
       "id": "prepare_case",
@@ -234,6 +280,9 @@
       "requires": 2,
       "grant": [
         "written_account"
+      ],
+      "requires_flags": [
+        "sanctuary"
       ]
     },
     {
@@ -285,5 +334,115 @@
   },
   "recovery_actions": [
     "rest_estate"
-  ]
+  ],
+  "setting": "Fear!",
+  "resolution": "dxd",
+  "dxd": {
+    "provenance": "Provisional AGE adaptations grounded in authored roles and relative capabilities; no direct conversion or assumed supernatural abilities.",
+    "attributes": {
+      "CCA": 8,
+      "RCA": 8,
+      "REF": 7,
+      "INT": 9,
+      "KNO": 9,
+      "PRE": 9,
+      "POW": 8,
+      "STR": 6,
+      "FOR": 7,
+      "MOV": 7,
+      "SIZ": 7,
+      "ZED": 7
+    },
+    "skills": {
+      "Forensics": 2,
+      "Interview": 2
+    },
+    "favor": {
+      "initial": 3,
+      "maximum": 1,
+      "desired": {
+        "routine": 0,
+        "minor": 0,
+        "important": 1,
+        "critical": 1
+      }
+    },
+    "inspiration": {
+      "enabled": true
+    },
+    "npc_attributes": {
+      "martha": {
+        "CCA": 6,
+        "RCA": 6,
+        "REF": 7,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 10,
+        "POW": 8,
+        "STR": 7,
+        "FOR": 7,
+        "MOV": 7,
+        "SIZ": 7,
+        "ZED": 7
+      },
+      "zebediah": {
+        "CCA": 10,
+        "RCA": 9,
+        "REF": 9,
+        "INT": 9,
+        "KNO": 8,
+        "PRE": 6,
+        "POW": 10,
+        "STR": 9,
+        "FOR": 9,
+        "MOV": 8,
+        "SIZ": 8,
+        "ZED": 7
+      },
+      "ree": {
+        "CCA": 9,
+        "RCA": 8,
+        "REF": 8,
+        "INT": 7,
+        "KNO": 7,
+        "PRE": 8,
+        "POW": 10,
+        "STR": 9,
+        "FOR": 8,
+        "MOV": 8,
+        "SIZ": 8,
+        "ZED": 7
+      }
+    },
+    "inactive_major_attributes": {
+      "Sheriff Cobb": {
+        "CCA": 8,
+        "RCA": 9,
+        "REF": 8,
+        "INT": 8,
+        "KNO": 8,
+        "PRE": 9,
+        "POW": 10,
+        "STR": 9,
+        "FOR": 9,
+        "MOV": 8,
+        "SIZ": 8,
+        "ZED": 7
+      },
+      "Reverend Pike": {
+        "CCA": 6,
+        "RCA": 6,
+        "REF": 7,
+        "INT": 8,
+        "KNO": 10,
+        "PRE": 11,
+        "POW": 11,
+        "STR": 6,
+        "FOR": 7,
+        "MOV": 7,
+        "SIZ": 7,
+        "ZED": 7
+      }
+    }
+  }
 }
