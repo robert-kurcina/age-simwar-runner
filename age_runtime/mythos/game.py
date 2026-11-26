@@ -37,8 +37,12 @@ def main():
         if cmd == "act":
             q.add_argument("action")
             q.add_argument("--revision", required=True)
-            q.add_argument("--decision-id")
-            q.add_argument("--decision-label")
+    control = sub.add_parser("narrative")
+    control.add_argument("session", type=Path)
+    control.add_argument("kind", choices=("scene", "open", "complete", "abandon"))
+    control.add_argument("id")
+    control.add_argument("--label")
+    control.add_argument("--revision", required=True)
     memory = sub.add_parser("memory")
     memory.add_argument("session", type=Path)
     memory.add_argument("event")
@@ -55,11 +59,13 @@ def main():
         result = mythos.inspect(args.session)
     elif args.command == "memory":
         result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
+    elif args.command == "narrative":
+        request = {"kind": args.kind, "id": args.id}
+        if args.label is not None:
+            request["label"] = args.label
+        result = mythos.narrative(args.session, request, args.revision)
     else:
-        if (args.decision_id is None) != (args.decision_label is None):
-            p.error("decision id and label must be supplied together")
-        decision = None if args.decision_id is None else {"id": args.decision_id, "label": args.decision_label}
-        result = mythos.act(args.session, args.action, args.revision, decision)
+        result = mythos.act(args.session, args.action, args.revision)
     print(json.dumps(result, indent=2))
 
 if __name__ == "__main__":
