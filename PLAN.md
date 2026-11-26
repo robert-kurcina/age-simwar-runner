@@ -194,7 +194,13 @@ Each development increment must complete an acceptance criterion or a concrete i
 - Pacing issue: successful route concludes at 16:30 on the first day, before scheduled evening events. Trial scoring may exceed original authored scenario maxima; retain explicit provisional status. Next prioritize playable narrative qualification and configuration-driven Castine/Ram Island conversion, not new subsystems.
 - Standalone launch guide from PR #56 is not present on main at this review; reconcile packaging branch before claiming automated standalone distribution complete.
 
-## WIP — Repository organization
+## DONE — Repository organization (PR #61 merged)
 
 - Runtime implementation moved into `age_runtime/{core,interfaces,mythos,examples}`; tests moved into `tests/`. Keep existing root launch commands and private-import compatibility. Scenario data paths remain stable. Consolidate facilitator guidance under `00_Meta/CHAT_GAMEPLAY.md` and technical CLI reference under `docs/cli.md`.
-- Verify regression and runtime bundle CI before merging. Private integration remains independently qualified against its pinned revision; do not claim latest compatibility until tested.
+- PR #61 regression workflow 45792445758 and runtime bundle workflow 45792445696 passed; main merge acfbb818a1ac0443a6a5272a8840db3457a6a4a5 confirmed. Private integration remains independently qualified against its pinned revision; do not claim latest compatibility until tested.
+
+## WIP — Clear launch and standalone distribution
+
+- README is a player-first launch guide with separate connected and offline prompts, current campaign availability, distribution status and developer references. LLM-specific instructions remain in 00_Meta.
+- Incorporate the useful standalone guide and extracted-package smoke test from unmerged PR #56 into current main architecture. Bundle workflow includes START_HERE.md and tests the extracted source, including actual Mythos CLI start, action and inspect. CI and independent Chat upload qualification pending; no claim that private archives exist.
+- Next: qualify standalone artifact, convert Castine and Ram Island, then private SH44SER and Conflagration packaging. Reconcile superseded PR #56 after verification. Do not expand engine architecture unnecessarily.
