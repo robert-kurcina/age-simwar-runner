@@ -67,6 +67,11 @@ def initial(sid, seed):
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if rules.get("local_proposals"):
         state["local_records"] = []
+    if "character_profiles" in rules["dxd"]:
+        profiles = rules["dxd"]["character_profiles"]
+        if set(profiles) != {"pc", *rules["dxd"]["body_profiles"].keys()}:
+            raise ValueError("character profile coverage mismatch")
+        state["character_profiles"] = copy.deepcopy(profiles)
     if "pacing" in rules:
         state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:
@@ -104,11 +109,16 @@ def initial(sid, seed):
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
         if rules.get("emotional_commitment"):
             state["dxd"]["commitments"] = []
+        if "character_profiles" in state:
+            state["dxd"]["concerns"]["capacity"]["resilience"] += state["dxd"]["skills"].get("Grit", 0)
         if "activity" in rules:
             state["dxd"]["activity"] = dxd_conditions.activity_initial(derived["pc"]["attributes"], rules["activity"]["initial_awake_seconds"])
         for nid, profile in state["npcs"].items():
             profile["dxd_attributes"] = derived[nid]["attributes"]
             profile["body"] = derived[nid]
+            if "character_profiles" in state:
+                profile["skills"] = copy.deepcopy(state["character_profiles"][nid]["proficiencies"]["skills"])
+                profile["dxd_traits"] = copy.deepcopy(state["character_profiles"][nid]["proficiencies"]["traits"])
     return state
 
 def npc_available(state, rules, action):
@@ -204,6 +214,8 @@ def resolve_dxd(state, rules, action):
             spec["additional_attributes"] = ["INT"]
     cfg = rules["dxd"]
     pc = state["dxd"]
+    if "character_profiles" in state and spec.get("morale_event") and "Grit" in pc["skills"]:
+        spec["skill"] = "Grit"
     gathered = dxd_modifiers.gather(pc["attributes"], pc["skills"], pc["traits"], spec)
     attr = sum(x["dm"] for x in gathered["attribute"])
     skill = sum(x["dm"] for x in gathered["skill"])
@@ -724,10 +736,14 @@ def gm_context(state):
                                   "known_topics": state["npcs"][key]["known_topics"],
                                   "disclosed": state["npcs"][key]["disclosed"],
                                   "secret": state["npcs"][key]["secret"],
-                                  "location": state["npcs"][key]["location"]}
+                                  "location": state["npcs"][key]["location"],
+                                  "skills": copy.deepcopy(state["npcs"][key].get("skills", {})),
+                                  "traits": copy.deepcopy(state["npcs"][key].get("dxd_traits", {}))}
                                  for key in sorted(relevant)],
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
+                "traits": copy.deepcopy(pc["traits"]),
+                "character_profile": copy.deepcopy(state.get("character_profiles", {}).get("pc")),
                 "favor": pc["favor"],
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
                 "narrative_functions": continuity.projection(state, rules, legal),
