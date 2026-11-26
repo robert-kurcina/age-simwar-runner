@@ -204,7 +204,12 @@ def options(state, rules):
                                "location": state["location"], "seconds": duration, "activity": "sleep",
                                "interval_seconds": 3600, "repeatable": True,
                                "cost": {"cash_cents": rules["activity"]["sleep_cost_cents"]}})
-    candidates = [dict(a, duration_seconds=int((datetime.fromisoformat(a["until"]) - datetime.fromisoformat(state["time"])).total_seconds()) if "until" in a else pacing.duration(a)) for a in candidates]
+    timed = []
+    for a in candidates:
+        seconds = int((datetime.fromisoformat(a["until"]) - datetime.fromisoformat(state["time"])).total_seconds()) if "until" in a else pacing.duration(a)
+        seconds, saved = proposals.prepared_duration(state, a, seconds)
+        timed.append(dict(a, duration_seconds=seconds, **({"preparation_saved_seconds": saved} if saved else {})))
+    candidates = timed
     if "spatial" in rules:
         candidates = spatial_options(state, rules, candidates)
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()
@@ -580,6 +585,8 @@ def step(state, action, proposal=None, commitment=None):
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
+    if a.get("preparation_saved_seconds"):
+        state["last_result"]["preparation_saved_seconds"] = a["preparation_saved_seconds"]
     if proposal is not None:
         result = primary_result
         state["last_result"]["adjudication"] = {k: result[k] for k in ("passed", "dos", "dof", "margin")}
@@ -737,7 +744,7 @@ def view(state):
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
                           fear=dxd_morale.describe(state["dxd"]["morale"])),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
-        "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {})} for a in options(state, rules)]}
+        "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {}), **({"preparation_saved_seconds": a["preparation_saved_seconds"]} if a.get("preparation_saved_seconds") else {})} for a in options(state, rules)]}
 
 def gm_context(state):
     """Bounded referee packet; never render directly as player narration."""
