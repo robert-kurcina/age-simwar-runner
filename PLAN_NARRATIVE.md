@@ -1,6 +1,6 @@
 # Narrative game development plan
 
-Status: WIP — 2026-11-26. Shared constraints: [master plan](PLAN.md).
+Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
 
 ## Goal and evidence
 
@@ -46,18 +46,18 @@ Source review DONE. N1 source audit DONE (execution reproduction still pending):
 
 | Phase | Deliverable | Exit evidence |
 |---|---|---|
-| N1 | Audit current runner, Boothbay source and native rules; reproduce reported path where inputs/seed are available, otherwise document representative reproduction. | Identify actual gaps and reusable mechanics; distinguish existing support from planned work. |
-| N2 | Native Scenario Outline and compact GM briefing, with hidden truth, likely scenes and possible resolutions. | GM can run from prepared situation without following a script; source provenance and visibility hold. |
-| N3 | Running the Scene protocol, grounded prompts, free-form intent and bounded GM proposals. | Player can attempt plausible unscripted approaches; accepted inputs and consequences replay exactly. |
-| N4 | Point Maps and physical exploration using existing locations/connections. | Travel, revisits and access changes are meaningful, with time costs where relevant. |
-| N5 | Relationships, Demeanor and Interaction Tests. | NPCs respond differently to consequential interactions; sparse directed state and native timing limits persist. |
-| N6 | Clues, Locks, Keys and Key Drops with alternative investigation paths. | Important revelations change opportunities; a missed clue or failed Test need not dead-end the scenario. |
-| N7 | Event Clocks, Encounter Tension and Triggers, off-scene developments. | Waiting and interference can change the situation; no double-counting threats; seeded checks replay. |
-| N8 | Consequential DXD adjudication for free-form actions, including Degrees and partial outcomes. | Fictionally justified success, failure, cost and changed opportunities; unsupported effects rejected without consuming a turn. |
-| N9 | Emotional Commitment, Hooks/Cues and character-driven consequences. | Player-chosen investment has native mechanical costs and benefits without overriding agency. |
-| N10 | One-shot pacing, responsive opposition, grounded scene narration and meaningful resolutions. | Stall handling, escalation, relief, departure and consequences are coherent; no railroading. |
-| N11 | Actual Boothbay Chat play and compact gameplay regression. | Author experiential feedback, distinct intermediate situations and outcomes, exact mechanical replay, no hidden-information leaks. |
-| N12 | Adapt Castine and Ram Island. | Same GM protocol and engine primitives respect distinct settings, calendars and relationship progression. |
+| N1 | WIP: Audit current runner, Boothbay source and native rules; reproduce reported path where inputs/seed are available, otherwise document representative reproduction. | Identify actual gaps and reusable mechanics; distinguish existing support from planned work. |
+| N2 | WIP: Native Scenario Outline and compact GM briefing, with hidden truth, likely scenes and possible resolutions. | GM can run from prepared situation without following a script; source provenance and visibility hold. |
+| N3 | WIP: Running the Scene protocol, grounded prompts, free-form intent and bounded GM proposals. | Player can attempt plausible unscripted approaches; accepted inputs and consequences replay exactly. |
+| N4 | WIP: Point Maps and physical exploration using existing locations/connections. | Travel, revisits and access changes are meaningful, with time costs where relevant. |
+| N5 | WIP: Relationships, Demeanor and Interaction Tests. | NPCs respond differently to consequential interactions; sparse directed state and native timing limits persist. |
+| N6 | WIP: Clues, Locks, Keys and Key Drops with alternative investigation paths. | Important revelations change opportunities; a missed clue or failed Test need not dead-end the scenario. |
+| N7 | WIP: Event Clocks, Encounter Tension and Triggers, off-scene developments. | Waiting and interference can change the situation; no double-counting threats; seeded checks replay. |
+| N8 | PENDING: Consequential DXD adjudication for free-form actions, including Degrees and partial outcomes. | Fictionally justified success, failure, cost and changed opportunities; unsupported effects rejected without consuming a turn. |
+| N9 | PENDING: Emotional Commitment, Hooks/Cues and character-driven consequences. | Player-chosen investment has native mechanical costs and benefits without overriding agency. |
+| N10 | WIP: One-shot pacing, responsive opposition, grounded scene narration and meaningful resolutions. | Stall handling, escalation, relief, departure and consequences are coherent; no railroading. |
+| N11 | PENDING (qualification gate): Actual Boothbay Chat play and compact gameplay regression. | Author experiential feedback, distinct intermediate situations and outcomes, exact mechanical replay, no hidden-information leaks. |
+| N12 | DEFERRED until Boothbay qualifies: Adapt Castine and Ram Island. | Same GM protocol and engine primitives respect distinct settings, calendars and relationship progression. |
 
 ## Implementation boundaries
 
