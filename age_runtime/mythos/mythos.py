@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -220,6 +220,7 @@ def resolve_dxd(state, rules, action):
     attr = sum(x["dm"] for x in gathered["attribute"])
     skill = sum(x["dm"] for x in gathered["skill"])
     other = [x["dm"] for key in ("trait", "explicit", "interdisciplinary") for x in gathered[key]]
+    contextual, context_dm, emotional_triggers = dxd_context.effects(state, action, spec)
     mods = dxd_modifiers.totals(gathered)
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
     hook = (state["relationships"].get(action.get("npc"), 0) if rules.get("demeanor") and spec["attribute"] == "PRE"
@@ -232,19 +233,29 @@ def resolve_dxd(state, rules, action):
     psychology = dxd_psychology.effects(pc["morale"], spec.get("psychology_context"))
     progression_dm = -(state["progression"]["stage"] - 1) if "progression" in state and spec["attribute"] == "POW" else 0
     emotional_dm = dxd_commitment.modifier(pc, action)
-    components = [emotional_dm, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
+    components = [context_dm, emotional_dm, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
-    net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"]
+    net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"] - sum(x["penalty"] for x in contextual)
     bonus = min(policy["maximum"], max(0, net))
     penalty = max(0, -net)
     args = {"favor": favor, "bonus": bonus}
+    npc_gathered = None
     if interaction == "pivotal":
-        npc_attrs = state["npcs"][action["npc"]]["dxd_attributes"]
+        npc = state["npcs"][action["npc"]]
+        npc_attrs = npc["dxd_attributes"]
+        target_spec = {"attribute": "INT", **spec.get("opposition", {})}
+        npc_gathered = dxd_modifiers.gather(npc_attrs, npc.get("skills", {}), npc.get("dxd_traits", {}), target_spec, player=False)
+        target_mods = dxd_modifiers.totals(npc_gathered)
         # NPCs do not receive the PC-only additional Attribute bonus.
         args = {"active_raw": pc["attributes"]["PRE"], "target_raw": npc_attrs["INT"],
                 "active_dm": sum(components) - dxd.attribute_dm(pc["attributes"]["PRE"]),
-                "active_bonus": bonus, "active_penalty": penalty, "active_favor": favor}
+                "active_bonus": bonus, "active_penalty": penalty, "active_favor": favor,
+                "target_dm": target_mods["dm"] - dxd.attribute_dm(npc_attrs["INT"]),
+                "target_bonus": target_mods["bonus"], "target_penalty": target_mods["penalty"]}
+    elif spec.get("narrative"):
+        args.update(narrative=True, tn=spec["tn"], dm=sum(max(0, x) for x in components),
+                    adversity=sum(max(0, -x) for x in components), adversity_dice=penalty)
     elif "npc_attribute" in spec:
         npc = state["npcs"][action["npc"]]
         args.update(narrative=True, dm=sum(max(0, x) for x in components),
@@ -273,12 +284,13 @@ def resolve_dxd(state, rules, action):
         retry = dict(args, base=3)
         result = dxd.test(digest(seed_parts + ["inspiration"]), **retry)
         dxd_conditions.add(pc["concerns"], weariness=1)
+    dxd_context.record(state, emotional_triggers, result)
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
                         **({"emotional_commitment": emotional_dm} if "commitments" in pc else {}),
                         "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
-                        "gathered": gathered, "net_bonus": bonus, "net_penalty": penalty,
+                        "gathered": gathered, **({"contextual": contextual, "npc_gathered": npc_gathered} if "character_profiles" in state else {}), "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
                         "initial_result": first, "inspired": inspired is not None,
                         "result": result})
@@ -477,7 +489,8 @@ def step(state, action, proposal=None, commitment=None):
         success = resolve_dxd(state, rules, a)
     primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
     if commitment is not None:
-        dxd_commitment.record(state, a, primary_result)
+        entry = dxd_commitment.record(state, a, primary_result)
+        dxd_context.acquire_commitment_disability(state["dxd"], entry)
     if a.get("test", {}).get("interaction"):
         # Signed margin is the Test Effect; ordinary Demeanor limits still apply.
         change_demeanor(state, a["npc"], primary_result["margin"])
