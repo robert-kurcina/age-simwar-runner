@@ -1,6 +1,7 @@
 """Read-only local player visualization from verified private sessions."""
 from html import escape
 from private_play import briefing
+from game_map import projection, render_map
 
 LABELS = {
     "households_assisted": "Households assisted",
@@ -38,7 +39,8 @@ def snapshot(session):
             "date": current["date"], "turn": current["turn"],
             "elapsed_minutes": current["elapsed_minutes"], "complete": current["complete"],
             "continued": current["continued"], "metrics": metrics,
-            "objectives": current["objectives"], "calibration": current["calibration"]}
+            "objectives": current["objectives"], "calibration": current["calibration"],
+            "map": projection(session)}
 
 
 def chart(points):
@@ -84,10 +86,11 @@ h1{{font-size:clamp(22px,4vw,34px);margin:8px 0}}h2{{font-size:16px;margin:0 0 1
 .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px;margin:20px 0}}
 article{{background:white;border:1px solid #d7dfe3;border-radius:8px;padding:20px}}
 strong{{font-size:34px;font-variant-numeric:tabular-nums}}.muted,small{{color:#50616d}}
-svg{{width:100%;height:auto;display:block}}li{{margin:8px 0}}
+article > svg{{width:100%;height:auto;display:block}}li{{margin:8px 0}}
 </style><main><header><small>AGE SIMWAR · READ-ONLY SESSION SNAPSHOT</small>
 <h1>{esc(data['title'])}</h1><p>{esc(data['perspective'])} · {esc(data['date'])} · Turn {data['turn']} · {'Complete' if data['complete'] else 'In progress'}</p>
 <p class="muted">{esc(data['calibration'])}</p></header>
+{render_map(data["map"])}
 <section class="grid" aria-label="Observed resources">{''.join(cards) or '<p>No visible resource reports.</p>'}</section>
 <article><h2>Objectives</h2><ul>{goals or '<li>No configured objectives.</li>'}</ul></article>
 </main></html>"""

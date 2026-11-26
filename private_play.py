@@ -152,6 +152,10 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
               "effective_date": spec["effective_date"], "actor": actor,
               "compiled": compiled, "preset": configuration,
               "briefing_context": reviewed_context(entry, compiled, actor, spec["effective_date"])}
+    from game_map import reviewed_map
+    map_config = reviewed_map(entry, compiled, spec["effective_date"])
+    if map_config is not None:
+        header["game_map"] = map_config
     if link is not None:
         header["continuity"] = link
     if shared:
