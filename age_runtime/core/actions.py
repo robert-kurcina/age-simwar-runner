@@ -219,7 +219,7 @@ def resolve_agreements(s, state, minute):
     Ordinary orders resolve first. No balance reservation or forced debt.
     A shortfall is a recorded default, never an invented negative balance.
     """
-    for aid, a in sorted(s.get("agreements", {}).items()):
+    for aid, a in s.get("agreements", {}).items():
         if minute != a["due_minute"]:
             continue
         signed = sorted(actor for actor, action in a["consent"].items()
