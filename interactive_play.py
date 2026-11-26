@@ -1,7 +1,7 @@
 """Interactive local terminal interface over the existing private session API."""
 import json
 from pathlib import Path
-from private_play import inventory, perspectives, available_presets, start, verify, read, briefing, update
+from private_play import inventory, perspectives, available_presets, select, switch_perspective, start, verify, read, briefing, update
 from player_requests import packet, confirm
 from local_model import propose
 from runner import save, digest
@@ -70,7 +70,13 @@ def run(path, manifest=None, owners=None, model=None,
             preset = choose(choices, "Configuration", ask, emit) if len(choices) > 1 else "standard"
             if preset is None:
                 return
-            session = start(manifest, selected, actor, owners, preset)
+            _, _, _, _, compiled = select(manifest, selected, owners)
+            shared = bool(compiled["scenario"].get("civic_agreement"))
+            if shared:
+                emit("Shared local session: each human participant confirms their own requests; referee controls handoff.")
+                if ask("Start shared session? [y/N] ").strip().lower() != "y":
+                    return
+            session = start(manifest, selected, actor, owners, preset, shared)
             if path.exists():
                 raise ValueError("session path already exists")
             save(path, session)
@@ -82,7 +88,7 @@ def run(path, manifest=None, owners=None, model=None,
             actions = info["available_requests"]
             for action, item in actions.items():
                 emit(f"{action}: {item['description']}")
-            emit("Commands: action ID | next | quit" + (" | say <request> | narrative" if model else ""))
+            emit("Commands: action ID | next | quit" + (" | say <request> | narrative" if model else "") + (" | switch" if info["shared"] else ""))
             command = ask("> ").strip()
             if command == "quit":
                 return
@@ -94,7 +100,13 @@ def run(path, manifest=None, owners=None, model=None,
                     emit("Unverified model commentary:")
                     emit(comment["summary"])
                     continue
-                if command == "next":
+                if command == "switch" and info["shared"]:
+                    actors = session["header"]["compiled"]["scenario"]["actors"]
+                    selected = choose([{"id": a, "label": p["label"]} for a, p in actors.items()], "Participant", ask, emit)
+                    if selected is None:
+                        continue
+                    candidate = switch_perspective(session, selected)
+                elif command == "next":
                     candidate = update(session, turns=1)
                 elif command in actions:
                     if ask(f"Confirm {command}? [y/N] ").strip().lower() != "y":
