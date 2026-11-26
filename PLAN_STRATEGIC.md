@@ -31,9 +31,10 @@ Keep existing civic fixtures for regression. Do not build another generic campai
 
 ## Current implementation increment — strategic turn support
 
-- WIP (P1): actor-local derived project assessments, conditional single-investment costs and capacity effects, report-cutoff deltas, pending orders and latest project results. No new scenario properties or adjudication rules. Focused regression checks committed; CI pending.
-- WIP (P1): revision-bound one-turn resolution with exact pending faction response map; existing packet validation and checkpoint replay reused. Chat facilitator procedure documented. Model behavior and actual player-led gameplay not yet qualified.
-- NEXT (P1): verify CI, then execute the authorized Fiji 12-week scenario in ordinary Chat using the integrated procedure. Collect author feedback and resolve concrete gameplay gaps before broadening the scenario set.
+- DONE (PR #97; tests 45878260145 and bundle 45878260151 passed): actor-local derived project assessments, conditional single-investment costs and capacity effects, report-cutoff deltas, pending orders and latest project results. No new scenario properties or adjudication rules. Focused regression checks passed.
+- DONE (mechanical, PR #97): revision-bound one-turn resolution with exact pending faction response map; existing packet validation and checkpoint replay reused. Chat facilitator procedure documented. Model behavior and actual player-led gameplay not yet qualified.
+- WIP (P0): connector-backed pinned source resolver for JSON, Markdown and PNG; exact blob bytes checked; same compilation/provenance contract. Synthetic equivalence/tamper tests added; CI pending. No local checkout requirement for transferred sources.
+- NEXT (P1): verify source adapter CI and actual private source transfer, then execute the authorized Fiji 12-week scenario in ordinary Chat using the integrated procedure. Collect author feedback and resolve concrete gameplay gaps before broadening the scenario set.
 
 ## Gameplay qualification
 

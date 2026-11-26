@@ -1,5 +1,7 @@
 """Compile reviewed structured civilian inputs from local Git repositories."""
 import argparse
+import base64
+import binascii
 import copy
 from datetime import date
 import hashlib
@@ -34,6 +36,50 @@ def git(root, *args):
     return result.stdout
 
 
+def read_pinned_source(owners, owner, revision, path):
+    """Read a Git blob or trusted connector export without changing provenance.
+
+    Connector entries are operator-supplied assertions of repository identity
+    and commit/path binding. Git blob SHA verifies the transferred bytes,
+    not the authenticity of a fabricated manifest.
+    """
+    if owner not in owners or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("unapproved or unpinned source")
+    relative = PurePosixPath(path)
+    if relative.is_absolute() or ".." in relative.parts or str(relative) != path or path == ".":
+        raise ValueError("invalid source path")
+    source = owners[owner]
+    if not isinstance(source, dict):
+        root = Path(source).resolve()
+        if git(root, "cat-file", "-t", revision).strip() != b"commit":
+            raise ValueError("source revision is not a commit")
+        return git(root, "show", revision + ":" + path)
+    if set(source) != {"kind", "files"} or source["kind"] != "connector-export-v1" or not isinstance(source["files"], list):
+        raise ValueError("invalid connector source manifest")
+    matches = []
+    identities = set()
+    for record in source["files"]:
+        if not isinstance(record, dict) or set(record) != {"revision", "path", "blob_sha", "content_base64"} or not all(isinstance(v, str) for v in record.values()):
+            raise ValueError("invalid connector source record")
+        identity = (record["revision"], record["path"])
+        if identity in identities:
+            raise ValueError("duplicate connector source identity")
+        identities.add(identity)
+        if identity == (revision, path):
+            matches.append(record)
+    if len(matches) != 1:
+        raise ValueError("pinned connector source unavailable")
+    record = matches[0]
+    try:
+        raw = base64.b64decode(record["content_base64"], validate=True)
+    except (ValueError, binascii.Error) as exc:
+        raise ValueError("invalid connector source encoding") from exc
+    blob = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") + b"\x00" + raw).hexdigest()
+    if blob != record["blob_sha"]:
+        raise ValueError("connector source blob mismatch")
+    return raw
+
+
 def checked_date(value):
     if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
         raise ValueError("expected ISO effective date")
@@ -56,10 +102,7 @@ def resolve_reference(ref, owners, effective_date):
         raise ValueError("unresolved or invalid source classification")
     if checked_date(ref["effective_date"]) != effective_date:
         raise ValueError("reference effective date differs from scenario")
-    root = Path(owners[ref["owner"]]).resolve()
-    if git(root, "cat-file", "-t", ref["revision"]).strip() != b"commit":
-        raise ValueError("source revision is not a commit")
-    raw = git(root, "show", ref["revision"] + ":" + str(path))
+    raw = read_pinned_source(owners, ref["owner"], ref["revision"], str(path))
     data = parse_json(raw)
     try:
         entity = data["entities"][ref["entity"]]
@@ -93,10 +136,7 @@ def resolve_evidence(ref, owners):
     if ref["classification"] not in {"canonical", "historical"}:
         raise ValueError("invalid evidence classification")
     checked_date(ref["reviewed_for"])
-    root = Path(owners[ref["owner"]]).resolve()
-    if git(root, "cat-file", "-t", ref["revision"]).strip() != b"commit":
-        raise ValueError("evidence revision is not a commit")
-    raw = git(root, "show", ref["revision"] + ":" + str(path))
+    raw = read_pinned_source(owners, ref["owner"], ref["revision"], str(path))
     lines = raw.decode("utf-8").splitlines()
     headings = []
     fence = None
@@ -220,6 +260,8 @@ def stale_dependencies(snapshot, owners):
     for key, ref in list(snapshot["dependencies"].items()) + [("evidence:" + key, ref) for key, ref in snapshot.get("evidence", {}).items()]:
         if ref["owner"] not in owners:
             raise ValueError("unapproved source owner")
+        if isinstance(owners[ref["owner"]], dict):
+            raise ValueError("connector export has no local HEAD for staleness comparison")
         root = Path(owners[ref["owner"]]).resolve()
         try:
             raw = git(root, "show", "HEAD:" + ref["path"])
@@ -234,7 +276,7 @@ def stale_dependencies(snapshot, owners):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("spec", type=Path)
-    parser.add_argument("owners", type=Path, help="Local JSON map of approved owner IDs to Git roots")
+    parser.add_argument("owners", type=Path, help="Approved owner IDs mapped to Git roots or connector exports")
     parser.add_argument("snapshot", type=Path)
     parser.add_argument("scenario_output", type=Path)
     parser.add_argument("--variation", type=Path, help="Optional pinned civilian variation JSON")

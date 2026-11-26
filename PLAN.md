@@ -34,7 +34,7 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 - DONE: four short public civic fixtures; PR #80 adds one-shot conditional institutional events with visible prerequisites, guarded debits and recorded outcomes.
 - DONE: Fear! Boothbay v15, Castine v8 and Ram Island v3, shared bounded DXD, derived Attributes, Concerns, Favor, Inspiration, Morale and Psychology. PR #78 tests and bundle CI passed (45814058341, 45814058241). Player-led Boothbay Chat trial completed with negative gameplay feedback; execution verified, experiential qualification WIP. PR #79 inline icons merged. See [DXD migration](docs/dxd-migration.md).
 - DONE: scripted Fiji 12-turn strategic alternatives, resource guards, actor visibility and exact replay (vault-sh44ser #993, run 45873529443; export step failed separately).
-- WIP (P1): actual strategic Chat gameplay and private scenario delivery. Runner #89 and vault #994 merged; corrected export qualification/retention and repository ownership remain unresolved. Local-only storage is not a requirement; retain private versioned source access without exposing private content publicly.
+- WIP (P1): actual strategic Chat gameplay and private scenario delivery. Runner #89 and vault #994 merged; corrected private export passed (vault run 45873796338); durable retention and repository ownership remain unresolved. Strategic decision support and one-turn resolution passed CI (#97); connector-backed source compilation WIP. Local-only storage is not a requirement; retain private versioned source access without exposing private content publicly.
 - DEFERRED (P2): first bounded Sarna Len scenario, until the narrative foundation is qualified.
 
 ## Development phases and immediate priorities

@@ -1,3 +1,4 @@
+import base64
 import copy
 import json
 from pathlib import Path
@@ -162,3 +163,39 @@ class SourceCompilerTest(unittest.TestCase):
         ref["reviewed_for"] = "2044-01-01"
         with self.assertRaisesRegex(ValueError, "review date"):
             compile_scenario(spec, self.owners)
+
+    def test_connector_export_equivalence_and_tamper(self):
+        (self.root / "history.md").write_text("# History\n\n## Recovery\nServices resumed.\n")
+        self.git("add", "history.md")
+        self.git("commit", "-qm", "evidence fixture")
+        revision = self.git("rev-parse", "HEAD").strip()
+        self.spec["evidence_refs"] = {"context": {
+            "owner": "synthetic", "revision": revision, "path": "history.md",
+            "heading": "Recovery", "reviewed_for": self.spec["effective_date"],
+            "classification": "canonical"}}
+        records = []
+        for rev, path in ((self.revision, "facts.json"), (revision, "history.md")):
+            raw = subprocess.check_output(["git", "-C", str(self.root), "show", rev + ":" + path])
+            records.append({"revision": rev, "path": path,
+                            "blob_sha": self.git("rev-parse", rev + ":" + path).strip(),
+                            "content_base64": base64.b64encode(raw).decode("ascii")})
+        owners = {"synthetic": {"kind": "connector-export-v1", "files": records}}
+        expected = compile_scenario(self.spec, self.owners)
+        self.assertEqual(compile_scenario(self.spec, owners), expected)
+        for mutation in ("content", "hash", "missing", "duplicate", "revision"):
+            bad = copy.deepcopy(owners)
+            files = bad["synthetic"]["files"]
+            if mutation == "content":
+                files[0]["content_base64"] = "YQ=="
+            elif mutation == "hash":
+                files[0]["blob_sha"] = "0" * 40
+            elif mutation == "missing":
+                files.pop()
+            elif mutation == "duplicate":
+                files.append(files[0].copy())
+            elif mutation == "revision":
+                files[0]["revision"] = "0" * 40
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                compile_scenario(self.spec, bad)
+        with self.assertRaisesRegex(ValueError, "no local HEAD"):
+            stale_dependencies(expected, owners)

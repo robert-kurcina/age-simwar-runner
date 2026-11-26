@@ -6,7 +6,7 @@ from copy import deepcopy
 import re
 import struct
 from pathlib import PurePosixPath
-from age_runtime.core.source_compiler import git, checked_date
+from age_runtime.core.source_compiler import read_pinned_source, checked_date
 
 
 def resolve(entry, compiled, date, owners):
@@ -28,10 +28,7 @@ def resolve(entry, compiled, date, owners):
     audience = config["actors"]
     if not isinstance(audience, list) or not audience or any(a not in compiled["scenario"]["actors"] for a in audience):
         raise ValueError("invalid image map audience")
-    root = owners[config["owner"]]
-    if git(root, "cat-file", "-t", config["revision"]).strip() != b"commit":
-        raise ValueError("image map revision must be a commit")
-    raw = git(root, "show", config["revision"] + ":" + str(path))
+    raw = read_pinned_source(owners, config["owner"], config["revision"], str(path))
     if len(raw) > 16 * 1024 * 1024 or len(raw) < 33 or raw[:16] != b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR":
         raise ValueError("image map must be a PNG under 16 MiB")
     width, height = struct.unpack(">II", raw[16:24])
