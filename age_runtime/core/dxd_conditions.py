@@ -165,6 +165,7 @@ def wake(state, clock, attributes, *, seed, forced=False):
         clock["checks"].append({"sleep_seconds": slept, "awakening": result})
         if not result["passed"]:
             return False
+    state["fatigue"] = max(0, state["fatigue"] - slept // 60)
     state["weariness"] = max(0, state["weariness"] - sum(rng.randint(1, 6) for _ in range(slept // 3600)))
     state["stress"] = max(state.get("min_stress", 0), state["stress"] - rng.randint(1, 6))
     if slept < required:
@@ -174,7 +175,7 @@ def wake(state, clock, attributes, *, seed, forced=False):
         extra = sum(rng.randint(1, 6) for _ in range(missed))
         clock["early_stress"] += extra
         state["min_stress"] = state.get("min_stress", 0) + extra
-        state["stress"] = max(state["stress"], state["min_stress"])
+        add(state, stress=max(0, state["min_stress"] - state["stress"]))
     elif clock["early_stress"]:
         state["min_stress"] = max(0, state.get("min_stress", 0) - clock["early_stress"])
         clock["early_stress"] = 0
