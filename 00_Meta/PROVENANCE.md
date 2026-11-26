@@ -123,3 +123,7 @@ PR #28 merged after successful CI. Added optional finite household demand and co
 ## Capacity deployment status
 
 PR #29 passed CI and merged. The external private pilot now has a finite-demand configuration and four hypothetical supply sensitivity cases staged for private verification. Source references remain unchanged. The numerical cases are illustrative, not calibrated historical uncertainty bounds. No private configuration data is included here.
+
+## Corpus-first roadmap revision
+
+Author directed adoption of useful WarGameLLM player-experience ideas while focusing on the extensive private fictional corpus layered on real-world knowledge. PR #30 and external capacity deployment passed CI and merged; private job output confirmed all four hypothetical sensitivity cases. Prioritize private catalog recovery, supported scenario/perspective selection, actor-visible briefings, confirmed civilian request interpretation and persistent sessions over further isolated fixture expansion. Pretrained knowledge is not verified evidence. Existing runtime safety boundaries and private-source separation remain. This increment revises priorities; no new runtime behavior claimed.
