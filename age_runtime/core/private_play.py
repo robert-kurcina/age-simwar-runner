@@ -30,7 +30,7 @@ def inventory(path):
 
 def supported(s):
     # Reuse reviewed civilian mechanics rather than scenario-specific identities.
-    if s["events"] or s["constraints"]:
+    if s["events"] or s["constraints"] or "economy_projects" in s or "dependent_events" in s:
         raise ValueError("unsupported private scenario mechanics")
     keys = set(s["initial"])
     requests = set(s.get("action_catalog", {}))
@@ -235,6 +235,7 @@ def briefing(session):
         "objectives": {oid: {"description": obj["description"],
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
+        **({"project_results": observation["project_results"]} if "project_results" in observation else {}),
         "reports": observation["reports"],
         "own_requests": observation["own_requests"],
         "available_requests": observation["available_requests"],
