@@ -90,6 +90,46 @@ class PrivatePlayTest(unittest.TestCase):
             from image_map import projection as image_projection
             self.assertIsNone(image_projection({"header": {**session["header"], "actor": "other"}}, True))
             self.assertNotIn("Local <reference>", render(session))
+            from browser_play import apply as browser_apply, page as browser_page, server as browser_server
+            from urllib.request import Request, urlopen
+            from urllib.error import HTTPError
+            from threading import Thread
+            browser_path = root / "browser-session.json"
+            save(browser_path, session)
+            original_browser = digest(session)
+            with browser_server(browser_path, 0) as http:
+                thread = Thread(target=http.serve_forever, daemon=True)
+                thread.start()
+                try:
+                    origin = f"http://127.0.0.1:{http.server_port}"
+                    html = urlopen(origin + "/", timeout=5).read().decode()
+                    self.assertIn("Confirm request", html)
+                    self.assertIn("Adjudicating turn", html)
+                    import re
+                    token = json.loads(re.search(r"const playConfig = (.*?);", html).group(1))["token"]
+                    payload = {"revision": original_browser, "operation": "submit", "action": "deliver_aid"}
+                    def post(payload, token):
+                        return urlopen(Request(origin + "/operation", data=json.dumps(payload).encode(),
+                            headers={"Origin": origin, "Content-Type": "application/json",
+                                     "X-Session-Token": token}), timeout=5)
+                    with self.assertRaises(HTTPError) as forbidden:
+                        post(payload, "wrong")
+                    self.assertEqual(forbidden.exception.code, 403)
+                    with post(payload, token) as response:
+                        self.assertEqual(response.status, 200)
+                    submitted = verify(json.loads(browser_path.read_text()))
+                    self.assertEqual(len(submitted["state"]["requests"]), 1)
+                    with self.assertRaises(HTTPError) as stale:
+                        post(payload, token)
+                    self.assertEqual(stale.exception.code, 409)
+                    with post({"revision": digest(submitted), "operation": "advance", "action": None}, token) as response:
+                        self.assertEqual(response.status, 200)
+                    advanced = verify(json.loads(browser_path.read_text()))
+                    self.assertEqual(advanced["state"]["values"]["households_assisted"], 10)
+                    self.assertEqual(advanced["state"]["turn"], 1)
+                finally:
+                    http.shutdown()
+                    thread.join(timeout=5)
             self.assertNotIn("aid_packages", view(session)["observation"]["values"])
             opening = briefing(session)
             self.assertEqual(opening["kind"], "opening")

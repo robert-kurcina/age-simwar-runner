@@ -97,6 +97,9 @@ def view(session, actor=None):
 
 
 def main():
+    if sys.argv[1:3] == ['private', 'browser']:
+        from browser_play import main as browser_main
+        return browser_main(sys.argv[3:])
     if sys.argv[1:2] == ['private']:
         from private_play import main as private_main
         return private_main(sys.argv[2:])
