@@ -14,6 +14,15 @@ The intended product is corpus-grounded SH44SER campaign play, with a reusable r
 
 Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/): scenario discovery, perspective selection, concise opening/turn briefings, configurable information presentation, session resumption and model independence. Do not copy proprietary scenario text or infer correctness from competitor marketing. Preserve deterministic state ownership and source references. Supported executable scope remains civilian recovery, institutional coordination and retrospective historical context; no operational military targeting, escalation or casualty optimization.
 
+## EXECUTION MODES — author-approved Chat-first delivery
+
+1. Primary: ordinary ChatGPT Chat inside the AGE project. Retrieve pinned runner and authorized private scenario inputs, run the existing Python engine in the available execution environment, and present actor-visible briefings, decisions, resource summaries and actual rendered visuals in conversation. No always-running process assumed.
+2. Alternative: ChatGPT Work for larger analysis and extended tasks, using the same engine and checkpoint contract.
+3. Alternative: local CLI/browser and optional LM Studio / GPT-OSS inference. Preserve existing verified implementations; further browser features are not the primary delivery gate.
+4. Deferred: hosted browser application, GitHub Pages deployment and MCP integration, only if a demonstrated requirement remains after Chat qualification.
+
+ChatGPT interprets player intent and explains results; the verified Python engine owns state and adjudication. A model-generated state block, conversational memory, or a generated UI interaction alone is not evidence of engine execution. Keep private canonical inputs and session files access-controlled; never commit private state or artwork to the public runner. No remote service, custom plugin, local model, or additional browser framework is required for the initial Chat vertical slice.
+
 ## DONE
 - Deterministic scheduled-event runner, actor reports, checkpoints and replay.
 - Administrative request ledger, review capacity, read-only interpretation exchange and completed-session comparison.
@@ -59,20 +68,30 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 - Private continuity merged after CI (PR #44); linked private recovery verified with standard and limited-resource configurations, persistence and completed-session reporting. Independent branches are not pooled.
-- Actor-visible resource dashboard and observed-history export merged after CI (PR #45). Standalone HTML is a read-only session snapshot, not a live browser game. Optional Leaflet map export merged after CI (PR #46); private Fiji map configuration merged. Actual browser inspection remains outstanding. Standalone pinned PNG image mode merged after CI (PR #47); private reference gallery merged. Actor-filtered image annotations with authored hex identifiers merged after CI (PR #48). Private gallery and dashboard browser smoke checks passed after runner compatibility correction; direct screenshot review, actual private pixel control points and live tiles remain outstanding. External map services require explicit user activation.
+- Actor-visible resource dashboard and observed-history export merged after CI (PR #45). Standalone HTML is a read-only session snapshot, not a live browser game. Optional Leaflet map export merged after CI (PR #46); private Fiji map configuration merged. Direct screenshot inspection remains outstanding. Standalone pinned PNG image mode merged after CI (PR #47); private reference gallery merged. Actor-filtered image annotations with authored hex identifiers merged after CI (PR #48). Private gallery and dashboard browser smoke checks passed after runner compatibility correction; direct screenshot review, actual private pixel control points and live tiles remain outstanding. External map services require explicit user activation.
 
 - Post-Agreement civilian service recovery verified privately; five illustrative scenarios across four groups.
 - Shared framework-independent loading UI (SVG spinner, suspense skeleton, accessible busy state, reduced-motion, timeout and retry) merged after CI (PR #49) for actual map library/artwork/tile loading. Apply the same pattern to scenario/session loads, confirmed requests and narrative generation when asynchronous gameplay UI is implemented. Do not insert artificial delays or replace already available observations.
 
-- Local single-session browser gameplay adapter implemented, pending CI: existing verified session, explicit request confirmation, one-turn adjudication, autosave, revision-bound requests, loopback-only HTTP and shared loading indicator. This is a trusted local single-writer interface, not remote multiplayer or deployment. Browser transition verification and scenario selection remain outstanding.
+- Local single-session browser gameplay adapter merged after CI (PR #50): existing verified session, explicit request confirmation, one-turn adjudication, autosave, revision-bound requests, loopback-only HTTP and shared loading indicator. This is a trusted local single-writer interface, not remote multiplayer or deployment. Browser transition verification and scenario selection remain outstanding; these are alternative-mode improvements, not Chat delivery prerequisites.
 
 ## NEXT (ordered, with acceptance criteria)
 
-1. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries. Do not invent canon or block playability on exhaustive calibration.
-2. Deliver the Gameplay Map and Visualization milestone below, starting with session-derived resource views and an actual lightweight browser map.
-3. Qualify optional live local model inference and reviewed context discovery. Manual gameplay remains available; model connectivity is not a release gate.
-4. Deliver the post-stabilization MCP milestone below.
-5. Implement late-priority Automated Scenario Exploration only after the supported interactive workflow is stable.
+1. Qualify actual ordinary Chat execution: retrieve pinned engine code and a supported private scenario with authorized source access, materialize required files into the Python runtime, execute a real opening briefing and turn, and capture a verified checkpoint. If connector-to-runtime transfer is unavailable, use an explicit user-provided archive or mounted project file; never claim a connector reference alone is a runnable local file.
+2. Complete an entire private scenario through Chat, including player-confirmed decisions, actual engine adjudication, observation-only narrative, visible resource history and a final outcome. Verify at least one rejected/stale request and one linked continuation using existing mechanics. Keep each increment focused on actual play rather than additional fixtures.
+3. Demonstrate checkpoint export and resumption after runtime reset, then across a separate conversation. Use an explicit durable user-controlled private checkpoint (download/upload or verified project storage). Pin the runner revision and input provenance; verify saved state and revision before accepting a new turn. Do not assume memory, a sandbox path, or a chat transcript is durable storage. Reject ambiguous/stale checkpoints and avoid silently overwriting an earlier branch.
+4. Present actual actor-visible map/dashboard output in Chat: reuse engine rendering and structured observations. Qualify delivery of original private artwork through authorized transfer; do not substitute invented maps or screenshots. Use a compact textual briefing and controls only when they submit actual user instructions; verify each mutation in the engine. Preserve available state during real loading; do not add fake spinners or progress.
+5. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries. Do not invent canon or block playability on exhaustive calibration. Qualify reviewed context discovery as needed for actual scenarios.
+6. After Chat acceptance, qualify optional Work and local model/browser modes according to demand. Consider MCP/hosting only if the verified Chat flow cannot meet a concrete requirement. Automated Scenario Exploration remains a late-priority independent milestone.
+
+## CHAT GAMEPLAY CONTRACT — primary delivery acceptance
+
+- Startup: identify the authorized campaign, scenario, perspective and preset; verify exact engine/source revisions; compile and initialize through the existing engine. Store the opening checkpoint and present actor-visible context, objectives, known reports, and permissible actions.
+- Turn: translate player intent into an existing allowed request, clarify material ambiguity, obtain explicit confirmation for a proposed action, bind it to the current checkpoint revision, and execute only through the engine. Advancing time is a separate explicit operation unless the player requests both. Shared participation requires each human's own consent; do not infer agreement.
+- Output: present actual engine results, observation timestamps, pending requests, remaining options, and concise clearly distinguished narrative. Do not expose hidden state, raw private corpus passages, or other perspectives in player-facing displays. Label illustrative numerical assumptions and unresolved historical calibration.
+- Persistence: export a verified checkpoint with provenance and revision information on every successful mutation; retain previous checkpoint until the new one is saved. On resumption, load and verify the exact checkpoint before acting. A new conversation must be able to resume without replaying conversational prose.
+- Failure: if runtime, source retrieval, verification or checkpoint persistence fails, report which step failed; do not report fictional execution or successful state changes. Offer the supported file handoff or local CLI as fallback.
+- Acceptance evidence: actual ordinary Chat tool execution, real verified initial/final checkpoints, complete scenario, linked continuation, resumed checkpoint in a separate conversation, and engine-derived visual output. Public CI alone does not satisfy this end-to-end acceptance. Avoid a new API or adapter if existing CLI/functions and a concise operating contract suffice.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 
@@ -83,7 +102,7 @@ See [ADR-001](docs/adr/001-canonical-source-references.md). The world-building r
 3. Implement a local, read-only reference resolver and compiler against synthetic fixtures first. Acceptance: deterministic compilation, explicit failures for missing or ambiguous fields, temporal mismatch, stale source detection and immutable pinned snapshots. No network or private repository dependency in public CI.
 4. Extend the verified private civilian pilot with reviewed numerical inputs only when evidence is sufficient. Keep authored facts in their existing authoritative homes; store only simulation-specific assumptions in the private package. Do not claim predictive accuracy from successful compilation.
 
-## GAMEPLAY MAP AND VISUALIZATION — after private continuity, before MCP (author-approved)
+## GAMEPLAY MAP AND VISUALIZATION — shared engine-derived presentation (author-approved)
 
 Use minimum sufficient geographic fidelity for informed gameplay. One shared lightweight Leaflet renderer; interchangeable permitted basemap tiles, SVG and GeoJSON overlays, and optional H3 geographic indexing only where useful. Existing canonical raster and hex maps remain authoritative for fictional geography; preserve their identifiers rather than replacing them with H3 cells. No mandatory ArcGIS SDK, dedicated GIS database, comprehensive GIS pipeline or terrain reconstruction.
 
@@ -93,11 +112,11 @@ Use minimum sufficient geographic fidelity for informed gameplay. One shared lig
 4. Add optional simplified terrain presentation from available, appropriately dated geographic sources and canonical artwork. Use broad land-cover, relief and water classes, keep unknown terrain unknown, and distinguish modern reference imagery from historical conditions. Avoid unnecessary raster processing; terrain presentation is not a new adjudication rule.
 5. Add optional H3 indexing if a supported scenario needs geographic aggregation; retain existing authored hex maps independently. Display supported civilian service locations, relationships, and resource information through actor-visible overlays. Use the same read-only contracts for eventual MCP delivery.
 
-Acceptance: an actual browser-rendered scenario map with real geographic context, source-linked canonical imagery where applicable, selectable overlays and resource information derived from a private session. Keep private artwork local/access-controlled and comply with tile provider attribution and use restrictions. Do not introduce operational military logistics or targeting tooling. No mandatory cloud GIS, new elevation model, bathymetric reconstruction or comprehensive digital twin.
+Acceptance: actual engine-derived scenario visuals and resource information from a private session, deliverable in Chat. Existing browser rendering remains an alternative; live tiles, selectable overlays and geographic registration are required only where a supported scenario needs them. Keep private artwork local/access-controlled and comply with tile provider attribution and use restrictions. Do not introduce operational military logistics or targeting tooling. No mandatory cloud GIS, new elevation model, bathymetric reconstruction or comprehensive digital twin.
 
-## POST-STABILIZATION — ChatGPT-native MCP plugin (author-approved)
+## DEFERRED OPTIONAL — ChatGPT-native MCP plugin (previously approved; not a Chat prerequisite)
 
-Do not begin plugin development until the current Python/CLI engine has satisfied its existing functional acceptance criteria, including campaign continuity and end-to-end execution. Optional local model connectivity is not a release gate unless separately required. Keep GitHub as source control; do not migrate the engine to JavaScript or require a browser UI merely for plugin integration.
+Do not begin plugin development until ordinary Chat gameplay acceptance is satisfied and a concrete requirement warrants an external service. Optional local model connectivity is not a release gate unless separately required. Keep GitHub as source control; do not migrate the engine to JavaScript or require a browser UI merely for plugin integration.
 
 1. Verify current ChatGPT custom plugin eligibility, MCP transport and authentication requirements, and select a suitable executable hosting environment. GitHub Pages alone cannot host executable MCP functions.
 2. Expose read-only campaign listing and session inspection for the existing civilian synthetic campaign through a minimal MCP adapter. Verify actual invocation from ChatGPT.
@@ -109,7 +128,7 @@ Acceptance: a user can operate a supported civilian campaign from ChatGPT throug
 
 ## LATE PRIORITY — Automated Scenario Exploration (author-approved)
 
-After supported scenario configurations, interactive gameplay and private continuity are stable, add an optional research mode for civilian recovery and institutional coordination. This milestone must not displace current player-facing work or block MCP delivery.
+After supported scenario configurations, interactive gameplay and private continuity are stable, add an optional research mode for civilian recovery and institutional coordination. This milestone must not displace current Chat gameplay qualification or source-qualified scenario coverage.
 
 1. Establish deterministic civilian participant baselines and explicit experiment assumptions before adding model-generated behavior.
 2. Explore reviewed civilian resource, service-capacity, reporting-delay and institutional cooperation variations using isolated sessions and the existing adjudication engine.
@@ -122,7 +141,7 @@ Acceptance: a reproducible civilian experiment compares reviewed scenarios and p
 ## DEFERRED
 - Private campaign content belongs in an external private package, not this public repository. Recover its original stage and scenario inventory, participant perspectives, chronology, objectives and continuity requirements from authorized private sources; record unknowns rather than inventing canon.
 - Historical reconstruction may be represented by documented milestones and retrospective civilian consequences; no operational military escalation, targeting, or optimization of casualties.
-- Autonomous actor policy, general causal inference, AGE/AIGen integration, rich UI and stochastic models are not delivered. Reassess only after the civilian vertical slice works.
+- Hosted deployment, further standalone browser UX, autonomous actor policy, general causal inference, AGE/AIGen integration, rich UI and stochastic models are not primary delivery requirements. Reassess only after the civilian vertical slice works.
 
 ## REJECTED
 - Counting repeated plans, additional isolated demonstrations or documentation-only changes as functional implementation.
