@@ -169,13 +169,13 @@ def derive(attributes, body):
 # Universal Table scalar values, indices 1 through 19.
 SCALARS = (12, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300, 400, 500, 600, 800)
 
-def sleep_limit_hours(fortitude, weariness=0):
-    """DXD Book VII: Scalar(FOR minus raw Weariness, min Index 1) minus 5."""
+def sleep_limit_hours(fortitude, weariness_degrees=0, stress_degrees=0):
+    """DXD Book VII: Scalar(FOR minus Weariness and Stress Degrees, min Index 1) minus 5."""
     if type(fortitude) is not int or not 1 <= fortitude <= len(SCALARS):
         raise ValueError("FOR outside supported scalar range")
-    if type(weariness) is not int or weariness < 0:
-        raise ValueError("invalid Weariness")
-    return SCALARS[max(1, fortitude - weariness) - 1] - 5
+    if any(type(n) is not int or n < 0 for n in (weariness_degrees, stress_degrees)):
+        raise ValueError("invalid Concern Degrees")
+    return SCALARS[max(1, fortitude - weariness_degrees - stress_degrees) - 1] - 5
 
 def physical_properties(a, stature, body):
     """Ordinary human baseline; no implicit PML, ancestry or injury modifiers."""
