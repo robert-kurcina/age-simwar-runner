@@ -51,7 +51,8 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Reviewed perspective-specific context binding merged and actual private briefing verified (PR #34 and private integration). Index metadata discovery utility merged; actual index query remains unverified.
 - Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Civic agreement requires separately designed human perspective participation.
 - Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
-- Loopback OpenAI-compatible local model adapter implemented; targeted HTTP transport test pending. Actual inference on the user's host remains unverified. Manual interpretation/confirmation remains available.
+- Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
+- Interactive terminal gameplay implemented over the existing private session API; targeted verification pending. Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)

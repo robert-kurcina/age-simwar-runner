@@ -106,6 +106,21 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(view(restored)["observation"]["values"]["open_service_centers"], 2)
             self.assertEqual(restored["state"]["values"]["restoration_credits"], 0)
             self.assertTrue(view(restored)["complete"])
+            # Interactive mode: choose scenario and actor, decline, confirm, save, resume.
+            from interactive_play import run
+            interactive = root / "interactive.json"
+            output = []
+            commands = iter(["1", "1", "deliver_aid", "n", "deliver_aid", "y", "next", "quit"])
+            run(interactive, path, owners, ask=lambda _: next(commands), emit=output.append)
+            resumed = verify(json.loads(interactive.read_text()))
+            self.assertEqual(resumed["state"]["turn"], 1)
+            self.assertEqual(len(resumed["state"]["requests"]), 1)
+            commands = iter(["deliver_aid", "y", "next", "next"])
+            run(interactive, ask=lambda _: next(commands), emit=output.append)
+            final = verify(json.loads(interactive.read_text()))
+            self.assertEqual(final["state"]["values"]["households_assisted"], 15)
+            self.assertTrue(view(final)["complete"])
+            self.assertTrue(any("Scenario complete" in line for line in output))
             # Resume without the source files or inventory.
             path.unlink()
             (root / "spec.json").unlink()

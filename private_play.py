@@ -230,8 +230,18 @@ def main(argv=None):
     local.add_argument("--model", required=True)
     local.add_argument("--base", default="http://127.0.0.1:1234/v1")
     local.add_argument("--output", type=Path, required=True)
+    interactive = commands.add_parser("interactive")
+    interactive.add_argument("session", type=Path)
+    interactive.add_argument("--inventory", type=Path)
+    interactive.add_argument("--owners", type=Path)
+    interactive.add_argument("--model")
+    interactive.add_argument("--base", default="http://127.0.0.1:1234/v1")
     a = p.parse_args(argv)
     try:
+        if a.command == "interactive":
+            from interactive_play import run
+            run(a.session, a.inventory, read(a.owners) if a.owners else None, a.model, a.base)
+            return
         if a.command == "list":
             result = inventory(a.inventory)
         elif a.command == "perspectives":
