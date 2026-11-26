@@ -72,3 +72,38 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["ending"]["scores"]["Self Preserved"], 10.0)
         self.assertEqual(s["ending"]["scores"]["Truth Preserved"], 1.0)
         mythos.verify(s)
+
+    def test_earned_revelation_and_account(self):
+        def choose(state, action):
+            return mythos.step(state, action)
+        for seed in range(200):
+            s = mythos.initial("boothbay", seed)
+            self.assertNotIn("follow_eleanor", [x["id"] for x in mythos.view(s)["choices"]])
+            s = choose(s, "talk_eleanor")
+            if "eleanor_account" not in s["flags"]:
+                continue
+            self.assertIn("follow_eleanor", [x["id"] for x in mythos.view(s)["choices"]])
+            s = choose(s, "inspect_docks")
+            if "badge" not in s["flags"]:
+                continue
+            s = choose(s, "report")
+            self.assertIsNone(s["ending"])
+            self.assertIn("written_account", s["flags"])
+            self.assertEqual(s["containment"], 0)
+            s = choose(s, "leave_copy")
+            self.assertTrue(s["ending"]["account_entrusted"])
+            self.assertFalse(s["ending"]["account_relayed"])
+            self.assertEqual(s["ending"]["scores"]["Horror Contained"], 1.0)
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No successful evidence route")
+
+    def test_timed_observation_once(self):
+        s = mythos.initial("boothbay", 42)
+        for _ in range(4):
+            s = mythos.step(s, "rest_room")
+        self.assertEqual(s["events_seen"], ["evening"])
+        s = mythos.step(s, "observe")
+        self.assertEqual(len(s["observations"]), 1)
+        mythos.verify(s)
