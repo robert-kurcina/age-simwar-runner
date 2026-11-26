@@ -216,6 +216,14 @@ def main(argv=None):
             sub.add_argument("request")
         if name == "advance":
             sub.add_argument("--turns", type=int, default=1)
+    for name in ("interpret", "proposal", "confirm"):
+        sub = commands.add_parser(name)
+        sub.add_argument("session", type=Path)
+        sub.add_argument("instruction")
+        if name != "interpret":
+            sub.add_argument("response", type=Path)
+        if name == "confirm":
+            sub.add_argument("--approve", required=True)
     a = p.parse_args(argv)
     try:
         if a.command == "list":
@@ -228,6 +236,18 @@ def main(argv=None):
             session = start(a.inventory, a.scenario, a.actor, read(a.owners))
             save(a.session, session)
             result = view(session)
+        elif a.command in ("interpret", "proposal", "confirm"):
+            from player_requests import packet, prompt, validate_proposal, confirm
+            session = verify(read(a.session))
+            exchange = packet(session, a.instruction)
+            if a.command == "interpret":
+                result = {"exchange": exchange, "prompt": prompt(exchange)}
+            elif a.command == "proposal":
+                result = validate_proposal(session, exchange, read(a.response))
+            else:
+                session = confirm(session, exchange, read(a.response), a.approve)
+                save(a.session, session)
+                result = view(session)
         else:
             session = verify(read(a.session))
             if a.command not in ("inspect", "briefing"):
