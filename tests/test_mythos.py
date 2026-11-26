@@ -1005,3 +1005,36 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["npcs"]["elias"]["skills"]["Fishing"], 2)
         self.assertNotIn("character_profiles", mythos.view(s))
         mythos.verify(s)
+
+    def test_contextual_emotional_and_narrative_modifiers(self):
+        from age_runtime.core import dxd_context
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        a = {"id": "context_test", "npc": "eleanor",
+             "test": {"attribute": "PRE", "skill": "Persuade", "interaction": "ordinary",
+                      "tn": 7, "significance": "minor", "context_tags": ["event:war"]}}
+        self.assertEqual(dxd_context.effects(s, a, a["test"])[0][0]["penalty"], 1)
+        self.assertEqual(dxd_context.effects(s, a, dict(a["test"], context_tags=[]))[0], [])
+        mythos.resolve_dxd(s, rules, a)
+        self.assertEqual(s["dxd"]["tests"][-1]["contextual"][0]["penalty"], 1)
+        self.assertEqual(dxd_context.effects(s, a, a["test"])[0], [])
+        # Isolated resolver check: narrative fixed penalties and dice convert to TN.
+        s["dxd"]["concerns"]["fatigue"] = s["dxd"]["concerns"]["capacity"]["endurance"]
+        mythos.resolve_dxd(s, rules, {"id": "danger_test", "test": {
+            "attribute": "REF", "tn": 7, "significance": "minor", "narrative": True, "fixed_dm": -2}})
+        self.assertEqual(s["dxd"]["tests"][-1]["result"]["tn"], 12)
+
+    def test_native_opposition_and_acquired_disability(self):
+        from age_runtime.core import dxd_context
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        a = next(a for a in rules["actions"] if a["id"] == "speak_burroughs")
+        mythos.resolve_dxd(s, rules, a)
+        t = s["dxd"]["tests"][-1]
+        self.assertEqual(t["inputs"]["target_dm"], 1)
+        self.assertEqual(t["npc_gathered"]["skill"][0]["name"], "Investigate")
+        dxd_context.acquire_commitment_disability(s["dxd"], {"context": "eleanor", "emotional_disability": True})
+        name = "[Emotional > Commitment: eleanor]"
+        self.assertIn(name, s["dxd"]["traits"])
+        social = {"npc": "eleanor", "test": {"interaction": "ordinary"}}
+        self.assertEqual(dxd_context.effects(s, social, social["test"])[0][0]["name"], name)
