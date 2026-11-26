@@ -17,9 +17,10 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 ## EXECUTION MODES — author-approved Chat-first delivery
 
 1. Primary: ordinary ChatGPT Chat within a single conversation, launched by the README prompt. Assume the user's active GitHub Connector is configured and authorized for the runner and relevant private repositories. Retrieve pinned runner and authorized scenario inputs, run the existing Python engine in the available execution environment, and present actor-visible briefings, decisions, resource summaries and actual rendered visuals. No always-running process or cross-conversation persistence required.
-2. Alternative: ChatGPT Work for larger analysis and extended tasks, using the same engine and checkpoint contract.
-3. Alternative: local CLI/browser and optional LM Studio / GPT-OSS inference. Preserve existing verified implementations; further browser features are not the primary delivery gate.
-4. Deferred: hosted browser application, GitHub Pages deployment and MCP integration, only if a demonstrated requirement remains after Chat qualification.
+2. Also supported: standalone ZIP uploaded to a single ordinary ChatGPT conversation with Python execution; no GitHub Connector or network retrieval required for bundled campaign play. Preserve exact engine revision and use the same adjudication and presentation contract. Public distributions contain only public scenarios; authorized private offline distributions are separate.
+3. Alternative: ChatGPT Work for larger analysis and extended tasks, using the same engine and checkpoint contract.
+4. Alternative: local CLI/browser and optional LM Studio / GPT-OSS inference. Preserve existing verified implementations; further browser features are not the primary delivery gate.
+5. Deferred: hosted browser application, GitHub Pages deployment and MCP integration, only if a demonstrated requirement remains after Chat qualification.
 
 ChatGPT interprets player intent and explains results; the verified Python engine owns state and adjudication. A model-generated state block, conversational memory, or a generated UI interaction alone is not evidence of engine execution. Keep private canonical inputs and session files access-controlled; never commit private state or artwork to the public runner. No remote service, custom plugin, local model, or additional browser framework is required for the initial Chat vertical slice.
 
@@ -77,7 +78,7 @@ ChatGPT interprets player intent and explains results; the verified Python engin
 
 ## NEXT (ordered, with acceptance criteria)
 
-1. Qualify the README launch prompt from ordinary Chat with an active authorized GitHub Connector. Retrieve the exact runner archive and discover supported campaign manifests; verify revision and archive integrity, transfer the files, and use the original Python engine. Public runtime transfer and gameplay have been demonstrated; verify the prompt-driven launch and private source transfer without requiring manual file handling.
+1. Qualify both README launch paths from ordinary Chat: an uploaded standalone ZIP without a GitHub connection, and the GitHub-connected prompt. For the connected path, start with an active authorized GitHub Connector. Retrieve the exact runner archive and discover supported campaign manifests; verify revision and archive integrity, transfer the files, and use the original Python engine. Public runtime transfer and gameplay have been demonstrated; verify the prompt-driven launch and private source transfer without requiring manual file handling.
 2. Complete an authorized private scenario within one conversation, including actor/preset selection, opening briefing, confirmed decisions, actual engine adjudication, resource history and final outcome. Exercise one rejected/stale request and linked continuation where supported. Retain verified checkpoints within the conversation without mandatory export/download/upload.
 3. Present actual actor-visible map/dashboard output in Chat, using existing engine rendering, structured observations and authorized artwork. Keep narrative and adjudication distinct; do not substitute invented maps, state or rules. Qualify only presentation necessary for the selected scenario.
 4. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries; do not invent canon or block playability on exhaustive calibration.
@@ -90,7 +91,7 @@ ChatGPT interprets player intent and explains results; the verified Python engin
 - Output: present actual engine results, observation timestamps, pending requests, remaining options and distinct narrative. Do not expose hidden state or unauthorized private material. Label illustrative quantities and unknowns.
 - Session: keep verified checkpoints and prior state available within the same conversation. Verify before each mutation. Downloads, uploads, checkpoint export and cross-conversation restoration are optional, not acceptance requirements.
 - Failure: if source transfer, revision verification, Python execution or session access fails, identify the blocker and stop adjudication. If runtime resets, use existing verified files if available; otherwise offer optional handoff or restart. Never reconstruct the engine in prose or claim unexecuted results.
-- Acceptance: a user with an authorized active GitHub Connector launches from the README prompt and completes a supported private scenario in a single ordinary Chat conversation using the original Python engine, with verified state and actor-visible results. No extra hosted service, new API or mandatory manual file handling.
+- Acceptance: a user with an authorized active GitHub Connector launches from the README prompt and completes a supported private scenario in a single ordinary Chat conversation using the original Python engine, with verified state and actor-visible results. Separately, a user uploads a standalone public ZIP and starts and completes a bundled scenario without a GitHub Connector, using the same engine and verified state. No extra hosted service, new API or mandatory manual file handling.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 
@@ -170,3 +171,9 @@ Each development increment must complete an acceptance criterion or a concrete i
 - README.md is the primary user launch guide and facilitator contract. Presume the GitHub Connector is active, configured and authorized; runtime execution must still be verified.
 - The public fixture was subsequently played through its final turn in Chat, as reported in the development conversation. A separate-conversation handoff test reproduced state but did not invoke the original engine; it is not authoritative execution evidence. Cross-thread persistence is explicitly removed from acceptance by the author, not declared verified.
 - Retain checkpoint and archive features already implemented; reject further mandatory resume-package or persistence infrastructure. Focus on private prompt-driven execution and gameplay presentation.
+
+## Standalone ZIP distribution — author-approved alternative
+
+- Reuse the existing tested runtime artifact rather than create a second engine or distribution framework. Include START_HERE.md, pinned source ZIP, revision and checksum. The Actions lifecycle check now executes from the extracted source archive rather than the checkout. Preserve public/private separation.
+- A standalone ZIP built from workflow 45764405624, artifact 15091177196, engine revision a83720fa4668532f8eb8c8f746700d07442a60fa, was transferred and tested in a fresh local Chat execution directory: checksum, catalog discovery, opening, two confirmed-example restoration actions, final state (four centers), and linked Community Assistance initialization all succeeded without connector retrieval during execution. This is package execution evidence, not yet a new-conversation user launch test. The revised artifact workflow is pending CI.
+- Acceptance: upload the generated ZIP into a file-upload/Python-capable conversation without relying on GitHub; follow the embedded launch prompt, run the actual bundled engine, present playable choices and complete the selected bundled scenario. Private offline packaging may be qualified separately when its required inputs are authorized and available.
