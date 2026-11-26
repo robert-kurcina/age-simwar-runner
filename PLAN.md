@@ -159,8 +159,9 @@ Each development increment must complete an acceptance criterion or a concrete i
 - Verification: PR #52 test workflow 45760047208 succeeded on Python 3.10 and 3.12. Do not mark NEXT 1–4 as accepted on this basis.
 - Next: verify public CI, qualify exact-file transfer into the Chat Python environment, execute a supported scenario using actual engine code, and demonstrate export/import plus source-qualified private continuation. Avoid further frontend work until Chat gameplay works.
 
-## CURRENT INCREMENT — Offline Chat runtime transfer (PR pending)
+## DONE — Offline Chat runtime transfer (PR #53 merged)
 
 - Direct Git clone in Chat's Python container failed with DNS resolution error. GitHub connector file reads and Actions remain accessible.
 - Added a GitHub Actions workflow to test the pinned source, exercise a public opening/submit/advance/handoff/restore/finish/linked continuation, and export an exact tracked-source ZIP with revision and SHA-256 manifest. No private source or session is included. Artifact delivery is an explicit manual download/upload fallback; connector-to-runtime byte transfer is not assumed.
-- Acceptance remains pending: successful workflow, actual archive transfer, checksum verification, execution inside Chat and separate-conversation resumption. CI execution alone does not qualify Chat.
+- PR #53 workflow 45760207089 succeeded. Artifact 15089157126 was downloaded through the GitHub connector directly into ordinary Chat's execution container. Inner source archive SHA-256 verified; pinned source revision 4b6d58600be0fbf778b39f69665f601ff2e05fa5 (PR synthetic merge, not main). All 68 tests passed locally in Chat. Public service-restoration opening checkpoint initialized, actor observation inspected and portable opening handoff exported through the actual CLI. No manual upload required for this public artifact.
+- NEXT 1 partially qualified: ordinary Chat engine execution and initial checkpoint verified for public fixture; private source transfer and actual player-confirmed turn remain pending. Separate-conversation resumption and visual acceptance remain pending.
