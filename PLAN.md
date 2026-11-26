@@ -49,8 +49,9 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Private campaign inventory merged after direct source-reference review; stage discovery metadata established, original scenario roster still incomplete.
 - Private launcher and actor-visible briefing packets merged after successful CI; actual private launcher integration verified.
 - Reviewed perspective-specific context binding merged and actual private briefing verified (PR #34 and private integration). Index metadata discovery utility merged; actual index query remains unverified.
-- Private service restoration support merged after CI (PR #35); second private scenario authored and merged, actual execution staged in existing private workflow. Civic agreement requires separately designed human perspective participation.
-- Model-independent natural-language request exchange implemented, with session-bound proposals and explicit confirmation; CI pending. Actual LLM invocation not demonstrated.
+- Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Civic agreement requires separately designed human perspective participation.
+- Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
+- Loopback OpenAI-compatible local model adapter implemented; targeted HTTP transport test pending. Actual inference on the user's host remains unverified. Manual interpretation/confirmation remains available.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
