@@ -74,3 +74,19 @@ def attribute_quote(attribute, increments, target_increments):
         raise ValueError("attribute exceeds Fear purchased-growth ceiling")
     return {"skillpoints": cumulative_cost(im, target_increments) - cumulative_cost(im, increments),
             "months": sum(im * n for n in range(increments + 1, target_increments + 1))}
+
+def describe(profile, careers):
+    background, intrinsic = profile["background"], profile["intrinsics"]
+    prof = profile["proficiencies"]
+    age, age_rank = background["age_years"], background["age_rank"]
+    if not 0 <= age_rank < len(AGE_GROUPS) or AGE_GROUPS[age_rank] != background["age_group"]:
+        raise ValueError("inconsistent age group")
+    rank = intrinsic["professional_rank"]
+    career = careers[intrinsic["profession"]]
+    result = qualification(prof["skills"], career, rank)
+    result["bonus_skillpoints"] = fast_track_budget(age, rank)
+    result["age_rank"] = age_rank
+    result["prior_careers"] = [
+        {"profession": c["profession"], **qualification(prof["skills"], careers[c["profession"]], c["attained_rank"])}
+        for c in intrinsic.get("prior_careers", [])]
+    return result
