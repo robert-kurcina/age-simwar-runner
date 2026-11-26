@@ -527,7 +527,8 @@ def step(state, action, proposal=None, commitment=None):
             outcome = state["dxd"]["tests"][-1]["result"]
             reaction = dxd_morale.apply(state["dxd"]["morale"], concerns,
                 kind=hazard["kind"], trigger=hazard["trigger"], result=outcome,
-                event=spec["morale_event"], turn=state["turn"])
+                event=spec["morale_event"], turn=state["turn"],
+                grit=state["dxd"]["skills"].get("Grit", 0))
             if not reaction["passed"]:
                 state["observations"].append(hazard["reaction"])
                 if "cosmic_failure" in hazard:
