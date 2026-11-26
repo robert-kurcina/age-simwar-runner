@@ -118,8 +118,9 @@ def validate_capacity_actions(s):
     projects = {p["id"]: p for p in s["economy_projects"]}
     inputs = {a["key"] for p in projects.values() for a in p["axes"]}
     counters = {p[k] for p in projects.values() for k in ("progress", "delay", "complications")}
-    external = {e["key"] for e in s["events"]} | {
-        k for e in s.get("dependent_events", []) for k in e["updates"]}
+    scheduled = {e["key"] for e in s["events"]}
+    dependent = s.get("dependent_events", [])
+    external = scheduled | {k for e in dependent for k in e["updates"]}
     for name, a in actions.items():
         if name not in s.get("action_catalog", {}) or not isinstance(a, dict) or set(a) != {
                 "project", "capacity", "resource", "cost"}:
@@ -139,13 +140,34 @@ def validate_capacity_actions(s):
             raise ValueError("capacity action requires project-local rating")
         stock = a["resource"]
         if (stock not in s["initial"] or stock in inputs | counters or
-                s["initial"][stock] < 0 or {stock, a["capacity"]} & external):
+                s["initial"][stock] < 0 or stock in scheduled or a["capacity"] in external):
             raise ValueError("capacity action requires stable resource and rating keys")
+        # Only reviewed positive milestone grants to the resource owner may
+        # replenish an investment stock. Other event mutations remain forbidden.
+        for event in dependent:
+            if stock in event["updates"] and (event["participant"] != actor_id or event["updates"][stock] <= 0):
+                raise ValueError("investment resource events require positive owner grants")
         actor = s["actors"][actor_id]
         if stock not in actor.get("visible_keys", []) or actor.get("report_delay_minutes", {}).get(stock, 0):
             raise ValueError("resource must be currently observable")
         if type(a["cost"]) is not int or a["cost"] <= 0:
             raise ValueError("capacity action cost must be positive")
+
+def validate_private_grants(s):
+    """Private economy events may only replenish existing investment stocks.
+
+    Reuse the existing one-shot event prerequisites, visibility and ordering.
+    No new resources, project counters, capacities or arbitrary state updates.
+    """
+    projects = {p["id"]: p for p in s["economy_projects"]}
+    allowed = {}
+    for a in s.get("capacity_actions", {}).values():
+        allowed.setdefault(projects[a["project"]]["participant"], set()).add(a["resource"])
+    for event in s.get("dependent_events", []):
+        if any(key not in allowed.get(event["participant"], set()) or delta <= 0
+               for key, delta in event["updates"].items()):
+            raise ValueError("private economy events require positive owner grants")
+
 
 def fulfill_capacity_action(s, state, record, minute):
     a = s.get("capacity_actions", {}).get(record["action"])
