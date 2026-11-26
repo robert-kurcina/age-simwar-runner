@@ -21,6 +21,31 @@ def load(sid):
         raise ValueError("scenario is not yet executable")
     return read(ROOT / entry["file"])["story_config"], read(ROOT / entry["rules"])
 
+def npc_profiles(story, rules):
+    """Bind active NPCs to original authored identities and capabilities."""
+    source = {n["name"]: n for n in story["antagonists"]["key_npcs"]}
+    profiles = {}
+    for nid, cfg in rules.get("npcs", {}).items():
+        n = source[cfg["source_name"]]
+        profiles[nid] = {
+            "name": n["name"], "public_role": cfg["public_role"],
+            "location": cfg["location"], "motivation": n["motivation"],
+            "attributes": copy.deepcopy(n["attributes"]),
+            "traits": copy.deepcopy(n["traits"]), "secret": n["secret"],
+            "known_topics": list(cfg["known_topics"]),
+            "encounters": 0, "disclosed": [], "last_contact": None,
+        }
+    for a in rules["actions"]:
+        if "npc" not in a:
+            continue
+        p = profiles[a["npc"]]
+        if a.get("location") != p["location"]:
+            raise ValueError("NPC interaction location mismatch")
+        if "disclosure" in a and (a["disclosure"] not in p["known_topics"]
+                                 or a["disclosure"] not in a.get("grant", [])):
+            raise ValueError("NPC disclosure must be known and granted")
+    return profiles
+
 def initial(sid, seed):
     story, rules = load(sid)
     return {"scenario": sid, "seed": seed, "source": digest([story, rules]),
@@ -31,7 +56,7 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "sanity": 0,
             "fatigue": 0, "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
-            "observations": [], "events_seen": []}
+            "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
 
 def options(state, rules):
     if state["ending"]:
@@ -39,7 +64,9 @@ def options(state, rules):
     candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
                   and len(state["discoveries"]) >= a.get("requires", 0)
                   and all(f in state["flags"] for f in a.get("requires_flags", []))
-                  and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())] + [
+                  and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
+                  and ("npc" not in a or state["npcs"][a["npc"]]["location"] == a.get("location"))
+                  and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":30}]
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
     return [a for a in candidates if a["minutes"] <= remaining
@@ -61,6 +88,10 @@ def step(state, action):
         state["used"].append(action)
     for key, amount in a.get("cost", {}).items():
         state["resources"][key] -= amount
+    npc = state["npcs"].get(a.get("npc"))
+    if npc is not None:
+        npc["encounters"] += 1
+        npc["last_contact"] = state["time"]
     success = True
     if "attribute" in a:
         rng = random.Random(digest([state["seed"], state["turn"]]))
@@ -68,8 +99,14 @@ def step(state, action):
                  + state["attributes"][a["attribute"]]
                  + rules["conditions"]["sanity_dm"][state["sanity"]]
                  + rules["conditions"]["fatigue_dm"][state["fatigue"]])
-        success = total >= a["tn"]
+        tn = a["tn"]
+        if "disclosure" in a:
+            cfg = rules["npcs"][a["npc"]]
+            tn += npc["attributes"]["Willpower"] - cfg["reference_rating"]
+        success = total >= tn
     if success:
+        if "disclosure" in a:
+            npc["disclosed"].append(a["disclosure"])
         if "discovery" in a and a["discovery"] not in state["discoveries"]:
             state["discoveries"].append(a["discovery"])
         for flag in a.get("grant", []):
@@ -87,6 +124,8 @@ def step(state, action):
             state["events_seen"].append(event["id"])
             state["observations"].append(event["observation"])
     state["last_result"] = {"action": action, "success": success}
+    if npc is not None:
+        state["last_result"]["participant"] = npc["name"]
     state["history"].append(action)
     if a.get("terminal") or state["turn"] >= rules["max_turns"] or not options(state, rules):
         state["ending"] = {"reason": action if a.get("terminal") else "limit",
@@ -119,6 +158,9 @@ def view(state):
     return {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
+        "contacts": [{"name": p["name"], "role": p["public_role"],
+                      "encounters": p["encounters"], "last_contact": p["last_contact"]}
+                     for p in state["npcs"].values() if p["encounters"]],
         "condition": {"sanity": rules["conditions"]["sanity"][state["sanity"]],
                       "fatigue": rules["conditions"]["fatigue"][state["fatigue"]]},
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,

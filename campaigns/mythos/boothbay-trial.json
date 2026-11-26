@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -42,7 +42,9 @@
       },
       "grant": [
         "eleanor_account"
-      ]
+      ],
+      "npc": "eleanor",
+      "disclosure": "eleanor_account"
     },
     {
       "id": "inspect_room",
@@ -76,7 +78,9 @@
       },
       "grant": [
         "journal"
-      ]
+      ],
+      "npc": "elias",
+      "disclosure": "journal"
     },
     {
       "id": "report",
@@ -162,7 +166,9 @@
       },
       "success": {
         "sanity": 1
-      }
+      },
+      "npc": "eleanor",
+      "disclosure": "water_warning"
     },
     {
       "id": "read_journal",
@@ -197,7 +203,8 @@
       "success": {
         "containment": 2
       },
-      "discovery": "Eleanor agrees to warn people she trusts about the unusual conditions."
+      "discovery": "Eleanor agrees to warn people she trusts about the unusual conditions.",
+      "npc": "eleanor"
     },
     {
       "id": "transmit_account",
@@ -229,7 +236,8 @@
         "account_entrusted"
       ],
       "terminal": true,
-      "discovery": "Eleanor accepts a copy of the account for safekeeping."
+      "discovery": "Eleanor accepts a copy of the account for safekeeping.",
+      "npc": "eleanor"
     }
   ],
   "conditions": {
@@ -291,5 +299,26 @@
     "leave_copy": "A trusted local has accepted your account. Whether it survives is uncertain.",
     "depart": "You leave Boothbay with whatever evidence you have gathered.",
     "limit": "Your allotted investigation time has ended; the remaining uncertainties are unresolved."
+  },
+  "npcs": {
+    "eleanor": {
+      "source_name": "Eleanor",
+      "public_role": "Harbor Diner waitress",
+      "location": "Harbor Diner",
+      "known_topics": [
+        "eleanor_account",
+        "water_warning"
+      ],
+      "reference_rating": 3
+    },
+    "elias": {
+      "source_name": "Elias Marsh",
+      "public_role": "Retired fisherman",
+      "location": "Creek Inlet South",
+      "known_topics": [
+        "journal"
+      ],
+      "reference_rating": 3
+    }
   }
 }
