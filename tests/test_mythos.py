@@ -842,3 +842,45 @@ class MythosTrialTests(unittest.TestCase):
             self.assertEqual(mythos.inspect(path), v)
             v = mythos.act(path, "inspect_docks", v["revision"], request)
             self.assertEqual(mythos.inspect(path), v)
+
+    def test_native_interaction_modes(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "talk_eleanor")
+        test = s["dxd"]["tests"][0]
+        self.assertEqual(test["inputs"]["tn"], 7)
+        self.assertNotIn("narrative", test["inputs"])
+        self.assertIn("margin", test["result"])
+        for action in ("visit_elias", "inspect_room"):
+            s = mythos.step(s, action)
+        s = mythos.step(s, "speak_burroughs")
+        test = s["dxd"]["tests"][-1]
+        self.assertEqual(test["inputs"]["active_raw"], s["dxd"]["attributes"]["PRE"])
+        self.assertEqual(test["inputs"]["target_raw"], s["npcs"]["burroughs"]["dxd_attributes"]["INT"])
+        self.assertIsNotNone(test["result"]["opponent"])
+        mythos.verify(s)
+
+    def test_local_proposal_creates_record_not_clue(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "local:survey:Harbor Docks", "approach": "survey",
+                   "intent": "Survey the waterfront from a safe distance."}
+        self.assertNotIn(request["action"], [a["id"] for a in mythos.view(s)["choices"]])
+        self.assertIn(request["action"], [a["action"] for a in mythos.gm_context(s)["referee"]["local_capabilities"]])
+        after = mythos.step(s, request["action"], request)
+        self.assertEqual(after["time"], "1927-10-13T08:10:00")
+        self.assertEqual(after["discoveries"], s["discoveries"])
+        self.assertEqual(after["local_records"][0]["kind"], "survey")
+        mythos.verify(after)
+        with self.assertRaises(ValueError):
+            mythos.step(after, request["action"], request)
+        with self.assertRaises(ValueError):
+            mythos.step(s, "local:survey:Harbor Diner", dict(request, action="local:survey:Harbor Diner"))
+
+    def test_local_rapport_requires_contact(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "local:build_rapport:eleanor", "approach": "build_rapport",
+                   "intent": "Introduce myself and establish rapport."}
+        with self.assertRaises(ValueError):
+            mythos.step(s, request["action"], request)
+        s = mythos.step(s, "talk_eleanor")
+        s = mythos.step(s, request["action"], request)
+        self.assertEqual(s["local_records"][-1]["target"], "eleanor")
+        mythos.verify(s)
