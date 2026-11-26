@@ -504,6 +504,8 @@ def step(state, action, proposal=None, commitment=None):
     if "test" in a:
         success = resolve_dxd(state, rules, a)
     primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
+    if primary_result is not None:
+        hooks.record(state, a)
     if commitment is not None:
         entry = dxd_commitment.record(state, a, primary_result)
         dxd_context.acquire_commitment_disability(state["dxd"], entry)
@@ -782,6 +784,7 @@ def gm_context(state):
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
                 "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
                 "character_hooks": {a["id"]: h for a in legal if (h := hooks.offers(state, rules, a))},
+                "character_emphasis_xp": pc.get("xp", 0),
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
