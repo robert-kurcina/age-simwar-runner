@@ -4,8 +4,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
-from source_compiler import compile_scenario, stale_dependencies
-from runner import initialize, advance, verify_checkpoint, submit_request
+from source_compiler import compile_scenario, compile_variation, stale_dependencies
+from runner import initialize, advance, verify_checkpoint, submit_request, digest
 
 
 class SourceCompilerTest(unittest.TestCase):
@@ -88,3 +88,47 @@ class SourceCompilerTest(unittest.TestCase):
         self.ref["revision"] = self.git("rev-parse", "HEAD").strip()
         with self.assertRaisesRegex(ValueError, "duplicate"):
             compile_scenario(self.spec, self.owners)
+
+    def test_variation_preserves_base_and_replays(self):
+        from observations import observe
+        base = compile_scenario(self.spec, self.owners)
+        variation = {"version": 1, "id": "limited-budget",
+                     "base_digest": digest(self.spec),
+                     "initial_overrides": {"restoration_credits": {
+                         "value": 1, "reason": "Illustrative reduced budget"}},
+                     "report_delays": {"coordinator": {"open_service_centers": 60}}}
+        snapshot = compile_variation(self.spec, variation, self.owners)
+        self.assertEqual(snapshot, compile_variation(self.spec, variation, self.owners))
+        self.assertEqual(base, compile_scenario(self.spec, self.owners))
+        self.assertEqual(snapshot["dependencies"], base["dependencies"])
+        self.assertEqual(snapshot["initial_overrides"]["restoration_credits"]["original"], 2)
+        self.assertEqual(snapshot["initial_overrides"]["restoration_credits"]["classification"], "hypothetical")
+        self.assertEqual(snapshot["base_scenario_digest"], base["scenario_digest"])
+        scenario = snapshot["scenario"]
+        self.assertEqual(scenario["id"], "service-restoration--limited-budget")
+        state = initialize(scenario)
+        for _ in range(2):
+            state = submit_request(scenario, state, "coordinator", {"action": "restore_service_center"})
+        state = advance(scenario, state)
+        self.assertEqual(observe(scenario, state, "coordinator")["values"]["open_service_centers"], 0)
+        state = advance(scenario, state)
+        self.assertEqual(state["values"]["open_service_centers"], 3)
+        self.assertEqual(state["requests"][1]["fulfillment"], "insufficient_credits")
+        verify_checkpoint(scenario, state)
+        with self.assertRaises(ValueError):
+            verify_checkpoint(base["scenario"], state)
+
+    def test_variation_rejects_unapproved_changes(self):
+        good = {"version": 1, "id": "test", "base_digest": digest(self.spec),
+                "initial_overrides": {}, "report_delays": {}}
+        for change in (
+                {"base_digest": "wrong"}, {"id": "../bad"}, {"version": True},
+                {"initial_overrides": {"open_service_centers": {"value": 9, "reason": "test"}}},
+                {"initial_overrides": {"restoration_credits": {"value": -1, "reason": "test"}}},
+                {"initial_overrides": {"restoration_credits": {"value": 1, "reason": ""}}},
+                {"report_delays": {"unknown": {}}},
+                {"report_delays": {"coordinator": {"hidden": 0}}},
+                {"report_delays": {"coordinator": {"open_service_centers": True}}},
+                {"events": []}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                compile_variation(self.spec, {**good, **change}, self.owners)

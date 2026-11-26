@@ -102,6 +102,60 @@ def compile_scenario(spec, owners):
             "scenario": scenario}
 
 
+def compile_variation(spec, variation, owners):
+    """Compile an explicit, bounded civilian variation without changing its base."""
+    fields = {"version", "id", "base_digest", "initial_overrides", "report_delays"}
+    if not isinstance(variation, dict) or set(variation) != fields:
+        raise ValueError("invalid variation fields")
+    if type(variation["version"]) is not int or variation["version"] != VERSION:
+        raise ValueError("unsupported variation version")
+    if not isinstance(variation["id"], str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", variation["id"]):
+        raise ValueError("invalid variation ID")
+    if variation["base_digest"] != digest(spec):
+        raise ValueError("variation base revision mismatch")
+    base = compile_scenario(spec, owners)
+    scenario = copy.deepcopy(base["scenario"])
+    overrides = variation["initial_overrides"]
+    delays = variation["report_delays"]
+    if not isinstance(overrides, dict) or not isinstance(delays, dict):
+        raise ValueError("invalid variation maps")
+    approved = {}
+    # Limit variations to civilian fixture resource budgets and reporting delays.
+    # Do not override factual source values or expand the supported simulation scope.
+    eligible = {
+        "service-restoration": {"restoration_credits"},
+        "community-assistance": {"aid_packages"},
+        "civic-agreement": set(),
+    }
+    if scenario["id"] not in eligible:
+        raise ValueError("variation unsupported for this scenario")
+    for key, record in sorted(overrides.items()):
+        if key not in eligible[scenario["id"]] or key not in scenario["initial"]:
+            raise ValueError("initial override not permitted")
+        if not isinstance(record, dict) or set(record) != {"value", "reason"}:
+            raise ValueError("override requires value and reason")
+        value, reason = record["value"], record["reason"]
+        if type(value) is not int or value < 0 or not isinstance(reason, str) or not reason.strip():
+            raise ValueError("invalid override")
+        approved[key] = {"original": scenario["initial"][key], "value": value,
+                         "reason": reason, "classification": "hypothetical"}
+        scenario["initial"][key] = value
+    for actor, actor_delays in sorted(delays.items()):
+        if actor not in scenario.get("actors", {}) or not isinstance(actor_delays, dict):
+            raise ValueError("invalid reporting actor")
+        profile = scenario["actors"][actor]
+        for key, delay in sorted(actor_delays.items()):
+            if key not in profile.get("visible_keys", []) or type(delay) is not int or delay < 0:
+                raise ValueError("invalid report delay override")
+            profile.setdefault("report_delay_minutes", {})[key] = delay
+    scenario["id"] += "--" + variation["id"]
+    validate(scenario)
+    return {**base, "base_scenario_digest": base["scenario_digest"],
+            "variation_digest": digest(variation), "variation_id": variation["id"],
+            "initial_overrides": approved, "report_delays": copy.deepcopy(delays),
+            "scenario_digest": digest(scenario), "scenario": scenario}
+
+
 def stale_dependencies(snapshot, owners):
     """Compare pinned source file bytes with local HEAD; never mutate snapshot."""
     stale = []
@@ -125,13 +179,16 @@ def main():
     parser.add_argument("owners", type=Path, help="Local JSON map of approved owner IDs to Git roots")
     parser.add_argument("snapshot", type=Path)
     parser.add_argument("scenario_output", type=Path)
+    parser.add_argument("--variation", type=Path, help="Optional pinned civilian variation JSON")
     args = parser.parse_args()
     try:
         outputs = [args.snapshot.resolve(), args.scenario_output.resolve()]
         if len(set(outputs)) != 2 or any(p.exists() for p in outputs):
             raise ValueError("outputs must be distinct new files")
-        result = compile_scenario(parse_json(args.spec.read_bytes()),
-                                  parse_json(args.owners.read_bytes()))
+        spec = parse_json(args.spec.read_bytes())
+        owners = parse_json(args.owners.read_bytes())
+        result = (compile_variation(spec, parse_json(args.variation.read_bytes()), owners)
+                  if args.variation else compile_scenario(spec, owners))
         save(args.scenario_output, result["scenario"])
         save(args.snapshot, result)
     except (ValueError, TypeError, KeyError, OSError) as exc:

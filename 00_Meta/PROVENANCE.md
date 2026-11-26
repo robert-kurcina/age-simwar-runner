@@ -95,3 +95,7 @@ PR #21 passed CI and merged. The author approved single-source canonical ownersh
 ## Pinned source compiler increment
 
 PR #22 passed CI and merged. Added a local read-only Git resolver and deterministic initial-value compiler for reviewed structured JSON civilian fixtures. Owner roots are explicitly supplied by a trusted referee; full commit IDs, exact effective dates, entity/field selectors, classifications and file digests are recorded. Missing fields, duplicate JSON keys and literal/reference conflicts fail. Staleness checks compare committed HEAD file bytes without modifying prior snapshots. Four synthetic tests authored; CI pending. No private data, network fetching, Markdown extraction or historical accuracy claims.
+
+## Scenario variation increment
+
+PR #23 merged after successful CI. Added explicit base-spec-pinned overlays for synthetic civilian resource budgets and actor reporting delays. Variations preserve source dependencies and distinguish hypothetical budget changes from source facts; distinct scenario IDs and digests keep checkpoints separate. Two tests authored; CI pending. No arbitrary rule mutation, private canon or campaign transition integration for variations is claimed.
