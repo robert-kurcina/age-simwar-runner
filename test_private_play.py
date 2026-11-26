@@ -78,6 +78,11 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertNotIn("png_base64", snapshot(session)["image_map"])
             self.assertIn("data:image/png;base64,", render(session))
             self.assertIn("L.CRS.Simple", render(session))
+            self.assertIn("age-spinner", render(session))
+            self.assertIn("prefers-reduced-motion", render(session))
+            self.assertIn('id="map-load-skeleton"', render(session))
+            self.assertIn("Retry map", render(session))
+            self.assertIn('aria-busy="false"', render(session))
             from image_map import resolve as resolve_image
             bad = {**entry, "image_map": {**entry["image_map"], "reviewed_for": "2000-01-02"}}
             with self.assertRaisesRegex(ValueError, "date-specific"):
