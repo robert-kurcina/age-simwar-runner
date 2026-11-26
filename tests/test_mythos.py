@@ -505,3 +505,42 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["relationships"]["eleanor"], 0)
         mythos.change_demeanor(s, "eleanor", 1)
         self.assertEqual(s["relationships"]["eleanor"], 0)
+
+    def test_spatial_movement_and_route_replay(self):
+        s = mythos.initial("boothbay", 42)
+        v = mythos.view(s)
+        self.assertEqual(v["scene"]["zone"], "town")
+        self.assertNotIn("move:Devil's Throat Sea Caves", [a["id"] for a in v["choices"]])
+        before = mythos.digest(s)
+        with self.assertRaises(ValueError):
+            mythos.step(s, "move:Devil's Throat Sea Caves")
+        self.assertEqual(mythos.digest(s), before)
+        s = mythos.step(s, "move:Creek Inlet South")
+        self.assertEqual(s["time"], "1927-10-13T08:20:00")
+        self.assertEqual(s["transitions"][-1]["terrain"], ["Rough"])
+        self.assertEqual(mythos.view(s)["scene"]["zone"], "inlet")
+        self.assertEqual(s["dxd"]["tests"], [])
+        mythos.verify(s)
+
+    def test_npc_availability_and_single_anchor(self):
+        s = mythos.initial("boothbay", 42)
+        self.assertIsNone(s["npcs"]["burroughs"]["location"])
+        self.assertFalse(any(a["id"].startswith("speak_burroughs") for a in mythos.view(s)["choices"]))
+        for action in ("talk_eleanor", "visit_elias", "inspect_room"):
+            s = mythos.step(s, action)
+        self.assertIsNone(s["npcs"]["burroughs"]["location"])
+        self.assertIn("speak_burroughs_diner", [a["id"] for a in mythos.view(s)["choices"]])
+        s = mythos.step(s, "speak_burroughs_diner")
+        self.assertEqual(s["npcs"]["burroughs"]["location"], "Harbor Diner")
+        self.assertNotIn("speak_burroughs", [a["id"] for a in mythos.view(s)["choices"]])
+        mythos.verify(s)
+
+    def test_spatial_window_and_terrain_cost(self):
+        from age_runtime.mythos import spatial
+        _, rules = mythos.load("boothbay")
+        cfg = rules["spatial"]
+        docks, cave = "Harbor Docks", "Devil's Throat Sea Caves"
+        self.assertIsNone(spatial.route(cfg, docks, cave, "1927-10-14T02:00:00", []))
+        self.assertIsNone(spatial.route(cfg, docks, cave, "1927-10-14T02:25:00", ["tide_window_known"]))
+        self.assertEqual(spatial.route(cfg, docks, cave, "1927-10-14T02:00:00", ["tide_window_known"])["minutes"], 10)
+        self.assertIsNotNone(spatial.route(cfg, cave, docks, "1927-10-14T03:00:00", []))
