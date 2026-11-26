@@ -44,6 +44,8 @@ Use actual elapsed seconds and timestamps; default narrative interval ten minute
 
 ## Strategic presentation
 
+When present, use the actor-local `faction_strategy` motivation and ordered goals to represent that faction's own interests. Lower-priority goals still matter; do not treat the order as a rigid numerical optimization function. An unknown observed result is not failure or success. Do not reveal other factions' private motivations or infer their actual state from stale reports. Identify tensions between specific goals, distinguish routine orders from dramatically significant Critical Decisions, and describe downstream consequences only from recorded adjudication. Do not invent crises to fill the pacing budget.
+
 Use `python game.py describe <campaign> <scenario>` to inspect the public profile. For strategic scenarios, follow `frameworks/strategic/presentation.json` and [scenario generation guidance](SCENARIO_GENERATION.md): present actual player results, known participant developments, assessment and legal options. Never fabricate missing choices or actor actions to fill a menu. The presentation profile does not change adjudication or turn sequencing.
 
 ### Strategic private economy turn procedure

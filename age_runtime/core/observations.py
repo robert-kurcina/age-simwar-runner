@@ -118,7 +118,17 @@ def observe(s, state, actor_id):
         pacing = {"decision_pacing": {"game_length": s["game_length"],
                    "target": GAME_LENGTHS[s["game_length"]], "count": len(committed),
                    "advisory": True}}
+    strategy = {}
+    if "strategy" in actor:
+        # Own goals are known even when the supporting report has not arrived.
+        # Never infer another faction's intentions from the referee configuration.
+        strategy = {"faction_strategy": {
+            "motivation": actor["strategy"]["motivation"],
+            "goals": [{"id": oid, **deepcopy(actor["objectives"][oid]),
+                       "observed_result": deepcopy(observed_objectives.get(oid))}
+                      for oid in actor["strategy"]["priorities"]]}}
     return {
+        **strategy,
         **pacing,
         **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s else {}),
         **({"projects": projects} if "economy_projects" in s else {}),

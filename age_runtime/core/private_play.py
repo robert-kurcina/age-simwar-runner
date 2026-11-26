@@ -259,6 +259,7 @@ def briefing(session):
         "objectives": {oid: {"description": obj["description"],
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
+        **({"faction_strategy": observation["faction_strategy"]} if "faction_strategy" in observation else {}),
         **({"project_results": observation["project_results"]} if "project_results" in observation else {}),
         **({"strategic_support": observation["strategic_support"]} if "strategic_support" in observation else {}),
         "revision": digest(session),
