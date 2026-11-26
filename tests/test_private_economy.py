@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from age_runtime.core.private_play import start, update, briefing, perspectives, model_packet, model_choice, verify, pending_factions, resolve_turn
+from age_runtime.core.private_play import start, update, briefing, perspectives, model_packet, model_choice, verify, pending_factions, resolve_turn, record_decision
 from age_runtime.core.runner import digest
 from tests.test_model_factions import scenario
 
@@ -81,3 +81,23 @@ class PrivateEconomyTests(unittest.TestCase):
             self.assertEqual(briefing(b)["own_requests"], [])
             verify(b)
             verify(c)
+
+            paced = start(path, s["id"], "other", owners, game_length="Short")
+            self.assertEqual(briefing(paced)["decision_pacing"]["target"], 6)
+            self.assertEqual(briefing(paced)["decision_pacing"]["count"], 0)
+            self.assertNotIn("decision_pacing", model_packet(paced, "council")["observation"])
+            revision = digest(paced)
+            chosen = record_decision(paced, revision, "hold-1", "Preserve current commitments")
+            self.assertEqual(briefing(chosen)["decision_pacing"]["count"], 1)
+            self.assertEqual(chosen["state"]["minute"], 0)
+            for rev, key in ((revision, "hold-2"), (digest(chosen), "hold-1")):
+                with self.assertRaises(ValueError):
+                    record_decision(chosen, rev, key, "Hold")
+            packet = model_packet(chosen, "council")
+            completed = resolve_turn(chosen, digest(chosen), {
+                "council": {"packet_id": packet["packet_id"], "action": "recruit"}})
+            self.assertEqual(briefing(completed)["decision_pacing"]["count"], 1)
+            self.assertEqual(completed["state"]["turn"], 1)
+            verify(completed)
+            with self.assertRaises(ValueError):
+                start(path, s["id"], "other", owners, game_length="20")

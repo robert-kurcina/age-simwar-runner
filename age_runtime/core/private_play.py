@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from datetime import timedelta
 from age_runtime.core.source_compiler import parse_json, compile_scenario, checked_date
-from age_runtime.core.runner import initialize, verify_checkpoint, submit_request, advance, digest, save, faction_packet, accept_faction_choice
+from age_runtime.core.runner import initialize, verify_checkpoint, submit_request, advance, digest, save, faction_packet, accept_faction_choice, commit_decision, GAME_LENGTHS
 from age_runtime.core.observations import observe
 
 
@@ -143,7 +143,7 @@ def available_presets(path, scenario_id, owners):
     return options(entry)
 
 
-def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None):
+def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None, game_length=None):
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
     from age_runtime.core.presets import apply
     compiled, configuration = apply(entry, spec, compiled, preset)
@@ -154,6 +154,13 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
         from age_runtime.core.private_continuity import derive
         compiled, link = derive(catalog, entry, spec, compiled, previous)
         configuration = {"id": "standard", "label": "Continuation — derived session outcome"}
+    if game_length is not None:
+        if previous is not None or shared:
+            raise ValueError("game length override requires fresh single-perspective scenario")
+        if game_length not in GAME_LENGTHS:
+            raise ValueError("invalid game length")
+        compiled = {**compiled, "scenario": {**compiled["scenario"], "game_length": game_length}}
+        compiled["scenario_digest"] = digest(compiled["scenario"])
     s = compiled["scenario"]
     supported(s)
     state = initialize(s)
@@ -254,6 +261,8 @@ def briefing(session):
                        for oid, obj in actor.get("objectives", {}).items()},
         **({"project_results": observation["project_results"]} if "project_results" in observation else {}),
         **({"strategic_support": observation["strategic_support"]} if "strategic_support" in observation else {}),
+        "revision": digest(session),
+        **({"decision_pacing": observation["decision_pacing"]} if "decision_pacing" in observation else {}),
         "reports": observation["reports"],
         "own_requests": observation["own_requests"],
         "available_requests": observation["available_requests"],
@@ -290,6 +299,16 @@ def model_choice(session, actor, response):
     s = session["header"]["compiled"]["scenario"]
     state = accept_faction_choice(s, session["state"], actor, packet, response)
     return verify({**session, "state": state})
+
+
+def record_decision(session, revision, decision_id, intent, action=None):
+    verify(session)
+    if revision != digest(session):
+        raise ValueError("stale session revision")
+    h, state = session["header"], session["state"]
+    result = commit_decision(h["compiled"]["scenario"], state, h["actor"],
+                             digest(state), decision_id, intent, action)
+    return verify({**session, "state": result})
 
 
 def pending_factions(session):
@@ -333,6 +352,7 @@ def main(argv=None):
             sub.add_argument("actor")
             sub.add_argument("session", type=Path)
             sub.add_argument("--preset", default="standard")
+            sub.add_argument("--game-length", choices=list(GAME_LENGTHS))
             sub.add_argument("--shared", action="store_true")
             sub.add_argument("--from-session", type=Path)
     for name in ("inspect", "briefing", "submit", "advance"):
@@ -356,6 +376,12 @@ def main(argv=None):
         sub.add_argument("actor")
         if name == "faction-choice":
             sub.add_argument("response", type=Path)
+    decision = commands.add_parser("commit-decision")
+    decision.add_argument("session", type=Path)
+    decision.add_argument("decision_id")
+    decision.add_argument("--intent", required=True)
+    decision.add_argument("--action")
+    decision.add_argument("--revision", required=True)
     pending = commands.add_parser("pending-factions")
     pending.add_argument("session", type=Path)
     turn = commands.add_parser("resolve-turn")
@@ -396,9 +422,13 @@ def main(argv=None):
             if a.session.exists():
                 raise ValueError("session path already exists")
             session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset, a.shared,
-                            read(a.from_session) if a.from_session else None)
+                            read(a.from_session) if a.from_session else None, a.game_length)
             save(a.session, session)
             result = view(session)
+        elif a.command == "commit-decision":
+            session = record_decision(read(a.session), a.revision, a.decision_id, a.intent, a.action)
+            save(a.session, session)
+            result = briefing(session)
         elif a.command == "pending-factions":
             session = verify(read(a.session))
             result = {"revision": digest(session), "pending": pending_factions(session)}

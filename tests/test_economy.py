@@ -111,3 +111,24 @@ class EconomyTests(unittest.TestCase):
                                              "resource": "credits", "cost": 1}}
         with self.assertRaisesRegex(ValueError, "stable resource"):
             initialize(s)
+
+    def test_critical_decisions_are_advisory_and_replayable(self):
+        from age_runtime.core.runner import commit_decision, digest
+        s = fixture()
+        s["events"], s["constraints"] = [], []
+        s["game_length"] = "Short"
+        s["action_catalog"] = {"review": {"description": "Review plan", "actors": ["council"]}}
+        state = initialize(s)
+        state = submit_request(s, state, "council", {"action": "review"})
+        self.assertEqual(observe(s, state, "council")["decision_pacing"]["count"], 0)
+        for i in range(7):
+            state = commit_decision(s, state, "council", digest(state),
+                                    str(i), "Confirmed commitment",
+                                    "review" if i == 0 else None)
+        self.assertEqual(observe(s, state, "council")["decision_pacing"]["count"], 7)
+        self.assertEqual(observe(s, state, "other")["decision_pacing"]["count"], 0)
+        self.assertEqual(state["turn"], 0)
+        state = advance(s, state)
+        verify_checkpoint(s, state)
+        self.assertEqual(state["turn"], 1)
+        self.assertEqual(observe(s, state, "council")["decision_pacing"]["count"], 7)
