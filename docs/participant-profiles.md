@@ -17,3 +17,13 @@ Motivations, commitments, capabilities, resources and directed relationships are
 Compile reviewed nonnegative integer source records with the existing resolver; other native value types can be recorded as reviewed hypothetical literals in this increment. Narrative evidence supports review but does not automatically derive values. Snapshot digest binds exact initialization and references. Recompilation with unchanged source and inputs is deterministic; future session decisions and dialogue are separate.
 
 This increment validates and compiles profiles only. No automatic source mining, actor policy, cross-framework attribute conversion, or gameplay integration is claimed.
+
+## Additional Sarna Len source audit
+
+Great War (vault-great-war, revision da7e1140e92d5450fd82393acc2a15a3ff36a037): active README, state/economy/politics author guidance, and politics index establish distinct resource owners and player controllers. Preserve the separation of institutional resources, political condition, divine resources and temporary event authority. Its active clock advances through events; do not restore superseded fixed annual turns. Its economic and political tracks have native units and bounds; unresolved timing and balance candidates are not final mechanics.
+
+Solo City (vault-solo-city, revision 71dbfd5de85fd5142710913f1ea9822861d0394d): inspected faction profile records, generated faction matrix, DXD character/economy reconciliation and active MEST card chassis. Reuse the distinction between organizational interaction descriptors, directed trust/influence tracks, deadlines and crisis conditions. Archetypes are templates, not unique canonical organizations. Generated matrices are implementation evidence, not independent canon.
+
+Author direction: DXD is the parent rules system for Sarna Len character definitions; Solo City and MEST Tactics are specialized views. Preserve complete DXD character records where available. A compressed Solo City attribute modifier or stock combat rating cannot uniquely reconstruct a full DXD attribute. Maintain explicit conversion provenance, preserve original values, and leave ambiguous or missing values unresolved. Do not silently change existing Solo City game rules. Any migration of its own game mechanics requires a separate source-repository change.
+
+For AGE, distinguish participant identity, player/controller, acting entity, resource owner, authority grant and its expiry. These are prospective session-level fields, not additions to the implemented profile compiler. Include event-driven clocks in future scenario design. Do not add another simulation engine solely to represent these distinctions.
