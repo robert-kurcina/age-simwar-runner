@@ -130,10 +130,16 @@ def available_presets(path, scenario_id, owners):
     return options(entry)
 
 
-def start(path, scenario_id, actor, owners, preset="standard", shared=False):
+def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None):
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
     from presets import apply
     compiled, configuration = apply(entry, spec, compiled, preset)
+    link = None
+    if previous is not None:
+        if preset != "standard" or shared:
+            raise ValueError("continuity target requires standard single-perspective setup")
+        from private_continuity import derive
+        compiled, link = derive(catalog, entry, spec, compiled, previous)
     s = compiled["scenario"]
     supported(s)
     state = initialize(s)
@@ -145,6 +151,8 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False):
               "effective_date": spec["effective_date"], "actor": actor,
               "compiled": compiled, "preset": configuration,
               "briefing_context": reviewed_context(entry, compiled, actor, spec["effective_date"])}
+    if link is not None:
+        header["continuity"] = link
     if shared:
         header["shared"] = True
         header["actor_contexts"] = {a: reviewed_context(entry, compiled, a, spec["effective_date"]) for a in s["actors"]}
@@ -161,6 +169,9 @@ def verify(session):
     if digest(s) != h["compiled"]["scenario_digest"]:
         raise ValueError("compiled scenario mismatch")
     supported(s)
+    if "continuity" in h:
+        from private_continuity import verify_record
+        verify_record(h["compiled"], h["continuity"])
     if bool(s.get("civic_agreement")) != h.get("shared", False):
         raise ValueError("session participation mode mismatch")
     if h.get("shared") and (set(h.get("actor_contexts", {})) != set(s["actors"]) or h["briefing_context"] != h["actor_contexts"][h["actor"]]):
@@ -253,6 +264,7 @@ def main(argv=None):
             sub.add_argument("session", type=Path)
             sub.add_argument("--preset", default="standard")
             sub.add_argument("--shared", action="store_true")
+            sub.add_argument("--from-session", type=Path)
     for name in ("inspect", "briefing", "submit", "advance"):
         sub = commands.add_parser(name)
         sub.add_argument("session", type=Path)
@@ -298,7 +310,8 @@ def main(argv=None):
         elif a.command == "start":
             if a.session.exists():
                 raise ValueError("session path already exists")
-            session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset, a.shared)
+            session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset, a.shared,
+                            read(a.from_session) if a.from_session else None)
             save(a.session, session)
             result = view(session)
         elif a.command == "switch":
