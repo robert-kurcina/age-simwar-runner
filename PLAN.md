@@ -176,3 +176,9 @@ Each development increment must complete an acceptance criterion or a concrete i
 - Preserve all five AIMythos JSON sources and exact provenance before repository retirement. Dagon Basic differences still require review.
 - Add framework-aware public catalog and separate bounded Boothbay investigation trial without altering strategic runner contracts. Trial uses authored character attributes, seeded 2D6, elapsed time, limited evidence discovery, replay, revision-bound actions and ending. Trial opening, action durations and thresholds are provisional adaptations; not full AIMythos compliance.
 - Next: qualify CI and actual Chat gameplay, implement only missing mechanics needed for substantive Boothbay play (inventory changes, character conditions, NPC interactions, scored outcomes), then adapt Castine and Ram Island. Keep their catalog status imported until executable. Update standalone launch guide and qualify extracted ZIP. Continue private Conflagration packaging separately. No universal engine rewrite.
+
+### Boothbay trial v2 — proposed
+
+- Add bounded sanity/fatigue conditions and modifiers, cash/flask consumption, rest and meal choices, visible descriptors and three provisional ending metrics. Conditions and resource costs live in the trial overlay. Fatigue cadence and score rubric are illustrative, not faithful reproduction of all AIMythos rules. No automatic publication or actual containment is inferred from a written account; containment points are a trial proxy only.
+- Existing v1 sessions require restart because replay pins the rules digest. Existing strategic sessions unaffected.
+- Next: verify CI, qualify actual Chat play, add scenario-specific NPC and earned revelation progression and improve ending semantics before expanding to Castine/Ram Island. No additional infrastructure.
