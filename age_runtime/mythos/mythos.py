@@ -232,7 +232,7 @@ def resolve_dxd(state, rules, action):
     contextual, context_dm, emotional_triggers = dxd_context.effects(state, action, spec)
     mods = dxd_modifiers.totals(gathered)
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
-    hook = (state["relationships"].get(action.get("npc"), 0) if rules.get("demeanor") and spec["attribute"] == "PRE"
+    hook = (dxd_commitment.effective_demeanor(state, action.get("npc"), action) if rules.get("demeanor") and spec["attribute"] == "PRE"
             else 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0)
     cue = spec.get("inspiration")
     inspiration_dm = dxd_inspiration.applicable_dm(pc["inspirations"], [cue["tag"]] if cue else [])
@@ -242,7 +242,8 @@ def resolve_dxd(state, rules, action):
     psychology = dxd_psychology.effects(pc["morale"], spec.get("psychology_context"))
     progression_dm = -(state["progression"]["stage"] - 1) if "progression" in state and spec["attribute"] == "POW" else 0
     emotional_dm = dxd_commitment.modifier(pc, action)
-    components = [context_dm, emotional_dm, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
+    leverage_dm = dxd_commitment.leverage(state, action)
+    components = [context_dm, emotional_dm, -leverage_dm if interaction != "pivotal" else 0, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
     net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"] - sum(x["penalty"] for x in contextual)
@@ -260,7 +261,7 @@ def resolve_dxd(state, rules, action):
         args = {"active_raw": pc["attributes"]["PRE"], "target_raw": npc_attrs["INT"],
                 "active_dm": sum(components) - dxd.attribute_dm(pc["attributes"]["PRE"]),
                 "active_bonus": bonus, "active_penalty": penalty, "active_favor": favor,
-                "target_dm": target_mods["dm"] - dxd.attribute_dm(npc_attrs["INT"]),
+                "target_dm": target_mods["dm"] - dxd.attribute_dm(npc_attrs["INT"]) + leverage_dm,
                 "target_bonus": target_mods["bonus"], "target_penalty": target_mods["penalty"]}
     elif spec.get("narrative"):
         args.update(narrative=True, tn=spec["tn"], dm=sum(max(0, x) for x in components),
@@ -297,7 +298,7 @@ def resolve_dxd(state, rules, action):
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
-                        **({"emotional_commitment": emotional_dm} if "commitments" in pc else {}),
+                        **({"emotional_commitment": emotional_dm, "commitment_leverage": leverage_dm} if "commitments" in pc else {}),
                         "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
                         "gathered": gathered, **({"contextual": contextual, "npc_gathered": npc_gathered} if "character_profiles" in state else {}), "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
@@ -331,6 +332,7 @@ def change_demeanor(state, key, delta):
     new = max(-6, min(6, old + delta))
     if new != old:
         state["relationships"][key] = new
+        dxd_commitment.supersede_demeanor(state, key)
         state["relationship_changes"].append({"npc": key, "at": state["time"], "delta": new - old})
 
 def advance_opposition(state, rules, action, success):
@@ -505,6 +507,8 @@ def step(state, action, proposal=None, commitment=None):
     if a.get("test", {}).get("interaction"):
         # Signed margin is the Test Effect; ordinary Demeanor limits still apply.
         change_demeanor(state, a["npc"], primary_result["margin"])
+        if commitment is not None:
+            entry["demeanor_at_commitment"] = state["relationships"][a["npc"]]
     if success:
         if a.get("arrest_progression"):
             state["progression"]["arrested"] = True
@@ -718,7 +722,7 @@ def view(state):
             for x in state["dxd"]["inspirations"] if x["turn"] == state["turn"]
             and x["source"] == "authored"), None),
         "contacts": [{"name": p["name"], "role": p["public_role"],
-                      **({"demeanor": DEMEANORS[state["relationships"][nid] + 6]} if rules.get("demeanor") else {}),
+                      **({"demeanor": DEMEANORS[dxd_commitment.effective_demeanor(state, nid) + 6]} if rules.get("demeanor") else {}),
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for nid, p in state["npcs"].items() if p["encounters"]],
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),

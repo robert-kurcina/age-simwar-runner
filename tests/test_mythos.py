@@ -1129,3 +1129,32 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(audit["unallocated_budget"], 8)
         self.assertEqual(s["character_profiles"]["pc"]["proficiencies"]["progression"]["skillpoints"], 0)
         mythos.verify(s)
+
+    def test_commitment_leverage_and_temporary_demeanor(self):
+        from age_runtime.core import dxd_commitment as ec
+        s = mythos.initial("boothbay", 42)
+        s["turn"] = 2
+        entry = {"context": "burroughs", "level": 1, "turn": 1,
+                 "witnessed_by": ["burroughs"], "demeanor_at_commitment": -1}
+        s["dxd"]["commitments"].append(entry)
+        _, rules = mythos.load("boothbay")
+        action = next(a for a in rules["actions"] if a["id"] == "speak_burroughs")
+        self.assertEqual(ec.leverage(s, action), 1)
+        mythos.resolve_dxd(s, rules, action)
+        t = s["dxd"]["tests"][-1]
+        self.assertEqual(t["inputs"]["target_dm"], 3)
+        self.assertEqual(t["components"]["emotional_commitment"], -1)
+        self.assertEqual(t["components"]["commitment_leverage"], 1)
+        self.assertEqual(ec.leverage(s, dict(action, npc="eleanor")), 0)
+        self.assertEqual(ec.leverage(s, dict(action, commitment={"level": 1})), 0)
+        entry["witnessed_by"] = []
+        self.assertEqual(ec.leverage(s, action), 0)
+        entry["witnessed_by"] = ["burroughs"]
+        self.assertEqual(ec.effective_demeanor(s, "burroughs"), -1)
+        # Higher level only as isolated rule test; initial player use remains 1.
+        entry["level"] = 2
+        self.assertEqual(ec.effective_demeanor(s, "burroughs"), 0)
+        self.assertEqual(s["relationships"]["burroughs"], -1)
+        mythos.change_demeanor(s, "burroughs", -1)
+        self.assertIsNone(entry["demeanor_at_commitment"])
+        self.assertEqual(ec.effective_demeanor(s, "burroughs"), -2)
