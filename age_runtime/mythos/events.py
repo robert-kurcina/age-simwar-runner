@@ -62,10 +62,12 @@ def advance_time(state, rules, seconds):
     """Only time elapsed while eligible counts; no retroactive marks."""
     if "narrative_events" not in state:
         return
-    for key, cfg in rules.get("event_clocks", {}).items():
+    # Snapshot eligibility before applying any same-boundary consequence.
+    due = [(key, cfg) for key, cfg in rules.get("event_clocks", {}).items()
+           if not state["narrative_events"]["clocks"][key]["resolved"]
+           and cfg.get("interval_seconds") and eligible(state, cfg)]
+    for key, cfg in due:
         clock = state["narrative_events"]["clocks"][key]
-        if clock["resolved"] or not cfg.get("interval_seconds") or not eligible(state, cfg):
-            continue
         marks, clock["seconds"] = divmod(clock["seconds"] + seconds, cfg["interval_seconds"])
         mark(state, key, cfg, marks)
 
