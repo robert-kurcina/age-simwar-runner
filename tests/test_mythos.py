@@ -32,7 +32,7 @@ class MythosTrialTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "session.json"
             with self.assertRaises(ValueError):
-                mythos.start("castine", p, 42)
+                mythos.start("ram-island", p, 42)
             v = mythos.start("boothbay", p, 42)
             with self.assertRaises(ValueError):
                 mythos.act(p, "report", v["revision"])
@@ -139,3 +139,44 @@ class MythosTrialTests(unittest.TestCase):
         next(a for a in rules["actions"] if a["id"] == "talk_eleanor")["disclosure"] = "invented"
         with self.assertRaisesRegex(ValueError, "disclosure"):
             mythos.npc_profiles(story, rules)
+
+    def test_castine_independent_replay_and_endings(self):
+        def run(seed, route):
+            s = mythos.initial("castine", seed)
+            for action in route:
+                s = mythos.step(s, action)
+            mythos.verify(s)
+            return s
+        self.assertEqual(run(42, ["inspect_wharf", "depart"]),
+                         run(42, ["inspect_wharf", "depart"]))
+        self.assertEqual(run(42, ["depart"])["ending"]["reason"], "depart")
+        self.assertEqual(mythos.initial("castine", 42)["resources"], {"cash_cents": 3800})
+        for seed in range(200):
+            s = mythos.initial("castine", seed)
+            for action in ("inspect_wharf", "inspect_ledger", "secure_estate"):
+                s = mythos.step(s, action)
+            if "sanctuary" in s["flags"] and len(s["discoveries"]) >= 2:
+                s = mythos.step(s, "prepare_case")
+                s = mythos.step(s, "entrust_case")
+                self.assertTrue(s["ending"]["account_entrusted"])
+                self.assertEqual(s["ending"]["scores"]["Horror Contained"], 1.0)
+                mythos.verify(s)
+                break
+        else:
+            self.fail("No successful Castine report route")
+
+    def test_castine_background_clock_and_hidden_state(self):
+        s = mythos.initial("castine", 42)
+        self.assertEqual(s["npcs"]["zebediah"]["attributes"]["Willpower"], 4)
+        self.assertNotIn("father_account", [a["id"] for a in mythos.view(s)["choices"]])
+        for seed in range(200):
+            s = mythos.step(mythos.initial("castine", seed), "secure_estate")
+            if "sanctuary" in s["flags"]:
+                for _ in range(7):
+                    s = mythos.step(s, "rest_estate")
+                self.assertIn("convergence", s["events_seen"])
+                self.assertFalse(any("convergence" in x for x in s["observations"]))
+                mythos.verify(s)
+                break
+        else:
+            self.fail("No estate access")

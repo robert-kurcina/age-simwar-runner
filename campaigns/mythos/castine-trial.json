@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "start": "1927-11-02T08:00:00",
+  "end": "1927-11-03T23:59:00",
+  "max_turns": 20,
+  "opening": "You arrive in Castine to investigate the disappearance of Imogen Vane. Your case file and her photograph are your starting evidence.",
+  "start_location": "Castine Wharf",
+  "locations": [
+    "Castine Wharf",
+    "Higgins General Store",
+    "Dyar Mountain Lookout",
+    "Backwoods Shantytown",
+    "Boston Brahmin Summer Estate"
+  ],
+  "conditions": {
+    "sanity": [
+      "Steady",
+      "Uneasy",
+      "Shaken",
+      "Frayed",
+      "Unraveling",
+      "Shattered"
+    ],
+    "fatigue": [
+      "Rested",
+      "Tired",
+      "Weary",
+      "Exhausted",
+      "Spent",
+      "Catatonic"
+    ],
+    "sanity_dm": [
+      0,
+      -1,
+      -2,
+      -2,
+      -3,
+      -4
+    ],
+    "fatigue_dm": [
+      0,
+      -1,
+      -2,
+      -3,
+      -4,
+      -5
+    ]
+  },
+  "resources": {
+    "cash_cents": 3800
+  },
+  "relationships": {
+    "martha": 0,
+    "zebediah": 0,
+    "ree": 0
+  },
+  "npcs": {
+    "martha": {
+      "source_name": "Martha Higgins",
+      "public_role": "General store proprietor",
+      "location": "Higgins General Store",
+      "known_topics": [
+        "family_connection"
+      ],
+      "reference_rating": 3
+    },
+    "zebediah": {
+      "source_name": "Zebediah",
+      "public_role": "Backwoods trapper",
+      "location": "Backwoods Shantytown",
+      "known_topics": [
+        "father_account"
+      ],
+      "reference_rating": 3
+    },
+    "ree": {
+      "source_name": "Regis 'Ree' Rourke",
+      "public_role": "Man sought in connection with the case",
+      "location": "Backwoods Shantytown",
+      "known_topics": [
+        "escape_account"
+      ],
+      "reference_rating": 3
+    }
+  },
+  "actions": [
+    {
+      "id": "inspect_wharf",
+      "label": "Examine the tide charts",
+      "location": "Castine Wharf",
+      "minutes": 60,
+      "attribute": "Investigation",
+      "tn": 7,
+      "grant": [
+        "tide_chart"
+      ],
+      "discovery": "The charts indicate an unusual convergence at 3:17 AM on November 3."
+    },
+    {
+      "id": "inspect_ledger",
+      "label": "Ask to examine the store ledger",
+      "location": "Higgins General Store",
+      "minutes": 60,
+      "attribute": "Persuasion",
+      "tn": 7,
+      "grant": [
+        "ledger"
+      ],
+      "discovery": "The ledger records purchases of salt blocks and kelp supplements under E. Vane."
+    },
+    {
+      "id": "talk_martha",
+      "label": "Ask Martha about the Vane family",
+      "location": "Higgins General Store",
+      "minutes": 45,
+      "npc": "martha",
+      "disclosure": "family_connection",
+      "requires_flags": [
+        "ledger"
+      ],
+      "attribute": "Persuasion",
+      "tn": 7,
+      "grant": [
+        "family_connection"
+      ],
+      "relationship": {
+        "martha": 1
+      },
+      "discovery": "Martha acknowledges that she is Imogen's aunt."
+    },
+    {
+      "id": "inspect_journal",
+      "label": "Search the lookout for Imogen's journal",
+      "location": "Dyar Mountain Lookout",
+      "minutes": 90,
+      "attribute": "Investigation",
+      "tn": 10,
+      "grant": [
+        "journal"
+      ],
+      "discovery": "You recover Imogen's hidden journal.",
+      "failure": {
+        "sanity": 1
+      }
+    },
+    {
+      "id": "talk_zebediah",
+      "label": "Speak with the trapper about Imogen",
+      "location": "Backwoods Shantytown",
+      "minutes": 90,
+      "npc": "zebediah",
+      "disclosure": "father_account",
+      "requires_flags": [
+        "family_connection"
+      ],
+      "attribute": "Persuasion",
+      "tn": 7,
+      "grant": [
+        "father_account"
+      ],
+      "relationship": {
+        "zebediah": 1
+      },
+      "discovery": "Zebediah says he is Imogen's father and arranged her placement in Arkham."
+    },
+    {
+      "id": "talk_ree",
+      "label": "Ask Ree to explain the disappearance",
+      "location": "Backwoods Shantytown",
+      "minutes": 90,
+      "npc": "ree",
+      "disclosure": "escape_account",
+      "requires_flags": [
+        "father_account"
+      ],
+      "attribute": "Persuasion",
+      "tn": 7,
+      "grant": [
+        "escape_account"
+      ],
+      "relationship": {
+        "ree": 1
+      },
+      "discovery": "Ree says he helped Imogen escape the institution rather than killing her."
+    },
+    {
+      "id": "secure_estate",
+      "label": "Arrange a place to rest at the estate",
+      "location": "Boston Brahmin Summer Estate",
+      "minutes": 90,
+      "attribute": "Persuasion",
+      "tn": 7,
+      "grant": [
+        "sanctuary"
+      ],
+      "discovery": "You arrange access to the estate as a temporary refuge."
+    },
+    {
+      "id": "rest_estate",
+      "label": "Rest at the estate",
+      "location": "Boston Brahmin Summer Estate",
+      "minutes": 180,
+      "repeatable": true,
+      "requires_flags": [
+        "sanctuary"
+      ],
+      "success": {
+        "fatigue": -3,
+        "sanity": -1
+      }
+    },
+    {
+      "id": "offer_refuge",
+      "label": "Offer Ree temporary refuge at the estate",
+      "location": "Backwoods Shantytown",
+      "minutes": 60,
+      "npc": "ree",
+      "requires_flags": [
+        "escape_account",
+        "sanctuary"
+      ],
+      "attribute": "Persuasion",
+      "tn": 10,
+      "grant": [
+        "refuge_offered"
+      ],
+      "discovery": "Ree agrees to consider the refuge; his ultimate decision remains uncertain."
+    },
+    {
+      "id": "prepare_case",
+      "label": "Prepare a case report distinguishing testimony from evidence",
+      "location": "Boston Brahmin Summer Estate",
+      "minutes": 60,
+      "requires": 2,
+      "grant": [
+        "written_account"
+      ]
+    },
+    {
+      "id": "entrust_case",
+      "label": "Leave your case report with the estate and conclude the investigation",
+      "location": "Boston Brahmin Summer Estate",
+      "minutes": 60,
+      "requires_flags": [
+        "written_account",
+        "sanctuary"
+      ],
+      "grant": [
+        "account_entrusted"
+      ],
+      "terminal": true
+    },
+    {
+      "id": "depart",
+      "label": "Leave Castine with the evidence you have",
+      "location": "Castine Wharf",
+      "minutes": 60,
+      "terminal": true
+    }
+  ],
+  "events": [
+    {
+      "id": "evening",
+      "at": "1927-11-02T18:00:00",
+      "observation": "Evening arrives in Castine."
+    },
+    {
+      "id": "convergence",
+      "at": "1927-11-03T03:17:00",
+      "observation": "The time marked for convergence on the tide charts has passed.",
+      "visible_requires": [
+        "tide_chart"
+      ]
+    }
+  ],
+  "ending_text": {
+    "entrust_case": "Your report is left at the estate. Imogen's fate and the reliability of its custody remain unresolved.",
+    "depart": "You depart with the evidence you have gathered. The disappearance remains unresolved.",
+    "limit": "Your allotted investigation time ends. The case remains incomplete."
+  },
+  "ending_flags": {
+    "account_prepared": "written_account",
+    "account_entrusted": "account_entrusted",
+    "refuge_offered": "refuge_offered"
+  },
+  "recovery_actions": [
+    "rest_estate"
+  ]
+}

@@ -50,7 +50,7 @@ The updated archive includes START_HERE.md; older artifacts without it use the b
 | Civic Recovery — Community Assistance | Playable demonstration |
 | Civic Recovery — Civic Agreement | Playable demonstration |
 | Mythos — The Boothbay Incident | Playable bounded trial |
-| Mythos — The Salt-Stained Silence (Castine) | Imported; not executable |
+| Mythos — The Salt-Stained Silence (Castine) | Bounded investigation trial; full source arc not implemented |
 | Mythos — The Keeper at Ram Island | Imported; not executable |
 | Conflagration / SH44SER | Private content; offline distribution pending |
 

@@ -15,7 +15,8 @@
       "id": "castine",
       "title": "The Salt-Stained Silence",
       "file": "castine.json",
-      "status": "imported"
+      "status": "trial",
+      "rules": "castine-trial.json"
     },
     {
       "id": "ram-island",

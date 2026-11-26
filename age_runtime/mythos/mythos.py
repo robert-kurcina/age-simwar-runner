@@ -117,12 +117,13 @@ def step(state, action):
     effects = a.get("success" if success else "failure", {})
     for key, delta in effects.items():
         state[key] = max(0, min(5, state[key] + delta))
-    if state["turn"] % 4 == 0 and action not in ("rest_room", "buy_meal"):
+    if state["turn"] % 4 == 0 and action not in rules.get("recovery_actions", ("rest_room", "buy_meal")):
         state["fatigue"] = min(5, state["fatigue"] + 1)
     for event in rules.get("events", []):
         if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
             state["events_seen"].append(event["id"])
-            state["observations"].append(event["observation"])
+            if all(flag in state["flags"] for flag in event.get("visible_requires", [])):
+                state["observations"].append(event["observation"])
     state["last_result"] = {"action": action, "success": success}
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
@@ -130,9 +131,9 @@ def step(state, action):
     if a.get("terminal") or state["turn"] >= rules["max_turns"] or not options(state, rules):
         state["ending"] = {"reason": action if a.get("terminal") else "limit",
                            "evidence_count": len(state["discoveries"]),
-                           "account_prepared": "written_account" in state["flags"],
-                           "account_relayed": "account_relayed" in state["flags"],
-                           "account_entrusted": "account_entrusted" in state["flags"],
+                           **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
+                               "account_prepared": "written_account", "account_relayed": "account_relayed",
+                               "account_entrusted": "account_entrusted"}).items()},
                            "epilogue": rules["ending_text"][action if a.get("terminal") else "limit"],
                            "scores": scores(state, action)}
     return state
