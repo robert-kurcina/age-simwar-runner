@@ -61,6 +61,16 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(opening["date"], "2000-01-01")
             self.assertNotIn("aid_packages", opening["reports"])
             self.assertNotIn("compiled", opening)
+            from narrative import packet as narrative_packet, prompt as narrative_prompt, validate as validate_narrative
+            narrative = narrative_packet(session)
+            unchanged = digest(session)
+            self.assertNotIn("aid_packages", narrative["briefing"]["reports"])
+            self.assertIn("unknown", narrative_prompt(narrative))
+            reply = {"packet_id": narrative["packet_id"], "summary": "Relief is underway."}
+            self.assertEqual(validate_narrative(narrative, reply)["authority"], "unverified_model_commentary")
+            with self.assertRaises(ValueError):
+                validate_narrative(narrative, {**reply, "packet_id": "wrong"})
+            self.assertEqual(digest(session), unchanged)
             self.assertEqual(opening["context"][0]["id"], "relief-context")
             self.assertEqual(opening["context"][0]["classification"], "canonical")
             self.assertNotIn("path", opening["context"][0])
