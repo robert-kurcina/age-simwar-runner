@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from datetime import timedelta
 from age_runtime.core.source_compiler import parse_json, compile_scenario, checked_date
-from age_runtime.core.runner import initialize, verify_checkpoint, submit_request, advance, digest, save
+from age_runtime.core.runner import initialize, verify_checkpoint, submit_request, advance, digest, save, faction_packet, accept_faction_choice
 from age_runtime.core.observations import observe
 
 
@@ -30,7 +30,20 @@ def inventory(path):
 
 def supported(s):
     # Reuse reviewed civilian mechanics rather than scenario-specific identities.
-    if s["events"] or s["constraints"] or "economy_projects" in s or "dependent_events" in s or "model_factions" in s:
+    if "economy_projects" in s:
+        # Reviewed civilian reconstruction projects only. No arbitrary
+        # background effects or mixed special fulfillment rules in this slice.
+        from age_runtime.core.runner import validate
+        validate(s)
+        if (s["events"] or s["constraints"] or s.get("dependent_events")
+                or not s.get("capacity_actions") or not s.get("model_factions")
+                or set(s.get("action_catalog", {})) != set(s["capacity_actions"])
+                or len(set(s["actors"]) - set(s["model_factions"])) != 1
+                or s.get("administrative_reviews_per_turn", 0) < len(s["model_factions"]) + 1
+                or s["turn_minutes"] < 10080 or s["end_minute"] % s["turn_minutes"]):
+            raise ValueError("unsupported private economy scenario")
+        return
+    if s["events"] or s["constraints"] or "dependent_events" in s or "model_factions" in s:
         raise ValueError("unsupported private scenario mechanics")
     keys = set(s["initial"])
     requests = set(s.get("action_catalog", {}))
@@ -82,7 +95,7 @@ def select(path, scenario_id, owners):
 def perspectives(path, scenario_id, owners):
     _, _, _, _, compiled = select(path, scenario_id, owners)
     return [{"id": k, "label": v["label"]} for k, v in
-            compiled["scenario"].get("actors", {}).items()]
+            compiled["scenario"].get("actors", {}).items() if k not in compiled["scenario"].get("model_factions", [])]
 
 
 def reviewed_context(entry, compiled, actor, effective_date):
@@ -145,6 +158,8 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
     supported(s)
     state = initialize(s)
     observe(s, state, actor)
+    if actor in s.get("model_factions", []):
+        raise ValueError("player cannot assume model faction")
     if bool(s.get("civic_agreement")) != shared:
         raise ValueError("agreement requires shared human participation; other scenarios use single perspective")
     header = {"campaign": catalog["id"], "group": group["id"],
@@ -186,6 +201,8 @@ def verify(session):
     if h.get("shared") and (set(h.get("actor_contexts", {})) != set(s["actors"]) or h["briefing_context"] != h["actor_contexts"][h["actor"]]):
         raise ValueError("shared perspective context mismatch")
     verify_checkpoint(s, session["state"])
+    if h["actor"] in s.get("model_factions", []):
+        raise ValueError("player cannot assume model faction")
     observe(s, session["state"], h["actor"])
     return session
 
@@ -239,6 +256,7 @@ def briefing(session):
         "reports": observation["reports"],
         "own_requests": observation["own_requests"],
         "available_requests": observation["available_requests"],
+        **({"projects": observation["projects"]} if "projects" in observation else {}),
         **({"faction_context": observation["faction_context"]} if "faction_context" in observation else {}),
         "context": context,
         "context_status": "reviewed perspective summaries" if context else "source references pinned; player-safe narrative not yet supplied",
@@ -258,6 +276,18 @@ def update(session, request=None, turns=0):
         if state["minute"] >= s["end_minute"]:
             break
         state = advance(s, state)
+    return verify({**session, "state": state})
+
+
+def model_packet(session, actor):
+    verify(session)
+    return faction_packet(session["header"]["compiled"]["scenario"], session["state"], actor)
+
+
+def model_choice(session, actor, response):
+    packet = model_packet(session, actor)
+    s = session["header"]["compiled"]["scenario"]
+    state = accept_faction_choice(s, session["state"], actor, packet, response)
     return verify({**session, "state": state})
 
 
@@ -292,6 +322,12 @@ def main(argv=None):
             sub.add_argument("response", type=Path)
         if name == "confirm":
             sub.add_argument("--approve", required=True)
+    for name in ("faction-packet", "faction-choice"):
+        sub = commands.add_parser(name)
+        sub.add_argument("session", type=Path)
+        sub.add_argument("actor")
+        if name == "faction-choice":
+            sub.add_argument("response", type=Path)
     dashboard = commands.add_parser("dashboard")
     dashboard.add_argument("session", type=Path)
     dashboard.add_argument("--output", type=Path)
@@ -329,6 +365,12 @@ def main(argv=None):
                             read(a.from_session) if a.from_session else None)
             save(a.session, session)
             result = view(session)
+        elif a.command == "faction-packet":
+            result = model_packet(read(a.session), a.actor)
+        elif a.command == "faction-choice":
+            session = model_choice(read(a.session), a.actor, read(a.response))
+            save(a.session, session)
+            result = briefing(session)
         elif a.command == "dashboard":
             from age_runtime.interfaces.visualization import snapshot, render
             session = verify(read(a.session))

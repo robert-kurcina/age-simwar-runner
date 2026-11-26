@@ -40,7 +40,12 @@ def observe(s, state, actor_id):
         oid: obj for oid, obj in actor.get("objectives", {}).items()
         if obj["key"] in values}}
     observed_objectives = evaluate({"actors": {actor_id: observed_actor}}, values)[actor_id]["objectives"]
+    projects = [{"id": p["id"], "need": p["need"], "stages": p["stages"],
+                 "axes": deepcopy(p["axes"]), "progress": p["progress"],
+                 "delay": p["delay"], "complications": p["complications"]}
+                for p in s.get("economy_projects", []) if p["participant"] == actor_id]
     return {
+        **({"projects": projects} if "economy_projects" in s else {}),
         **({"faction_context": deepcopy(actor["faction_context"]["profile"])} if "faction_context" in actor else {}),
         **({"project_results": [deepcopy(r) for r in state["project_results"] if r["participant"] == actor_id]} if "project_results" in state else {}),
         "actor": actor_id,
