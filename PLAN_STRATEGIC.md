@@ -55,7 +55,8 @@ Author-approved design direction: factions pursue their own asymmetric goals, wi
 | Priority | Status | Increment |
 |---|---|---|
 | P1 | DONE (mechanical) | PR #111 actor strategy tests passed; shared CI failed only on narrative forced-sleep regression (45893817282, 45893817233). Full bundle qualification pending shared fix. |
-| P1 | WIP | Donor-authorized resource transfers between distinct existing civilian investment stocks; coupled domestic/recipient opportunities, FIFO review, conservation, actor-local feasibility and replay tests. No binding reciprocal agreements yet. |
+| P1 | DONE (mechanical) | PR #112 transfer test passed; 166/167 regression tests passed, narrative forced sleep remains failing (45894866993, 45894866919). |
+| P1 | WIP | Independently authorized bilateral agreements with fixed existing transfer terms and due date, reviewed consent, atomic settlement or recorded default; focused tests added. No forced debt, arbitrary effects or dynamic negotiation yet. |
 | P1 | PENDING | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
 | P1 | PENDING | Dramatic decision presentation and downstream reassessment; qualify divergent outcomes in author-led play. |
 | P2 | DEFERRED | Additional mechanics absent a demonstrated scenario requirement. |
