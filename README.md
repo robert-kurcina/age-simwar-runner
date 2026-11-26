@@ -1,80 +1,97 @@
 # AGE SimWar Runner
 
-A prompt-driven scenario simulation component of AGE. Play within a single ordinary ChatGPT conversation using the GitHub Connector and the authoritative Python runner (Python 3.10+, standard library only).
+Play scenario-based games in a single ChatGPT conversation. ChatGPT presents the story and interprets your decisions; the bundled Python engine resolves actions and maintains authoritative game state.
 
-## Quick start — play in ChatGPT
+## 1. Choose how to play
 
-### Prerequisites
+| Method | Requirements |
+| --- | --- |
+| GitHub-connected | Active GitHub connector with repository access, plus Python execution |
+| Standalone ZIP | Uploaded runtime archive, plus Python execution; no GitHub connection |
 
-- Your ChatGPT account has the GitHub Connector configured and active, with access to `robert-kurcina/age-simwar-runner`.
-- The current conversation can invoke that connector and execute Python code.
-- For private campaigns, your connected account also has access to the relevant private campaign and canonical source repositories. Public fixtures require no private access.
+No local installation or hosted game server is required for Chat play. Keep playing in the same conversation.
 
-No local installation, hosted game server, MCP service, or manual checkpoint transfer is required for the intended single-conversation experience. Connector capabilities may vary by conversation; repository read access alone does not establish runtime execution capability.
+### A. GitHub-connected play
 
-### Launch prompt
-
-Open a ChatGPT conversation (preferably in your AGE project), activate the GitHub Connector, and paste:
+Activate your GitHub connector in a new ChatGPT conversation and paste:
 
 ```text
-Using my active GitHub Connector, retrieve robert-kurcina/age-simwar-runner
-and follow the ChatGPT gameplay instructions in its README.md.
-
-Use the authoritative Python runner in this conversation's execution
-environment. Discover available authorized campaigns, including associated
-private campaign specifications when accessible. Present their scenarios,
-participant perspectives and available presets. Let me select what to play,
-then initialize the selected scenario and present its opening briefing,
-objectives, known resources, relevant maps and permissible actions.
-
-Adjudicate all gameplay through the actual pinned Python engine. Keep
-the active session and verified checkpoints within this conversation.
-Interpret my natural-language orders, execute confirmed actions, and
-present actor-visible results and next decisions. Do not reconstruct
-simulation rules or invent engine results if execution is unavailable.
+Retrieve robert-kurcina/age-simwar-runner using my GitHub connector.
+Follow README.md and 00_Meta/CHAT_GAMEPLAY.md.
+Load and verify the actual Python runtime, show available authorized
+campaigns and playable scenarios, and let me select one.
+Execute my confirmed decisions using the engine in this conversation.
+Do not invent engine results or reveal hidden scenario information.
 ```
 
-For a quick public demonstration, add: "Start the public Civic Recovery campaign, Service Restoration scenario, as the coordinator."
+Private SH44SER content requires separate authorized access and a supported runtime package.
 
-### How to play
+### B. Standalone ZIP play
 
-After initialization, use ordinary prompts in the same conversation. For example:
+1. Download a successful [Chat runtime bundle](https://github.com/robert-kurcina/age-simwar-runner/actions/workflows/chat-runtime-bundle.yml) artifact from GitHub Actions. Choose a main-branch build when available. The download is a ZIP; keep it intact.
+2. Upload the ZIP to a new ChatGPT conversation.
+3. Paste:
 
-- "Show my objectives, resources and available actions."
-- "Allocate one restoration credit to restore a service center."
-- "Confirm that action and advance one turn."
-- "Show the resource history and current map, if available."
-- "Continue to the next linked scenario."
+```text
+Start AGE SimWar Runner from the attached ZIP. Follow START_HERE.md
+and the bundled 00_Meta/CHAT_GAMEPLAY.md. Verify and execute the actual
+Python engine. Show the bundled playable campaigns and let me select one.
+Keep gameplay in this conversation. Do not access GitHub or invent results.
+```
 
-These example orders apply only when the selected scenario supports them. ChatGPT should present available choices from that scenario, not assume that all scenarios share the same actions. Explicit confirmation of a specific action is sufficient; advance time only when requested. The session remains within this thread; downloading or uploading checkpoint files is optional.
+The updated archive includes START_HERE.md; older artifacts without it use the bundled README and facilitator guide with the offline procedure. The public archive does not include private SH44SER material.
 
-### Facilitator instructions
+## 2. Choose a campaign
 
-See [00_Meta/CHAT_GAMEPLAY.md](00_Meta/CHAT_GAMEPLAY.md) for the authoritative LLM gameplay procedure and framework-specific guidance.
+| Campaign / scenario | Status |
+| --- | --- |
+| Civic Recovery — Service Restoration | Playable demonstration |
+| Civic Recovery — Service Review | Playable demonstration |
+| Civic Recovery — Community Assistance | Playable demonstration |
+| Civic Recovery — Civic Agreement | Playable demonstration |
+| Mythos — The Boothbay Incident | Playable bounded trial |
+| Mythos — The Salt-Stained Silence (Castine) | Imported; not executable |
+| Mythos — The Keeper at Ram Island | Imported; not executable |
+| Conflagration / SH44SER | Private content; offline distribution pending |
 
-**Current status:** The public runtime archive was successfully transferred into ordinary Chat and the pinned Python engine passed 68 regression tests there. The public opening and subsequent gameplay were demonstrated; the full private campaign prompt-to-play workflow remains to be qualified. Supported executable scope is civilian recovery and institutional coordination, not operational combat adjudication or predictive historical simulation. See [PLAN.md](PLAN.md).
+The live catalog is authoritative: run `python game.py list` in the extracted repository. Do not offer imported scenarios as playable.
 
-## Experimental Mythos campaign
+For a first narrative game, choose **The Boothbay Incident**. For a short strategic demonstration, choose **Service Restoration** as coordinator.
 
-Run `python game.py list` to discover bundled campaigns and their implementation status. Strategic scenarios continue to use `play.py`; the Mythos trial uses `game.py`. Boothbay is a bounded investigation trial, not the full AIMythos ruleset. Castine and Ram Island are preserved but not yet executable.
+## 3. Play
+
+Choose an offered action or describe your intended action in ordinary language. ChatGPT maps it to a permitted engine action, asks for confirmation when ambiguous, and presents the actual result. Mythos actions advance the clock; strategic turns advance when requested. Hidden information is revealed only when earned. If the engine cannot execute or verify the session, gameplay stops rather than switching to invented adjudication.
+
+## 4. Distributions
+
+| Intended archive | Contents | Status |
+| --- | --- | --- |
+| age-simwar-standalone.zip | Public engine, Civic Recovery and Mythos | Public runtime artifact available; updated standalone guide included by new builds |
+| age-simwar-sh44ser.zip | Supported private SH44SER campaigns | Pending |
+| age-simwar-conflagration.zip | Conflagration only | Pending |
+
+GitHub Actions uses revision-specific artifact names; the intended archive names describe distribution scope, not a permanent release URL.
+
+## 5. Developer reference
+
+Python 3.10+, standard library only. Run commands from the repository root.
 
 ```sh
-python game.py start boothbay /tmp/boothbay-session.json --seed 42
-python game.py inspect /tmp/boothbay-session.json
-python game.py act /tmp/boothbay-session.json inspect_docks --revision <revision-from-inspect>
+python game.py list
+python -m unittest discover -v
 ```
 
-See [Mythos gameplay guidance](00_Meta/CHAT_GAMEPLAY.md#mythos) for current trial limits and presentation rules.
+| Directory | Purpose |
+| --- | --- |
+| [00_Meta/](00_Meta/) | LLM gameplay/development guidance and provenance |
+| age_runtime/core/ | Strategic engine and session management |
+| age_runtime/mythos/ | Character-oriented gameplay |
+| age_runtime/interfaces/ | Narrative, maps and model interfaces |
+| age_runtime/examples/ | Demonstration implementations |
+| campaigns/, frameworks/, scenarios/ | Authored configurations and trial overlays |
+| tests/ | Regression tests |
+| [docs/](docs/) | Technical documentation |
 
-## Repository organization
+Root Python files preserve existing launch commands. See [CLI operations](docs/cli.md), [architecture](docs/architecture.md), [facilitator guidance](00_Meta/CHAT_GAMEPLAY.md) and [PLAN.md](PLAN.md).
 
-- `age_runtime/core/`: strategic simulation, session management and source compilation.
-- `age_runtime/mythos/`: character-oriented gameplay and bundled catalog.
-- `age_runtime/interfaces/`: narrative, models, maps and presentation.
-- `age_runtime/examples/`: demonstration implementations.
-- `campaigns/`, `frameworks/`, `scenarios/`: configuration data.
-- `tests/`: regression tests (`python -m unittest discover -v`).
-- `00_Meta/`: LLM development and gameplay guidance, provenance.
-- `docs/`: technical references, including [CLI operations](docs/cli.md).
-
-Run commands from the repository root. Root Python files are compatibility entry points, not primary implementations.
+This is an experimental game engine, not a calibrated predictive simulation. Strategic execution is limited to supported civilian and institutional scenarios. Mythos scoring and narrative branches remain provisional.

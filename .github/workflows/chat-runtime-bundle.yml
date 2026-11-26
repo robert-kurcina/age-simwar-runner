@@ -43,6 +43,24 @@ jobs:
           printf '%s\n' "$revision" > "$RUNNER_TEMP/chat-bundle/ENGINE_REVISION.txt"
           cd "$RUNNER_TEMP/chat-bundle"
           sha256sum runner-source.zip > SHA256SUMS
+          cp "$GITHUB_WORKSPACE/00_Meta/STANDALONE_PLAY.md" START_HERE.md
+      - name: Verify extracted offline package
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/chat-bundle"
+          cd "$bundle"
+          sha256sum -c SHA256SUMS
+          test -s START_HERE.md
+          work="$(mktemp -d)"
+          python -m zipfile -e runner-source.zip "$work"
+          cd "$work/age-simwar-runner"
+          python -m unittest discover -v
+          python game.py list
+          python game.py start boothbay "$work/mythos.json" --seed 42 > "$work/opening.json"
+          revision="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["revision"])' "$work/opening.json")"
+          python game.py act "$work/mythos.json" inspect_docks --revision "$revision"
+          python game.py inspect "$work/mythos.json"
       - uses: actions/upload-artifact@v4
         with:
           name: chat-runtime-${{ github.sha }}
