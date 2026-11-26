@@ -117,3 +117,7 @@ Use `python library_service.py --room 1 --room 2` for a custom request sequence.
 See [architecture](docs/architecture.md) and [plan](PLAN.md). Public synthetic scenarios only; private scenario packages stay external.
 
 Development provenance and LLM guidance: [00_Meta](00_Meta/).
+
+## Pinned source compilation
+
+See [source compiler](docs/source-compiler.md). A trusted local operator can resolve reviewed structured initial-state values from allowlisted Git repositories and produce a standalone scenario plus provenance snapshot. Existing runner and checkpoint formats are unchanged.
