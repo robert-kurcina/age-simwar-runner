@@ -884,3 +884,33 @@ class MythosTrialTests(unittest.TestCase):
         s = mythos.step(s, request["action"], request)
         self.assertEqual(s["local_records"][-1]["target"], "eleanor")
         mythos.verify(s)
+
+    def test_danger_beat_is_local_and_replayable(self):
+        from age_runtime.mythos import beats
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        req = {"action": "beat:inlet_withdrawal", "approach": "careful_footing",
+               "intent": "Retreat along the dry margin."}
+        with self.assertRaises(ValueError):
+            mythos.step(s, req["action"], req)
+        # Obtain the existing ecological encounter by ordinary exposed activity.
+        for seed in range(100):
+            s = mythos.step(mythos.initial("boothbay", seed), "move:Creek Inlet South")
+            for _ in range(18):
+                if "filament_anomaly" in s["flags"]:
+                    break
+                s = mythos.step(s, "observe")
+            if "filament_anomaly" in s["flags"]:
+                break
+        else:
+            self.fail("No filament encounter")
+        self.assertTrue(beats.available(s, rules))
+        prior = s["pacing"]["narrative_beats"]
+        after = mythos.step(s, req["action"], req)
+        self.assertEqual(after["pacing"]["narrative_beats"], prior + 1)
+        self.assertIn("inlet_withdrawal", after["flags"])
+        self.assertEqual(after["location"], s["location"])
+        self.assertEqual(after["discoveries"], s["discoveries"])
+        with self.assertRaises(ValueError):
+            mythos.step(after, req["action"], req)
+        mythos.verify(after)
