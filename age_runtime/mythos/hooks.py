@@ -40,11 +40,16 @@ def offers(state, rules, action):
 
 def apply(state, rules, action):
     choices = offers(state, rules, action)
+    persistent = circumstances(state, rules, action)
+    if persistent:
+        # Same fact is promoted, not stacked. One controlling narrative modifier.
+        choices = [x for x in choices if x["id"] not in {p.get("replaces") for p in persistent}]
+        choices.extend(persistent)
     if not choices:
         return action
     # Adverse circumstances take precedence over beneficial cues. Stable tie
     # order; only one Hook per Test. Repeat effects remain, repeat XP does not.
-    match = min(choices, key=lambda x: (x["dm"], x["id"]))
+    match = min(choices, key=lambda x: (x["dm"] > 0, -abs(x["dm"]), x["id"]))
     result = copy.deepcopy(action)
     result["character_hook"] = match
     return result
@@ -77,7 +82,7 @@ def record(state, action, test):
     candidates = []
     hook = action.get("character_hook", {})
     if hook.get("emphasis") and hook["dm"] < 0:
-        candidates.append((-hook["dm"], hook["id"], "character_hook"))
+        candidates.append((-hook["dm"], hook.get("replaces") or hook["id"], hook.get("source", "character_hook")))
     for entry in test.get("contextual", []):
         if entry["penalty"] > 0 and entry["name"].startswith(("[Emotional > ", "[Addict > ")):
             candidates.append((3 * entry["penalty"], entry["name"], "native_disability"))
@@ -85,3 +90,31 @@ def record(state, action, test):
         penalty, key, source = max(candidates, key=lambda x: (x[0], x[1]))
         return award(state, key, penalty, source=source)
     return 0
+
+def circumstances(state, rules, action):
+    """Derive persistent modifiers from committed flags/clock evidence.
+
+    No new mutable state and no model-created numerical adjustments.
+    A circumstance must explicitly establish its scope and termination.
+    """
+    if not action.get("test"):
+        return []
+    result = []
+    for key, cfg in sorted(rules.get("persistent_circumstances", {}).items()):
+        if action["id"] not in cfg["actions"]:
+            continue
+        if not all(f in state["flags"] for f in cfg["requires_flags"]):
+            continue
+        if any(f in state["flags"] for f in cfg.get("excludes_flags", [])):
+            continue
+        dm = cfg["dm"]
+        if type(dm) is not int or dm not in (-3, 3):
+            raise ValueError("persistent circumstance must be +/-3")
+        clock = cfg.get("clock")
+        if clock and not state.get("narrative_events", {}).get("clocks", {}).get(clock, {}).get("resolved"):
+            continue
+        result.append({"id": key, "fact": cfg["fact"], "dm": dm,
+                       "source": "persistent_circumstance",
+                       "replaces": cfg.get("replaces"),
+                       "emphasis": cfg.get("emphasis", False)})
+    return result

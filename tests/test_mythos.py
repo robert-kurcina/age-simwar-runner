@@ -1190,3 +1190,21 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(hooks.record(s, {}, test), 0)
         self.assertEqual(s["dxd"]["xp"], 20)
         self.assertEqual(len(s["dxd"]["emphasis_awards"]), 1)
+
+    def test_persistent_circumstance_replaces_hook(self):
+        from age_runtime.mythos import hooks
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        a = next(a for a in rules["actions"] if a["id"] == "speak_burroughs")
+        s["flags"].append("police_attention")
+        self.assertEqual(hooks.apply(s, rules, a)["character_hook"]["dm"], -1)
+        s["narrative_events"]["clocks"]["official_attention"]["resolved"] = True
+        compiled = hooks.apply(s, rules, a)
+        self.assertEqual(compiled["character_hook"]["dm"], -3)
+        self.assertEqual(compiled["character_hook"]["replaces"], "professional_scrutiny")
+        self.assertEqual(hooks.record(s, compiled, {}), 20)
+        self.assertEqual(hooks.record(s, compiled, {}), 0)
+        self.assertEqual(hooks.record(s, {"character_hook": {"id": "professional_scrutiny", "dm": -1, "emphasis": True}}, {}), 0)
+        self.assertNotIn("character_hook", a)
+        s["flags"].append("police_clearance")
+        self.assertEqual(hooks.circumstances(s, rules, a), [])
