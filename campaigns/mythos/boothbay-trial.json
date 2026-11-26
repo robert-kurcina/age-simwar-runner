@@ -1055,14 +1055,18 @@
           "tragedy_seed": "WWI shell shock",
           "beliefs": null,
           "current_region": "Maine, United States",
-          "current_settlement": "Portland"
+          "current_settlement": "Boothbay",
+          "employment_base": "Portland"
         },
         "intrinsics": {
           "species": "Human",
           "lineage": "Earth Human",
           "trade": "Service",
           "profession": "Journalist",
-          "wealth_rank": 2
+          "wealth_rank": 2,
+          "attribute_profile": "pc",
+          "pml": null,
+          "zed_policy": "derived compatibility field; no magic affordance"
         },
         "proficiencies": {
           "skills": {
@@ -1091,7 +1095,13 @@
         },
         "utilities": {
           "gear": "source protagonist starting_inventory",
-          "relationships": "scenario relationships"
+          "relationships": "scenario relationships",
+          "spells": [],
+          "magic_items": []
+        },
+        "properties": {
+          "body_profile": "pc",
+          "derived_attributes": "runtime"
         }
       },
       "eleanor": {
@@ -1115,7 +1125,10 @@
           "lineage": "Earth Human",
           "trade": "Service",
           "profession": "Waitress",
-          "wealth_rank": 1
+          "wealth_rank": 1,
+          "attribute_profile": "eleanor",
+          "pml": null,
+          "zed_policy": "derived compatibility field; no magic affordance"
         },
         "proficiencies": {
           "skills": {
@@ -1129,7 +1142,13 @@
         },
         "utilities": {
           "gear": null,
-          "relationships": null
+          "relationships": null,
+          "spells": [],
+          "magic_items": []
+        },
+        "properties": {
+          "body_profile": "eleanor",
+          "derived_attributes": "runtime"
         }
       },
       "elias": {
@@ -1153,7 +1172,10 @@
           "lineage": "Earth Human",
           "trade": "Mariner",
           "profession": "Retired fisherman",
-          "wealth_rank": 1
+          "wealth_rank": 1,
+          "attribute_profile": "elias",
+          "pml": null,
+          "zed_policy": "derived compatibility field; no magic affordance"
         },
         "proficiencies": {
           "skills": {
@@ -1169,7 +1191,13 @@
         },
         "utilities": {
           "gear": null,
-          "relationships": null
+          "relationships": null,
+          "spells": [],
+          "magic_items": []
+        },
+        "properties": {
+          "body_profile": "elias",
+          "derived_attributes": "runtime"
         }
       },
       "burroughs": {
@@ -1193,7 +1221,10 @@
           "lineage": "Earth Human",
           "trade": "Warrior",
           "profession": "Police chief",
-          "wealth_rank": 3
+          "wealth_rank": 3,
+          "attribute_profile": "burroughs",
+          "pml": null,
+          "zed_policy": "derived compatibility field; no magic affordance"
         },
         "proficiencies": {
           "skills": {
@@ -1208,7 +1239,13 @@
         },
         "utilities": {
           "gear": null,
-          "relationships": null
+          "relationships": null,
+          "spells": [],
+          "magic_items": []
+        },
+        "properties": {
+          "body_profile": "burroughs",
+          "derived_attributes": "runtime"
         }
       },
       "Mayor Gilman": {
@@ -1232,7 +1269,10 @@
           "lineage": "Earth Human",
           "trade": "Merchant",
           "profession": "Mayor",
-          "wealth_rank": 3
+          "wealth_rank": 3,
+          "attribute_profile": "Mayor Gilman",
+          "pml": null,
+          "zed_policy": "derived compatibility field; no magic affordance"
         },
         "proficiencies": {
           "skills": {
@@ -1247,7 +1287,13 @@
         },
         "utilities": {
           "gear": null,
-          "relationships": null
+          "relationships": null,
+          "spells": [],
+          "magic_items": []
+        },
+        "properties": {
+          "body_profile": "Mayor Gilman",
+          "derived_attributes": "runtime"
         }
       },
       "Mrs. Croft": {
@@ -1271,7 +1317,10 @@
           "lineage": "Earth Human",
           "trade": "Merchant",
           "profession": "Boarding house proprietor",
-          "wealth_rank": 2
+          "wealth_rank": 2,
+          "attribute_profile": "Mrs. Croft",
+          "pml": null,
+          "zed_policy": "derived compatibility field; no magic affordance"
         },
         "proficiencies": {
           "skills": {
@@ -1286,7 +1335,13 @@
         },
         "utilities": {
           "gear": null,
-          "relationships": null
+          "relationships": null,
+          "spells": [],
+          "magic_items": []
+        },
+        "properties": {
+          "body_profile": "Mrs. Croft",
+          "derived_attributes": "runtime"
         }
       }
     }
@@ -1589,7 +1644,10 @@
     "read_journal": {
       "cross_reference": {
         "attribute": "KNO",
-        "skill": "Investigate"
+        "skill": "Investigate",
+        "additional_skills": [
+          "Reasoning"
+        ]
       }
     },
     "clear_dock_obstruction": {
