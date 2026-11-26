@@ -1,6 +1,6 @@
 # Strategic game development plan
 
-Status: WIP — 2026-11-26. Shared constraints and status: [master plan](PLAN.md).
+Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
 
 ## Strategic design
 
@@ -24,8 +24,8 @@ External standards are optional semantic references, not required schemas: W3C O
 | 1 | DONE (PR #82, CI passed): optional dated organization context bound to existing actors using the participant compiler; no duplicate mutable stocks. Fiji pilot needs only its existing relief objective, aid resources and dated history. | Faction context and authority are consistent; no invented canon or individual-agent model. |
 | 2 | DONE (PR #83, both CI workflows passed): native Shortfall bands and bounded weekly project progression using existing state and ledger; deterministic delay policy, no character tests. | A project can progress, stall or change scope; resource guards and replay hold. |
 | 3 | DONE (PRs #85–86, CI passed): funded capacity decisions and actor-local model choice/abstention. Private adapter now wired; live model qualification pending. | Unsupported effects are rejected; independent decisions and ignored events remain consistent. |
-| 4 | WIP: separate illustrative Fiji 2003 recovery project scenario (12 weekly Turns), with competing civilian projects, limited funds and independent relief partner. Preserve original pilot. Qualify via private session adapter; actual Chat play pending. | Complete actual Chat play with alternative outcomes and exact replay. |
-| 5 | Carry forward only consequential faction conditions, commitments and resources into a successor scenario; qualify reviewed scenario generation and public/private ZIP delivery. | Meaningful campaign continuity, frozen configuration, correct visibility and verified execution. |
+| 4 | DONE (mechanical): 12-week illustrative Fiji scenario and scripted alternatives passed on vault #993 (run 45873529443), including exact replay, visibility and independent partner abstention. WIP (P1): actual strategic Chat gameplay and live model choices. Preserve original pilot. | Complete actual Chat play with alternative outcomes and exact replay. |
+| 5 | PENDING (P2): Carry forward only consequential faction conditions, commitments and resources into a successor scenario; qualify reviewed scenario generation and public/private ZIP delivery. | Meaningful campaign continuity, frozen configuration, correct visibility and verified execution. |
 
 Keep existing civic fixtures for regression. Do not build another generic campaign before the SH44SER vertical slice unless a concrete test requires it. Conflagration inventory remains partial; qualify supported civilian/institutional content only. Add bounded Sarna Len content later using native DXD. Great War and Solo City are supporting sources, not additional engines to port.
 
@@ -36,6 +36,7 @@ A strategic turn must present a changed situation, meaningful faction-level alte
 ## Repository ownership correction — 2026-11-26
 
 - DONE: audit of vault-sh44ser SimWar PRs #977–#993 and repository boundaries. Public runner already contains generic private play, source compilation, project economy, faction decisions and regression tests; do not duplicate these.
-- WIP: migration of SH44SER-derived scenarios, authored verification, geographic manifests and private CI out of the canonical vault. The existing private vault package is the only verified durable copy; **do not delete it before a byte-verified local export and private qualification**.
-- NEXT: follow [private migration procedure](docs/private-simwar-migration.md), transfer PR #993's pending verifier into the ignored local package, execute the 12-turn alternatives and replay/visibility tests, then propose a separate vault cleanup PR. Close #993 only when its test is preserved.
-- BLOCKED: no claim of migration completion or deletion until local export and execution evidence exists. Never copy private scenarios into public commits or bundles.
+- DONE: runner #89 migration safeguards and public CI; vault #993 scripted strategic qualification (export failed separately), #994 export correction merged.
+- WIP (P1): qualify corrected export and establish durable authorized private versioned scenario access. The earlier local-only migration procedure is superseded in that respect: a Mac-local copy is optional, not an architectural dependency. Decide private companion repository versus private runner before migration; neither is authorized by this plan alone.
+- BLOCKED: vault cleanup until complete, byte-verified private retention and replacement execution are confirmed. Never copy private content into public commits or bundles.
+- REJECTED: mandatory local-only private scenario storage for Chat-first gameplay.
