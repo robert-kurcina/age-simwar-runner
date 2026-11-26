@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -371,7 +371,9 @@ def step(state, action, proposal=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
     a = next((a for a in options(state, rules) if a["id"] == action), None)
-    if proposal is not None and action.startswith("local:"):
+    if proposal is not None and action.startswith("beat:"):
+        a = beats.compile_beat(state, rules, proposal)
+    elif proposal is not None and action.startswith("local:"):
         a = proposals.compile_local(state, rules, proposal, npc_available)
     elif a is None:
         raise ValueError("action unavailable")
@@ -505,6 +507,8 @@ def step(state, action, proposal=None):
                         disability=revelation["disability"], turn=state["turn"])
     if "progression" not in state and "pacing" not in rules:
         advance_events(state, rules, elapsed)
+    if a.get("danger_beat"):
+        beats.record(state, rules, a, primary_result)
     if a.get("local_capability"):
         proposals.record_local(state, a, success, primary_result)
     narrative_events.complete_action(state, rules, a, success, a.get("local_seconds", a["duration_seconds"]))
@@ -636,6 +640,8 @@ def view(state):
         scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
+    if rules.get("danger_beats"):
+        scene_view["danger"] = beats.available(state, rules)
     if "local_records" in state:
         scene_view["local_records"] = copy.deepcopy(state["local_records"][-8:])
     if "narrative_events" in state:
@@ -669,7 +675,7 @@ def gm_context(state):
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
-    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records") if k in public})
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger") if k in public})
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]
