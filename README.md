@@ -78,6 +78,8 @@ Python 3.10+, standard library only. Run commands from the repository root.
 
 ```sh
 python game.py list
+python game.py describe mythos boothbay
+python game.py describe civic-recovery service-restoration
 python -m unittest discover -v
 ```
 
@@ -95,3 +97,5 @@ python -m unittest discover -v
 Root Python files preserve existing launch commands. See [CLI operations](docs/cli.md), [architecture](docs/architecture.md), [facilitator guidance](00_Meta/CHAT_GAMEPLAY.md) and [PLAN.md](PLAN.md).
 
 This is an experimental game engine, not a calibrated predictive simulation. Strategic execution is limited to supported civilian and institutional scenarios. Mythos scoring and narrative branches remain provisional.
+
+The `describe` command provides the common scenario profile (scale, perspective, actual duration and conclusion mode). [Scenario generation guidance](00_Meta/SCENARIO_GENERATION.md) defines the proposed authoring process; automatic generation and new mechanics are not yet implemented.

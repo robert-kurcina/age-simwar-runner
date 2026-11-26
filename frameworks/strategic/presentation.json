@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "staff-briefing",
+  "opening": [
+    "situation",
+    "perspective",
+    "known_conditions",
+    "options"
+  ],
+  "turn": [
+    "player_results",
+    "other_participant_results",
+    "assessment",
+    "options"
+  ],
+  "assessment": [
+    "result",
+    "why",
+    "cost",
+    "main_concern"
+  ],
+  "domains": [
+    {
+      "id": "services",
+      "label": "Essential services"
+    },
+    {
+      "id": "information",
+      "label": "Information and assessment"
+    },
+    {
+      "id": "coordination",
+      "label": "Institutional coordination"
+    },
+    {
+      "id": "public",
+      "label": "Public affairs"
+    },
+    {
+      "id": "logistics",
+      "label": "Finance and logistics"
+    }
+  ],
+  "options_per_domain": 2,
+  "custom_requests": true,
+  "optional_statement": true,
+  "closing": "Your orders.",
+  "target_words": [
+    400,
+    800
+  ]
+}

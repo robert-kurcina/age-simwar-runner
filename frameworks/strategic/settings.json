@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "duration_presets": {
+    "flashpoint": 6,
+    "campaign": 12,
+    "extended": 24
+  },
+  "difficulty": [
+    "easy",
+    "standard",
+    "hard",
+    "iron"
+  ],
+  "fidelity": [
+    "cinematic",
+    "plausible",
+    "strict"
+  ],
+  "visibility": [
+    "open",
+    "limited",
+    "heavy"
+  ],
+  "note": "Presets are design suggestions, not implemented mechanical modifiers. Actual limits and observation rules come from the scenario engine."
+}

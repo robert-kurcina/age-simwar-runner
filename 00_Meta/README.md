@@ -6,3 +6,6 @@
 - [Development provenance](PROVENANCE.md)
 
 Authored framework configurations remain runtime data, not general assistant instructions. Private content remains external.
+
+- [Scenario generation and strategic presentation](SCENARIO_GENERATION.md)
+- [Participant authoring guidance](PARTICIPANT_GUIDANCE.md)
