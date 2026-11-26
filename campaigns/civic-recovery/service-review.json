@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "id": "service-review",
+  "turn_minutes": 360,
+  "end_minute": 360,
+  "initial": {
+    "reports_received": 0
+  },
+  "events": [
+    {
+      "id": "report",
+      "minute": 360,
+      "key": "reports_received",
+      "delta": 1
+    }
+  ],
+  "constraints": [],
+  "actors": {
+    "reviewer": {
+      "label": "Service reviewer",
+      "visible_keys": [
+        "reports_received"
+      ],
+      "objectives": {
+        "report": {
+          "description": "Receive one service report",
+          "key": "reports_received",
+          "comparison": "at_least",
+          "threshold": 1
+        }
+      }
+    }
+  }
+}

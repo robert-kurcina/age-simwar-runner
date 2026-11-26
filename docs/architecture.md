@@ -20,3 +20,7 @@ See [scenario format](scenario-format.md) for configuration and [plan](../PLAN.m
 Run: python demo.py
 
 Test: python -m unittest -v
+
+## Campaign continuity
+
+A catalog entry may declare carry_from with a prerequisite scenario ID and a variables map (destination initial key to source final key). The referee explicitly exports a completed replay-verified source into a derived destination scenario and a digest-bound transition record. Verification recomputes the record from the source artifacts and current catalog. Source rules must match the source template, with initial changes allowed only for declared incoming mappings. Derived scenarios are independently executable and pinned by the existing checkpoint digest. This is consistency verification, not signature-based authentication or recursive lineage verification. Independent starts remain unchanged.

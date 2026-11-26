@@ -6,7 +6,8 @@
   "initial": {
     "participating_councils": 0,
     "council_a_joined": 0,
-    "council_b_joined": 0
+    "council_b_joined": 0,
+    "households_assisted": 0
   },
   "events": [],
   "constraints": [],
@@ -15,7 +16,8 @@
       "label": "Council A",
       "visible_keys": [
         "participating_councils",
-        "council_a_joined"
+        "council_a_joined",
+        "households_assisted"
       ],
       "objectives": {
         "agreement": {
@@ -30,7 +32,8 @@
       "label": "Council B",
       "visible_keys": [
         "participating_councils",
-        "council_b_joined"
+        "council_b_joined",
+        "households_assisted"
       ],
       "objectives": {
         "consent": {

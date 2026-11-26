@@ -19,7 +19,7 @@ scenarios. Each scenario entry has id (matching the referenced scenario),
 title, scope, file (relative to the manifest directory) and optional
 prerequisites (scenario IDs). IDs are unique within their respective
 campaign namespaces. Missing references and cycles are rejected.
-Prerequisites express suggested continuity, not enforced locks or state transfer.
+Prerequisites express suggested continuity, not enforced locks. Optional carry_from mappings explicitly transfer approved values when requested by the referee.
 All three campaign scenarios now have bounded human-directed choices: restoration credits, assistance packages, and independent council consent.
 
 ## Playable civilian restoration
@@ -43,6 +43,17 @@ python runner.py campaigns/civic-recovery/civic-agreement.json agreement.json --
 ```
 
 Each council controls its own consent. Duplicate consent does not add another participant. The fixture does not model autonomous negotiation.
+
+## Campaign continuity
+
+After completing the restoration session above, run:
+
+```sh
+python continuity.py campaigns/civic-recovery/campaign.json campaigns/civic-recovery/service-restoration.json chosen.json community-assistance transition.json derived-aid.json
+python runner.py derived-aid.json aid-linked.json --actor coordinator --request deliver_aid --turns 2
+```
+
+The transition record pins the source checkpoint and scenario, catalog, destination template, copied variables and derived scenario. The derived scenario uses the ordinary runner; the original template remains an independent start. Transferred values are contextual observations, not causal modifiers. Preserve the source files for verification. The trusted referee is responsible for provenance and session authorization.
 
 ## Demonstration
 

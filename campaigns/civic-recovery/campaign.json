@@ -12,6 +12,12 @@
           "title": "Service restoration",
           "scope": "Municipal",
           "file": "service-restoration.json"
+        },
+        {
+          "id": "service-review",
+          "title": "Service review",
+          "scope": "Municipal",
+          "file": "service-review.json"
         }
       ]
     },
@@ -26,7 +32,13 @@
           "file": "community-assistance.json",
           "prerequisites": [
             "service-restoration"
-          ]
+          ],
+          "carry_from": {
+            "scenario": "service-restoration",
+            "variables": {
+              "open_service_centers": "open_service_centers"
+            }
+          }
         }
       ]
     },
@@ -41,7 +53,13 @@
           "file": "civic-agreement.json",
           "prerequisites": [
             "community-assistance"
-          ]
+          ],
+          "carry_from": {
+            "scenario": "community-assistance",
+            "variables": {
+              "households_assisted": "households_assisted"
+            }
+          }
         }
       ]
     }
