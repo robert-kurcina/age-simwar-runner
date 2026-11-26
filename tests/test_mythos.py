@@ -704,16 +704,16 @@ class MythosTrialTests(unittest.TestCase):
         s = mythos.initial("boothbay", 42)["dxd"]
         concerns, attrs = s["concerns"], s["attributes"]
         c.add(concerns, fatigue=5, stress=8, weariness=5)
-        clock = c.activity_initial(45)
+        clock = c.activity_initial(attrs)
         for seconds in (30, 30):
             c.advance_activity(concerns, clock, seconds, "rest", attributes=attrs)
         self.assertEqual(concerns["fatigue"], 4)
         self.assertEqual(concerns["stress"], 8)
         c.advance_activity(concerns, clock, 600, "quiet", safe=True, attributes=attrs)
         self.assertLess(concerns["stress"], 8)
-        clock = c.activity_initial(1)
+        clock = c.activity_initial(attrs, awake_seconds=45 * 3600)
         w = concerns["weariness"]
-        c.advance_activity(concerns, clock, 7200, "active", attributes=attrs)
+        c.advance_activity(concerns, clock, 3600, "active", attributes=attrs)
         self.assertEqual(concerns["weariness"], w + 1)
 
     def test_forced_sleep_checks_and_waking(self):
@@ -724,7 +724,7 @@ class MythosTrialTests(unittest.TestCase):
         for seed in range(100):
             concerns = copy.deepcopy(pc["concerns"])
             c.add(concerns, weariness=concerns["capacity"]["endurance"] * 2)
-            clock = c.activity_initial(1)
+            clock = c.activity_initial(attrs, awake_seconds=7 * 3600)
             elapsed = c.advance_activity(concerns, clock, 10800, "active", seed=seed, attributes=attrs)
             if clock["pending_sleep_seconds"] != 0:
                 continue

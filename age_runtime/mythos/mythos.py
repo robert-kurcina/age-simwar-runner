@@ -98,7 +98,7 @@ def initial(sid, seed):
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
         if "activity" in rules:
-            state["dxd"]["activity"] = dxd_conditions.activity_initial(derived["pc"]["physical"]["sleep_limit_hours"], rules["activity"]["initial_awake_seconds"])
+            state["dxd"]["activity"] = dxd_conditions.activity_initial(derived["pc"]["attributes"], rules["activity"]["initial_awake_seconds"])
         for nid, profile in state["npcs"].items():
             profile["dxd_attributes"] = derived[nid]["attributes"]
             profile["body"] = derived[nid]
@@ -331,6 +331,9 @@ def finish_activity(state, rules, action, a, success, reason=None):
         state["last_result"]["interrupted"] = reason
     if state["transitions"] and state["transitions"][-1]["turn"] == state["turn"]:
         state["last_result"]["transition"] = state["transitions"][-1]
+    if "activity" in state["dxd"]:
+        pc = state["dxd"]
+        dxd_conditions.refresh_sleep_limit(pc["concerns"], pc["activity"], pc["attributes"])
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
     state["history"].append(action)
@@ -592,7 +595,7 @@ def view(state):
         scene_view["pacing"] = pacing.projection(state, rules)
     if "activity" in state["dxd"]:
         clock = state["dxd"]["activity"]
-        scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}
+        scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "overdue_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}
     return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
