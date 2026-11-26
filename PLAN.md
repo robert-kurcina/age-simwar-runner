@@ -31,8 +31,10 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - Unified local campaign CLI and linked end-to-end workflow (PR #25 merged after successful CI).
 
+- Pinned Markdown evidence references (PR #26 merged after successful CI).
+
 ## WIP
-- Pinned Markdown evidence references implemented; CI pending. Private source qualification remains partial.
+- External private civilian recovery pilot configured with pinned narrative evidence and explicitly hypothetical quantities. A private verification script and scoped CI workflow have been added; execution against the actual private checkout is not yet confirmed. Historical numerical calibration remains outstanding.
 
 ## NEXT (ordered, with acceptance criteria)
 5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
