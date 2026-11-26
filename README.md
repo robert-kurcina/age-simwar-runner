@@ -162,3 +162,7 @@ python play.py inspect restored-session.json --actor coordinator
 ```
 
 Export validates deterministic replay. Verify and restore require matching pinned engine revisions and replay the contained checkpoint; restore refuses to overwrite an existing path. The envelope hash detects incidental corruption, **not deliberate forgery**. Preserve previous handoffs as immutable branches; exporting is not proof that a separate Chat conversation has access to the same file, engine or private sources. No private asset files, source repository snapshots or interpreter environment are bundled.
+
+## Offline Chat runtime transfer
+
+The **Chat runtime bundle** Actions workflow exports the tested public tracked source as an artifact containing `runner-source.zip`, `ENGINE_REVISION.txt` and `SHA256SUMS`. Download a successful **main** run's artifact, upload it to the Chat conversation, verify the archive checksum and revision, and extract into a fresh execution directory before running the existing CLI. PR runs may use a synthetic merge commit; prefer main for stable provenance. The artifact expires after 14 days. This is a manual fallback, not a claim of automatic connector-to-runtime transfer. Never include private sources or sessions in this public workflow.
