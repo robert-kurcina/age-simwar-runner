@@ -12,6 +12,8 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
+from age_runtime.core import negotiation
+
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
 
@@ -25,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -72,6 +74,7 @@ def validate(s):
     validate_capacity_actions(s)
     validate_transfers(s)
     validate_agreements(s)
+    negotiation.validate(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
@@ -92,6 +95,8 @@ def initialize(s):
         state["project_results"] = []
     if "agreements" in s:
         state["agreement_results"] = []
+    if s.get("dynamic_negotiation"):
+        state["negotiations"] = {}
     return state
 
 def check_identity(s, state):
@@ -123,6 +128,7 @@ def advance(s, state):
         if minute == end:
             resolve_reviews(s, result, end)
             resolve_agreements(s, result, end)
+            negotiation.resolve(s, result, end)
         resolve_dependent_events(s, result, minute)
         if minute == end:
             resolve_projects(s, result, minute)
@@ -183,6 +189,25 @@ def _append_request(s, state, actor_id, proposal):
     result["requests"].append(record)
     return result
 
+def _append_negotiation(s, state, actor, command, origin):
+    result = copy.deepcopy(state)
+    negotiation.apply(s, result, actor, command)
+    result["requests"].append({"actor": actor, "action": None, "status": "negotiated",
+        "turn": state["turn"], "minute": state["minute"],
+        "sequence": len(state["requests"]) + 1, "origin": origin,
+        "negotiation": copy.deepcopy(command)})
+    return result
+
+
+def negotiate(s, state, actor, revision, command):
+    verify_checkpoint(s, state)
+    if digest(state) != revision or actor in s.get("model_factions", []):
+        raise ValueError("stale negotiation revision or invalid player")
+    result = _append_negotiation(s, state, actor, command, "negotiation")
+    verify_checkpoint(s, result)
+    return result
+
+
 def _append_model_choice(s, state, actor_id, action):
     if actor_id not in s.get("model_factions", []):
         raise ValueError("not a model faction")
@@ -190,6 +215,8 @@ def _append_model_choice(s, state, actor_id, action):
         raise ValueError("session ended")
     if any(r["actor"] == actor_id and r["turn"] == state["turn"] for r in state["requests"]):
         raise ValueError("faction already decided this turn")
+    if isinstance(action, dict):
+        return _append_negotiation(s, state, actor_id, action, "model")
     if action is None:
         result = copy.deepcopy(state)
         result["requests"].append({"actor": actor_id, "action": None, "status": "abstained",
@@ -217,7 +244,7 @@ def accept_faction_choice(s, state, actor_id, packet, response):
     if not isinstance(response, dict) or set(response) != {"packet_id", "action"} or response["packet_id"] != packet["packet_id"]:
         raise ValueError("invalid faction response")
     action = response["action"]
-    if action is not None and (not isinstance(action, str) or action not in packet["observation"]["available_requests"]):
+    if action is not None and not isinstance(action, dict) and (not isinstance(action, str) or action not in packet["observation"]["available_requests"]):
         raise ValueError("unsupported faction action")
     result = _append_model_choice(s, state, actor_id, action)
     verify_checkpoint(s, result)
@@ -240,7 +267,11 @@ def verify_checkpoint(s, state):
             if record["turn"] != turn:
                 break
             if record.get("origin") == "model":
-                expected = _append_model_choice(s, expected, record["actor"], record["action"])
+                expected = _append_model_choice(s, expected, record["actor"], record.get("negotiation", record["action"]))
+            elif record.get("origin") == "negotiation":
+                if record["actor"] in s.get("model_factions", []):
+                    raise ValueError("model negotiation requires model origin")
+                expected = _append_negotiation(s, expected, record["actor"], record["negotiation"], "negotiation")
             elif record.get("origin") == "critical_decision":
                 expected = _append_decision(s, expected, record["actor"], record["decision_id"], record["intent"], record["action"])
             else:

@@ -56,8 +56,9 @@ Author-approved design direction: factions pursue their own asymmetric goals, wi
 |---|---|---|
 | P1 | DONE (mechanical) | PR #111 actor strategy tests passed; shared CI failed only on narrative forced-sleep regression (45893817282, 45893817233). Full bundle qualification pending shared fix. |
 | P1 | DONE (mechanical) | PR #112 transfer test passed; 166/167 regression tests passed, narrative forced sleep remains failing (45894866993, 45894866919). |
-| P1 | WIP | Independently authorized bilateral agreements with fixed existing transfer terms and due date, reviewed consent, atomic settlement or recorded default; focused tests added. No forced debt, arbitrary effects or dynamic negotiation yet. |
-| P1 | PENDING | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
+| P1 | DONE (mechanical) | PR #113 agreement test passed; 167/168 regression tests passed, narrative forced sleep failed (45895154813, 45895154664). |
+| P1 | WIP | Opt-in runtime bilateral negotiation using reviewed transfer IDs, proposal/counter/accept/reject, expiry and atomic settlement. Actor-local projections, revision-bound player command and model choice/replay integrated. Focused tests added; CI pending. |
+| P1 | NEXT | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
 | P1 | PENDING | Dramatic decision presentation and downstream reassessment; qualify divergent outcomes in author-led play. |
 | P2 | DEFERRED | Additional mechanics absent a demonstrated scenario requirement. |
 

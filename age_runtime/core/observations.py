@@ -1,5 +1,6 @@
 """Read-only actor projections. Full checkpoints are referee-only."""
 from copy import deepcopy
+from age_runtime.core.negotiation import view as negotiation_view
 from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
 from age_runtime.core.economy import bottleneck
@@ -150,6 +151,7 @@ def observe(s, state, actor_id):
                        "observed_result": deepcopy(observed_objectives.get(oid))}
                       for oid in actor["strategy"]["priorities"]]}}
     return {
+        **negotiation_view(s, state, actor_id),
         **strategy,
         **pacing,
         **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s else {}),
