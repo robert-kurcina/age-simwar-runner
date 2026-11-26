@@ -59,3 +59,29 @@ def compile_profile(spec, owners):
             raise ValueError("invalid property record")
     return {"version": 1, "spec_digest": digest(spec),
             "profile_digest": digest(out), "profile": out}
+
+
+def bind_factions(scenario, profiles, owners, effective_date):
+    """Freeze optional organization context in existing actor records.
+
+    No individual agents, new ratings, or duplicate mutable resource stocks.
+    Profile properties are opening context only; current values remain in
+    the existing state/ledger. Context is visible to its own actor only.
+    """
+    if not isinstance(profiles, dict) or not profiles:
+        raise ValueError("faction_profiles must be a nonempty object")
+    for actor_id, spec in sorted(profiles.items()):
+        if actor_id not in scenario.get("actors", {}):
+            raise ValueError("unknown faction actor")
+        if not isinstance(spec, dict) or spec.get("kind") != "organization":
+            raise ValueError("strategic factions must be organizations")
+        if spec.get("id") != actor_id or spec.get("effective_date") != effective_date:
+            raise ValueError("faction identity or date mismatch")
+        actor = scenario["actors"][actor_id]
+        if "faction_context" in actor or spec.get("label") != actor["label"]:
+            raise ValueError("faction label or context conflict")
+        compiled = compile_profile(spec, owners)
+        # Quantified resources/conditions used by rules belong in initial
+        # values, not in a parallel faction profile. Qualitative context
+        # and native comparison metrics are allowed in the opening record.
+        actor["faction_context"] = compiled
