@@ -914,3 +914,40 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.step(after, req["action"], req)
         mythos.verify(after)
+
+    def test_continuity_carrier_loss_and_independent_route(self):
+        from age_runtime.mythos import continuity
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        self.assertNotIn("narrative_functions", mythos.view(s))
+        self.assertTrue(any(a["id"] == "visit_elias" for a in mythos.options(s, rules)))
+        # Advance normally, without obtaining journal access.
+        mythos.verify(s)
+        from datetime import datetime
+        s["time"] = "1927-10-14T06:00:00"
+        mythos.advance_events(s, rules, datetime.fromisoformat(s["time"]))
+        self.assertIn("elias_isolated", s["flags"])
+        self.assertFalse(any(a["id"] == "visit_elias" for a in mythos.options(s, rules)))
+        packet = mythos.gm_context(s)
+        tide = next(x for x in packet["referee"]["narrative_functions"] if x["id"] == "tide_evidence")
+        self.assertFalse(tide["established"])
+        self.assertEqual(tide["carriers"][0]["status"], "blocked")
+        self.assertEqual(tide["carriers"][1]["status"], "conditional")
+        with self.assertRaises(ValueError):
+            mythos.step(s, "visit_elias")
+        # Model a previously granted access and independent evidence as
+        # isolated projection tests; do not mistake synthetic state for replay.
+        s["flags"].append("journal")
+        tide = continuity.projection(s, rules, mythos.options(s, rules))[0]
+        self.assertNotEqual(tide["carriers"][0]["status"], "blocked")
+        s["flags"].extend(["water_risk_known", "tide_window_known"])
+        self.assertTrue(any(a["id"] == "inspect_inlet_pattern" for a in mythos.options(s, rules)))
+
+    def test_continuity_preserves_established_evidence(self):
+        from age_runtime.mythos import continuity
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        s["flags"].extend(["journal", "tide_clue", "elias_isolated"])
+        tide = continuity.projection(s, rules, mythos.options(s, rules))[0]
+        self.assertTrue(tide["established"])
+        self.assertFalse(tide["no_immediate_route"])
