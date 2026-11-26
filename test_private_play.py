@@ -18,7 +18,10 @@ class PrivatePlayTest(unittest.TestCase):
             git("config", "user.email", "test@example.invalid")
             git("config", "user.name", "Test")
             (root / "history.md").write_text("# Context\nSynthetic civilian relief.\n")
-            git("add", "history.md")
+            import base64
+            png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB9sAAAAASUVORK5CYII=")
+            (root / "map.png").write_bytes(png)
+            git("add", "history.md", "map.png")
             git("commit", "-m", "Evidence")
             revision = git("rev-parse", "HEAD")
             spec = {"version": 1, "effective_date": "2000-01-01", "initial_refs": {},
@@ -54,6 +57,9 @@ class PrivatePlayTest(unittest.TestCase):
                 start(path, "external-relief", "relief", owners)
             entry["briefing_context"][0]["known_from"] = "2000-01-01"
             save(path, catalog)
+            entry["image_map"] = {"title": "Fixture map", "note": "Not georeferenced",
+                "owner": "test", "revision": revision, "path": "map.png",
+                "actors": ["relief"], "reviewed_for": "2000-01-01"}
             entry["game_map"] = {"center": [0, 0], "zoom": 5, "note": "Synthetic geographic reference",
                 "locations": [{"id": "local", "label": "Local <reference>", "coordinates": [0, 0],
                     "actors": ["relief"], "known_from": "2000-01-01", "source": "Illustrative fixture"}]}
@@ -63,6 +69,16 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(snapshot(session)["map"]["locations"][0]["id"], "local")
             self.assertNotIn("actors", snapshot(session)["map"]["locations"][0])
             self.assertIn("Load interactive map", render(session))
+            self.assertEqual(snapshot(session)["image_map"]["width"], 1)
+            self.assertNotIn("png_base64", snapshot(session)["image_map"])
+            self.assertIn("data:image/png;base64,", render(session))
+            self.assertIn("L.CRS.Simple", render(session))
+            from image_map import resolve as resolve_image
+            bad = {**entry, "image_map": {**entry["image_map"], "reviewed_for": "2000-01-02"}}
+            with self.assertRaisesRegex(ValueError, "date-specific"):
+                resolve_image(bad, session["header"]["compiled"], "2000-01-01", owners)
+            from image_map import projection as image_projection
+            self.assertIsNone(image_projection({"header": {**session["header"], "actor": "other"}}, True))
             self.assertNotIn("Local <reference>", render(session))
             self.assertNotIn("aid_packages", view(session)["observation"]["values"])
             opening = briefing(session)
