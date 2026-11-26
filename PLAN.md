@@ -170,3 +170,9 @@ Each development increment must complete an acceptance criterion or a concrete i
 - README.md is the primary user launch guide and facilitator contract. Presume the GitHub Connector is active, configured and authorized; runtime execution must still be verified.
 - The public fixture was subsequently played through its final turn in Chat, as reported in the development conversation. A separate-conversation handoff test reproduced state but did not invoke the original engine; it is not authoritative execution evidence. Cross-thread persistence is explicitly removed from acceptance by the author, not declared verified.
 - Retain checkpoint and archive features already implemented; reject further mandatory resume-package or persistence infrastructure. Focus on private prompt-driven execution and gameplay presentation.
+
+## WIP — Mythos conversion (author-approved)
+
+- Preserve all five AIMythos JSON sources and exact provenance before repository retirement. Dagon Basic differences still require review.
+- Add framework-aware public catalog and separate bounded Boothbay investigation trial without altering strategic runner contracts. Trial uses authored character attributes, seeded 2D6, elapsed time, limited evidence discovery, replay, revision-bound actions and ending. Trial opening, action durations and thresholds are provisional adaptations; not full AIMythos compliance.
+- Next: qualify CI and actual Chat gameplay, implement only missing mechanics needed for substantive Boothbay play (inventory changes, character conditions, NPC interactions, scored outcomes), then adapt Castine and Ram Island. Keep their catalog status imported until executable. Update standalone launch guide and qualify extracted ZIP. Continue private Conflagration packaging separately. No universal engine rewrite.
