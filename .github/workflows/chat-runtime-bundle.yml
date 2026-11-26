@@ -16,12 +16,27 @@ jobs:
           python-version: '3.12'
       - name: Test pinned source
         run: python -m unittest discover -v
-      - name: Verify public scenario and handoff
+      - name: Export exact tracked public source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/chat-bundle"
+          revision="$(git rev-parse HEAD)"
+          git archive --format=zip --prefix=age-simwar-runner/ --output="$RUNNER_TEMP/chat-bundle/runner-source.zip" "$revision"
+          printf '%s\n' "$revision" > "$RUNNER_TEMP/chat-bundle/ENGINE_REVISION.txt"
+          cp docs/standalone-chat.md "$RUNNER_TEMP/chat-bundle/START_HERE.md"
+          cd "$RUNNER_TEMP/chat-bundle"
+          sha256sum runner-source.zip > SHA256SUMS
+      - name: Verify public scenario and handoff from packaged archive
         shell: bash
         run: |
           set -euo pipefail
           work="$(mktemp -d)"
-          revision="$(git rev-parse HEAD)"
+          bundle="$RUNNER_TEMP/chat-bundle"
+          revision="$(cat "$bundle/ENGINE_REVISION.txt")"
+          (cd "$bundle" && sha256sum -c SHA256SUMS)
+          unzip -q "$bundle/runner-source.zip" -d "$work/engine"
+          cd "$work/engine/age-simwar-runner"
           python play.py start campaigns/civic-recovery/campaign.json service-restoration "$work/opening.json"
           cp "$work/opening.json" "$work/session.json"
           python play.py submit "$work/session.json" restore_service_center --actor coordinator
@@ -33,16 +48,6 @@ jobs:
           python play.py inspect "$work/restored.json" --actor coordinator
           python play.py start campaigns/civic-recovery/campaign.json community-assistance "$work/linked.json" --from-session "$work/restored.json"
           python play.py inspect "$work/linked.json" --actor coordinator
-      - name: Export exact tracked public source
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/chat-bundle"
-          revision="$(git rev-parse HEAD)"
-          git archive --format=zip --prefix=age-simwar-runner/ --output="$RUNNER_TEMP/chat-bundle/runner-source.zip" "$revision"
-          printf '%s\n' "$revision" > "$RUNNER_TEMP/chat-bundle/ENGINE_REVISION.txt"
-          cd "$RUNNER_TEMP/chat-bundle"
-          sha256sum runner-source.zip > SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
           name: chat-runtime-${{ github.sha }}
