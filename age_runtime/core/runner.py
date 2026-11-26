@@ -8,6 +8,7 @@ from pathlib import Path
 import tempfile
 from age_runtime.core.actors import validate_actors, evaluate
 from age_runtime.core.events import validate_dependent_events, resolve_dependent_events
+from age_runtime.core.economy import validate_projects, resolve_projects
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules
 
@@ -23,7 +24,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -64,6 +65,7 @@ def validate(s):
     validate_service_rule(s)
     validate_civic_rules(s)
     validate_dependent_events(s)
+    validate_projects(s)
 
 def initialize(s):
     validate(s)
@@ -72,6 +74,8 @@ def initialize(s):
             "actors": evaluate(s, s["initial"]), "requests": []}
     if "dependent_events" in s:
         state["background_events"] = []
+    if "economy_projects" in s:
+        state["project_results"] = []
     return state
 
 def check_identity(s, state):
@@ -89,7 +93,7 @@ def advance(s, state):
     end = min(start + s["turn_minutes"], s["end_minute"])
     result = copy.deepcopy(state)
     times = sorted({x["minute"] for x in s["events"] + s["constraints"] + s.get("dependent_events", [])
-                    if start < x["minute"] <= end})
+                    if start < x["minute"] <= end} | {end})
     for minute in times:
         for event in s["events"]:
             if event["minute"] == minute:
@@ -100,13 +104,13 @@ def advance(s, state):
         if minute == end:
             resolve_reviews(s, result, end)
         resolve_dependent_events(s, result, minute)
+        if minute == end:
+            resolve_projects(s, result, minute)
         for check in s["constraints"]:
             if check["minute"] == minute:
                 actual = result["values"][check["key"]]
                 result["checks"].append({**check, "actual": actual,
                     "passed": actual == check["equals"]})
-    if end not in times:
-        resolve_reviews(s, result, end)
     result.update(minute=end, turn=state["turn"] + 1,
                   actors=evaluate(s, result["values"]))
     return result
