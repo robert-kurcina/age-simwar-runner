@@ -83,3 +83,7 @@ Added an opt-in synthetic public-service rule to the shared runner: one reviewed
 ## Civilian scenario variety
 
 PR #19 passed both Python CI versions and was merged. The next increment adds a finite aid allocation fixture and independently controlled council consent fixture to the same runner, with three regression tests authored and CI pending. All quantities and identities are synthetic. Council consent is human-directed, not autonomous negotiation. No private material or general-purpose rule language introduced.
+
+## Campaign continuity increment
+
+PR #20 merged after successful CI. Implemented explicit catalog-approved copy mappings between completed synthetic civilian sessions and derived starting scenarios. Transition records pin catalog, source scenario, source checkpoint, destination template and derived scenario digests, and can be recomputed from source files. The trusted referee supplies source artifacts; hashes establish consistency, not authenticity or recursively verified ancestry. A second scenario in the public services stage exercises catalog grouping. Transferred values are contextual observations, not new causal modifiers. Two regression tests authored; CI pending. No private canon included. Initial submission failed with a connector disconnect; retry used sequential commits.
