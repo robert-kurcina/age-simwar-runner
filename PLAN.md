@@ -35,8 +35,10 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - External private civilian recovery pilot compiled and replayed successfully in private CI against the pinned source and runner revisions. Narrative references resolved; illustrative resource accounting and objectives verified.
 
+- Configurable finite civilian assistance demand and per-package yield (PR #29 merged after successful CI). Existing scenarios retain their original behavior.
+
 ## WIP
-- Configurable finite civilian assistance demand and per-package yield implemented; CI pending. Existing scenarios retain their original behavior.
+- External private recovery pilot updated to exercise finite demand and hypothetical supply sensitivity. Private CI pending; no empirical calibration claim.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
