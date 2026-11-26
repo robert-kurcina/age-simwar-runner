@@ -8,7 +8,7 @@ CAP = {"bravery": 1, "shock": 2, "fear": 4}
 LABELS = ("Ordered", "Nervous", "Disordered", "Panicked", "Broken")
 
 def initial():
-    return {"fear": 0, "events": [], "revelations": []}
+    return {"fear": 0, "events": [], "revelations": [], "psychology": {}}
 
 def specification(kind, trigger):
     if kind not in TRIGGERS or trigger not in TRIGGERS[kind]:

@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -115,10 +115,11 @@ def resolve_dxd(state, rules, action):
     policy = cfg["favor"]
     emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
                                  enabled=policy.get("emicted", False))
-    components = [attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0)] + other
+    psychology = dxd_psychology.effects(pc["morale"], spec.get("psychology_context"))
+    components = [attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"]] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
-    net = mods["bonus"] - mods["penalty"] - condition
+    net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"]
     bonus = min(policy["maximum"], max(0, net))
     penalty = max(0, -net)
     args = {"favor": favor, "bonus": bonus}
@@ -152,7 +153,7 @@ def resolve_dxd(state, rules, action):
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
-                        "inspiration": inspiration_dm, "emicted": emicted},
+                        "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology},
                         "gathered": gathered, "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
                         "initial_result": first, "inspired": inspired is not None,
