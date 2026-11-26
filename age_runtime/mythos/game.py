@@ -37,6 +37,8 @@ def main():
         if cmd == "act":
             q.add_argument("action")
             q.add_argument("--revision", required=True)
+            q.add_argument("--decision-id")
+            q.add_argument("--decision-label")
     memory = sub.add_parser("memory")
     memory.add_argument("session", type=Path)
     memory.add_argument("event")
@@ -54,7 +56,10 @@ def main():
     elif args.command == "memory":
         result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
     else:
-        result = mythos.act(args.session, args.action, args.revision)
+        if (args.decision_id is None) != (args.decision_label is None):
+            p.error("decision id and label must be supplied together")
+        decision = None if args.decision_id is None else {"id": args.decision_id, "label": args.decision_label}
+        result = mythos.act(args.session, args.action, args.revision, decision)
     print(json.dumps(result, indent=2))
 
 if __name__ == "__main__":

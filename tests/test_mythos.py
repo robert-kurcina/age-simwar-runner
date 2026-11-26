@@ -39,7 +39,10 @@ class MythosTrialTests(unittest.TestCase):
             for _ in range(20):
                 v = mythos.act(p, "observe", v["revision"])
             self.assertEqual(v["turn"], 20)
-            self.assertEqual(v["ending"]["reason"], "limit")
+            self.assertIsNone(v["ending"])
+            self.assertEqual(v["pacing"]["committed_decisions"], 0)
+            v = mythos.act(p, "depart", v["revision"])
+            self.assertEqual(v["ending"]["reason"], "depart")
             self.assertEqual(v["choices"], [])
 
     def test_tamper(self):
@@ -544,3 +547,62 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIsNone(spatial.route(cfg, docks, cave, "1927-10-14T02:25:00", ["tide_window_known"]))
         self.assertEqual(spatial.route(cfg, docks, cave, "1927-10-14T02:00:00", ["tide_window_known"])["minutes"], 10)
         self.assertIsNotNone(spatial.route(cfg, cave, docks, "1927-10-14T03:00:00", []))
+
+    def test_decisions_are_advisory_idempotent_and_replayed(self):
+        s = mythos.initial("boothbay", 42)
+        d = {"id": "watch_harbor", "label": "Keep watching the harbor"}
+        s = mythos.step(s, "observe", d)
+        s = mythos.step(s, "observe", d)
+        self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 1)
+        self.assertEqual(s["turn"], 2)
+        self.assertEqual(s["time"], "1927-10-13T08:20:00")
+        before = mythos.digest(s)
+        with self.assertRaises(ValueError):
+            mythos.step(s, "observe", {"id": "watch_harbor", "label": "Different commitment"})
+        self.assertEqual(mythos.digest(s), before)
+        for n in range(20):
+            s = mythos.step(s, "observe", {"id": "trial_" + str(n), "label": "Synthetic decision " + str(n)})
+        self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 21)
+        self.assertEqual(mythos.view(s)["pacing"]["remaining_decisions"], 0)
+        self.assertIsNone(s["ending"])
+        mythos.verify(s)
+
+    def test_second_resolution_and_beat_metadata(self):
+        from unittest.mock import patch
+        import copy
+        story, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        rules["actions"].append({"id": "test_beat", "label": "Synthetic immediate beat",
+                                 "seconds": 10, "interval_seconds": 10,
+                                 "narrative_beat": True, "repeatable": True})
+        with patch.object(mythos, "load", return_value=(story, rules)):
+            s = mythos.initial("boothbay", 42)
+            s = mythos.step(s, "test_beat")
+            self.assertEqual(s["time"], "1927-10-13T08:00:10")
+            self.assertEqual(mythos.view(s)["pacing"]["interval_seconds"], 10)
+            self.assertEqual(mythos.view(s)["pacing"]["narrative_beats"], 1)
+            self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 0)
+            mythos.verify(s)
+
+    def test_authored_commitment_groups_and_deadline(self):
+        for seed in range(30):
+            s = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
+            if "badge" not in s["flags"]:
+                continue
+            s = mythos.step(s, "compare_almanac")
+            s = mythos.step(s, "wait_for_tide")
+            s = mythos.step(s, "inspect_cave_entrance")
+            self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 1)
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No successful tide route")
+        s = mythos.initial("boothbay", 42)
+        while not s["ending"]:
+            choices = mythos.view(s)["choices"]
+            if not any(a["id"] == "observe" for a in choices):
+                s = mythos.step(s, choices[0]["id"])
+            else:
+                s = mythos.step(s, "observe")
+        self.assertGreater(s["turn"], 20)
+        mythos.verify(s)
