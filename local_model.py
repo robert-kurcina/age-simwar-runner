@@ -20,12 +20,11 @@ def endpoint(base):
     return base.rstrip("/") + "/chat/completions"
 
 
-def propose(session, instruction, model, base="http://127.0.0.1:1234/v1", timeout=60):
+def complete_json(message, model, base="http://127.0.0.1:1234/v1", timeout=60, max_tokens=256):
     if not isinstance(model, str) or not model.strip():
         raise ValueError("explicit model ID required")
-    exchange = packet(session, instruction)
-    body = {"model": model, "messages": [{"role": "user", "content": prompt(exchange)}],
-            "temperature": 0, "max_tokens": 256, "stream": False}
+    body = {"model": model, "messages": [{"role": "user", "content": message}],
+            "temperature": 0, "max_tokens": max_tokens, "stream": False}
     req = Request(endpoint(base), data=json.dumps(body).encode(), method="POST",
                   headers={"Content-Type": "application/json"})
     opener = build_opener(ProxyHandler({}), NoRedirect())
@@ -34,6 +33,11 @@ def propose(session, instruction, model, base="http://127.0.0.1:1234/v1", timeou
     if len(raw) > 1048576:
         raise ValueError("model response too large")
     result = parse_json(raw)
-    response = parse_json(result["choices"][0]["message"]["content"])
+    return parse_json(result["choices"][0]["message"]["content"])
+
+
+def propose(session, instruction, model, base="http://127.0.0.1:1234/v1", timeout=60):
+    exchange = packet(session, instruction)
+    response = complete_json(prompt(exchange), model, base, timeout)
     return {"response": response, "proposal": validate_proposal(session, exchange, response),
             "model": model}
