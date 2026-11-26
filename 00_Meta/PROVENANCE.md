@@ -107,3 +107,7 @@ PR #24 passed CI and merged. Added a single local referee CLI for list/start/ins
 ## Narrative evidence increment
 
 PR #25 passed CI and merged. Source qualification indicates that existing narrative dossiers and publication indexes serve different purposes; a new database is unnecessary for narrative references. Added exact-heading, commit-pinned Markdown evidence with file and section digests, without copying prose or deriving numerical inputs. Review dates are referee assertions. One synthetic regression authored; CI pending. No private source names, content or data published. Private scenario validation remains outstanding.
+
+## External pilot verification increment
+
+PR #26 passed CI and merged. An external private civilian pilot and its verification script/workflow have been staged in the private source repository. Source checkout is pinned separately from the runner and pilot revision. The verification checks deterministic compilation, checkpoint replay, and illustrative outcome differences. No private material is included here. Private workflow execution has not been observed; numerical calibration remains unverified. This is a status update, not a new runner implementation.
