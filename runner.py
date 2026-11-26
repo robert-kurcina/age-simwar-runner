@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 from actors import validate_actors, evaluate
 from observations import validate_views, observe
-from actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews
+from actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule
 
 CHECKPOINT_VERSION = 2
 
@@ -22,7 +22,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -60,6 +60,7 @@ def validate(s):
             raise ValueError("invalid constraint")
         if not integer(c["minute"]) or not 0 < c["minute"] <= s["end_minute"]:
             raise ValueError("constraint outside horizon")
+    validate_service_rule(s)
 
 def initialize(s):
     validate(s)
@@ -90,12 +91,15 @@ def advance(s, state):
                 result["values"][key] += event["delta"]
                 result["ledger"].append({"id": event["id"], "minute": minute,
                     "key": key, "delta": event["delta"], "value": result["values"][key]})
+        if minute == end:
+            resolve_reviews(s, result, end)
         for check in s["constraints"]:
             if check["minute"] == minute:
                 actual = result["values"][check["key"]]
                 result["checks"].append({**check, "actual": actual,
                     "passed": actual == check["equals"]})
-    resolve_reviews(s, result, end)
+    if end not in times:
+        resolve_reviews(s, result, end)
     result.update(minute=end, turn=state["turn"] + 1,
                   actors=evaluate(s, result["values"]))
     return result

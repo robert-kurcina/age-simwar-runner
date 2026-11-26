@@ -385,6 +385,64 @@ class RunnerTest(unittest.TestCase):
                 with self.subTest(kind=kind), self.assertRaises(ValueError):
                     load_campaign(path)
 
+    def test_service_restoration_causal_replay(self):
+        import tempfile
+        from comparison import compare
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        a = initialize(s)
+        b = submit_request(s, a, "coordinator", {"action": "restore_service_center"})
+        self.assertEqual(a["values"], b["values"])
+        for _ in range(2):
+            a, b = advance(s, a), advance(s, b)
+        self.assertEqual(a["values"], {"open_service_centers": 2, "restoration_credits": 2})
+        self.assertEqual(b["values"], {"open_service_centers": 3, "restoration_credits": 1})
+        self.assertFalse(a["actors"]["coordinator"]["objectives"]["completion"]["met"])
+        self.assertTrue(observe(s, b, "coordinator")["objectives"]["completion"]["met"])
+        self.assertEqual(observe(s, b, "coordinator")["own_requests"][0]["fulfillment"], "restored")
+        self.assertEqual(compare(s, a, b)["right_minus_left"]["values"]["open_service_centers"], 1)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "session.json"
+            save(path, b)
+            verify_checkpoint(s, json.loads(path.read_text()))
+        b["values"]["restoration_credits"] += 1
+        with self.assertRaises(ValueError):
+            verify_checkpoint(s, b)
+
+    def test_service_restoration_credit_and_review_limits(self):
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        s["initial"]["restoration_credits"] = 1
+        a = initialize(s)
+        for _ in range(2):
+            a = submit_request(s, a, "coordinator", {"action": "restore_service_center"})
+        b = advance(s, a)
+        self.assertEqual(b["requests"][1]["status"], "validated_request")
+        c = advance(s, b)
+        self.assertEqual(c["values"]["restoration_credits"], 0)
+        self.assertEqual(c["values"]["open_service_centers"], 3)
+        self.assertEqual(c["requests"][1]["fulfillment"], "insufficient_credits")
+        verify_checkpoint(s, c)
+
+    def test_service_restoration_observation_and_boundary(self):
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        s["actors"]["coordinator"]["report_delay_minutes"] = {"open_service_centers": 60}
+        s["constraints"] = [{"minute": 360, "key": "open_service_centers", "equals": 3}]
+        a = submit_request(s, initialize(s), "coordinator", {"action": "restore_service_center"})
+        b = advance(s, a)
+        self.assertTrue(b["checks"][0]["passed"])
+        self.assertEqual(observe(s, b, "coordinator")["values"]["open_service_centers"], 0)
+        c = advance(s, b)
+        self.assertEqual(observe(s, c, "coordinator")["values"]["open_service_centers"], 3)
+        verify_checkpoint(s, c)
+
+    def test_service_rule_validation(self):
+        s = json.loads((Path(__file__).parent / "campaigns/civic-recovery/service-restoration.json").read_text())
+        for invalid in (False, 1, "true"):
+            with self.assertRaises(ValueError):
+                initialize({**s, "service_restoration": invalid})
+        s["initial"]["restoration_credits"] = -1
+        with self.assertRaises(ValueError):
+            initialize(s)
+
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
         with self.assertRaises(ValueError):
