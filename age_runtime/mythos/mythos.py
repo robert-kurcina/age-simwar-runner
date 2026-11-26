@@ -135,7 +135,7 @@ def spatial_options(state, rules, candidates):
     for trip in spatial.reachable(config, state):
         result.append({"id": "move:" + trip["destination"], "label": "Go to " + trip["destination"],
                        "location": trip["destination"], "duration_seconds": trip["seconds"], "local_seconds": 0,
-                       "interval_seconds": 60,
+                       "interval_seconds": 60 if trip["seconds"] <= 360 else 600 if trip["seconds"] <= 3600 else 3600,
                        "route": {k: v for k, v in trip.items() if k != "destination"}, "repeatable": True})
     return result
 
@@ -287,7 +287,7 @@ def step(state, action, decision=None):
         arrival = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["route"]["seconds"])
         advance_events(state, rules, arrival)
         state["transitions"].append({"turn": state["turn"], "start": state["time"], "arrival": arrival.isoformat(), **a["route"]})
-    if "progression" in state:
+    if "progression" in state or "pacing" in rules:
         advance_events(state, rules, elapsed)
     state["time"] = elapsed.isoformat()
     state["location"] = a.get("location", state["location"])
@@ -357,7 +357,7 @@ def step(state, action, decision=None):
                     dxd_psychology.acquire(state["dxd"]["morale"], concerns,
                         revelation=revelation["revelation"], understood=True, destabilized=True,
                         disability=revelation["disability"], turn=state["turn"])
-    if "progression" not in state:
+    if "progression" not in state and "pacing" not in rules:
         advance_events(state, rules, elapsed)
     state["last_result"] = {"action": action, "success": success}
     if "spatial" in rules and a["route"]["seconds"]:
