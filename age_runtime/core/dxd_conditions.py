@@ -55,3 +55,129 @@ def describe(state):
             "stress": ("Composed" if not state["stress"] else "Under pressure" if not d["stress"] else
                        "Irritable" if d["stress"] == 1 else "Anxious" if d["stress"] == 2 else "Emotionally distressed"),
             "weariness": ("Rested" if not state["weariness"] else "Low energy" if not d["weariness"] else "Worn down")}
+
+# Opt-in second-resolution activity accounting. Legacy callers retain recover().
+from random import Random
+from age_runtime.core import dxd
+
+ACTIVITIES = ("active", "quiet", "rest", "low_energy", "restorative", "travel", "sleep")
+
+def activity_initial(sleep_limit_hours, awake_seconds=0):
+    if type(sleep_limit_hours) is not int or sleep_limit_hours <= 0 or type(awake_seconds) is not int or awake_seconds < 0:
+        raise ValueError("invalid sleep timing")
+    return {"awake_seconds": awake_seconds, "limit_seconds": sleep_limit_hours * 3600,
+            "sleep_seconds": 0, "required_sleep_seconds": 0, "status": "awake",
+            "remainder": {}, "activity": None, "checks": [], "pending_sleep_seconds": None,
+            "sleep_episode": 0, "early_stress": 0}
+
+def required_sleep(state, attributes):
+    return max(1, 8 + dxd.attribute_dm(attributes["INT"]) + degrees(state)["weariness"]) * 3600
+
+def _interval(clock, key, seconds, unit, eligible):
+    if not eligible:
+        clock["remainder"].pop(key, None)
+        return 0
+    count, remainder = divmod(clock["remainder"].get(key, 0) + seconds, unit)
+    clock["remainder"][key] = remainder
+    return count
+
+def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", attributes=None):
+    """Advance one homogeneous interval; return actual seconds before forced sleep.
+
+    Minute Fatigue recovery is the selected native alternative. Full quiet
+    rest uses Recovery Rate Weariness; low-energy activity uses one/hour.
+    Sleep recovery is handled at waking, not stacked with ordinary rest.
+    """
+    if type(seconds) is not int or seconds < 0 or activity not in ACTIVITIES:
+        raise ValueError("invalid activity")
+    if activity == "sleep":
+        if clock["status"] != "asleep":
+            raise ValueError("not asleep")
+        clock["sleep_seconds"] += seconds
+        clock["activity"] = "sleep"
+        clock["remainder"].clear()
+        return seconds
+    if clock["status"] != "awake":
+        raise ValueError("character is asleep")
+    rr = state["capacity"]["recovery_rate"]
+    remaining = seconds
+    while remaining:
+        awake = clock["awake_seconds"]
+        limit = clock["limit_seconds"]
+        next_hour = limit + (max(0, awake - limit) // 3600 + 1) * 3600
+        chunk = min(remaining, next_hour - awake)
+        pending = clock["pending_sleep_seconds"]
+        if pending is not None:
+            chunk = min(chunk, pending)
+        quiet = activity in ("quiet", "rest", "low_energy", "restorative")
+        weariness_rate = rr if activity in ("quiet", "rest") else 1
+        # Preserve fractional progress only while the same recovery mode applies.
+        if clock["activity"] != activity:
+            clock["remainder"].pop("weariness", None)
+        fatigue = _interval(clock, "fatigue", chunk, 60, quiet)
+        stress = _interval(clock, "stress", chunk, 600, quiet and safe) * rr
+        weariness = _interval(clock, "weariness", chunk, 3600, quiet) * weariness_rate
+        restorative = _interval(clock, "restorative", chunk, 3600, activity == "restorative")
+        for _ in range(restorative):
+            n = clock.get("restorative_rolls", 0)
+            stress += Random(f"{seed}:restorative:{n}").randint(1, 6)
+            clock["restorative_rolls"] = n + 1
+        state["fatigue"] = max(0, state["fatigue"] - fatigue)
+        state["stress"] = max(state.get("min_stress", 0), state["stress"] - stress)
+        state["weariness"] = max(0, state["weariness"] - weariness)
+        clock["awake_seconds"] += chunk
+        clock["activity"] = activity
+        remaining -= chunk
+        if pending is not None:
+            clock["pending_sleep_seconds"] -= chunk
+            if clock["pending_sleep_seconds"] == 0:
+                return seconds - remaining
+        if clock["awake_seconds"] == next_hour:
+            add(state, weariness=1)
+            if degrees(state)["weariness"] and clock["pending_sleep_seconds"] is None:
+                result = dxd.test(f"{seed}:sleep:{clock['sleep_episode']}:{next_hour}",
+                                  tn=7, dm=dxd.attribute_dm(attributes["FOR"]),
+                                  penalty=penalty_dice(state))
+                clock["checks"].append({"awake_seconds": next_hour, "result": result})
+                if not result["passed"]:
+                    clock["pending_sleep_seconds"] = 60 * (rr + Random(f"{seed}:onset:{clock['sleep_episode']}:{next_hour}").randint(1, 6))
+    return seconds
+
+def begin_sleep(state, clock, attributes):
+    if clock["status"] != "awake":
+        raise ValueError("already asleep")
+    clock.update(status="asleep", sleep_seconds=0,
+                 required_sleep_seconds=required_sleep(state, attributes),
+                 pending_sleep_seconds=None, activity="sleep", remainder={})
+    clock["sleep_episode"] += 1
+
+def wake(state, clock, attributes, *, seed, forced=False):
+    if clock["status"] != "asleep" or clock["sleep_seconds"] < 3600:
+        raise ValueError("at least one hour of sleep required")
+    slept = clock["sleep_seconds"]
+    required = clock["required_sleep_seconds"]
+    if slept < required and not forced:
+        raise ValueError("premature waking requires forced awakening")
+    rng = Random(f"{seed}:wake:{clock['sleep_episode']}:{slept}")
+    if forced and slept < required:
+        result = dxd.test(f"{seed}:awaken:{clock['sleep_episode']}:{slept}",
+                          tn=7, dm=dxd.attribute_dm(attributes["FOR"]))
+        clock["checks"].append({"sleep_seconds": slept, "awakening": result})
+        if not result["passed"]:
+            return False
+    state["weariness"] = max(0, state["weariness"] - sum(rng.randint(1, 6) for _ in range(slept // 3600)))
+    state["stress"] = max(state.get("min_stress", 0), state["stress"] - rng.randint(1, 6))
+    if slept < required:
+        # Duration of the resulting floor is not specified in the source.
+        # Retain it until the next fully completed sleep episode.
+        missed = (required - slept + 3599) // 3600
+        extra = sum(rng.randint(1, 6) for _ in range(missed))
+        clock["early_stress"] += extra
+        state["min_stress"] = state.get("min_stress", 0) + extra
+        state["stress"] = max(state["stress"], state["min_stress"])
+    elif clock["early_stress"]:
+        state["min_stress"] = max(0, state.get("min_stress", 0) - clock["early_stress"])
+        clock["early_stress"] = 0
+    clock.update(status="awake", awake_seconds=0, sleep_seconds=0,
+                 required_sleep_seconds=0, activity=None, remainder={})
+    return True
