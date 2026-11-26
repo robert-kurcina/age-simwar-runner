@@ -29,6 +29,12 @@ External standards are optional semantic references, not required schemas: W3C O
 
 Keep existing civic fixtures for regression. Do not build another generic campaign before the SH44SER vertical slice unless a concrete test requires it. Conflagration inventory remains partial; qualify supported civilian/institutional content only. Add bounded Sarna Len content later using native DXD. Great War and Solo City are supporting sources, not additional engines to port.
 
+## Current implementation increment — strategic turn support
+
+- WIP (P1): actor-local derived project assessments, conditional single-investment costs and capacity effects, report-cutoff deltas, pending orders and latest project results. No new scenario properties or adjudication rules. Focused regression checks committed; CI pending.
+- WIP (P1): revision-bound one-turn resolution with exact pending faction response map; existing packet validation and checkpoint replay reused. Chat facilitator procedure documented. Model behavior and actual player-led gameplay not yet qualified.
+- NEXT (P1): verify CI, then execute the authorized Fiji 12-week scenario in ordinary Chat using the integrated procedure. Collect author feedback and resolve concrete gameplay gaps before broadening the scenario set.
+
 ## Gameplay qualification
 
 A strategic turn must present a changed situation, meaningful faction-level alternatives, opportunity costs and observable consequences. Use existing actor views, conditional events and accounting before adding mechanics. At least two plausible strategies must produce materially different intermediate states and outcomes; independent factions or scheduled developments must matter even when ignored. Show commitments, bottlenecks, uncertainties and decision-relevant geography. Do not import narrative character mechanics or require SH44SER corpus expansion. Qualify one authorized recovery slice before broadening content; distinguish actual play evidence from CI.
@@ -37,6 +43,7 @@ A strategic turn must present a changed situation, meaningful faction-level alte
 
 - DONE: audit of vault-sh44ser SimWar PRs #977–#993 and repository boundaries. Public runner already contains generic private play, source compilation, project economy, faction decisions and regression tests; do not duplicate these.
 - DONE: runner #89 migration safeguards and public CI; vault #993 scripted strategic qualification (export failed separately), #994 export correction merged.
-- WIP (P1): qualify corrected export and establish durable authorized private versioned scenario access. The earlier local-only migration procedure is superseded in that respect: a Mac-local copy is optional, not an architectural dependency. Decide private companion repository versus private runner before migration; neither is authorized by this plan alone.
+- DONE: corrected private export and all regression/strategic/browser verification passed (vault run 45873796338, artifact 15144621110).
+- WIP (P1): establish durable authorized private versioned scenario access. The earlier local-only migration procedure is superseded in that respect: a Mac-local copy is optional, not an architectural dependency. Decide private companion repository versus private runner before migration; neither is authorized by this plan alone.
 - BLOCKED: vault cleanup until complete, byte-verified private retention and replacement execution are confirmed. Never copy private content into public commits or bundles.
 - REJECTED: mandatory local-only private scenario storage for Chat-first gameplay.
