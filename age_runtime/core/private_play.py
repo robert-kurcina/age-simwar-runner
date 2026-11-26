@@ -31,11 +31,12 @@ def inventory(path):
 def supported(s):
     # Reuse reviewed civilian mechanics rather than scenario-specific identities.
     if "economy_projects" in s:
-        # Reviewed civilian reconstruction projects only. No arbitrary
-        # background effects or mixed special fulfillment rules in this slice.
+        # Reviewed civilian reconstruction projects and bounded owner grants only.
         from age_runtime.core.runner import validate
         validate(s)
-        if (s["events"] or s["constraints"] or s.get("dependent_events")
+        from age_runtime.core.economy import validate_private_grants
+        validate_private_grants(s)
+        if (s["events"] or s["constraints"]
                 or not s.get("capacity_actions") or not s.get("model_factions")
                 or set(s.get("action_catalog", {})) != set(s["capacity_actions"])
                 or len(set(s["actors"]) - set(s["model_factions"])) != 1
