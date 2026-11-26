@@ -300,7 +300,9 @@ class MythosTrialTests(unittest.TestCase):
             self.assertEqual(pc["attributes"]["SIZ"], 12)
             self.assertEqual(pc["body"]["weight_pounds"], 166)
             self.assertEqual(pc["attributes"]["MOV"], pc["body"]["run"])
-            self.assertEqual(pc["concerns"]["capacity"], dxd_conditions.capacities(pc["attributes"]))
+            expected = dxd_conditions.capacities(pc["attributes"])
+            expected["resilience"] += pc["skills"].get("Grit", 0)
+            self.assertEqual(pc["concerns"]["capacity"], expected)
             for nid, npc in s["npcs"].items():
                 expected = dxd_character.derive(rules["dxd"]["npc_attributes"][nid],
                                                 rules["dxd"]["body_profiles"][nid])
