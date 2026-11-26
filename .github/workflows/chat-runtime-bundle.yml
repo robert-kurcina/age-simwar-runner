@@ -39,7 +39,21 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/chat-bundle"
           revision="$(git rev-parse HEAD)"
+          if git ls-files | grep -E '^(private/|tools/simwar/)' ; then
+            echo "Private scenario content is tracked in the public runner" >&2
+            exit 1
+          fi
           git archive --format=zip --prefix=age-simwar-runner/ --output="$RUNNER_TEMP/chat-bundle/runner-source.zip" "$revision"
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          archive = Path(__import__("os").environ["RUNNER_TEMP"]) / "chat-bundle/runner-source.zip"
+          with ZipFile(archive) as z:
+              forbidden = [name for name in z.namelist()
+                           if name.startswith(("age-simwar-runner/private/", "age-simwar-runner/tools/simwar/"))]
+              if forbidden:
+                  raise SystemExit("Private paths in public bundle: " + ", ".join(forbidden))
+          PY
           printf '%s\n' "$revision" > "$RUNNER_TEMP/chat-bundle/ENGINE_REVISION.txt"
           cd "$RUNNER_TEMP/chat-bundle"
           sha256sum runner-source.zip > SHA256SUMS
