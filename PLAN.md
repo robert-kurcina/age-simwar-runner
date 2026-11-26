@@ -10,7 +10,7 @@ Keep Python and JSON, existing strategic and Mythos engines, and existing CLI en
 
 DONE on main: four public strategic fixtures, Boothbay trial, actor observations/objectives, resource accounting, scheduled events, time, checkpoint/replay, source compiler, campaign discovery, Chat launch guidance, runtime ZIP workflow, repository organization. PR #62 tests and bundle CI passed. PR #56 closed as superseded. Earlier private CI verified bounded recovery fixtures against pinned revisions; current-main private Chat gameplay and standalone upload need qualification.
 
-WIP: PR #63 common descriptive scenario profiles and presentation guidance; PR #64 dated participant compilation and source audit. Both branch test and bundle workflows passed, but neither is merged. Retain their small useful changes; consolidate before further expansion.
+WIP: Consolidated the useful changes from PRs #63 and #64 on a fresh branch based on merged lean plan #65. Both original branches passed test and bundle CI. Combined regression verification pending. Next: integrate participant initialization into a playable scenario, not new architecture.
 
 Imported, not playable: Castine and Ram Island. Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
 

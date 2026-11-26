@@ -19,3 +19,7 @@ Read the bundled Mythos framework and character system as scenario-specific narr
 
 For Chat play, use actual engine choices and current revision; present narrative and discovered facts only. Do not expose GM-only source fields, dice or attributes. Do not invent state changes. The current trial tracks time, discoveries, cash and flask consumption, sanity and fatigue, with reproducible 2D6 attribute tests and provisional three-metric ending scores. Full traits, general inventory changes, NPC behavior, scored narrative epilogues and custom characters remain unimplemented. Trial v3 requires a fresh session; earlier checkpoints are not migrated. Conditional NPC conversations unlock earned revelations, timed observations appear once, and a written account may be entrusted to a local contact or relayed through the lighthouse. These are bounded authored branches, not autonomous NPC simulation. Trial action durations and opening are provisional adaptations.
 
+
+## Strategic presentation
+
+Use `python game.py describe <campaign> <scenario>` to inspect the public profile. For strategic scenarios, follow `frameworks/strategic/presentation.json` and [scenario generation guidance](SCENARIO_GENERATION.md): present actual player results, known participant developments, assessment and legal options. Never fabricate missing choices or actor actions to fill a menu. The presentation profile does not change adjudication or turn sequencing.

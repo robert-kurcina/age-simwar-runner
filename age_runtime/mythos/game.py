@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 import age_runtime.mythos.mythos as mythos
+from age_runtime.core.scenario_profile import profile
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -23,6 +24,9 @@ def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="command", required=True)
     sub.add_parser("list")
+    describe = sub.add_parser("describe")
+    describe.add_argument("campaign")
+    describe.add_argument("scenario")
     start = sub.add_parser("start")
     start.add_argument("scenario")
     start.add_argument("session", type=Path)
@@ -36,6 +40,8 @@ def main():
     args = p.parse_args()
     if args.command == "list":
         result = catalog()
+    elif args.command == "describe":
+        result = profile(args.campaign, args.scenario)
     elif args.command == "start":
         result = mythos.start(args.scenario, args.session, args.seed)
     elif args.command == "inspect":
