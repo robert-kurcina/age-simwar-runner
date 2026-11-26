@@ -60,3 +60,29 @@ def split(request):
     if request["nomination"] is None:
         raise ValueError("empty modifier nomination")
     return {k: v for k, v in request.items() if k != "nomination"}, request["nomination"]
+
+def projection(state, rules, legal, npc_available):
+    """Offer scopes for compiled methods, not just default action Tests."""
+    from age_runtime.mythos import proposals, beats
+    result = []
+    if not rules.get("modifier_nominations"):
+        return result
+    def add(request, action):
+        scope = offer(state, rules, action)
+        if scope and any(scope.values()):
+            result.append({"action": request["action"], "approach": request["approach"], **scope})
+    for action in legal:
+        for approach in rules.get("gm_proposals", {}).get(action["id"], {}):
+            request = {"action": action["id"], "approach": approach, "intent": "scope preview"}
+            try:
+                compiled = proposals.compile_action(state, rules, request, [action])
+            except ValueError:
+                continue
+            add(request, compiled)
+    for cap in proposals.local_capabilities(state, rules, npc_available):
+        request = {"action": cap["action"], "approach": cap["approach"], "intent": "scope preview"}
+        add(request, proposals.compile_local(state, rules, request, npc_available))
+    for cap in beats.available(state, rules):
+        request = {"action": cap["action"], "approach": cap["approach"], "intent": "scope preview"}
+        add(request, beats.compile_beat(state, rules, request))
+    return result
