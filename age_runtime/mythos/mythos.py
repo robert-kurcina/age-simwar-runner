@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -60,11 +60,12 @@ def initial(sid, seed):
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if rules.get("resolution") == "dxd":
         cfg = rules["dxd"]
-        dxd.validate_attributes(cfg["attributes"])
-        for record in cfg["npc_attributes"].values():
-            dxd.validate_attributes(record)
-        for record in cfg.get("inactive_major_attributes", {}).values():
-            dxd.validate_attributes(record)
+        bodies = cfg["body_profiles"]
+        raw = {"pc": cfg["attributes"], **cfg["npc_attributes"],
+               **cfg.get("inactive_major_attributes", {})}
+        if len(raw) != 1 + len(cfg["npc_attributes"]) + len(cfg.get("inactive_major_attributes", {})) or set(raw) != set(bodies):
+            raise ValueError("DXD body profile coverage mismatch")
+        derived = {key: dxd_character.derive(value, bodies[key]) for key, value in raw.items()}
         active_names = {p["name"] for p in state["npcs"].values()}
         authored_names = {p["name"] for p in story["antagonists"]["key_npcs"]}
         inactive_names = set(cfg.get("inactive_major_attributes", {}))
@@ -72,13 +73,15 @@ def initial(sid, seed):
                 or active_names & inactive_names
                 or active_names | inactive_names != authored_names):
             raise ValueError("DXD major NPC coverage mismatch")
-        state["dxd"] = {"attributes": copy.deepcopy(cfg["attributes"]),
+        state["dxd"] = {"attributes": derived["pc"]["attributes"], "body": derived["pc"],
                         "skills": copy.deepcopy(cfg["skills"]),
                         "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [],
-                        "concerns": dxd_conditions.initial(cfg["attributes"]),
-                        "inactive_major_attributes": copy.deepcopy(cfg.get("inactive_major_attributes", {}))}
+                        "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
+                        "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
+                        "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
         for nid, profile in state["npcs"].items():
-            profile["dxd_attributes"] = copy.deepcopy(cfg["npc_attributes"][nid])
+            profile["dxd_attributes"] = derived[nid]["attributes"]
+            profile["body"] = derived[nid]
     return state
 
 def options(state, rules):
