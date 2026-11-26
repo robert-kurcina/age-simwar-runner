@@ -1,6 +1,10 @@
 # ChatGPT gameplay guidance
 
-### Instructions for the ChatGPT game facilitator
+## Runtime acquisition
+
+For an uploaded ZIP, follow [STANDALONE_PLAY.md](STANDALONE_PLAY.md) instead of steps 1–2 below. For GitHub-connected play, use steps 1–2. The remaining gameplay procedure applies to both.
+
+## Instructions for the ChatGPT game facilitator
 
 1. Use the active GitHub Connector to read the repository and identify an exact engine commit. Locate the successful **Chat runtime bundle** Actions artifact for that revision (prefer a main-branch run), download it through the connector into the execution environment, verify the inner archive checksum and recorded revision, and extract it into a fresh directory. Do not assume a connector file reference is already an executable local file. A PR synthetic merge revision is acceptable only when explicitly identified and used consistently.
 2. Discover campaign manifests and authorized private package references using the connector. Read required source and configuration files at pinned revisions. Transfer actual required files into the runtime; preserve source provenance. Never publish private inputs or session artifacts. Present only discovered, supported scenarios; identify unavailable content rather than inventing it.
@@ -10,6 +14,8 @@
 6. If actual source transfer, revision checks, Python execution or checkpoint verification fails, report the specific blocker and do not adjudicate. If the runtime resets within the thread, attempt to restore from the verified files available in that thread; if unavailable, offer a fresh start or optional file handoff. Do not simulate the engine in prose or substitute reimplemented logic. Cross-thread resumption is not a requirement.
 
 ## Mythos
+
+Read the bundled Mythos framework and character system as scenario-specific narrative guidance, not as permission to override executable rules. Use the engine's available action IDs and revision. Present up to three neutral choices at a time without concealing the availability of other legal actions; show more on request. Never invent discoveries, NPC knowledge, or state changes. On termination, narrate only the engine-supported outcome and distinguish uncertainty from established facts.
 
 For Chat play, use actual engine choices and current revision; present narrative and discovered facts only. Do not expose GM-only source fields, dice or attributes. Do not invent state changes. The current trial tracks time, discoveries, cash and flask consumption, sanity and fatigue, with reproducible 2D6 attribute tests and provisional three-metric ending scores. Full traits, general inventory changes, NPC behavior, scored narrative epilogues and custom characters remain unimplemented. Trial v3 requires a fresh session; earlier checkpoints are not migrated. Conditional NPC conversations unlock earned revelations, timed observations appear once, and a written account may be entrusted to a local contact or relayed through the lighthouse. These are bounded authored branches, not autonomous NPC simulation. Trial action durations and opening are provisional adaptations.
 
