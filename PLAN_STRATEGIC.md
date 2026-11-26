@@ -54,8 +54,8 @@ Author-approved design direction: factions pursue their own asymmetric goals, wi
 
 | Priority | Status | Increment |
 |---|---|---|
-| P1 | WIP | Optional actor strategy: motivation and ordered existing objective IDs, exposed through actor-local observations and model packets; validation and delayed-report tests added. |
-| P1 | NEXT | Concrete civilian cross-faction commitments and coupled effects, using existing state and replay. Demonstrate an actual trade-off rather than independent parallel projects. |
+| P1 | DONE (mechanical) | PR #111 actor strategy tests passed; shared CI failed only on narrative forced-sleep regression (45893817282, 45893817233). Full bundle qualification pending shared fix. |
+| P1 | WIP | Donor-authorized resource transfers between distinct existing civilian investment stocks; coupled domestic/recipient opportunities, FIFO review, conservation, actor-local feasibility and replay tests. No binding reciprocal agreements yet. |
 | P1 | PENDING | Bounded referee-proposed developments with explicit prerequisites, authorized effect types, provenance, visibility and deterministic replay. No unrestricted model deltas. |
 | P1 | PENDING | Dramatic decision presentation and downstream reassessment; qualify divergent outcomes in author-led play. |
 | P2 | DEFERRED | Additional mechanics absent a demonstrated scenario requirement. |
