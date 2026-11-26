@@ -101,3 +101,11 @@ def automatic_favor(*, available, maximum, significance, desired):
         raise ValueError("unknown significance")
     amount = _int(desired.get(significance, 0), "desired favor", 0)
     return min(available, maximum, amount)
+
+def emicted_favor(*, available, maximum, enabled):
+    """Book II: exhausted pool grants fixed Max Advantage DM, not dice."""
+    _int(available, "available favor", 0)
+    _int(maximum, "maximum advantage", 0)
+    if type(enabled) is not bool:
+        raise ValueError("invalid emicted favor policy")
+    return maximum if enabled and available == 0 else 0

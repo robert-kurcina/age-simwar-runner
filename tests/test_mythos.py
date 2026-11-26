@@ -305,3 +305,19 @@ class MythosTrialTests(unittest.TestCase):
                 self.assertEqual(npc["dxd_attributes"], expected["attributes"])
             self.assertNotIn("weight_pounds", str(mythos.view(s)))
             mythos.verify(s)
+
+    def test_emicted_favor_after_exhaustion_not_during_last_spend(self):
+        from age_runtime.core import dxd
+        _, rules = mythos.load("boothbay")
+        action = next(a for a in rules["actions"] if a["id"] == "visit_elias")
+        s = mythos.initial("boothbay", 42)
+        s["dxd"]["favor"] = 1
+        s["turn"] = 1
+        mythos.resolve_dxd(s, rules, action)
+        self.assertEqual(s["dxd"]["favor"], 0)
+        self.assertEqual(s["dxd"]["tests"][-1]["components"]["emicted"], 0)
+        s["turn"] = 2
+        mythos.resolve_dxd(s, rules, action)
+        self.assertEqual(s["dxd"]["tests"][-1]["inputs"]["favor"], 0)
+        self.assertEqual(s["dxd"]["tests"][-1]["components"]["emicted"], 1)
+        self.assertEqual(dxd.emicted_favor(available=0, maximum=3, enabled=False), 0)
