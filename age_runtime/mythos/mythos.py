@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -54,6 +54,7 @@ def npc_profiles(story, rules):
 
 def initial(sid, seed):
     story, rules = load(sid)
+    continuity.validate(rules)
     if rules.get("resolution") != "dxd":
         raise ValueError("unsupported narrative resolver")
     state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
@@ -115,7 +116,8 @@ def npc_available(state, rules, action):
     npc = state["npcs"][nid]
     cfg = rules["npcs"][nid]
     destination = action.get("location")
-    return (all(f in state["flags"] for f in cfg.get("requires_flags", []))
+    return (not continuity.blocked(state, cfg)
+            and all(f in state["flags"] for f in cfg.get("requires_flags", []))
             and destination in cfg.get("eligible_locations", [npc["location"]])
             and (npc["location"] is None or npc["location"] == destination))
 
@@ -427,7 +429,9 @@ def step(state, action, proposal=None):
             return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
         if reason:
             return finish_activity(state, rules, action, a, False, reason, proposal)
-        if any(f in state["flags"] for f in a.get("excludes_flags", [])):
+        if (any(f in state["flags"] for f in a.get("excludes_flags", []))
+                or not all(f in state["flags"] for f in a.get("requires_flags", []))
+                or not npc_available(state, rules, a)):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
         if "progression" in state or "pacing" in rules:
@@ -637,7 +641,7 @@ def view(state):
         config = rules["spatial"]
         scene_view["scene"]["zone"] = config["nodes"][state["location"]]["zone"]
         scene_view["scene"]["routes"] = [r for r in spatial.reachable(config, state) if r["seconds"] <= (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()] if not state["ending"] else []
-        scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
+        scene_view["scene"]["contacts_here"] = [p["name"] for nid, p in state["npcs"].items() if p["encounters"] and p["location"] == state["location"] and npc_available(state, rules, {"npc": nid, "location": state["location"]})]
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
     if rules.get("danger_beats"):
@@ -706,6 +710,7 @@ def gm_context(state):
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
                 "favor": pc["favor"],
+                "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
                                for a in legal if a["id"] in rules.get("gm_proposals", {})},
