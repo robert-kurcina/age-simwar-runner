@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -74,7 +74,7 @@ def initial(sid, seed):
                 or active_names | inactive_names != authored_names):
             raise ValueError("DXD major NPC coverage mismatch")
         state["dxd"] = {"attributes": derived["pc"]["attributes"], "body": derived["pc"],
-                        "skills": copy.deepcopy(cfg["skills"]),
+                        "skills": copy.deepcopy(cfg["skills"]), "traits": copy.deepcopy(cfg.get("traits", {})),
                         "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [],
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
@@ -103,8 +103,11 @@ def resolve_dxd(state, rules, action):
     spec = action["test"]
     cfg = rules["dxd"]
     pc = state["dxd"]
-    attr = dxd.attribute_dm(pc["attributes"][spec["attribute"]])
-    skill = pc["skills"].get(spec.get("skill"), 0)
+    gathered = dxd_modifiers.gather(pc["attributes"], pc["skills"], pc["traits"], spec)
+    attr = sum(x["dm"] for x in gathered["attribute"])
+    skill = sum(x["dm"] for x in gathered["skill"])
+    other = [x["dm"] for key in ("trait", "explicit", "interdisciplinary") for x in gathered[key]]
+    mods = dxd_modifiers.totals(gathered)
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
     hook = 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0
     cue = spec.get("inspiration")
@@ -112,18 +115,21 @@ def resolve_dxd(state, rules, action):
     policy = cfg["favor"]
     emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
                                  enabled=policy.get("emicted", False))
-    components = [attr, skill, hook, inspiration_dm, emicted]
+    components = [attr, skill, hook, inspiration_dm, emicted] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
-    args = {"favor": favor}
+    net = mods["bonus"] - mods["penalty"] - condition
+    bonus = min(policy["maximum"], max(0, net))
+    penalty = max(0, -net)
+    args = {"favor": favor, "bonus": bonus}
     if "npc_attribute" in spec:
         npc = state["npcs"][action["npc"]]
         args.update(narrative=True, dm=sum(max(0, x) for x in components),
-                    adversity=sum(max(0, -x) for x in components), adversity_dice=condition,
+                    adversity=sum(max(0, -x) for x in components), adversity_dice=penalty,
                     npc_dm=dxd.attribute_dm(npc["dxd_attributes"][spec["npc_attribute"]])
                            + spec.get("npc_adversity", 0))
     else:
-        args.update(tn=spec["tn"], dm=sum(components), penalty=condition)
+        args.update(tn=spec["tn"], dm=sum(components), penalty=penalty)
     pc["favor"] -= favor
     chance = dxd_inspiration.probability(**args)
     first = dxd.test(digest([state["seed"], state["turn"]]), **args)
@@ -144,6 +150,7 @@ def resolve_dxd(state, rules, action):
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
                         "inspiration": inspiration_dm, "emicted": emicted},
+                        "gathered": gathered, "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
                         "initial_result": first, "inspired": inspired is not None,
                         "result": result})

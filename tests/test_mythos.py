@@ -321,3 +321,12 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(s["dxd"]["tests"][-1]["inputs"]["favor"], 0)
         self.assertEqual(s["dxd"]["tests"][-1]["components"]["emicted"], 1)
         self.assertEqual(dxd.emicted_favor(available=0, maximum=3, enabled=False), 0)
+
+    def test_castine_ledger_gathers_independent_skills(self):
+        s = mythos.step(mythos.initial("castine", 42), "inspect_ledger")
+        t = s["dxd"]["tests"][-1]
+        self.assertEqual([(x["name"], x["effective_level"]) for x in t["gathered"]["skill"]],
+                         [("Interview", 2), ("Forensics", 1)])
+        self.assertEqual(t["components"]["skill"], 3)
+        self.assertNotIn("gathered", str(mythos.view(s)))
+        mythos.verify(s)

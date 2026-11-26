@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "start": "1927-11-02T08:00:00",
   "end": "1927-11-03T23:59:00",
   "max_turns": 20,
@@ -74,7 +74,7 @@
     },
     {
       "id": "inspect_ledger",
-      "label": "Ask to examine the store ledger",
+      "label": "Request access to the store ledger and examine its entries",
       "location": "Higgins General Store",
       "minutes": 60,
       "grant": [
@@ -91,7 +91,10 @@
           "memory": "You recall the importance of securing cooperation without intimidation.",
           "consequence": "meaningful"
         },
-        "tn": 7
+        "tn": 7,
+        "additional_skills": [
+          "Forensics"
+        ]
       }
     },
     {
@@ -530,6 +533,7 @@
           "FOR": 7
         }
       }
-    }
+    },
+    "traits": {}
   }
 }
