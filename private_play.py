@@ -115,15 +115,24 @@ def reviewed_context(entry, compiled, actor, effective_date):
     return result
 
 
-def start(path, scenario_id, actor, owners):
+def available_presets(path, scenario_id, owners):
+    from presets import options
+    _, _, entry, _, _ = select(path, scenario_id, owners)
+    return options(entry)
+
+
+def start(path, scenario_id, actor, owners, preset="standard"):
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
+    from presets import apply
+    compiled, configuration = apply(entry, spec, compiled, preset)
     s = compiled["scenario"]
+    supported(s)
     state = initialize(s)
     observe(s, state, actor)
     header = {"campaign": catalog["id"], "group": group["id"],
               "title": entry["title"], "catalog_digest": digest(catalog),
               "effective_date": spec["effective_date"], "actor": actor,
-              "compiled": compiled,
+              "compiled": compiled, "preset": configuration,
               "briefing_context": reviewed_context(entry, compiled, actor, spec["effective_date"])}
     return {"version": 1, "header": header, "header_digest": digest(header), "state": state}
 
@@ -166,6 +175,7 @@ def briefing(session):
         "kind": "opening" if observation["turn"] == 0 else "turn",
         "campaign": current["campaign"], "scenario": current["title"],
         "perspective": actor["label"],
+        "preset": h.get("preset", {"id": "standard", "label": "Standard — configured baseline"}),
         "date": (start_date + timedelta(days=elapsed // 1440)).isoformat(),
         "elapsed_minutes": elapsed, "turn": observation["turn"],
         "complete": current["complete"],
@@ -201,7 +211,7 @@ def main(argv=None):
     commands = p.add_subparsers(dest="command", required=True)
     ls = commands.add_parser("list")
     ls.add_argument("inventory")
-    for name in ("perspectives", "start"):
+    for name in ("perspectives", "presets", "start"):
         sub = commands.add_parser(name)
         sub.add_argument("inventory")
         sub.add_argument("scenario")
@@ -209,6 +219,7 @@ def main(argv=None):
         if name == "start":
             sub.add_argument("actor")
             sub.add_argument("session", type=Path)
+            sub.add_argument("--preset", default="standard")
     for name in ("inspect", "briefing", "submit", "advance"):
         sub = commands.add_parser(name)
         sub.add_argument("session", type=Path)
@@ -246,10 +257,12 @@ def main(argv=None):
             result = inventory(a.inventory)
         elif a.command == "perspectives":
             result = perspectives(a.inventory, a.scenario, read(a.owners))
+        elif a.command == "presets":
+            result = available_presets(a.inventory, a.scenario, read(a.owners))
         elif a.command == "start":
             if a.session.exists():
                 raise ValueError("session path already exists")
-            session = start(a.inventory, a.scenario, a.actor, read(a.owners))
+            session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset)
             save(a.session, session)
             result = view(session)
         elif a.command == "local-propose":

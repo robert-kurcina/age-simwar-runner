@@ -1,7 +1,7 @@
 """Interactive local terminal interface over the existing private session API."""
 import json
 from pathlib import Path
-from private_play import inventory, perspectives, start, verify, read, briefing, update
+from private_play import inventory, perspectives, available_presets, start, verify, read, briefing, update
 from player_requests import packet, confirm
 from local_model import propose
 from runner import save, digest
@@ -25,6 +25,7 @@ def render(session, emit):
     info = briefing(session)
     emit(f"\n{info['scenario']} | {info['perspective']} | {info['date']} | Turn {info['turn']}")
     emit(info["calibration"])
+    emit("Configuration: " + info["preset"]["label"])
     if info["turn"] == 0:
         for item in info["context"]:
             emit(item["summary"])
@@ -65,7 +66,11 @@ def run(path, manifest=None, owners=None, model=None,
             actor = choose(perspectives(manifest, selected, owners), "Perspective", ask, emit)
             if actor is None:
                 return
-            session = start(manifest, selected, actor, owners)
+            choices = available_presets(manifest, selected, owners)
+            preset = choose(choices, "Configuration", ask, emit) if len(choices) > 1 else "standard"
+            if preset is None:
+                return
+            session = start(manifest, selected, actor, owners, preset)
             if path.exists():
                 raise ValueError("session path already exists")
             save(path, session)
