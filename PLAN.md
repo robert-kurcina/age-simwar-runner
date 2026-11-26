@@ -54,7 +54,8 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
 - Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
 - Optional LLM narrative briefings merged (PR #39). Structured observations remain authoritative; live inference unverified.
-- Scenario-authored hypothetical presets implemented for civilian resource budgets and reporting delays; targeted verification pending. Presets bind to base spec digest and are pinned to session; actual private preset authoring remains next.
+- Scenario-authored hypothetical presets merged (PR #40). Private scenario configurations authored and pending actual execution verification; presets bind to base spec digest and session.
+- Existing private geographic assets inventoried by reference; raster registration and temporal applicability remain unverified.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
@@ -75,6 +76,18 @@ See [ADR-001](docs/adr/001-canonical-source-references.md). The world-building r
 2. Define a minimal reference contract (repository identity, revision, path, stable entity/field selector, effective date, provenance classification); use an explicit allowlist of source owners. Do not require a new national database.
 3. Implement a local, read-only reference resolver and compiler against synthetic fixtures first. Acceptance: deterministic compilation, explicit failures for missing or ambiguous fields, temporal mismatch, stale source detection and immutable pinned snapshots. No network or private repository dependency in public CI.
 4. Extend the verified private civilian pilot with reviewed numerical inputs only when evidence is sufficient. Keep authored facts in their existing authoritative homes; store only simulation-specific assumptions in the private package. Do not claim predictive accuracy from successful compilation.
+
+## VISUAL DECISION SUPPORT — after private continuity, before MCP
+
+Use existing private canonical map artwork and geographic records for sufficient gameplay-scale visualization; do not reconstruct comprehensive GIS terrain or duplicate the corpus. ArcGIS is an optional basemap/authoring provider, not a required runtime dependency. Retain interoperability with local GIS and open geographic formats.
+
+1. Inventory source-owned artwork, map scale, local feature namespaces and reference anchors. Establish image control points, orientation, extent, datum and registration quality before claiming georeferenced imagery.
+2. Export perspective-filtered resource balances and historical observed values from the authoritative existing engine. Preserve unknown/stale status and observation cutoff; do not reveal hidden state, future observations or referee-only records.
+3. Render existing island imagery and optional hex overlays over a verified geographic basemap. Keep historical applicability and actor knowledge separate. Do not assume modern basemaps or later-era canonical artwork represent earlier dates.
+4. Associate modeled civilian services and resource information with source-qualified locations; add civilian service dependency diagrams and institutional relationships only where supported by actual modeled data.
+5. Provide consistent read-only visualization contracts for the interactive player experience and eventual MCP delivery; use deterministic rendering rather than generated illustrative imagery for authoritative views. Do not publish private assets or require hosted GIS upload.
+
+Acceptance: demonstrate a source-linked island overlay with verified registration and a resource visualization driven by an actual private session, clearly distinguishing canonical geography, hypothetical configuration and observed simulation state. No new elevation model, bathymetric reconstruction, comprehensive geographic digital twin or operational military logistics tooling.
 
 ## POST-STABILIZATION — ChatGPT-native MCP plugin (author-approved)
 
