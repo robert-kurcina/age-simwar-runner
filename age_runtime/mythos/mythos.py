@@ -65,7 +65,7 @@ def initial(sid, seed):
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if "pacing" in rules:
-        state["pacing"] = pacing.initial(rules["pacing"])
+        state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:
         spatial.validate(rules["spatial"], rules["locations"])
         state["transitions"] = []
@@ -272,7 +272,7 @@ def advance_opposition(state, rules, action, success):
         state["flags"].append(cfg["grant"])
         state["observations"].append(cfg["observation"])
 
-def step(state, action, decision=None):
+def step(state, action):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
     a = next((a for a in options(state, rules) if a["id"] == action), None)
@@ -282,7 +282,6 @@ def step(state, action, decision=None):
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
     state["turn"] += 1
-    pacing.record(state, a, decision)
     if "spatial" in rules and a["route"]["seconds"]:
         arrival = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["route"]["seconds"])
         advance_events(state, rules, arrival)
@@ -364,7 +363,9 @@ def step(state, action, decision=None):
         state["last_result"]["transition"] = state["transitions"][-1]
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
-    state["history"].append(action if decision is None else {"action": action, "decision": copy.deepcopy(decision)})
+    pacing.reconcile_scene(state, rules)
+    pacing.record(state, a)
+    state["history"].append(action)
     terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
     if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
         state["ending"] = {"reason": action if terminal else "limit",
@@ -433,12 +434,32 @@ def apply_memory(state, event, memory):
     found[0]["source"] = "model"
     pc["memory_edits"].append({"turn": state["turn"], "event": event, "memory": memory})
 
+def narrative_step(state, request):
+    result = copy.deepcopy(state)
+    _, rules = load(result["scenario"])
+    pacing.control(result, rules, request)
+    result["history"].append({"narrative": copy.deepcopy(request)})
+    return result
+
+def narrative(path, request, revision):
+    state = read(path)
+    verify(state)
+    if digest(state) != revision:
+        raise ValueError("stale session revision")
+    state = narrative_step(state, request)
+    verify(state)
+    save(path, state)
+    return view(state)
+
 def verify(state):
     replay = initial(state["scenario"], state["seed"])
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
-        replay = step(replay, entry) if isinstance(entry, str) else step(replay, entry["action"], entry["decision"])
+        if not isinstance(entry, str):
+            replay = narrative_step(replay, entry["narrative"])
+            continue
+        replay = step(replay, entry)
         while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
             e = edits[cursor]
             apply_memory(replay, e["event"], e["memory"])
@@ -458,7 +479,7 @@ def view(state):
         scene_view["scene"]["routes"] = [r for r in spatial.reachable(config, state) if r["seconds"] <= (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()] if not state["ending"] else []
         scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     if "pacing" in state:
-        scene_view["pacing"] = pacing.projection(state)
+        scene_view["pacing"] = pacing.projection(state, rules)
     return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
@@ -488,12 +509,12 @@ def inspect(path):
     verify(state)
     return view(state)
 
-def act(path, action, revision, decision=None):
+def act(path, action, revision):
     state = read(path)
     verify(state)
     if digest(state) != revision:
         raise ValueError("stale session revision")
-    state = step(state, action, decision)
+    state = step(state, action)
     verify(state)
     save(path, state)
     return view(state)
