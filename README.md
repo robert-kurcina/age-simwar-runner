@@ -149,3 +149,16 @@ python play.py compare baseline-session.json service-session.json
 ```
 
 Use inspect for read-only resumption; submit records a request without advancing. Finish advances the remaining scheduled turns without additional requests. Actor projection is not an authorization boundary: the local referee owns all session bundles. Concurrent writers are unsupported. Retain previous session bundles and catalog revisions for complete transition re-verification; embedded transition checks alone do not prove recursive lineage. This CLI is limited to the four supported civilian fixture identities; compiler variations remain standalone and are not integrated into campaign continuity.
+
+## Chat checkpoint handoff (trusted referee)
+
+A verified local session can be exported as a portable, self-contained JSON handoff. Use the exact 40-character commit SHA of the engine checkout, not a branch name. Treat this as a provenance assertion from the trusted operator, not an independently attested engine binary. The session's scenario is embedded; the source catalog digest is retained. Keep private handoffs private.
+
+```sh
+python chat_handoff.py export service-session.json service-handoff.json --engine-revision <40-character-commit-SHA>
+python chat_handoff.py verify service-handoff.json --engine-revision <same-commit-SHA>
+python chat_handoff.py restore service-handoff.json restored-session.json --engine-revision <same-commit-SHA>
+python play.py inspect restored-session.json --actor coordinator
+```
+
+Export validates deterministic replay. Verify and restore require matching pinned engine revisions and replay the contained checkpoint; restore refuses to overwrite an existing path. The envelope hash detects incidental corruption, **not deliberate forgery**. Preserve previous handoffs as immutable branches; exporting is not proof that a separate Chat conversation has access to the same file, engine or private sources. No private asset files, source repository snapshots or interpreter environment are bundled.
