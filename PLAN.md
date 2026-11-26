@@ -12,6 +12,10 @@ Play a complete game in one ordinary ChatGPT conversation, from authorized GitHu
 
 Keep Python, JSON and existing CLI entry points. Favor playable vertical slices over infrastructure. Add a property or mechanic only when it changes a meaningful game decision, consequence or continuity requirement.
 
+## Shared game-length design
+
+Author-approved game-length targets are 6, 12 or 24 consequential player decisions: Critical Decisions in strategic play and Spot-lights in narrative play. Narrative scenes and strategic simulation Turns are distinct from these pacing units. Intermediate actions, reading, clarification, mechanical resolution and autonomous developments do not automatically consume a player's decision budget. The 20-decision target is superseded; retain historical evidence and legacy fixture durations until deliberately adapted. Do not equate LLM exchanges or elapsed fictional time with the pacing budget. Each gameplay track owns its terminology and implementation.
+
 ## Priority and status discipline
 
 Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLAN_NARRATIVE.md maintain their own ordered deliverables and evidence. Keep one shared engine. Apply the following vocabulary in all three plans:
