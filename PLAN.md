@@ -2,71 +2,55 @@
 
 ## Goal
 
-Run a complete scenario in one ordinary ChatGPT conversation, using either an authorized GitHub connector or an uploaded standalone ZIP. ChatGPT interprets decisions and presents narrative or staff briefings; the Python runtime validates and commits state. The same frozen scenario, engine revision, seed and resolved inputs must reproduce the same mechanical results across independent runs. Different player choices may produce different outcomes. Dialogue wording need not be identical.
+Play a complete game in one ordinary ChatGPT conversation, from authorized GitHub sources or an uploaded standalone ZIP. ChatGPT interprets decisions and presents results; Python validates and commits state. Frozen configuration, engine revision, seed and recorded inputs must replay exactly.
 
-Keep Python and JSON, existing strategic engine and narrative execution loop, and existing CLI entry points. Migrate narrative resolution to bounded DXD; reclassify Mythos-inspired content as Fear!. No new platform architecture unless actual gameplay exposes a concrete need. Supported execution remains bounded fictional investigation and civilian/institutional simulation; no operational military targeting or predictive claims.
+Keep Python, JSON and existing CLI entry points. Favor playable vertical slices over infrastructure. Add a property or mechanic only when it changes a meaningful game decision, consequence or continuity requirement.
 
-## Status at reset (2026-11-26)
+## Status — 2026-11-26
 
-DONE on main: four public strategic fixtures, Boothbay trial, actor observations/objectives, resource accounting, scheduled events, time, checkpoint/replay, source compiler, campaign discovery, Chat launch guidance, runtime ZIP workflow, repository organization. PR #62 tests and bundle CI passed. PR #56 closed as superseded. Earlier private CI verified bounded recovery fixtures against pinned revisions; current-main private Chat gameplay and standalone upload need qualification.
+- DONE: deterministic clock, actor views and objectives, resource accounting, scheduled events, checkpoints/replay, source compiler, participant profile compiler, campaign catalog and selected scalar continuity.
+- DONE: four short public civic fixtures; PR #80 adds one-shot conditional institutional events with visible prerequisites, guarded debits and recorded outcomes.
+- DONE: Fear! Boothbay v15, Castine v8 and Ram Island v3, shared bounded DXD, derived Attributes, Concerns, Favor, Inspiration, Morale and Psychology. PR #78 tests and bundle CI passed (45814058341, 45814058241). Player-led Chat trial underway; feedback separately. PR #79 inline icons merged. See [DXD migration](docs/dxd-migration.md).
+- WIP: substantial strategic gameplay and current private SH44SER recovery qualification. Public runtime ZIP workflow exists; private SH44SER and Conflagration packages pending.
+- PENDING: first bounded Sarna Len scenario.
 
-DONE: PR #66 merged scenario/participant profiles; combined Tests 45801596447 and Chat runtime bundle 45801596576 passed. WIP milestone 1: Boothbay v4 binds active NPCs to native authored records, records encounters and earned disclosures, and uses authored Willpower for a provisional disclosure threshold adjustment. PR #67 merged; v3 checkpoints require restart.
+## Strategic design
 
-PR #68 merged Castine trial v1 using the existing NPC, event and conclusion mechanics; actual Chat qualification remains pending. Ram Island v3 bounded playable trial added; actual play qualification pending. PR #69 merged bounded DXD Test kernel. WIP: Boothbay v15 integrates hidden DXD Tests, complete twelve-Attribute PC and major NPC adaptations, a bounded physical Test, finite automatic Favor, and DXD Fatigue/Stress/Weariness with derived thresholds and recovery, and automatic Inspiration at 33%/67% with three-Turn cooldown; Castine v8 migrates to the same DXD resolver; Boothbay v15 removes legacy condition configuration; derived SIZ/MOV/ZED now use explicit body and Affinity inputs; ordinary human physical baselines and Emicted Favor implemented; bounded multi-source modifier gathering integrated; bounded Morale outcomes and Boothbay Shock encounter implemented; explicit cosmic acquisition and one paired Disability kernel added, exercised by Ram Island; old narrative checkpoints require restart; PR #77 v1 CI passed (Tests 45812489981 and bundle 45812490362); v2 Tests 45813686978 and bundle 45813686933 passed; v3 contextual Inspiration enrichment passed Tests 45814058341 and bundle 45814058241; independent player-led Fear! trial in progress. see [DXD migration](docs/dxd-migration.md). Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
+The unit of play is the faction, not the individual person. Leaders, figureheads, constituent institutions and internal friction are qualitative context unless independently consequential; do not generate character sheets or simulate their members. The LLM represents faction interests and proposes decisions; the engine validates supported effects, authority, resources, timing and information boundaries. No unrecorded model state changes.
 
-## NEXT — five milestones
+Use existing SH44SER simple native properties and descriptions, without requiring expansion of its corpus. The National Database is the 2044 baseline, not a 2003 snapshot. Use dated local history for earlier scenarios. Preserve units, ranges and unknowns; distinguish canonical facts, native derivations, reviewed scenario assumptions and runtime changes. Do not invent canonical values or convert GDP into available treasury funds.
 
-| Milestone | Deliverable | Exit test |
+Use native Economy Design where applicable: select only one to three relevant capacity axes per project Turn (0–5), compare Project Need (1–5), select the largest Shortfall, and resolve the supported consequence or applicable native Test. Track the bottleneck and meaningful progress, not every shipment or axis. Do not invent universal faction ratings, duplicate native logistics rules, or port character mechanics into faction play.
+
+Source reference (pinned audit revision `2700b3939d13df4811f8b8565e753c6f8143a5e6`):
+- [National Database](https://github.com/robert-kurcina/vault-sh44ser/blob/2700b3939d13df4811f8b8565e753c6f8143a5e6/04_Global_Order/02_Blocs_Regions/02_National_Database.md)
+- [Economy Design Core](https://github.com/robert-kurcina/vault-sh44ser/blob/2700b3939d13df4811f8b8565e753c6f8143a5e6/12_Game_System/08_Advanced_Design/20_Economy_Design/02_Design_Core.md)
+- [Logistics and Shipping](https://github.com/robert-kurcina/vault-sh44ser/blob/2700b3939d13df4811f8b8565e753c6f8143a5e6/12_Game_System/08_Advanced_Design/20_Economy_Design/12_Logistics_Shipping.md)
+
+External standards are optional semantic references, not required schemas: W3C ORG/PROV, BPMN/DMN, stock-and-flow accounting, NIMS/SCOR, GeoJSON and SISO scenario guidance. Reuse useful conventions only; no compliance or new standards subsystem.
+
+## NEXT — lean implementation sequence
+
+| Step | Deliverable | Exit test |
 |---|---|---|
-| 1. Participants | Stable dated faction and NPC definitions, native attributes, motivations, resources, knowledge and relationships as relevant. Freeze these with scenario initialization. | Two independent runs start with identical participant records; bounded participant decisions obey recorded constraints. |
-| 2. Events | Extend the existing scheduler with only the persistent conditions, milestones, dependencies and background changes required by a real scenario. Initialize prior history from reviewed dated conditions; advance eligible events when game time advances. | An ignored event still progresses; no duplicate effects; replay matches; alternate player choices affect only supported consequences. |
-| 3. Geography and time | Stable location IDs, parent/route relationships and travel or reporting delays where they affect play; reuse existing maps and clocks. | Travel, event timing and visible map/observations agree; no contradictory locations or invented time advances. |
-| 4. Scenario generation | Let ChatGPT propose a bounded configuration using existing supported rules. Validate, review and freeze it before play. Preserve unknowns and source dates. | A generated configuration launches through actual Python, rejects unsupported actions and reaches a meaningful end. |
-| 5. Gameplay qualification | Complete narrative and strategic scenarios in ordinary Chat, including ZIP launch and authorized private content. | Same seed and resolved inputs replay exactly; different choices produce legitimate different results; player views do not disclose hidden state. |
+| 1 | Use dated collective faction records and relevant native properties; bind only necessary facts to existing engine state. | Faction context and authority are consistent; no invented canon or individual-agent model. |
+| 2 | Implement the bounded native Economy Design bottleneck procedure and necessary persistent consequences using existing events and accounting. | A project can progress, stall or change scope; resource guards and replay hold. |
+| 3 | Support constrained LLM-proposed faction decisions, preserving exact accepted inputs. | Unsupported effects are rejected; independent decisions and ignored events remain consistent. |
+| 4 | Extend one authorized SH44SER civilian recovery scenario into a substantial strategic game; add location, timing and reporting details only where needed. Target 12–24 Turns if useful, not a quota. | Complete actual Chat play with alternative outcomes and exact replay. |
+| 5 | Carry forward only consequential faction conditions, commitments and resources into a successor scenario; qualify reviewed scenario generation and public/private ZIP delivery. | Meaningful campaign continuity, frozen configuration, correct visibility and verified execution. |
 
-Milestones are ordered by dependency, not separate infrastructure projects. Use a playable vertical slice for each increment. Prefer extending an existing module over adding a new abstraction. Stop adding mechanics when the selected scenario is sufficiently playable.
+Keep existing civic fixtures for regression. Do not build another generic campaign before the SH44SER vertical slice unless a concrete test requires it. Conflagration inventory remains partial; qualify supported civilian/institutional content only. Add bounded Sarna Len content later using native DXD. Great War and Solo City are supporting sources, not additional engines to port.
 
-## Strategic implementation sequence
+## Consistency and verification
 
-1. WIP: bounded independent participant decisions and conditional background events. The service-review fixture now has a one-shot report assessment requiring the report and finite review capacity; outcome is persistent and replayable. CI pending.
-2. Integrate only relevant dated participant properties and commitments; add recurring or dependent events only as gameplay requires.
-3. Add mechanically relevant location hierarchy, routes, durations and information propagation.
-4. Build one substantial combined civilian scenario (target 12–24 Turns, subject to playability).
-5. Extend campaign continuity only for properties needed by the combined scenario and its successor.
-6. Qualify an authorized SH44SER recovery scenario, then supported scenario generation and standalone distribution.
+Reuse existing JSON records: scenario metadata/objectives, factions or narrative participants, locations, events, rules and session state. Resources, projects and relationships may be simple properties; separate records only when necessary. Persist what affects future decisions. Preserve stable IDs, source revisions, visibility, relevant reporting delays and deterministic order. Record model-proposed decisions as resolved inputs. Use existing tests and actual gameplay, not generated narration as proof. CI alone does not qualify independent Chat play. Keep private content out of public archives.
 
-Existing short public scenarios remain regression fixtures, not a substitute for substantial gameplay. Fear! gameplay feedback can be applied separately without restarting unrelated sessions.
+Source authority: SH44SER uses its native system; vault-sarnalen DXD governs Sarna Len, Mai Appollonia Yo!, Apocalyptic Seizure! and Fear!. Use vault-age as terminology and design reference, not a mandatory architecture. Keep historical equipment vocabulary deferred until needed; the modern `meta-dxd` draft (`a9dd1966a4a3d68db9595209c82c3664354d9176`) is a working reference, not accepted canon.
 
-## Practical content queue
+## Deferred / non-goals
 
-- First: qualify Boothbay v15 and Castine v8, and Ram Island v3 using DXD. Preserve legacy Mythos catalog ID until migration is complete. Do not port the entire DXD ruleset.
-- In parallel where useful: use an existing civilian scenario to exercise participant behavior and persistent background events.
-- Then qualify one authorized SH44SER recovery scenario in ordinary Chat; retain Conflagration inventory without claiming unsupported scenarios are playable.
-- Add one bounded Sarna Len scenario only after useful source mappings and applicable DXD rules are established. Great War and Solo City are supporting sources, not additional engines to port.
-- Distribute verified public standalone ZIP; produce private SH44SER and Conflagration-only packages when their supported content is ready. Keep private material out of public artifacts.
-
-## Consistency contract
-
-A scenario needs only six logical components: scenario metadata/objectives, participants, locations, events, rules and mutable session state. These may be ordinary JSON records in existing files. Separate fixed source facts from dated initialization, hypothetical assumptions and runtime changes. Preserve native units and unknown values. Use stable IDs, source revisions and explicit visibility. Persist a detail when it affects future decisions or continuity; purely descriptive prose need not be simulated.
-
-Mechanical repeatability requires identical configuration, engine revision, seed and resolved inputs, including any model-proposed participant decisions. For independent runs without recorded model decisions, use bounded deterministic/seeded policies where required. Behavioral consistency means respecting motivations, capabilities and constraints, not producing identical dialogue.
-
-Use vault-age as terminology/design reference, not an implementation checklist. Its Property Sheets map to existing JSON records; scope facets to scenario metadata; TickPolicy to existing clocks; event generators to bounded tables if needed; durable semantic facts to simple validated records. Source owners remain authoritative: SH44SER for its setting and native rules; current vault-sarnalen DXD for Sarna Len, Mai Appollonia Yo!, Apocalyptic Seizure!, and Fear!. Future SH44SER influence on DXD is deferred until the source rules change. Great War and Solo City supply applicable specialized material. Do not infer full DXD attributes from compressed MEST/Solo City values or back-project later national metrics.
-
-## Verification and delivery
-
-Run existing regression tests plus focused scenario tests; no new test framework. Demonstrate a full game before claiming playable. Test same-input replay, alternative decisions, independent perspectives, ignored events, repeated NPC encounters, resource exhaustion, and time-limit/early endings where supported. Confirm actual Python execution and actor-visible output; do not substitute generated prose for adjudication. Keep session files within the thread; cross-thread persistence is optional.
-
-CI success is evidence of CI execution, not independent Chat play or private integration. Earlier local qualification claims in historical plans are retained as historical statements, not independently reverified in this reset.
-
-## Equipment reference (deferred until needed)
-
-Use the author-review modern equipment draft in `meta-dxd` at `a9dd1966a4a3d68db9595209c82c3664354d9176` as a working reference, not accepted canon. Fear! historical names and aliases belong to setting vocabulary and must be available in the relevant period. Map to shared abstract DXD classifications only when a scenario needs them; no additional equipment subsystem now. SH44SER retains native rules.
-
-## DEFERRED / NON-GOALS
-
-Full AGE platform, universal rules DSL/AGEScript, full CAL/LMS-Graph, distributed partitions, PACE, Storygen integration, autonomous multi-agent platform, continuous global simulation, databases, microservices, multiplayer branching, hosted browser/MCP, exhaustive geographic or historical calibration, full native ruleset ports, mandatory cross-thread persistence. Existing optional interfaces remain intact; no further work unless a demonstrated gameplay need warrants it.
+No mandatory SH44SER corpus expansion, universal property catalog, exhaustive inventories, individual-agent simulation, global economic simulation, full ruleset ports, formal standards compliance, universal DSL, full CAL/LMS-Graph, distributed partitions, PACE or Storygen integration, databases, microservices, multiplayer, hosted browser/MCP, mandatory cross-thread persistence or operational military targeting. Supported execution remains bounded fictional investigation and civilian/institutional simulation, not predictive claims. Add mechanics only when a demonstrated gameplay need warrants them.
 
 ## History
 
-Previous detailed plan remains available at [the pinned pre-reset revision](https://github.com/robert-kurcina/age-simwar-runner/blob/f7d9dba6dcc3db29b3c1c2eb0c36224c10f3e5ef/PLAN.md). Architecture references: [ADR-001](docs/adr/001-canonical-source-references.md), [vault-age](https://github.com/robert-kurcina/vault-age/tree/ed080124bb28a3ebb65b80eadbadfb4420de4f73). Update this plan only when milestones, evidence or priorities change.
+[Previous plan](https://github.com/robert-kurcina/age-simwar-runner/blob/9c0b0c5bb9f10893c7bfa71fe7ac48823d0ff283/PLAN.md) preserves earlier milestones and verification history. [ADR-001](docs/adr/001-canonical-source-references.md). Update this plan only when milestones, evidence or priorities change.
