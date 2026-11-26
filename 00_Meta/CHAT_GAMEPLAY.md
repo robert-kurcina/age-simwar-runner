@@ -87,3 +87,7 @@ Boothbay v27 integrates the GM packet and combined-Degree Sleep Limit. Use `pyth
 ### Boothbay v28 — optional danger Beats
 
 Use `danger` from the current view/GM packet as eligible decisive objectives, not an exhaustive player menu. For an appropriate declared intent, use `python game.py propose SESSION ACTION APPROACH --intent "intent" --revision REV`. Both example Beats consume one minute, count once in the Beat ledger, and use existing Tests and consequence records. Do not describe infection, injury, death, or NPC attacks that the engine does not resolve. A midnight relay requires successful patrol passage; passage does not transmit the account. Retreat and non-combat alternatives remain available. Do not force an optional Beat. Restart earlier Boothbay sessions.
+
+### Boothbay v29 — continuity
+
+Use `referee.narrative_functions` privately to identify ready, conditional, blocked and spent carriers. Do not reveal hidden availability or carrier identities before justified discovery. Elias may withdraw at dawn; do not depict his death or revoke journal access already granted. Independent inlet/almanac inference is not his testimony. The GM may present an eligible alternative or acknowledge that no immediate route exists; conditional routes are not proven impossible. No invented witnesses, automatic rescue or reversal of committed facts. Restart older Boothbay sessions.
