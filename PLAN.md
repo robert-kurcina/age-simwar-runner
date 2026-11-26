@@ -22,13 +22,23 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - P2 distinct playable synthetic assistance and agreement scenarios (PR #20 merged after successful CI).
 
+- P3 mapped campaign continuity, provenance verification and multiple-scenario stage support (PR #21 merged after successful CI).
+
 ## WIP
-- P3 explicit mapped continuity, provenance verification and multiple-scenario stage fixture implemented on development branch; CI pending. Actor perspectives already exercised in P2.
+- Source-reference architecture accepted; ADR and plan recorded. Compiler implementation and private source qualification remain outstanding.
 
 ## NEXT (ordered, with acceptance criteria)
-4. Campaign continuity and perspectives: explicitly export approved civilian recovery outcomes and import them into a later scenario. Acceptance: two completed sessions can yield distinct valid starting conditions; provenance identifies the source session and variables. Independent starts remain supported. Verify that multiple scenarios per stage, selectable participant perspectives, and distinct or compatible actor-specific outcome criteria are supported in the synthetic campaign without duplicating the runner. Do not claim private campaign completeness from fixture coverage.
 5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
 6. Campaign usability: provide a single documented workflow to list scenarios, start, inspect, submit permitted civilian requests, advance, finish and compare sessions. Acceptance: run the public campaign end to end using the documented commands.
+
+## SOURCE-REFERENCE ARCHITECTURE (author-approved)
+
+See [ADR-001](docs/adr/001-canonical-source-references.md). The world-building repository remains authoritative; the runner must not manually duplicate canon. Private package references, source qualification, compilation and generated session snapshots remain separate from public fixtures.
+
+1. Qualify the existing corpus ownership map, identifiers, temporal coverage and machine-readable data before choosing an extraction mechanism. Recover the private campaign inventory externally.
+2. Define a minimal reference contract (repository identity, revision, path, stable entity/field selector, effective date, provenance classification); use an explicit allowlist of source owners. Do not require a new national database.
+3. Implement a local, read-only reference resolver and compiler against synthetic fixtures first. Acceptance: deterministic compilation, explicit failures for missing or ambiguous fields, temporal mismatch, stale source detection and immutable pinned snapshots. No network or private repository dependency in public CI.
+4. Validate one private civilian recovery scenario with reviewed historical/canonical inputs and scenario-specific overlays. Keep authored facts in their existing authoritative homes; store only simulation-specific assumptions in the private package. Do not claim predictive accuracy from successful compilation.
 
 ## POST-STABILIZATION — ChatGPT-native MCP plugin (author-approved)
 
