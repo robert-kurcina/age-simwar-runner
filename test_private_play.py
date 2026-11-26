@@ -59,7 +59,10 @@ class PrivatePlayTest(unittest.TestCase):
             save(path, catalog)
             entry["image_map"] = {"title": "Fixture map", "note": "Not georeferenced",
                 "owner": "test", "revision": revision, "path": "map.png",
-                "actors": ["relief"], "reviewed_for": "2000-01-01"}
+                "actors": ["relief"], "reviewed_for": "2000-01-01",
+                "annotations": [{"id": "civilian-site", "label": "Illustrative public site", "pixel": [0, 0],
+                    "actors": ["relief"], "known_from": "2000-01-01", "source": "Fixture",
+                    "hex_id": "LOCAL:01"}]}
             entry["game_map"] = {"center": [0, 0], "zoom": 5, "note": "Synthetic geographic reference",
                 "locations": [{"id": "local", "label": "Local <reference>", "coordinates": [0, 0],
                     "actors": ["relief"], "known_from": "2000-01-01", "source": "Illustrative fixture"}]}
@@ -70,6 +73,8 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertNotIn("actors", snapshot(session)["map"]["locations"][0])
             self.assertIn("Load interactive map", render(session))
             self.assertEqual(snapshot(session)["image_map"]["width"], 1)
+            self.assertEqual(snapshot(session)["image_map"]["annotations"][0]["hex_id"], "LOCAL:01")
+            self.assertNotIn("actors", snapshot(session)["image_map"]["annotations"][0])
             self.assertNotIn("png_base64", snapshot(session)["image_map"])
             self.assertIn("data:image/png;base64,", render(session))
             self.assertIn("L.CRS.Simple", render(session))
