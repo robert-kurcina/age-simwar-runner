@@ -33,11 +33,13 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - Pinned Markdown evidence references (PR #26 merged after successful CI).
 
+- External private civilian recovery pilot compiled and replayed successfully in private CI against the pinned source and runner revisions. Narrative references resolved; illustrative resource accounting and objectives verified.
+
 ## WIP
-- External private civilian recovery pilot configured with pinned narrative evidence and explicitly hypothetical quantities. A private verification script and scoped CI workflow have been added; execution against the actual private checkout is not yet confirmed. Historical numerical calibration remains outstanding.
+- Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
-5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
+1. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 
