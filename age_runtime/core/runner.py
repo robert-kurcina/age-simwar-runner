@@ -13,6 +13,7 @@ from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules
 
 CHECKPOINT_VERSION = 2
+GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
@@ -24,7 +25,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -35,6 +36,8 @@ def validate(s):
         raise ValueError("invalid turn duration")
     if not integer(s["end_minute"]) or s["end_minute"] <= 0:
         raise ValueError("invalid horizon")
+    if "game_length" in s and (not isinstance(s["game_length"], str) or s["game_length"] not in GAME_LENGTHS):
+        raise ValueError("invalid game length")
     initial = s["initial"]
     if not isinstance(initial, dict) or not all(integer(v) for v in initial.values()):
         raise ValueError("initial values must be integers")
@@ -134,6 +137,40 @@ def submit_request(s, state, actor_id, proposal):
         raise ValueError("model faction requires its own decision exchange")
     return _append_request(s, state, actor_id, proposal)
 
+def commit_decision(s, state, actor_id, revision, decision_id, intent, action=None):
+    """Record a confirmed consequential commitment, optionally with a legal order."""
+    verify_checkpoint(s, state)
+    if digest(state) != revision:
+        raise ValueError("stale decision revision")
+    result = _append_decision(s, state, actor_id, decision_id, intent, action)
+    verify_checkpoint(s, result)
+    return result
+
+
+def _append_decision(s, state, actor_id, decision_id, intent, action):
+    if "game_length" not in s:
+        raise ValueError("scenario has no decision pacing target")
+    if actor_id not in s.get("actors", {}) or actor_id in s.get("model_factions", []):
+        raise ValueError("invalid player decision actor")
+    if state["minute"] >= s["end_minute"]:
+        raise ValueError("session ended")
+    if not isinstance(decision_id, str) or not decision_id.strip() or len(decision_id) > 128:
+        raise ValueError("invalid decision ID")
+    if not isinstance(intent, str) or not intent.strip() or len(intent) > 2000:
+        raise ValueError("invalid decision intent")
+    if any(r.get("decision_id") == decision_id and r["actor"] == actor_id for r in state["requests"]):
+        raise ValueError("duplicate decision ID")
+    if action is None:
+        result = copy.deepcopy(state)
+        result["requests"].append({"actor": actor_id, "action": None, "status": "abstained",
+                                   "turn": state["turn"], "minute": state["minute"],
+                                   "sequence": len(state["requests"]) + 1})
+    else:
+        result = _append_request(s, state, actor_id, {"action": action})
+    result["requests"][-1].update(origin="critical_decision", decision_id=decision_id, intent=intent)
+    return result
+
+
 def _append_request(s, state, actor_id, proposal):
     record = register_request(s, state, actor_id, proposal)
     result = copy.deepcopy(state)
@@ -199,6 +236,8 @@ def verify_checkpoint(s, state):
                 break
             if record.get("origin") == "model":
                 expected = _append_model_choice(s, expected, record["actor"], record["action"])
+            elif record.get("origin") == "critical_decision":
+                expected = _append_decision(s, expected, record["actor"], record["decision_id"], record["intent"], record["action"])
             else:
                 if record["actor"] in s.get("model_factions", []):
                     raise ValueError("model faction choice requires model origin")
