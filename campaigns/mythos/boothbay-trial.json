@@ -493,6 +493,9 @@
       "grant": [
         "warning_confirmed"
       ],
+      "success": {
+        "containment": 1
+      },
       "discovery": "Eleanor confirms that she has begun warning people she trusts; their safety is not established.",
       "npc": "eleanor",
       "interval_seconds": 600,

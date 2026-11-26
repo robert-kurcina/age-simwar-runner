@@ -860,6 +860,23 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIsNotNone(test["result"]["opponent"])
         mythos.verify(s)
 
+    def test_warning_confirmation_has_bounded_followthrough(self):
+        # Provisional scenario payoff: confirmation follows an independently
+        # resolved distribution clock, not the player's initial promise.
+        import copy
+        _, rules = mythos.load("boothbay")
+        action = next(a for a in rules["actions"] if a["id"] == "confirm_precaution")
+        self.assertEqual(action["requires_flags"], ["local_warning", "warning_distributed"])
+        self.assertEqual(action["success"], {"containment": 1})
+        s = mythos.initial("boothbay", 42)
+        s["flags"].extend(["local_warning", "warning_distributed"])
+        before = s["containment"]
+        after = mythos.step(s, "confirm_precaution")
+        self.assertEqual(after["containment"], before + 1)
+        self.assertIn("warning_confirmed", after["flags"])
+        self.assertNotIn("people_safe", after["flags"])
+        self.assertNotIn("confirm_precaution", [a["id"] for a in mythos.options(after, rules)])
+
     def test_local_proposal_creates_record_not_clue(self):
         s = mythos.initial("boothbay", 42)
         request = {"action": "local:survey:Harbor Docks", "approach": "survey",
