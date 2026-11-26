@@ -38,3 +38,23 @@ def eligible(chance, *, turn, last_turn, consequence, maximum, extra_base):
 
 def applicable_dm(entries, tags):
     return min(3, sum(1 for entry in entries if entry["tag"] in tags))
+
+def opposed_probability(**args):
+    """Exact opposed probability, including native dice cancellation and ties."""
+    ac, an = dxd._pool(2, args.get("active_bonus", 0), args.get("active_penalty", 0), args.get("active_favor", 0))
+    tc, tn = dxd._pool(2, args.get("target_bonus", 0), args.get("target_penalty", 0), args.get("target_favor", 0))
+    if an * tn > 0:
+        cancel = min(abs(an), abs(tn))
+        sign = 1 if an > 0 else -1
+        an -= sign * cancel
+        tn -= sign * cancel
+    active_raw, target_raw = args["active_raw"], args["target_raw"]
+    active_dm = dxd.attribute_dm(active_raw) + args.get("active_dm", 0)
+    target_dm = dxd.attribute_dm(target_raw) + args.get("target_dm", 0)
+    chance = Fraction(0)
+    for score in range(tc + target_dm, 6 * tc + target_dm + 1):
+        pool = {"base": tc, "dm": target_dm, "bonus": max(0, tn), "penalty": max(0, -tn)}
+        mass = probability(tn=score, **pool) - probability(tn=score + 1, **pool)
+        chance += mass * probability(tn=score + int(active_raw < target_raw), base=ac,
+                                    dm=active_dm, bonus=max(0, an), penalty=max(0, -an))
+    return chance
