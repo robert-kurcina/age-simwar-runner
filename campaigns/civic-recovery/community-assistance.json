@@ -4,7 +4,8 @@
   "turn_minutes": 360,
   "end_minute": 720,
   "initial": {
-    "households_assisted": 0
+    "households_assisted": 0,
+    "aid_packages": 2
   },
   "events": [
     {
@@ -14,27 +15,32 @@
       "delta": 20
     }
   ],
-  "constraints": [
-    {
-      "minute": 720,
-      "key": "households_assisted",
-      "equals": 20
-    }
-  ],
+  "constraints": [],
   "actors": {
     "coordinator": {
       "label": "Civic coordinator",
       "visible_keys": [
-        "households_assisted"
+        "households_assisted",
+        "aid_packages"
       ],
       "objectives": {
         "completion": {
-          "description": "Meet illustrative service milestone",
+          "description": "Assist thirty households",
           "key": "households_assisted",
           "comparison": "at_least",
-          "threshold": 20
+          "threshold": 30
         }
       }
+    }
+  },
+  "community_assistance": true,
+  "administrative_reviews_per_turn": 1,
+  "action_catalog": {
+    "deliver_aid": {
+      "description": "Use one illustrative aid package to assist ten additional households",
+      "actors": [
+        "coordinator"
+      ]
     }
   }
 }

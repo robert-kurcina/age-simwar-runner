@@ -57,6 +57,59 @@ def fulfill_service_request(s, state, record, end):
     record["fulfillment"] = "restored"
 
 
+def validate_civic_rules(s):
+    """Validate two narrow, opt-in civilian fixture rules."""
+    rules = {
+        "community_assistance": (("households_assisted", "aid_packages"), ("deliver_aid",)),
+        "civic_agreement": (("participating_councils", "council_a_joined", "council_b_joined"),
+                            ("join_council_a", "join_council_b")),
+    }
+    for name, (keys, requests) in rules.items():
+        if name not in s:
+            continue
+        if s[name] is not True:
+            raise ValueError(name + " must be true when present")
+        if any(k not in s["initial"] or s["initial"][k] < 0 for k in keys):
+            raise ValueError(name + " requires nonnegative state variables")
+        if any(r not in s.get("action_catalog", {}) for r in requests):
+            raise ValueError(name + " requires its declared requests")
+        if any(e["key"] in keys[1:] or (e["key"] == keys[0] and e["delta"] < 0)
+               for e in s["events"]):
+            raise ValueError(name + " forbids scheduled resource or consent changes")
+        if name == "civic_agreement":
+            for key, action in zip(keys[1:], requests):
+                if s["initial"][key] not in (0, 1):
+                    raise ValueError("consent must be binary")
+                if s["action_catalog"][action]["actors"] != [key.removesuffix("_joined")]:
+                    raise ValueError("each council must control its own consent")
+
+
+def commit_civic_delta(state, record, end, key, delta):
+    state["values"][key] += delta
+    state["ledger"].append({"id": "civic-request:" + str(record["sequence"]) + ":" + key,
+                            "minute": end, "key": key, "delta": delta,
+                            "value": state["values"][key]})
+
+
+def fulfill_civic_request(s, state, record, end):
+    action = record["action"]
+    if s.get("community_assistance") and action == "deliver_aid":
+        if state["values"]["aid_packages"] == 0:
+            record["fulfillment"] = "insufficient_packages"
+            return
+        commit_civic_delta(state, record, end, "aid_packages", -1)
+        commit_civic_delta(state, record, end, "households_assisted", 10)
+        record["fulfillment"] = "delivered"
+    if s.get("civic_agreement") and action in ("join_council_a", "join_council_b"):
+        key = action.removeprefix("join_") + "_joined"
+        if state["values"][key]:
+            record["fulfillment"] = "already_joined"
+            return
+        commit_civic_delta(state, record, end, key, 1)
+        commit_civic_delta(state, record, end, "participating_councils", 1)
+        record["fulfillment"] = "joined"
+
+
 def resolve_reviews(s, state, end):
     """Review pending administrative requests FIFO within a fixed capacity.
 
@@ -71,6 +124,7 @@ def resolve_reviews(s, state, end):
             record["status"] = "reviewed"
             record["reviewed_minute"] = end
             fulfill_service_request(s, state, record, end)
+            fulfill_civic_request(s, state, record, end)
             capacity -= 1
 
 def available_requests(s, actor_id):

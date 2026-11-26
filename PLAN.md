@@ -18,11 +18,12 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - P0 campaign catalog: three synthetic scenario files and catalog validation (PR #16 merged; 39 tests passed on Python 3.10 and 3.12).
 
+- P1 integrated civilian restoration rule, resource accounting, actor-visible fulfillment, replay and comparison (PR #19 merged after Python 3.10/3.12 CI success).
+
 ## WIP
-- P1 integrated civilian restoration rule, resource accounting, actor-visible fulfillment, replay and comparison implemented on development branch; CI verification pending. Do not mark DONE before verification.
+- P2 distinct playable synthetic assistance and agreement scenarios implemented on development branch; CI verification pending.
 
 ## NEXT (ordered, with acceptance criteria)
-2. Playable civilian recovery vertical slice: integrate a narrowly scoped, human-directed public-service restoration rule with the existing runner, rather than extending the standalone example. Acceptance: two human choices lead to different service outcomes under identical initial conditions, persisted and replay-verified, with resource accounting and actor-visible reporting.
 3. Scenario variety: add a humanitarian assistance scenario and a civic negotiation scenario in the public synthetic campaign. Acceptance: each has distinct objectives and completion criteria, executes using shared chronology and persistence; no duplicated runner.
 4. Campaign continuity and perspectives: explicitly export approved civilian recovery outcomes and import them into a later scenario. Acceptance: two completed sessions can yield distinct valid starting conditions; provenance identifies the source session and variables. Independent starts remain supported. Verify that multiple scenarios per stage, selectable participant perspectives, and distinct or compatible actor-specific outcome criteria are supported in the synthetic campaign without duplicating the runner. Do not claim private campaign completeness from fixture coverage.
 5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
