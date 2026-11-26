@@ -54,7 +54,16 @@ class PrivatePlayTest(unittest.TestCase):
                 start(path, "external-relief", "relief", owners)
             entry["briefing_context"][0]["known_from"] = "2000-01-01"
             save(path, catalog)
+            entry["game_map"] = {"center": [0, 0], "zoom": 5, "note": "Synthetic geographic reference",
+                "locations": [{"id": "local", "label": "Local <reference>", "coordinates": [0, 0],
+                    "actors": ["relief"], "known_from": "2000-01-01", "source": "Illustrative fixture"}]}
+            save(path, catalog)
             session = start(path, "external-relief", "relief", owners)
+            from visualization import snapshot, render
+            self.assertEqual(snapshot(session)["map"]["locations"][0]["id"], "local")
+            self.assertNotIn("actors", snapshot(session)["map"]["locations"][0])
+            self.assertIn("Load interactive map", render(session))
+            self.assertNotIn("Local <reference>", render(session))
             self.assertNotIn("aid_packages", view(session)["observation"]["values"])
             opening = briefing(session)
             self.assertEqual(opening["kind"], "opening")
