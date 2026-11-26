@@ -76,6 +76,9 @@ def initial(sid, seed):
             careers = rules["dxd"]["professional_progression"]["careers"]
             for profile in state["character_profiles"].values():
                 profile["proficiencies"]["qualification"] = dxd_progression.describe(profile, careers)
+                im = rules["dxd"]["professional_progression"].get("skill_im")
+                if im is not None:
+                    profile["proficiencies"]["progression"]["fast_track_audit"] = dxd_progression.audit_skills(profile, im)
     if "pacing" in rules:
         state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:
