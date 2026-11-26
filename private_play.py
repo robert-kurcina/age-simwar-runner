@@ -66,6 +66,45 @@ def perspectives(path, scenario_id, owners):
             compiled["scenario"].get("actors", {}).items()]
 
 
+def reviewed_context(entry, compiled, actor, effective_date):
+    """Pin author-reviewed, perspective-specific summaries, not raw corpus prose."""
+    records = entry.get("briefing_context", [])
+    if not isinstance(records, list):
+        raise ValueError("invalid briefing context")
+    result = []
+    seen = set()
+    for item in records:
+        if not isinstance(item, dict) or set(item) != {
+                "id", "summary", "evidence", "actors", "known_from", "reviewed_for"}:
+            raise ValueError("invalid context record")
+        if (not isinstance(item["id"], str) or not item["id"].strip()
+                or item["id"] in seen or not isinstance(item["summary"], str)
+                or not item["summary"].strip()):
+            raise ValueError("invalid context identity or summary")
+        seen.add(item["id"])
+        actors = item["actors"]
+        if (not isinstance(actors, list) or not actors
+                or any(not isinstance(a, str) or a not in compiled["scenario"].get("actors", {}) for a in actors)
+                or len(set(actors)) != len(actors)):
+            raise ValueError("invalid context audience")
+        evidence = item["evidence"]
+        if not isinstance(evidence, str) or evidence not in compiled.get("evidence", {}):
+            raise ValueError("context requires compiled evidence")
+        ref = compiled["evidence"][evidence]
+        if item["reviewed_for"] != effective_date or ref["reviewed_for"] != effective_date:
+            raise ValueError("context review date mismatch")
+        known = checked_date(item["known_from"])
+        if known > checked_date(effective_date):
+            raise ValueError("future context cannot enter opening briefing")
+        if actor in actors:
+            result.append({"id": item["id"], "summary": item["summary"],
+                           "classification": ref["classification"],
+                           "known_from": item["known_from"],
+                           "evidence": evidence,
+                           "section_sha256": ref["section_sha256"]})
+    return result
+
+
 def start(path, scenario_id, actor, owners):
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
     s = compiled["scenario"]
@@ -74,7 +113,8 @@ def start(path, scenario_id, actor, owners):
     header = {"campaign": catalog["id"], "group": group["id"],
               "title": entry["title"], "catalog_digest": digest(catalog),
               "effective_date": spec["effective_date"], "actor": actor,
-              "compiled": compiled}
+              "compiled": compiled,
+              "briefing_context": reviewed_context(entry, compiled, actor, spec["effective_date"])}
     return {"version": 1, "header": header, "header_digest": digest(header), "state": state}
 
 
@@ -111,6 +151,7 @@ def briefing(session):
     actor = s["actors"][h["actor"]]
     start_date = checked_date(h["effective_date"])
     elapsed = observation["minute"]
+    context = h.get("briefing_context", [])
     return {
         "kind": "opening" if observation["turn"] == 0 else "turn",
         "campaign": current["campaign"], "scenario": current["title"],
@@ -124,7 +165,8 @@ def briefing(session):
         "reports": observation["reports"],
         "own_requests": observation["own_requests"],
         "available_requests": observation["available_requests"],
-        "context_status": "source references pinned; player-safe narrative not yet supplied",
+        "context": context,
+        "context_status": "reviewed perspective summaries" if context else "source references pinned; player-safe narrative not yet supplied",
         "calibration": "illustrative scenario assumptions; not a historical forecast"
     }
 
