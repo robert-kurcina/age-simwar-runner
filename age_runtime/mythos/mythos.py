@@ -329,6 +329,8 @@ def finish_activity(state, rules, action, a, success, reason=None):
     state["last_result"] = {"action": action, "success": success}
     if reason:
         state["last_result"]["interrupted"] = reason
+    if state["transitions"] and state["transitions"][-1]["turn"] == state["turn"]:
+        state["last_result"]["transition"] = state["transitions"][-1]
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
     state["history"].append(action)
@@ -374,9 +376,6 @@ def step(state, action):
             for key, amount in a.get("cost", {}).items():
                 state["resources"][key] -= amount
             dxd_conditions.begin_sleep(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
-        elif action == "wake_early":
-            # One minute per attempted awakening; failed tests leave sleep active.
-            pass
         elif a.get("cost"):
             for key, amount in a["cost"].items():
                 state["resources"][key] -= amount
@@ -386,7 +385,7 @@ def step(state, action):
             pc = state["dxd"]
             before = dxd_conditions.degrees(pc["concerns"])["stress"]
             woke = False
-            if action == "wake_early" or clock["sleep_seconds"] >= clock["required_sleep_seconds"]:
+            if (action == "wake_early" and not reason) or clock["sleep_seconds"] >= clock["required_sleep_seconds"]:
                 woke = dxd_conditions.wake(pc["concerns"], clock, pc["attributes"], seed=state["seed"],
                                           forced=action == "wake_early")
             dxd_morale.calm(pc["morale"], safe=False, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
