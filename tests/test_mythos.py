@@ -951,3 +951,42 @@ class MythosTrialTests(unittest.TestCase):
         tide = continuity.projection(s, rules, mythos.options(s, rules))[0]
         self.assertTrue(tide["established"])
         self.assertFalse(tide["no_immediate_route"])
+
+    def test_emotional_commitment_authorized_and_replayable(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "talk_eleanor")
+        request = {"action": "local:build_rapport:eleanor", "approach": "build_rapport",
+                   "intent": "Build rapport with Eleanor."}
+        commitment = {"context": "eleanor", "level": 1,
+                      "vignette": "I feel a surge of concern and my hands tremble."}
+        before = s["dxd"]["concerns"].copy()
+        after = mythos.step(s, request["action"], request, commitment)
+        pc = after["dxd"]
+        entry = pc["commitments"][0]
+        self.assertEqual(entry["context"], "eleanor")
+        self.assertEqual(pc["tests"][-1]["components"]["emotional_commitment"], 1)
+        self.assertEqual(pc["concerns"]["min_stress"], before.get("min_stress", 0) + 1)
+        self.assertGreaterEqual(pc["concerns"]["fatigue"], before["fatigue"] + 1)
+        self.assertGreaterEqual(pc["concerns"]["weariness"], before["weariness"] + 1)
+        self.assertIn(entry["stress_cost"], range(1, 7))
+        self.assertEqual(after, mythos.step(s, request["action"], request, commitment))
+        mythos.verify(after)
+        with self.assertRaises(ValueError):
+            mythos.step(s, request["action"], request, dict(commitment, level=2))
+        with self.assertRaises(ValueError):
+            mythos.step(s, request["action"], request, dict(commitment, context="elias"))
+        from age_runtime.core import dxd_commitment
+        self.assertEqual(dxd_commitment.modifier(pc, {"npc": "eleanor"}), -1)
+        self.assertEqual(dxd_commitment.modifier(pc, {"npc": "elias"}), 0)
+        self.assertFalse(dxd_commitment.eligible(after, {"emotional_commitment": True},
+                         {"npc": "eleanor", "location": after["location"], "test": {"interaction": "ordinary"}}))
+        after["dxd"]["commitments"][0]["stress_cost"] += 1
+        with self.assertRaises(ValueError):
+            mythos.verify(after)
+
+    def test_emotional_commitment_no_unestablished_context(self):
+        s = mythos.initial("boothbay", 42)
+        with self.assertRaises(ValueError):
+            mythos.step(s, "talk_eleanor", commitment={"context": "eleanor", "level": 1,
+                         "vignette": "I feel concern and my hands tremble."})
+        self.assertEqual(s["dxd"]["commitments"], [])
+        mythos.verify(s)
