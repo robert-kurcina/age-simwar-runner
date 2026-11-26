@@ -64,6 +64,8 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if rules.get("local_proposals"):
+        state["local_records"] = []
     if "pacing" in rules:
         state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:
@@ -369,12 +371,16 @@ def step(state, action, proposal=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
     a = next((a for a in options(state, rules) if a["id"] == action), None)
-    if a is None:
+    if proposal is not None and action.startswith("local:"):
+        a = proposals.compile_local(state, rules, proposal, npc_available)
+    elif a is None:
         raise ValueError("action unavailable")
-    if proposal is not None:
+    elif proposal is not None:
         a = proposals.compile_action(state, rules, proposal, [a])
         if a["id"] != action:
             raise ValueError("proposal action mismatch")
+    if a["id"] != action:
+        raise ValueError("proposal action mismatch")
     elapsed = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
@@ -499,6 +505,8 @@ def step(state, action, proposal=None):
                         disability=revelation["disability"], turn=state["turn"])
     if "progression" not in state and "pacing" not in rules:
         advance_events(state, rules, elapsed)
+    if a.get("local_capability"):
+        proposals.record_local(state, a, success, primary_result)
     narrative_events.complete_action(state, rules, a, success, a.get("local_seconds", a["duration_seconds"]))
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
@@ -628,6 +636,8 @@ def view(state):
         scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
+    if "local_records" in state:
+        scene_view["local_records"] = copy.deepcopy(state["local_records"][-8:])
     if "narrative_events" in state:
         scene_view["event_pressure"] = narrative_events.projection(state, rules)
     if "activity" in state["dxd"]:
@@ -659,7 +669,7 @@ def gm_context(state):
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
-    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure") if k in public})
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records") if k in public})
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]
@@ -690,6 +700,7 @@ def gm_context(state):
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
                 "favor": pc["favor"],
+                "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
                                for a in legal if a["id"] in rules.get("gm_proposals", {})},
                 "clocks": [{"id": key, "name": cfg["name"], "source": cfg["source"],
