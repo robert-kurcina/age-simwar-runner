@@ -140,6 +140,7 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
             raise ValueError("continuity target requires standard single-perspective setup")
         from private_continuity import derive
         compiled, link = derive(catalog, entry, spec, compiled, previous)
+        configuration = {"id": "standard", "label": "Continuation — derived session outcome"}
     s = compiled["scenario"]
     supported(s)
     state = initialize(s)
@@ -218,6 +219,7 @@ def briefing(session):
         "campaign": current["campaign"], "scenario": current["title"],
         "perspective": actor["label"],
         "shared": h.get("shared", False),
+        "continued": "continuity" in h,
         "preset": h.get("preset", {"id": "standard", "label": "Standard — configured baseline"}),
         "date": (start_date + timedelta(days=elapsed // 1440)).isoformat(),
         "elapsed_minutes": elapsed, "turn": observation["turn"],
