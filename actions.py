@@ -64,6 +64,16 @@ def validate_civic_rules(s):
         "civic_agreement": (("participating_councils", "council_a_joined", "council_b_joined"),
                             ("join_council_a", "join_council_b")),
     }
+    if "assistance_capacity" in s:
+        cap = s["assistance_capacity"]
+        if not s.get("community_assistance") or not isinstance(cap, dict) or set(cap) != {"household_limit", "households_per_package"}:
+            raise ValueError("invalid assistance capacity")
+        if any(type(v) is not int or v <= 0 for v in cap.values()):
+            raise ValueError("assistance capacity must be positive integers")
+        if s["initial"].get("households_assisted", -1) > cap["household_limit"]:
+            raise ValueError("initial assistance exceeds household limit")
+        if any(e["key"] == "households_assisted" for e in s["events"]):
+            raise ValueError("capacity-limited assistance requires explicit requests")
     for name, (keys, requests) in rules.items():
         if name not in s:
             continue
@@ -97,8 +107,15 @@ def fulfill_civic_request(s, state, record, end):
         if state["values"]["aid_packages"] == 0:
             record["fulfillment"] = "insufficient_packages"
             return
+        cap = s.get("assistance_capacity")
+        amount = 10
+        if cap is not None:
+            amount = min(cap["households_per_package"], cap["household_limit"] - state["values"]["households_assisted"])
+            if amount <= 0:
+                record["fulfillment"] = "all_households_assisted"
+                return
         commit_civic_delta(state, record, end, "aid_packages", -1)
-        commit_civic_delta(state, record, end, "households_assisted", 10)
+        commit_civic_delta(state, record, end, "households_assisted", amount)
         record["fulfillment"] = "delivered"
     if s.get("civic_agreement") and action in ("join_council_a", "join_council_b"):
         key = action.removeprefix("join_") + "_joined"
