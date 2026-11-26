@@ -115,3 +115,7 @@ Consult private character profile qualification and career history; use actual o
 ### Boothbay v35 — native Disabilities
 
 The mission-start Discipline result and Addicted status are in private referee context. Do not force drinking or infer mood. Apply only supported authored Test contexts and actual resource state. Addicted status is a game mechanic, not a clinical diagnosis. Emotional Disability reduces hourly restorative Stress dice; do not double-charge RR recovery. Skill-only fast-track audit is derived and not spendable. Restart prior Boothbay sessions.
+
+### Boothbay v36 — Commitment leverage
+
+Only an NPC who witnessed a prior Commitment may use its Level as leverage on an explicitly enabled matching Interaction Test. Never infer witness knowledge from proximity or disclose private PC context to other NPCs. A negative Demeanor overlay is separate from baseline and uses floor(EC/2); persistent relationship changes supersede it. Do not invent leverage or change the baseline manually. Initial Level 1 remains the supported declaration. Restart prior sessions.
