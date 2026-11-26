@@ -107,3 +107,35 @@ class MythosTrialTests(unittest.TestCase):
         s = mythos.step(s, "observe")
         self.assertEqual(len(s["observations"]), 1)
         mythos.verify(s)
+
+    def test_npc_continuity_and_visibility(self):
+        a = mythos.initial("boothbay", 42)
+        b = mythos.initial("boothbay", 42)
+        self.assertEqual(a["npcs"], b["npcs"])
+        self.assertEqual(a["npcs"]["elias"]["attributes"]["Willpower"], 4)
+        self.assertEqual(mythos.view(a)["contacts"], [])
+        for seed in range(200):
+            s = mythos.step(mythos.initial("boothbay", seed), "talk_eleanor")
+            if s["last_result"]["success"]:
+                s = mythos.step(s, "follow_eleanor")
+                self.assertEqual(s["npcs"]["eleanor"]["encounters"], 2)
+                self.assertEqual(s["npcs"]["eleanor"]["disclosed"].count("eleanor_account"), 1)
+                self.assertEqual(mythos.view(s)["contacts"][0]["name"], "Eleanor")
+                v = str(mythos.view(s))
+                for key in ("known_topics", "motivation", "secret", "attributes", "disclosed"):
+                    self.assertNotIn(key, v)
+                mythos.verify(s)
+                s["npcs"]["eleanor"]["attributes"]["Willpower"] = 5
+                with self.assertRaisesRegex(ValueError, "replay"):
+                    mythos.verify(s)
+                break
+        else:
+            self.fail("No successful first conversation")
+
+    def test_npc_profile_rejects_unknown_topic(self):
+        import copy
+        story, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        next(a for a in rules["actions"] if a["id"] == "talk_eleanor")["disclosure"] = "invented"
+        with self.assertRaisesRegex(ValueError, "disclosure"):
+            mythos.npc_profiles(story, rules)
