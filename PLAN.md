@@ -1,5 +1,9 @@
 # Development plan — playable, consistent games
 
+## Purpose — AGE experimental testbed
+
+AGE SimWar Runner is a bounded executable testbed for Amazing Game Engine (AGE), not the definitive AGE implementation. Develop playable games to test, refine, reject or validate AGE concepts through actual use. Reuse applicable lightweight Property Sheets, stable IDs, scope facets, TickPolicy, Location/Event Sheets, simplified Event Generators and authoritative state semantics where useful; do not implement full AGE subsystems merely for architectural conformity. Record reusable findings, counterexamples and limitations in the existing plans or architecture notes, and propose upstream AGE changes separately when evidence warrants them. A successful runner experiment is evidence, not automatic adoption into AGE.
+
 ## Goal
 
 Play a complete game in one ordinary ChatGPT conversation, from authorized GitHub sources or an uploaded standalone ZIP. ChatGPT interprets decisions and presents results; Python validates and commits state. Frozen configuration, engine revision, seed and recorded inputs must replay exactly.
@@ -31,18 +35,22 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 - WIP (P1): actual strategic Chat gameplay and private scenario delivery. Runner #89 and vault #994 merged; corrected export qualification/retention and repository ownership remain unresolved. Local-only storage is not a requirement; retain private versioned source access without exposing private content publicly.
 - DEFERRED (P2): first bounded Sarna Len scenario, until the narrative foundation is qualified.
 
-## Gameplay tracks and immediate priorities
+## Development phases and immediate priorities
 
-- [Narrative game plan](PLAN_NARRATIVE.md): immediate Boothbay gameplay correction and qualification; then other Fear! scenarios.
-- [Strategic game plan](PLAN_STRATEGIC.md): preserve existing faction-based SH44SER recovery roadmap and qualify substantial strategic play independently.
+| Phase | Status | Purpose |
+|---|---|---|
+| Shared foundation | DONE for existing verified capabilities; WIP for demonstrated gaps | Shared authoritative runtime, source bindings, replay and delivery. Evolve as gameplay experiments require. |
+| [Narrative sub-game](PLAN_NARRATIVE.md) | WIP (P1) | GM-directed, character-scale gameplay; qualify Boothbay, then other Fear! scenarios. |
+| [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; qualify SH44SER recovery and meaningful independent faction decisions. |
+| Full-stack service | DEFERRED (P3) | Final experimental phase; see the last section of this plan. |
 
-Maintain one shared engine and delivery path, with separate gameplay acceptance criteria. Neither track requires mechanics specific to the other. Prioritize the Boothbay vertical slice in the next implementation cycle; strategic work remains WIP, not cancelled. Record actual player feedback separately from deterministic execution and CI results.
+Narrative and strategic phases run concurrently, not sequentially. Each has its own plan, priorities and acceptance criteria; neither must wait for the other to finish. Both exercise one shared engine and feed lessons back into AGE. Coordinate changes to shared contracts and regression-test both modes when affected. Prioritize the smallest useful vertical slices independently; shared blockers take precedence when they actually impede play. ChatGPT gameplay acceptance is the joint exit gate of these concurrent phases, not a separate infrastructure project. Record actual player feedback separately from deterministic execution and CI results.
 
 ## Consistency and verification
 
 Reuse existing JSON records: scenario metadata/objectives, factions or narrative participants, locations, events, rules and session state. Resources, projects and relationships may be simple properties; separate records only when necessary. Persist what affects future decisions. Preserve stable IDs, source revisions, visibility, relevant reporting delays and deterministic order. Record model-proposed decisions as resolved inputs. Use existing tests and actual gameplay, not generated narration as proof. CI alone does not qualify independent Chat play. Keep private content out of public archives.
 
-Source authority: SH44SER uses its native system; vault-sarnalen DXD governs Sarna Len, Mai Appollonia Yo!, Apocalyptic Seizure! and Fear!. Use vault-age as terminology and design reference, not a mandatory architecture. Keep historical equipment vocabulary deferred until needed; the modern `meta-dxd` draft (`a9dd1966a4a3d68db9595209c82c3664354d9176`) is a working reference, not accepted canon.
+Source authority: SH44SER uses its native system; vault-sarnalen DXD governs Sarna Len, Mai Appollonia Yo!, Apocalyptic Seizure! and Fear!. Use vault-age as the broader AGE design reference and potential recipient of validated testbed findings, not a mandatory implementation architecture. Keep historical equipment vocabulary deferred until needed; the modern `meta-dxd` draft (`a9dd1966a4a3d68db9595209c82c3664354d9176`) is a working reference, not accepted canon.
 
 ## Deferred / rejected scope
 
@@ -53,10 +61,10 @@ Source authority: SH44SER uses its native system; vault-sarnalen DXD governs Sar
 
 [Previous plan](https://github.com/robert-kurcina/age-simwar-runner/blob/9c0b0c5bb9f10893c7bfa71fe7ac48823d0ff283/PLAN.md) preserves earlier milestones and verification history. [ADR-001](docs/adr/001-canonical-source-references.md). Update this plan at meaningful development checkpoints when status, milestones, evidence or priorities change.
 
-## Final project phase — full-stack service (DEFERRED, P3; last)
+## Final testbed phase — full-stack service (DEFERRED, P3; last)
 
 **Entry gate:** The author confirms that AGE SimWar is runnable to satisfaction entirely within ordinary ChatGPT, with both strategic and narrative gameplay qualified, authorized scenario selection, meaningful decisions and consequences, native rule fidelity, correct visibility, completion/resumption and reproducible mechanical replay. CI alone cannot satisfy this gate.
 
-Only after this gate and resolution of outstanding accepted Chat-first project work, ensure the same engine and scenario packages can run as a full-stack service. Define the smallest useful client/server delivery architecture at that time, including a service interface, browser client, session persistence, authorization for private content, deployment and end-to-end verification as warranted. Reuse the existing authoritative engine; do not fork adjudication or introduce a mandatory server dependency into Chat play. Select hosting, database, authentication and deployment technologies only against demonstrated service requirements. Multiplayer and other optional expansions are not implied.
+Only after this gate and resolution of outstanding accepted Chat-first project work, begin the full-stack service phase to test the same engine and scenario packages in a service delivery context. This is another AGE testbed phase, not an undertaking to implement the complete AGE platform. Define the smallest useful client/server delivery architecture at that time, including a service interface, browser client, session persistence, authorization for private content, deployment and end-to-end verification as warranted. Reuse the existing authoritative engine; do not fork adjudication or introduce a mandatory server dependency into Chat play. Select hosting, database, authentication and deployment technologies only against demonstrated service requirements. Multiplayer and other optional expansions are not implied.
 
 **Exit gate:** The service can start, play, resume and complete qualified scenarios with the same validated mechanics, information boundaries and replay behavior as ChatGPT, and the author accepts the service. No full-stack implementation before the entry gate.
