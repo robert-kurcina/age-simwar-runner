@@ -115,3 +115,7 @@ PR #26 passed CI and merged. An external private civilian pilot and its verifica
 ## External pilot execution verified
 
 Private CI completed successfully; job output confirms two evidence references, deterministic compilation, replay and expected illustrative civilian outcomes with resource accounting. Zero stale references relative to the pinned source checkout; this does not establish freshness against current main. Private pilot and public status PRs merged. Numerical calibration remains false. No private identifiers or source content copied here.
+
+## Finite civilian assistance capacity
+
+PR #28 merged after successful CI. Added optional finite household demand and configurable per-package yield to the existing civilian assistance rule, preserving legacy scenarios. Reviewed requests cannot exceed total demand; no package is consumed after demand is satisfied. Three regression tests authored; CI pending. No private source content or historical numerical claims.
