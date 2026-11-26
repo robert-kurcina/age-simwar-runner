@@ -110,7 +110,16 @@ def observe(s, state, actor_id):
                  "delay": p["delay"], "complications": p["complications"]}
                 for p in s.get("economy_projects", []) if p["participant"] == actor_id]
     requests = available_requests(s, actor_id) if state["minute"] < s["end_minute"] else {}
+    pacing = {}
+    if "game_length" in s and actor_id not in s.get("model_factions", []):
+        from age_runtime.core.runner import GAME_LENGTHS
+        committed = [r for r in state["requests"] if r["actor"] == actor_id
+                     and r.get("origin") == "critical_decision"]
+        pacing = {"decision_pacing": {"game_length": s["game_length"],
+                   "target": GAME_LENGTHS[s["game_length"]], "count": len(committed),
+                   "advisory": True}}
     return {
+        **pacing,
         **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s else {}),
         **({"projects": projects} if "economy_projects" in s else {}),
         **({"faction_context": deepcopy(actor["faction_context"]["profile"])} if "faction_context" in actor else {}),
