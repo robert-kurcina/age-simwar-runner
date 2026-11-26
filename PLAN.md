@@ -152,9 +152,15 @@ Acceptance: a reproducible civilian experiment compares reviewed scenarios and p
 ## Execution discipline
 Each development increment must complete an acceptance criterion or a concrete implementation step toward it, or explicitly document a blocker. Update this file after each increment. Review verification appropriate to the change before merging: direct review for documentation and inventory, targeted execution/regression tests for code. Do not count an unverified branch as done.
 
-## CURRENT INCREMENT — Chat checkpoint handoff (PR pending)
+## DONE — Chat checkpoint handoff (PR #52 merged)
 
 - Implemented a standalone, portable, revision-bound JSON session handoff in `chat_handoff.py` (export, verify and restore), including embedded scenario, deterministic checkpoint verification, session/scenario/payload digests and exclusive restore-path creation. Public fixture regression tests added in `test_chat_handoff.py`.
 - Limitations: commit SHA is operator supplied and is **not cryptographically attested** to the loaded code; SHA-256 hashes are integrity checks, not authenticity signatures. Private sources and canonical artwork are not included. Cross-conversation persistence is not demonstrated until an actual handoff is uploaded and restored in a fresh Chat runtime.
-- Verification: source syntax checked independently; repository integration tests and CI still need to run. Do not mark NEXT 1–4 as accepted on this basis.
+- Verification: PR #52 test workflow 45760047208 succeeded on Python 3.10 and 3.12. Do not mark NEXT 1–4 as accepted on this basis.
 - Next: verify public CI, qualify exact-file transfer into the Chat Python environment, execute a supported scenario using actual engine code, and demonstrate export/import plus source-qualified private continuation. Avoid further frontend work until Chat gameplay works.
+
+## CURRENT INCREMENT — Offline Chat runtime transfer (PR pending)
+
+- Direct Git clone in Chat's Python container failed with DNS resolution error. GitHub connector file reads and Actions remain accessible.
+- Added a GitHub Actions workflow to test the pinned source, exercise a public opening/submit/advance/handoff/restore/finish/linked continuation, and export an exact tracked-source ZIP with revision and SHA-256 manifest. No private source or session is included. Artifact delivery is an explicit manual download/upload fallback; connector-to-runtime byte transfer is not assumed.
+- Acceptance remains pending: successful workflow, actual archive transfer, checksum verification, execution inside Chat and separate-conversation resumption. CI execution alone does not qualify Chat.
