@@ -1,5 +1,5 @@
 {
-  "version": 17,
+  "version": 18,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -509,7 +509,11 @@
         "npc_attribute": "POW",
         "significance": "important",
         "decision": true
-      }
+      },
+      "excludes_flags": [
+        "police_clearance",
+        "police_refusal"
+      ]
     },
     {
       "id": "relay_after_pressure",
@@ -568,6 +572,41 @@
         "significance": "critical",
         "decision": true
       }
+    },
+    {
+      "id": "speak_burroughs_diner",
+      "label": "Speak with Chief Burroughs at the diner",
+      "location": "Harbor Diner",
+      "minutes": 30,
+      "npc": "burroughs",
+      "requires_flags": [
+        "police_attention"
+      ],
+      "grant": [
+        "police_clearance"
+      ],
+      "discovery": "Burroughs accepts your explanation for now, but advises you to leave town.",
+      "relationship": {
+        "burroughs": 1
+      },
+      "relationship_failure": {
+        "burroughs": -1
+      },
+      "grant_failure": [
+        "police_refusal"
+      ],
+      "failure_observation": "Burroughs refuses to accept your explanation and warns against further inquiries.",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "npc_attribute": "POW",
+        "significance": "important",
+        "decision": true
+      },
+      "excludes_flags": [
+        "police_clearance",
+        "police_refusal"
+      ]
     }
   ],
   "resources": {
@@ -619,7 +658,10 @@
         "eleanor_account",
         "water_warning"
       ],
-      "reference_rating": 3
+      "reference_rating": 3,
+      "eligible_locations": [
+        "Harbor Diner"
+      ]
     },
     "elias": {
       "source_name": "Elias Marsh",
@@ -628,14 +670,24 @@
       "known_topics": [
         "journal"
       ],
-      "reference_rating": 3
+      "reference_rating": 3,
+      "eligible_locations": [
+        "Creek Inlet South"
+      ]
     },
     "burroughs": {
       "source_name": "Chief Burroughs",
       "public_role": "Police Chief",
-      "location": "Harbor Docks",
+      "location": null,
       "known_topics": [],
-      "reference_rating": 3
+      "reference_rating": 3,
+      "requires_flags": [
+        "police_attention"
+      ],
+      "eligible_locations": [
+        "Harbor Docks",
+        "Harbor Diner"
+      ]
     }
   },
   "setting": "Fear!",
@@ -864,12 +916,128 @@
         "text": "Your inquiries have attracted official attention. You can explain yourself, seek another route, or leave."
       }
     ],
-    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated."
+    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration."
   },
   "demeanor": true,
   "opposition": {
     "segments": 3,
     "grant": "police_attention",
-    "observation": "Word of your inquiries has spread. A uniformed officer asks you to speak with Chief Burroughs."
+    "observation": "Word of your inquiries has spread. You have been asked to speak with Chief Burroughs."
+  },
+  "spatial": {
+    "zones": {
+      "boothbay": {},
+      "town": {
+        "parent": "boothbay"
+      },
+      "inlet": {
+        "parent": "boothbay"
+      },
+      "coast": {
+        "parent": "boothbay"
+      }
+    },
+    "nodes": {
+      "Harbor Docks": {
+        "zone": "town"
+      },
+      "Harbor Diner": {
+        "zone": "town"
+      },
+      "Sailor's Rest Boarding House": {
+        "zone": "town"
+      },
+      "Creek Inlet South": {
+        "zone": "inlet"
+      },
+      "Lighthouse (Western Point)": {
+        "zone": "coast"
+      },
+      "Devil's Throat Sea Caves": {
+        "zone": "coast"
+      }
+    },
+    "edges": [
+      {
+        "from": "Harbor Docks",
+        "to": "Harbor Diner",
+        "minutes": 5,
+        "terrain": "Clear"
+      },
+      {
+        "from": "Harbor Diner",
+        "to": "Harbor Docks",
+        "minutes": 5,
+        "terrain": "Clear"
+      },
+      {
+        "from": "Harbor Diner",
+        "to": "Sailor's Rest Boarding House",
+        "minutes": 5,
+        "terrain": "Clear"
+      },
+      {
+        "from": "Sailor's Rest Boarding House",
+        "to": "Harbor Diner",
+        "minutes": 5,
+        "terrain": "Clear"
+      },
+      {
+        "from": "Harbor Docks",
+        "to": "Creek Inlet South",
+        "minutes": 10,
+        "terrain": "Rough"
+      },
+      {
+        "from": "Creek Inlet South",
+        "to": "Harbor Docks",
+        "minutes": 10,
+        "terrain": "Rough"
+      },
+      {
+        "from": "Creek Inlet South",
+        "to": "Lighthouse (Western Point)",
+        "minutes": 15,
+        "terrain": "Rough"
+      },
+      {
+        "from": "Lighthouse (Western Point)",
+        "to": "Creek Inlet South",
+        "minutes": 15,
+        "terrain": "Rough"
+      },
+      {
+        "from": "Sailor's Rest Boarding House",
+        "to": "Lighthouse (Western Point)",
+        "minutes": 35,
+        "terrain": "Clear"
+      },
+      {
+        "from": "Lighthouse (Western Point)",
+        "to": "Sailor's Rest Boarding House",
+        "minutes": 35,
+        "terrain": "Clear"
+      },
+      {
+        "from": "Harbor Docks",
+        "to": "Devil's Throat Sea Caves",
+        "minutes": 5,
+        "terrain": "Rough",
+        "requires_flags": [
+          "tide_window_known"
+        ],
+        "opens": "1927-10-14T02:00:00",
+        "closes": "1927-10-14T02:30:00"
+      },
+      {
+        "from": "Devil's Throat Sea Caves",
+        "to": "Harbor Docks",
+        "minutes": 5,
+        "terrain": "Rough",
+        "opens": "1927-10-14T02:00:00",
+        "closes": "1927-10-14T02:40:00"
+      }
+    ],
+    "provenance": "Provisional AGE topology and travel costs, not surveyed historical geography. Cave window based on authored low tide; reverse crossing allowance until 02:40 is provisional safety margin."
   }
 }
