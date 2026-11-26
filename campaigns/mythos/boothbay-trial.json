@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -393,7 +393,7 @@
   "setting": "Fear!",
   "resolution": "dxd",
   "dxd": {
-    "provenance": "Provisional explicit AGE character adaptations, not canonical conversion. Combat and physical ratings reflect broad source capability descriptions; unspecified size and luck use neutral or provisional ordinary human-scale indices. No inference of weight or supernatural powers.",
+    "provenance": "Provisional explicit AGE character adaptations, not canonical conversion. Combat and physical ratings reflect broad source capability descriptions; unspecified size and luck use neutral or provisional ordinary human-scale indices. No inference of weight or supernatural powers. Body indices and Trade/Affinity selections are explicit provisional AGE assumptions. Original roll arrays equal curated final nine Attributes in the absence of documented creation adjustments; no magical powers inferred.",
     "attributes": {
       "CCA": 8,
       "RCA": 8,
@@ -403,10 +403,7 @@
       "PRE": 8,
       "POW": 9,
       "STR": 6,
-      "FOR": 7,
-      "MOV": 7,
-      "SIZ": 7,
-      "ZED": 7
+      "FOR": 7
     },
     "skills": {
       "Investigation": 2,
@@ -432,10 +429,7 @@
         "PRE": 9,
         "POW": 8,
         "STR": 6,
-        "FOR": 7,
-        "MOV": 7,
-        "SIZ": 7,
-        "ZED": 7
+        "FOR": 7
       },
       "elias": {
         "CCA": 8,
@@ -446,10 +440,7 @@
         "PRE": 7,
         "POW": 10,
         "STR": 9,
-        "FOR": 8,
-        "MOV": 6,
-        "SIZ": 8,
-        "ZED": 7
+        "FOR": 8
       }
     },
     "inactive_major_attributes": {
@@ -462,10 +453,7 @@
         "PRE": 9,
         "POW": 10,
         "STR": 10,
-        "FOR": 10,
-        "MOV": 8,
-        "SIZ": 9,
-        "ZED": 7
+        "FOR": 10
       },
       "Mayor Gilman": {
         "CCA": 7,
@@ -476,10 +464,7 @@
         "PRE": 10,
         "POW": 11,
         "STR": 7,
-        "FOR": 8,
-        "MOV": 7,
-        "SIZ": 7,
-        "ZED": 7
+        "FOR": 8
       },
       "Mrs. Croft": {
         "CCA": 7,
@@ -490,15 +475,116 @@
         "PRE": 9,
         "POW": 10,
         "STR": 8,
-        "FOR": 8,
-        "MOV": 7,
-        "SIZ": 8,
-        "ZED": 7
+        "FOR": 8
       }
     },
     "inspiration": {
       "enabled": true,
       "source": "AGE automatic policy; authored memory cues grounded in protagonist biography"
+    },
+    "body_profiles": {
+      "pc": {
+        "stature": 50,
+        "build": 50,
+        "trade": "Service",
+        "affinity": "INT",
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 8,
+          "REF": 7,
+          "INT": 9,
+          "KNO": 8,
+          "PRE": 8,
+          "POW": 9,
+          "STR": 6,
+          "FOR": 7
+        }
+      },
+      "eleanor": {
+        "stature": 45,
+        "build": 44,
+        "trade": "Service",
+        "affinity": "INT",
+        "attribute_rolls": {
+          "CCA": 6,
+          "RCA": 6,
+          "REF": 8,
+          "INT": 8,
+          "KNO": 7,
+          "PRE": 9,
+          "POW": 8,
+          "STR": 6,
+          "FOR": 7
+        }
+      },
+      "elias": {
+        "stature": 49,
+        "build": 51,
+        "trade": "Mariner",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 7,
+          "REF": 7,
+          "INT": 9,
+          "KNO": 9,
+          "PRE": 7,
+          "POW": 10,
+          "STR": 9,
+          "FOR": 8
+        }
+      },
+      "Chief Burroughs": {
+        "stature": 51,
+        "build": 54,
+        "trade": "Warrior",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 9,
+          "RCA": 9,
+          "REF": 8,
+          "INT": 8,
+          "KNO": 8,
+          "PRE": 9,
+          "POW": 10,
+          "STR": 10,
+          "FOR": 10
+        }
+      },
+      "Mayor Gilman": {
+        "stature": 50,
+        "build": 52,
+        "trade": "Merchant",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 7,
+          "RCA": 7,
+          "REF": 7,
+          "INT": 9,
+          "KNO": 9,
+          "PRE": 10,
+          "POW": 11,
+          "STR": 7,
+          "FOR": 8
+        }
+      },
+      "Mrs. Croft": {
+        "stature": 46,
+        "build": 49,
+        "trade": "Merchant",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 7,
+          "RCA": 6,
+          "REF": 7,
+          "INT": 8,
+          "KNO": 8,
+          "PRE": 9,
+          "POW": 10,
+          "STR": 8,
+          "FOR": 8
+        }
+      }
     }
   }
 }

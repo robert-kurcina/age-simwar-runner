@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "start": "1927-11-02T08:00:00",
   "end": "1927-11-03T23:59:00",
   "max_turns": 20,
@@ -338,7 +338,7 @@
   "setting": "Fear!",
   "resolution": "dxd",
   "dxd": {
-    "provenance": "Provisional AGE adaptations grounded in authored roles and relative capabilities; no direct conversion or assumed supernatural abilities.",
+    "provenance": "Provisional AGE adaptations grounded in authored roles and relative capabilities; no direct conversion or assumed supernatural abilities. Body indices and Trade/Affinity selections are explicit provisional AGE assumptions. Original roll arrays equal curated final nine Attributes in the absence of documented creation adjustments; no magical powers inferred.",
     "attributes": {
       "CCA": 8,
       "RCA": 8,
@@ -348,10 +348,7 @@
       "PRE": 9,
       "POW": 8,
       "STR": 6,
-      "FOR": 7,
-      "MOV": 7,
-      "SIZ": 7,
-      "ZED": 7
+      "FOR": 7
     },
     "skills": {
       "Forensics": 2,
@@ -380,10 +377,7 @@
         "PRE": 10,
         "POW": 8,
         "STR": 7,
-        "FOR": 7,
-        "MOV": 7,
-        "SIZ": 7,
-        "ZED": 7
+        "FOR": 7
       },
       "zebediah": {
         "CCA": 10,
@@ -394,10 +388,7 @@
         "PRE": 6,
         "POW": 10,
         "STR": 9,
-        "FOR": 9,
-        "MOV": 8,
-        "SIZ": 8,
-        "ZED": 7
+        "FOR": 9
       },
       "ree": {
         "CCA": 9,
@@ -408,10 +399,7 @@
         "PRE": 8,
         "POW": 10,
         "STR": 9,
-        "FOR": 8,
-        "MOV": 8,
-        "SIZ": 8,
-        "ZED": 7
+        "FOR": 8
       }
     },
     "inactive_major_attributes": {
@@ -424,10 +412,7 @@
         "PRE": 9,
         "POW": 10,
         "STR": 9,
-        "FOR": 9,
-        "MOV": 8,
-        "SIZ": 8,
-        "ZED": 7
+        "FOR": 9
       },
       "Reverend Pike": {
         "CCA": 6,
@@ -438,10 +423,111 @@
         "PRE": 11,
         "POW": 11,
         "STR": 6,
-        "FOR": 7,
-        "MOV": 7,
-        "SIZ": 7,
-        "ZED": 7
+        "FOR": 7
+      }
+    },
+    "body_profiles": {
+      "pc": {
+        "stature": 50,
+        "build": 50,
+        "trade": "Service",
+        "affinity": "INT",
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 8,
+          "REF": 7,
+          "INT": 9,
+          "KNO": 9,
+          "PRE": 9,
+          "POW": 8,
+          "STR": 6,
+          "FOR": 7
+        }
+      },
+      "martha": {
+        "stature": 46,
+        "build": 47,
+        "trade": "Merchant",
+        "affinity": "PRE",
+        "attribute_rolls": {
+          "CCA": 6,
+          "RCA": 6,
+          "REF": 7,
+          "INT": 8,
+          "KNO": 8,
+          "PRE": 10,
+          "POW": 8,
+          "STR": 7,
+          "FOR": 7
+        }
+      },
+      "zebediah": {
+        "stature": 51,
+        "build": 54,
+        "trade": "Ranger",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 10,
+          "RCA": 9,
+          "REF": 9,
+          "INT": 9,
+          "KNO": 8,
+          "PRE": 6,
+          "POW": 10,
+          "STR": 9,
+          "FOR": 9
+        }
+      },
+      "ree": {
+        "stature": 50,
+        "build": 52,
+        "trade": "Rogue",
+        "affinity": "CCA",
+        "attribute_rolls": {
+          "CCA": 9,
+          "RCA": 8,
+          "REF": 8,
+          "INT": 7,
+          "KNO": 7,
+          "PRE": 8,
+          "POW": 10,
+          "STR": 9,
+          "FOR": 8
+        }
+      },
+      "Sheriff Cobb": {
+        "stature": 51,
+        "build": 53,
+        "trade": "Warrior",
+        "affinity": "POW",
+        "attribute_rolls": {
+          "CCA": 8,
+          "RCA": 9,
+          "REF": 8,
+          "INT": 8,
+          "KNO": 8,
+          "PRE": 9,
+          "POW": 10,
+          "STR": 9,
+          "FOR": 9
+        }
+      },
+      "Reverend Pike": {
+        "stature": 49,
+        "build": 49,
+        "trade": "Cleric",
+        "affinity": "PRE",
+        "attribute_rolls": {
+          "CCA": 6,
+          "RCA": 6,
+          "REF": 7,
+          "INT": 8,
+          "KNO": 10,
+          "PRE": 11,
+          "POW": 11,
+          "STR": 6,
+          "FOR": 7
+        }
       }
     }
   }

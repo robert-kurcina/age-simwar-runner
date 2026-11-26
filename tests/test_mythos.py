@@ -287,3 +287,21 @@ class MythosTrialTests(unittest.TestCase):
                 break
         else:
             self.fail("No sanctuary route")
+
+    def test_derived_body_profiles_in_both_trials(self):
+        from age_runtime.core import dxd_character, dxd_conditions
+        for sid in ("boothbay", "castine"):
+            s = mythos.initial(sid, 42)
+            _, rules = mythos.load(sid)
+            pc = s["dxd"]
+            self.assertEqual(pc["attributes"]["SIZ"], 12)
+            self.assertEqual(pc["body"]["weight_pounds"], 166)
+            self.assertEqual(pc["attributes"]["MOV"], pc["body"]["run"])
+            self.assertEqual(pc["concerns"]["capacity"], dxd_conditions.capacities(pc["attributes"]))
+            for nid, npc in s["npcs"].items():
+                expected = dxd_character.derive(rules["dxd"]["npc_attributes"][nid],
+                                                rules["dxd"]["body_profiles"][nid])
+                self.assertEqual(npc["body"], expected)
+                self.assertEqual(npc["dxd_attributes"], expected["attributes"])
+            self.assertNotIn("weight_pounds", str(mythos.view(s)))
+            mythos.verify(s)
