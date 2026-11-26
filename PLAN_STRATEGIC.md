@@ -32,3 +32,10 @@ Keep existing civic fixtures for regression. Do not build another generic campai
 ## Gameplay qualification
 
 A strategic turn must present a changed situation, meaningful faction-level alternatives, opportunity costs and observable consequences. Use existing actor views, conditional events and accounting before adding mechanics. At least two plausible strategies must produce materially different intermediate states and outcomes; independent factions or scheduled developments must matter even when ignored. Show commitments, bottlenecks, uncertainties and decision-relevant geography. Do not import narrative character mechanics or require SH44SER corpus expansion. Qualify one authorized recovery slice before broadening content; distinguish actual play evidence from CI.
+
+## Repository ownership correction — 2026-11-26
+
+- DONE: audit of vault-sh44ser SimWar PRs #977–#993 and repository boundaries. Public runner already contains generic private play, source compilation, project economy, faction decisions and regression tests; do not duplicate these.
+- WIP: migration of SH44SER-derived scenarios, authored verification, geographic manifests and private CI out of the canonical vault. The existing private vault package is the only verified durable copy; **do not delete it before a byte-verified local export and private qualification**.
+- NEXT: follow [private migration procedure](docs/private-simwar-migration.md), transfer PR #993's pending verifier into the ignored local package, execute the 12-turn alternatives and replay/visibility tests, then propose a separate vault cleanup PR. Close #993 only when its test is preserved.
+- BLOCKED: no claim of migration completion or deletion until local export and execution evidence exists. Never copy private scenarios into public commits or bundles.
