@@ -32,9 +32,11 @@ def initial(sid, seed):
 def options(state, rules):
     if state["ending"]:
         return []
-    return [a for a in rules["actions"] if a["id"] not in state["used"]
-            and len(state["discoveries"]) >= a.get("requires", 0)] + [
-                {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":30}]
+    candidates = [a for a in rules["actions"] if a["id"] not in state["used"]
+                  and len(state["discoveries"]) >= a.get("requires", 0)] + [
+                      {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":30}]
+    remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
+    return [a for a in candidates if a["minutes"] <= remaining]
 
 def step(state, action):
     state = copy.deepcopy(state)
@@ -56,7 +58,7 @@ def step(state, action):
         if total >= a["tn"]:
             state["discoveries"].append(a["discovery"])
     state["history"].append(action)
-    if a.get("terminal") or state["turn"] >= rules["max_turns"] or elapsed == datetime.fromisoformat(rules["end"]):
+    if a.get("terminal") or state["turn"] >= rules["max_turns"] or not options(state, rules):
         state["ending"] = {"reason": action if a.get("terminal") else "limit",
                            "evidence_count": len(state["discoveries"]),
                            "account_prepared": action == "report"}
