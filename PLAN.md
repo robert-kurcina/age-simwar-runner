@@ -1,5 +1,13 @@
 # Development plan
 
+## Product scope and delivery boundaries
+
+The runner is a reusable script-first, multi-scenario, multi-perspective simulation component of AGE, not a library workflow product. Distinguish three deliverables: (1) the generic execution engine, (2) the public synthetic campaign used to validate supported behavior, and (3) externally maintained private campaign specifications. Private canon, scenario rosters and source material must not be published here.
+
+Campaigns may contain multiple stages, each with multiple scenarios, different participant identities (including nations and factions), distinct starting conditions and asymmetric outcome criteria. Scenarios may be independent, parallel or linked by explicit approved continuity mappings; catalog prerequisites alone do not transfer state. Preserve scenario-specific objectives without assuming that every outcome is zero-sum. These are product requirements, not claims of existing implementation. Recover the original private campaign specification externally before claiming its roster or objectives are complete.
+
+The public civilian fixtures are a means to verify causal consequences, persistence and interpretation; their content is not the definition of the generic campaign catalog. Keep the existing supported execution scope and deferred-work boundaries below.
+
 ## DONE
 - Deterministic scheduled-event runner, actor reports, checkpoints and replay.
 - Administrative request ledger, review capacity, read-only interpretation exchange and completed-session comparison.
@@ -16,7 +24,7 @@
 ## NEXT (ordered, with acceptance criteria)
 2. Playable civilian recovery vertical slice: integrate a narrowly scoped, human-directed public-service restoration rule with the existing runner, rather than extending the standalone example. Acceptance: two human choices lead to different service outcomes under identical initial conditions, persisted and replay-verified, with resource accounting and actor-visible reporting.
 3. Scenario variety: add a humanitarian assistance scenario and a civic negotiation scenario in the public synthetic campaign. Acceptance: each has distinct objectives and completion criteria, executes using shared chronology and persistence; no duplicated runner.
-4. Campaign continuity: explicitly export approved civilian recovery outcomes and import them into a later scenario. Acceptance: two completed sessions can yield distinct valid starting conditions; provenance identifies the source session and variables. Independent starts remain supported.
+4. Campaign continuity and perspectives: explicitly export approved civilian recovery outcomes and import them into a later scenario. Acceptance: two completed sessions can yield distinct valid starting conditions; provenance identifies the source session and variables. Independent starts remain supported. Verify that multiple scenarios per stage, selectable participant perspectives, and distinct or compatible actor-specific outcome criteria are supported in the synthetic campaign without duplicating the runner. Do not claim private campaign completeness from fixture coverage.
 5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
 6. Campaign usability: provide a single documented workflow to list scenarios, start, inspect, submit permitted civilian requests, advance, finish and compare sessions. Acceptance: run the public campaign end to end using the documented commands.
 
@@ -33,7 +41,7 @@ Do not begin plugin development until the current Python/CLI engine has satisfie
 Acceptance: a user can operate a supported civilian campaign from ChatGPT through the deployed plugin, with the same verified engine behavior as the CLI. Hosting and account eligibility must be demonstrated, not assumed.
 
 ## DEFERRED
-- Private campaign content belongs in an external private package, not this public repository.
+- Private campaign content belongs in an external private package, not this public repository. Recover its original stage and scenario inventory, participant perspectives, chronology, objectives and continuity requirements from authorized private sources; record unknowns rather than inventing canon.
 - Historical reconstruction may be represented by documented milestones and retrospective civilian consequences; no operational military escalation, targeting, or optimization of casualties.
 - Autonomous actor policy, general causal inference, AGE/AIGen integration, rich UI and stochastic models are not delivered. Reassess only after the civilian vertical slice works.
 
