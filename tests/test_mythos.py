@@ -32,7 +32,7 @@ class MythosTrialTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "session.json"
             with self.assertRaises(ValueError):
-                mythos.start("ram-island", p, 42)
+                mythos.start("not-a-scenario", p, 42)
             v = mythos.start("boothbay", p, 42)
             with self.assertRaises(ValueError):
                 mythos.act(p, "report", v["revision"])
@@ -347,3 +347,37 @@ class MythosTrialTests(unittest.TestCase):
             break
         else:
             self.fail("No disclosure route")
+
+    def test_ram_island_clock_and_earned_revelation(self):
+        for seed in range(200):
+            s = mythos.initial("ram-island", seed)
+            self.assertNotIn("inspect_reflections", [a["id"] for a in mythos.view(s)["choices"]])
+            for _ in range(8):
+                s = mythos.step(s, "observe")
+            self.assertIn("winter_signs", s["flags"])
+            s = mythos.step(s, "inspect_reflections")
+            if "physical_record" not in s["flags"]:
+                continue
+            s = mythos.step(s, "find_journal")
+            if "journal_found" not in s["flags"]:
+                continue
+            s = mythos.step(s, "compare_journal")
+            if "ancestry_understood" not in s["flags"]:
+                continue
+            self.assertEqual(s["dxd"]["morale"]["events"][-1]["trigger"], "amazement")
+            self.assertEqual(s["events_seen"].count("winter"), 1)
+            self.assertNotIn("secret", str(mythos.view(s)))
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No earned ancestry route")
+
+    def test_ram_island_limit_and_replay(self):
+        s = mythos.initial("ram-island", 42)
+        for _ in range(20):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["ending"]["reason"], "limit")
+        self.assertEqual(s["turn"], 20)
+        self.assertIn("spring_contact", s["flags"])
+        self.assertEqual(s["dxd"]["morale"]["revelations"], [])
+        mythos.verify(s)

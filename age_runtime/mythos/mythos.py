@@ -93,7 +93,7 @@ def options(state, rules):
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
                   and ("npc" not in a or state["npcs"][a["npc"]]["location"] == a.get("location"))
                   and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
-                      {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":30}]
+                      {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
     return [a for a in candidates if a["minutes"] <= remaining
             and all(state["resources"][k] >= v for k, v in a.get("cost", {}).items())]
@@ -216,9 +216,17 @@ def step(state, action):
                 event=spec["morale_event"], turn=state["turn"])
             if not reaction["passed"]:
                 state["observations"].append(hazard["reaction"])
+                if "cosmic_failure" in hazard:
+                    revelation = hazard["cosmic_failure"]
+                    dxd_psychology.acquire(state["dxd"]["morale"], concerns,
+                        revelation=revelation["revelation"], understood=True, destabilized=True,
+                        disability=revelation["disability"], turn=state["turn"])
     for event in rules.get("events", []):
         if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
             state["events_seen"].append(event["id"])
+            for flag in event.get("grant", []):
+                if flag not in state["flags"]:
+                    state["flags"].append(flag)
             if all(flag in state["flags"] for flag in event.get("visible_requires", [])):
                 state["observations"].append(event["observation"])
     state["last_result"] = {"action": action, "success": success}
