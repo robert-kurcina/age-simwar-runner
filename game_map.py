@@ -4,6 +4,7 @@ import math
 from html import escape
 from copy import deepcopy
 from source_compiler import checked_date
+from loading_ui import status_markup, skeleton_markup, JS
 
 
 def coords(value):
@@ -71,29 +72,66 @@ def render_map(data, image=None):
 """ + fallback + """
 <p>Load interactive map to contact the external Leaflet CDN. Geographic mode also requests OpenStreetMap tiles. Image mode uses embedded local artwork and no map tiles.</p>
 <button type="button" id="load-map">Load interactive map</button>
-<div id="game-map" style="height:440px;max-height:65vh;margin-top:12px;background:#e5e8eb"></div>
+""" + status_markup("map-load") + """
+<div class="age-load-panel" style="margin-top:12px">
+<div id="game-map" aria-busy="false" style="height:440px;max-height:65vh;background:#e5e8eb"></div>
+""" + skeleton_markup("map-load") + """
+</div>
 <p id="map-distance" aria-live="polite">Select two named locations to measure straight-line distance.</p>
 </article>
 <script type="application/json" id="map-data">""" + payload + """</script>
 <script>
+""" + JS + """
+let activeMap=null, attempt=0;
 document.getElementById('load-map').addEventListener('click', function () {
- const button = this; button.disabled = true;
- const css = document.createElement('link');
+ const button=this, target=document.getElementById('game-map');
+ if(button.disabled) return;
+ button.disabled=true;
+ const token=++attempt;
+ const show=(state,message,placeholder=false)=>ageLoading('map-load',target,state,message,placeholder);
+ let timer, finished=false, css, script;
+ function fail(message){
+  if(finished || token!==attempt) return;
+  finished=true; clearTimeout(timer);
+  if(activeMap){activeMap.remove();activeMap=null;}
+  if(script) script.remove(); if(css) css.remove();
+  const fallback=document.getElementById('image-fallback');
+  if(fallback) fallback.hidden=false;
+  show('error',message);button.disabled=false;button.hidden=false;button.textContent='Retry map';
+ }
+ function ready(message){
+  if(finished || token!==attempt)return;
+  finished=true;clearTimeout(timer);show('ready',message);button.hidden=true;
+ }
+ show('loading','Loading map library…',true);
+ timer=setTimeout(()=>fail('Map loading timed out. Retry when ready.'),20000);
+ css = document.createElement('link');
  css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
  css.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
- css.crossOrigin = 'anonymous'; document.head.appendChild(css);
- const script = document.createElement('script');
+ css.crossOrigin = 'anonymous'; css.onerror=()=>fail('Map stylesheet unavailable.');
+ script = document.createElement('script');
  script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
  script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
  script.crossOrigin = 'anonymous';
- script.onerror = () => {button.disabled = false; document.getElementById('map-distance').textContent = 'Map library unavailable.';};
- script.onload = () => {
+ script.onerror=()=>fail('Map library unavailable.');
+ script.onload=()=>{
+ if(finished || token!==attempt)return;
+ try {
   const d = JSON.parse(document.getElementById('map-data').textContent);
   const image = d.image;
   const map = L.map('game-map', image ? {crs:L.CRS.Simple,minZoom:-6,maxZoom:3} : {preferCanvas:false});
+  activeMap=map;
   if (image) {
+   show('loading','Loading canonical artwork…',true);
    const bounds = [[-image.height,0],[0,image.width]];
-   const artwork = L.imageOverlay('data:image/png;base64,'+image.png_base64,bounds).addTo(map);
+   const artwork = L.imageOverlay('data:image/png;base64,'+image.png_base64,bounds);
+   artwork.once('error',()=>fail('Canonical artwork could not be displayed.'));
+   artwork.once('load',()=>{
+    if(finished || token!==attempt)return;
+    document.getElementById('image-fallback').hidden=true;
+    ready('Canonical artwork loaded.');
+   });
+   artwork.addTo(map);
    const points = L.layerGroup().addTo(map);
    for (const item of image.annotations || []) {
     const label = document.createElement('span');
@@ -105,15 +143,33 @@ document.getElementById('load-map').addEventListener('click', function () {
    }
    L.control.layers({'Canonical artwork':artwork},{'Named locations':points}).addTo(map);
    map.fitBounds(bounds);
-   document.getElementById('image-fallback').hidden = true;
    document.getElementById('map-distance').textContent = 'Image coordinates only; geographic distances unavailable.';
-   button.hidden = true;
    return;
   }
   map.setView(d.center,d.zoom);
+  show('loading','Loading geographic tiles…',true);
+  let tileErrors=0, tileLoaded=0;
   const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom:19
-  }).addTo(map);
+  });
+  tiles.on('tileload',()=>{tileLoaded++;});
+  tiles.on('tileerror',()=>{tileErrors++;});
+  tiles.on('load',()=>{
+   if(token!==attempt)return;
+   if(!finished && tileLoaded===0){fail('Geographic tiles unavailable. Retry when ready.');return;}
+   if(!finished)ready(tileErrors?'Map loaded; some tiles unavailable.':'Map loaded.');
+   else if(activeMap===map)show('ready',tileErrors?'Some geographic tiles unavailable.':'Map loaded.');
+  });
+  let refreshTimer;
+  tiles.on('loading',()=>{
+   tileErrors=0;tileLoaded=0;
+   if(finished && activeMap===map){
+    show('loading','Loading map tiles…');clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(()=>{if(activeMap===map)show('ready','Some tiles are taking longer than expected.');},20000);
+   }
+  });
+  tiles.on('load',()=>clearTimeout(refreshTimer));
+  tiles.addTo(map);
   const names = L.layerGroup().addTo(map), measurements = L.layerGroup().addTo(map);
   L.control.layers({'Reference map':tiles}, {'Named locations':names,'Measurements':measurements}).addTo(map);
   L.control.scale({imperial:false}).addTo(map);
@@ -135,8 +191,9 @@ document.getElementById('load-map').addEventListener('click', function () {
     }
    });
   }
-  button.hidden = true;
+ }catch(error){fail('Map could not be initialized. Retry when ready.');}
  };
- document.head.appendChild(script);
+ css.onload=()=>{if(!finished && token===attempt)document.head.appendChild(script);};
+ document.head.appendChild(css);
 });
 </script>"""
