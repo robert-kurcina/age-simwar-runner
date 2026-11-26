@@ -157,6 +157,51 @@ class PrivatePlayTest(unittest.TestCase):
             save(path, catalog)
             with self.assertRaises(ValueError):
                 start(path, "external-relief", "relief", owners, "scarce")
+            # Independent human consent within a single authoritative shared checkpoint.
+            from private_play import switch_perspective
+            agreement = copy.deepcopy(spec)
+            a = agreement["scenario"]
+            a.pop("community_assistance")
+            a.pop("assistance_capacity")
+            a["id"] = "external-agreement"
+            a["initial"] = {"participating_councils": 0, "council_a_joined": 0, "council_b_joined": 0}
+            a["actors"] = {
+                "council_a": {"label": "Council A", "visible_keys": ["participating_councils", "council_a_joined"]},
+                "council_b": {"label": "Council B", "visible_keys": ["participating_councils", "council_b_joined"]}}
+            a["civic_agreement"] = True
+            a["action_catalog"] = {
+                "join_council_a": {"description": "Council A joins", "actors": ["council_a"]},
+                "join_council_b": {"description": "Council B joins", "actors": ["council_b"]}}
+            save(root / "agreement.json", agreement)
+            catalog["groups"][0]["scenarios"].append({
+                "id": a["id"], "title": "Agreement", "spec": "agreement.json",
+                "status": "reviewed-illustrative", "briefing_context": [
+                    {"id": "a-context", "summary": "Council A local context.", "evidence": "context",
+                     "actors": ["council_a"], "known_from": "2000-01-01", "reviewed_for": "2000-01-01"},
+                    {"id": "b-context", "summary": "Council B local context.", "evidence": "context",
+                     "actors": ["council_b"], "known_from": "2000-01-01", "reviewed_for": "2000-01-01"}]})
+            save(path, catalog)
+            with self.assertRaises(ValueError):
+                start(path, a["id"], "council_a", owners)
+            shared = start(path, a["id"], "council_a", owners, shared=True)
+            self.assertEqual(briefing(shared)["context"][0]["id"], "a-context")
+            with self.assertRaises(ValueError):
+                update(shared, "join_council_b")
+            shared = update(shared, "join_council_a", 1)
+            self.assertEqual(shared["state"]["values"]["participating_councils"], 1)
+            shared = switch_perspective(shared, "council_b")
+            self.assertEqual(briefing(shared)["context"][0]["id"], "b-context")
+            self.assertNotIn("council_a_joined", briefing(shared)["reports"])
+            self.assertEqual(briefing(shared)["own_requests"], [])
+            save(root / "shared.json", shared)
+            shared = verify(json.loads((root / "shared.json").read_text()))
+            shared = update(shared, "join_council_b", 1)
+            self.assertEqual(shared["state"]["values"]["participating_councils"], 2)
+            self.assertEqual(len(shared["state"]["requests"]), 2)
+            shared = switch_perspective(shared, "council_a")
+            self.assertEqual(len(briefing(shared)["own_requests"]), 1)
+            with self.assertRaises(ValueError):
+                switch_perspective(session, "relief")
             # Resume without the source files or inventory.
             path.unlink()
             (root / "spec.json").unlink()
