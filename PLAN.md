@@ -204,3 +204,9 @@ Each development increment must complete an acceptance criterion or a concrete i
 - README is a player-first launch guide with separate connected and offline prompts, current campaign availability, distribution status and developer references. LLM-specific instructions remain in 00_Meta.
 - Incorporate the useful standalone guide and extracted-package smoke test from unmerged PR #56 into current main architecture. Bundle workflow includes START_HERE.md and tests the extracted source, including actual Mythos CLI start, action and inspect. CI and independent Chat upload qualification pending; no claim that private archives exist.
 - Next: qualify standalone artifact, convert Castine and Ram Island, then private SH44SER and Conflagration packaging. Reconcile superseded PR #56 after verification. Do not expand engine architecture unnecessarily.
+
+## WIP — Canonical participant profiles
+
+- Author approved canonical faction and NPC definitions for consistent behavior across separate runs. Audited SH44SER and DXD/Sarna Len source structures at pinned revisions; preserve native capability scales, character motivations, organizational models and dated national values. Do not back-project later metrics or invent canonical behavioral scores. Private field mappings stay with source owners.
+- Added common dated participant profile validation and deterministic compilation of existing structured nonnegative integer references, explicitly hypothetical literals and unresolved values; no automatic prose-to-number extraction or decision policy. Three tests authored. CI pending.
+- Next: qualify synthetic profiles, define reviewed private source-side mappings and integrate frozen profiles into scenario initialization without leaking referee-only state. Then bounded participant decision policies, generated scenarios and persistent event management. PR #63 remains separately open; this increment branches from main without depending on it.
