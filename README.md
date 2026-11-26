@@ -1,10 +1,27 @@
 # AGE SimWar Runner
 
-A prompt-driven scenario simulation component of AGE. Play within a single ordinary ChatGPT conversation using the GitHub Connector and the authoritative Python runner (Python 3.10+, standard library only).
+A prompt-driven scenario simulation component of AGE. Play within a single ordinary ChatGPT conversation using either the active GitHub Connector or a standalone ZIP archive and the same authoritative Python runner (Python 3.10+, standard library only).
 
 ## Quick start — play in ChatGPT
 
-### Prerequisites
+Choose either **GitHub-connected play** (live authorized source retrieval) or **standalone ZIP play** (bundled engine and campaigns, no GitHub connection needed).
+
+### Option A — Standalone ZIP (no GitHub Connector required)
+
+Download the `chat-runtime-<commit>` artifact from a successful main-branch [Chat runtime bundle workflow](https://github.com/robert-kurcina/age-simwar-runner/actions/workflows/chat-runtime-bundle.yml). Upload the entire downloaded ZIP into a ChatGPT conversation that supports file uploads and Python execution. Enter:
+
+```text
+Start AGE SimWar Runner from the attached ZIP. Follow START_HERE.md,
+execute the bundled Python engine, and show me the available campaigns,
+scenarios and participant perspectives. Keep gameplay in this conversation.
+Do not connect to GitHub or reconstruct the engine in prose.
+```
+
+The artifact includes a launch guide, exact pinned source archive, revision and SHA-256 checksum. Use the [standalone launch instructions](docs/standalone-chat.md), which supersede GitHub retrieval requirements. Public artifacts contain only public campaign data. GitHub access may be needed to download an artifact initially; no GitHub account or connection is needed to play an already obtained ZIP. Artifacts expire according to the workflow retention policy. The ZIP cannot supply missing private scenarios or canonical source material; authorized private distributions are separate.
+
+### Option B — GitHub-connected play
+
+#### Prerequisites
 
 - Your ChatGPT account has the GitHub Connector configured and active, with access to `robert-kurcina/age-simwar-runner`.
 - The current conversation can invoke that connector and execute Python code.
@@ -12,7 +29,7 @@ A prompt-driven scenario simulation component of AGE. Play within a single ordin
 
 No local installation, hosted game server, MCP service, or manual checkpoint transfer is required for the intended single-conversation experience. Connector capabilities may vary by conversation; repository read access alone does not establish runtime execution capability.
 
-### Launch prompt
+#### Launch prompt
 
 Open a ChatGPT conversation (preferably in your AGE project), activate the GitHub Connector, and paste:
 
@@ -224,4 +241,4 @@ Export validates deterministic replay. Verify and restore require matching pinne
 
 ## Offline Chat runtime transfer
 
-The **Chat runtime bundle** Actions workflow exports the tested public tracked source as an artifact containing `runner-source.zip`, `ENGINE_REVISION.txt` and `SHA256SUMS`. Prefer retrieving a successful **main** run's artifact directly through the GitHub Connector's artifact download capability into Chat's execution environment. Verify the archive checksum and revision and extract into a fresh execution directory. Manual download/upload is an optional fallback if direct transfer fails. PR runs may use a synthetic merge commit; prefer main for stable provenance. The artifact expires after 14 days. Direct artifact transfer has been demonstrated in ordinary Chat; availability is not guaranteed in every conversation. Never include private sources or sessions in this public workflow.
+The **Chat runtime bundle** Actions workflow exports a standalone playable public artifact containing `START_HERE.md`, `runner-source.zip`, `ENGINE_REVISION.txt` and `SHA256SUMS`. Prefer retrieving a successful **main** run's artifact directly through the GitHub Connector's artifact download capability into Chat's execution environment. Verify the archive checksum and revision and extract into a fresh execution directory. Manual download/upload is an optional fallback if direct transfer fails. PR runs may use a synthetic merge commit; prefer main for stable provenance. The artifact expires after 14 days. Direct artifact transfer has been demonstrated in ordinary Chat; availability is not guaranteed in every conversation. Never include private sources or sessions in this public workflow.
