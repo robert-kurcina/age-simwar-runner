@@ -97,6 +97,8 @@ def initial(sid, seed):
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
+        if "activity" in rules:
+            state["dxd"]["activity"] = dxd_conditions.activity_initial(derived["pc"]["physical"]["sleep_limit_hours"], rules["activity"]["initial_awake_seconds"])
         for nid, profile in state["npcs"].items():
             profile["dxd_attributes"] = derived[nid]["attributes"]
             profile["body"] = derived[nid]
@@ -142,6 +144,19 @@ def spatial_options(state, rules, candidates):
 def options(state, rules):
     if state["ending"]:
         return []
+    clock = state["dxd"].get("activity")
+    if clock and clock["status"] == "asleep":
+        remaining = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
+        if remaining <= 0:
+            return []
+        duration = min(remaining, max(60, clock["required_sleep_seconds"] - clock["sleep_seconds"]))
+        result = [{"id": "continue_sleep", "label": "Continue sleeping", "location": state["location"],
+                   "duration_seconds": duration, "local_seconds": duration, "activity": "sleep",
+                   "interval_seconds": 3600, "repeatable": True, "route": {"nodes": [state["location"]], "seconds": 0, "minutes": 0, "terrain": []}}]
+        if clock["sleep_seconds"] >= 3600 and remaining >= 60:
+            result.append(dict(result[0], id="wake_early", label="Attempt to wake early", duration_seconds=60,
+                               local_seconds=60, interval_seconds=60))
+        return result
     candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
                   and len(state["discoveries"]) >= a.get("requires", 0)
                   and all(f in state["flags"] for f in a.get("requires_flags", []))
@@ -154,6 +169,14 @@ def options(state, rules):
                   and (not a.get("available_until") or state["time"] < a["available_until"])
                   and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
+    if clock and state["location"] == rules["activity"]["sleep_location"]:
+        available = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
+        duration = min(available, dxd_conditions.required_sleep(state["dxd"]["concerns"], state["dxd"]["attributes"]))
+        if duration > 0:
+            candidates.append({"id": "sleep_room", "label": "Sleep at the boarding house",
+                               "location": state["location"], "seconds": duration, "activity": "sleep",
+                               "interval_seconds": 3600, "repeatable": True,
+                               "cost": {"cash_cents": rules["activity"]["sleep_cost_cents"]}})
     candidates = [dict(a, duration_seconds=int((datetime.fromisoformat(a["until"]) - datetime.fromisoformat(state["time"])).total_seconds()) if "until" in a else pacing.duration(a)) for a in candidates]
     if "spatial" in rules:
         candidates = spatial_options(state, rules, candidates)
@@ -272,6 +295,51 @@ def advance_opposition(state, rules, action, success):
         state["flags"].append(cfg["grant"])
         state["observations"].append(cfg["observation"])
 
+def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=False):
+    """Apply recovery and events in chronological order, stopping at explicit interruptions."""
+    pc = state["dxd"]
+    clock = pc["activity"]
+    start = datetime.fromisoformat(state["time"])
+    finish = start + timedelta(seconds=seconds)
+    cursor = start
+    events = sorted((e for e in rules.get("events", []) if e["id"] not in state["events_seen"]
+                     and start < datetime.fromisoformat(e["at"]) <= finish), key=lambda e: e["at"])
+    boundaries = sorted(set([finish] + [datetime.fromisoformat(e["at"]) for e in events]))
+    reason = None
+    for boundary in boundaries:
+        span = int((boundary - cursor).total_seconds())
+        before = dxd_conditions.degrees(pc["concerns"])["stress"]
+        actual = dxd_conditions.advance_activity(pc["concerns"], clock, span, mode, safe=safe,
+                                                 seed=state["seed"], attributes=pc["attributes"])
+        dxd_morale.calm(pc["morale"], safe=safe, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
+        cursor += timedelta(seconds=actual)
+        state["time"] = cursor.isoformat()
+        advance_events(state, rules, cursor)
+        if mode != "sleep" and clock["pending_sleep_seconds"] == 0:
+            dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
+            reason = "involuntary_sleep"
+            break
+        if interruptible and any(e.get("interrupt_activity") and datetime.fromisoformat(e["at"]) == cursor
+                                 and (not e.get("locations") or state["location"] in e["locations"]) for e in events):
+            reason = "event"
+            break
+    return reason
+
+def finish_activity(state, rules, action, a, success, reason=None):
+    state["last_result"] = {"action": action, "success": success}
+    if reason:
+        state["last_result"]["interrupted"] = reason
+    pacing.reconcile_scene(state, rules)
+    pacing.record(state, a)
+    state["history"].append(action)
+    if not options(state, rules):
+        state["ending"] = {"reason": "limit", "evidence_count": len(state["discoveries"]),
+                           **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
+                               "account_prepared": "written_account", "account_relayed": "account_relayed",
+                               "account_entrusted": "account_entrusted"}).items()},
+                           "epilogue": rules["ending_text"]["limit"], "scores": scores(state, action)}
+    return state
+
 def step(state, action):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
@@ -282,18 +350,60 @@ def step(state, action):
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
     state["turn"] += 1
+    clock = state["dxd"].get("activity")
     if "spatial" in rules and a["route"]["seconds"]:
-        arrival = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["route"]["seconds"])
-        advance_events(state, rules, arrival)
-        state["transitions"].append({"turn": state["turn"], "start": state["time"], "arrival": arrival.isoformat(), **a["route"]})
-    if "progression" in state or "pacing" in rules:
-        advance_events(state, rules, elapsed)
-    state["time"] = elapsed.isoformat()
+        departure = state["time"]
+        arrival = datetime.fromisoformat(departure) + timedelta(seconds=a["route"]["seconds"])
+        if clock:
+            reason = activity_segment(state, rules, a["route"]["seconds"], "travel")
+            if reason:
+                # No partial edge position is modeled: retain the last anchored node.
+                return finish_activity(state, rules, action, a, False, reason)
+        else:
+            advance_events(state, rules, arrival)
+        state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
     state["location"] = a.get("location", state["location"])
+    if clock:
+        # Events during travel may invalidate the intended local action.
+        if (any(f in state["flags"] for f in a.get("excludes_flags", []))
+                or not all(f in state["flags"] for f in a.get("requires_flags", []))
+                or not npc_available(state, rules, a)):
+            return finish_activity(state, rules, action, a, False, "availability_changed")
+        mode = a.get("activity", "active")
+        if action == "sleep_room":
+            for key, amount in a.get("cost", {}).items():
+                state["resources"][key] -= amount
+            dxd_conditions.begin_sleep(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
+        elif action == "wake_early":
+            # One minute per attempted awakening; failed tests leave sleep active.
+            pass
+        elif a.get("cost"):
+            for key, amount in a["cost"].items():
+                state["resources"][key] -= amount
+        reason = activity_segment(state, rules, a.get("local_seconds", a["duration_seconds"]), mode,
+                                  safe=a.get("safe", False), interruptible=mode in ("rest", "low_energy", "sleep", "restorative", "quiet"))
+        if mode == "sleep":
+            pc = state["dxd"]
+            before = dxd_conditions.degrees(pc["concerns"])["stress"]
+            woke = False
+            if action == "wake_early" or clock["sleep_seconds"] >= clock["required_sleep_seconds"]:
+                woke = dxd_conditions.wake(pc["concerns"], clock, pc["attributes"], seed=state["seed"],
+                                          forced=action == "wake_early")
+            dxd_morale.calm(pc["morale"], safe=False, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
+            return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
+        if reason:
+            return finish_activity(state, rules, action, a, False, reason)
+        if any(f in state["flags"] for f in a.get("excludes_flags", [])):
+            return finish_activity(state, rules, action, a, False, "availability_changed")
+    else:
+        if "progression" in state or "pacing" in rules:
+            advance_events(state, rules, elapsed)
+        state["time"] = elapsed.isoformat()
     if action != "observe" and not a.get("repeatable"):
         state["used"].append(action)
-    for key, amount in a.get("cost", {}).items():
-        state["resources"][key] -= amount
+    if not clock:
+        for key, amount in a.get("cost", {}).items():
+            state["resources"][key] -= amount
     npc = state["npcs"].get(a.get("npc"))
     if npc is not None:
         if npc["location"] is None:
@@ -336,7 +446,8 @@ def step(state, action):
         dxd_conditions.add(concerns, **a.get("concern_always", {}))
         dxd_conditions.add(concerns, **a.get("concern_success" if success else "concern_failure", {}))
         before = dxd_conditions.degrees(concerns)["stress"]
-        dxd_conditions.recover(concerns, a.get("local_seconds", a["duration_seconds"]) // 60, **a.get("recovery", {}))
+        if not clock:
+            dxd_conditions.recover(concerns, a.get("local_seconds", a["duration_seconds"]) // 60, **a.get("recovery", {}))
         dxd_morale.calm(state["dxd"]["morale"], safe=a.get("recovery", {}).get("safe", False),
                         stress_degrees_removed=before - dxd_conditions.degrees(concerns)["stress"])
         if success and "morale_success" in a:
@@ -480,6 +591,9 @@ def view(state):
         scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
+    if "activity" in state["dxd"]:
+        clock = state["dxd"]["activity"]
+        scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}
     return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
