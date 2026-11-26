@@ -99,3 +99,7 @@ PR #22 passed CI and merged. Added a local read-only Git resolver and determinis
 ## Scenario variation increment
 
 PR #23 merged after successful CI. Added explicit base-spec-pinned overlays for synthetic civilian resource budgets and actor reporting delays. Variations preserve source dependencies and distinguish hypothetical budget changes from source facts; distinct scenario IDs and digests keep checkpoints separate. Two tests authored; CI pending. No arbitrary rule mutation, private canon or campaign transition integration for variations is claimed.
+
+## Unified campaign session increment
+
+PR #24 passed CI and merged. Added a single local referee CLI for list/start/inspect/submit/advance/finish/report/compare, with pinned session bundles and explicit previous-session transitions. An end-to-end subprocess regression exercises restoration, assistance, council consent, resumption, baseline comparison and invalid operations. CI pending. No private source qualification, concurrent writer safety, recursive provenance authentication or remote authorization is claimed. Existing civilian fixture scope is unchanged.
