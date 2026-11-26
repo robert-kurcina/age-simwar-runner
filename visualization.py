@@ -3,6 +3,7 @@ from html import escape
 from private_play import briefing
 from game_map import projection, render_map
 from image_map import projection as image_projection
+from loading_ui import CSS as LOADING_CSS
 
 LABELS = {
     "households_assisted": "Households assisted",
@@ -81,6 +82,7 @@ def render(session):
 <html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(data['title'])} — AGE SimWar</title>
 <style>
+{LOADING_CSS}
 *{{box-sizing:border-box}}body{{margin:0;background:#f3f5f6;color:#202d36;font:16px system-ui,sans-serif}}
 main{{max-width:1000px;margin:auto;padding:24px}}header{{border-bottom:1px solid #ccd5dc;padding-bottom:16px}}
 h1{{font-size:clamp(22px,4vw,34px);margin:8px 0}}h2{{font-size:16px;margin:0 0 12px}}
