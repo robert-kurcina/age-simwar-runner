@@ -59,6 +59,18 @@ These example orders apply only when the selected scenario supports them. ChatGP
 
 **Current status:** The public runtime archive was successfully transferred into ordinary Chat and the pinned Python engine passed 68 regression tests there. The public opening and subsequent gameplay were demonstrated; the full private campaign prompt-to-play workflow remains to be qualified. Supported executable scope is civilian recovery and institutional coordination, not operational combat adjudication or predictive historical simulation. See [PLAN.md](PLAN.md).
 
+## Experimental Mythos campaign
+
+Run `python game.py list` to discover bundled campaigns and their implementation status. Strategic scenarios continue to use `play.py`; the Mythos trial uses `game.py`. Boothbay is a bounded investigation trial, not the full AIMythos ruleset. Castine and Ram Island are preserved but not yet executable.
+
+```sh
+python game.py start boothbay /tmp/boothbay-session.json --seed 42
+python game.py inspect /tmp/boothbay-session.json
+python game.py act /tmp/boothbay-session.json inspect_docks --revision <revision-from-inspect>
+```
+
+For Chat play, use actual engine choices and current revision; present narrative and discovered facts only. Do not expose GM-only source fields, dice or attributes. Do not invent state changes. The current trial tracks time, discoveries, fixed inventory and endings, with reproducible 2D6 attribute tests. Full traits, condition changes, inventory mutation, NPC behavior, scored epilogues and custom characters remain unimplemented. Trial action durations and opening are provisional adaptations.
+
 ## Developer and local operation reference
 
 The remaining sections describe alternative CLI workflows and regression fixtures. They are not prerequisites for ordinary Chat gameplay.

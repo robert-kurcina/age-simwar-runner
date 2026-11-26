@@ -1,0 +1,31 @@
+{
+  "repository": "robert-kurcina/aimythos",
+  "revision": "65a7abdeaee9a79a594d13ea333014a294b1bb11",
+  "files": [
+    {
+      "source": "src/dagon-qwen-character-system.json",
+      "destination": "frameworks/mythos/character-system.json",
+      "blob": "36c77c66c01efcadfa517019a377909ea547cfcf"
+    },
+    {
+      "source": "src/dagon-qwen-mythos-outlay.json",
+      "destination": "frameworks/mythos/framework.json",
+      "blob": "46c06749f30eedc3b4b2b436f61edba5f0879080"
+    },
+    {
+      "source": "src/dagon-qwen-scenario-outlay-boothbay.json",
+      "destination": "campaigns/mythos/boothbay.json",
+      "blob": "aa04b41e2a2c23b1a464b148422614e2dc63a34d"
+    },
+    {
+      "source": "src/dagon-qwen-scenario-outlay-castine.json",
+      "destination": "campaigns/mythos/castine.json",
+      "blob": "e454cbaa83299a48089fc0eaa3ece94faf899f1a"
+    },
+    {
+      "source": "src/dagon-qwen-scenario-outlay-ram.json",
+      "destination": "campaigns/mythos/ram-island.json",
+      "blob": "3578add3716f0c7dd6df5b52666bb290daaf0b76"
+    }
+  ]
+}

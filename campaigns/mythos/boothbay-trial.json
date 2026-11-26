@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "start": "1927-10-13T08:00:00",
+  "end": "1927-10-14T23:59:00",
+  "max_turns": 20,
+  "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
+  "start_location": "Harbor Docks",
+  "locations": [
+    "Harbor Docks",
+    "Harbor Diner",
+    "Sailor's Rest Boarding House",
+    "Creek Inlet South",
+    "Lighthouse (Western Point)"
+  ],
+  "actions": [
+    {
+      "id": "inspect_docks",
+      "label": "Examine the waterfront",
+      "location": "Harbor Docks",
+      "minutes": 60,
+      "attribute": "Investigation",
+      "tn": 7,
+      "discovery": "A census badge lies near the waterfront."
+    },
+    {
+      "id": "talk_eleanor",
+      "label": "Ask the waitress about local events",
+      "location": "Harbor Diner",
+      "minutes": 45,
+      "attribute": "Persuasion",
+      "tn": 7,
+      "discovery": "Eleanor says her brother disappeared last month."
+    },
+    {
+      "id": "inspect_room",
+      "label": "Examine the abandoned luggage",
+      "location": "Sailor's Rest Boarding House",
+      "minutes": 60,
+      "attribute": "Investigation",
+      "tn": 7,
+      "discovery": "The abandoned suitcase contains census paperwork."
+    },
+    {
+      "id": "visit_elias",
+      "label": "Speak with the retired fisherman",
+      "location": "Creek Inlet South",
+      "minutes": 90,
+      "attribute": "Persuasion",
+      "tn": 10,
+      "discovery": "Elias has kept a journal of unusual coastal events."
+    },
+    {
+      "id": "report",
+      "label": "Prepare a written account for outside readers",
+      "location": "Lighthouse (Western Point)",
+      "minutes": 60,
+      "requires": 2,
+      "terminal": true
+    },
+    {
+      "id": "depart",
+      "label": "End the investigation and leave town",
+      "location": "Harbor Docks",
+      "minutes": 60,
+      "terminal": true
+    }
+  ]
+}
