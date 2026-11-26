@@ -192,7 +192,7 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(a["dxd"]["favor"], 2)
         t = a["dxd"]["tests"][0]
         self.assertEqual(t["inputs"]["favor"], 1)
-        self.assertEqual(t["result"]["tn"], 10)
+        self.assertEqual(t["result"]["tn"], 7)
         b = mythos.step(mythos.initial("boothbay", 42), "visit_elias")
         self.assertEqual(a, b)
         self.assertNotIn("dxd", mythos.view(a))
@@ -729,7 +729,7 @@ class MythosTrialTests(unittest.TestCase):
             if clock["pending_sleep_seconds"] != 0:
                 continue
             self.assertLess(elapsed, 10800)
-            self.assertFalse(clock["checks"][0]["result"]["passed"])
+            self.assertFalse(clock["checks"][-1]["result"]["passed"])
             c.begin_sleep(concerns, clock, attrs)
             needed = clock["required_sleep_seconds"]
             c.advance_activity(concerns, clock, needed, "sleep", attributes=attrs)
@@ -789,3 +789,128 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(e["dice"], 3)
         self.assertEqual(e["checks"][0]["kind"], "overflow")
         mythos.verify(s)
+
+    def test_gm_context_separate_and_bounded(self):
+        s = mythos.initial("boothbay", 42)
+        public = mythos.view(s)
+        packet = mythos.gm_context(s)
+        self.assertEqual(packet["audience"], "gm_only")
+        self.assertEqual(packet["player_surface"]["revision"], public["revision"])
+        self.assertNotIn("referee", public)
+        self.assertNotIn("official_attention", str(public["event_pressure"]))
+        self.assertIn("official_attention", [x["id"] for x in packet["referee"]["clocks"]])
+        self.assertEqual(packet["referee"]["participants"], [])
+        self.assertIn("watch_patterns", packet["referee"]["approaches"]["inspect_docks"])
+        s = mythos.step(s, "move:Harbor Diner")
+        packet = mythos.gm_context(s)
+        self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
+        self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
+
+    def test_proposal_reuses_authority_and_replays(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "inspect_docks", "approach": "watch_patterns",
+                   "intent": "Watch the fishermen and inspect the exposed waterfront."}
+        result = mythos.step(s, "inspect_docks", request)
+        self.assertEqual(result["turn"], 1)
+        self.assertEqual(result["dxd"]["tests"][0]["gathered"]["attribute"][0]["name"], "REF")
+        self.assertEqual(result["history"][-1], {"proposal": request})
+        self.assertEqual(result["last_result"]["approach"], "watch_patterns")
+        self.assertIn("dos", result["last_result"]["adjudication"])
+        self.assertEqual(result["used"], ["inspect_docks"])
+        mythos.verify(result)
+        with self.assertRaises(ValueError):
+            mythos.step(result, "inspect_docks", request)
+
+    def test_invalid_proposals_leave_state_unchanged(self):
+        s = mythos.initial("boothbay", 42)
+        before = mythos.digest(s)
+        request = {"action": "inspect_docks", "approach": "watch_patterns", "intent": "Look carefully."}
+        for invalid in (dict(request, grant=["invented"]), dict(request, approach="invented"),
+                        dict(request, action="read_journal"), dict(request, intent="")):
+            with self.assertRaises(ValueError):
+                mythos.step(s, "inspect_docks", invalid)
+        self.assertEqual(mythos.digest(s), before)
+
+    def test_proposal_revision_and_checkpoint(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "session.json"
+            v = mythos.start("boothbay", path, 42)
+            request = {"action": "inspect_docks", "approach": "watch_patterns",
+                       "intent": "Inspect through patient observation."}
+            with self.assertRaisesRegex(ValueError, "stale"):
+                mythos.act(path, "inspect_docks", "stale", request)
+            self.assertEqual(mythos.inspect(path), v)
+            v = mythos.act(path, "inspect_docks", v["revision"], request)
+            self.assertEqual(mythos.inspect(path), v)
+
+    def test_native_interaction_modes(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "talk_eleanor")
+        test = s["dxd"]["tests"][0]
+        self.assertEqual(test["inputs"]["tn"], 7)
+        self.assertNotIn("narrative", test["inputs"])
+        self.assertIn("margin", test["result"])
+        for action in ("visit_elias", "inspect_room"):
+            s = mythos.step(s, action)
+        s = mythos.step(s, "speak_burroughs")
+        test = s["dxd"]["tests"][-1]
+        self.assertEqual(test["inputs"]["active_raw"], s["dxd"]["attributes"]["PRE"])
+        self.assertEqual(test["inputs"]["target_raw"], s["npcs"]["burroughs"]["dxd_attributes"]["INT"])
+        self.assertIsNotNone(test["result"]["opponent"])
+        mythos.verify(s)
+
+    def test_local_proposal_creates_record_not_clue(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "local:survey:Harbor Docks", "approach": "survey",
+                   "intent": "Survey the waterfront from a safe distance."}
+        self.assertNotIn(request["action"], [a["id"] for a in mythos.view(s)["choices"]])
+        self.assertIn(request["action"], [a["action"] for a in mythos.gm_context(s)["referee"]["local_capabilities"]])
+        after = mythos.step(s, request["action"], request)
+        self.assertEqual(after["time"], "1927-10-13T08:10:00")
+        self.assertEqual(after["discoveries"], s["discoveries"])
+        self.assertEqual(after["local_records"][0]["kind"], "survey")
+        mythos.verify(after)
+        with self.assertRaises(ValueError):
+            mythos.step(after, request["action"], request)
+        with self.assertRaises(ValueError):
+            mythos.step(s, "local:survey:Harbor Diner", dict(request, action="local:survey:Harbor Diner"))
+
+    def test_local_rapport_requires_contact(self):
+        s = mythos.initial("boothbay", 42)
+        request = {"action": "local:build_rapport:eleanor", "approach": "build_rapport",
+                   "intent": "Introduce myself and establish rapport."}
+        with self.assertRaises(ValueError):
+            mythos.step(s, request["action"], request)
+        s = mythos.step(s, "talk_eleanor")
+        s = mythos.step(s, request["action"], request)
+        self.assertEqual(s["local_records"][-1]["target"], "eleanor")
+        mythos.verify(s)
+
+    def test_danger_beat_is_local_and_replayable(self):
+        from age_runtime.mythos import beats
+        s = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        req = {"action": "beat:inlet_withdrawal", "approach": "careful_footing",
+               "intent": "Retreat along the dry margin."}
+        with self.assertRaises(ValueError):
+            mythos.step(s, req["action"], req)
+        # Obtain the existing ecological encounter by ordinary exposed activity.
+        for seed in range(100):
+            s = mythos.step(mythos.initial("boothbay", seed), "move:Creek Inlet South")
+            for _ in range(18):
+                if "filament_anomaly" in s["flags"]:
+                    break
+                s = mythos.step(s, "observe")
+            if "filament_anomaly" in s["flags"]:
+                break
+        else:
+            self.fail("No filament encounter")
+        self.assertTrue(beats.available(s, rules))
+        prior = s["pacing"]["narrative_beats"]
+        after = mythos.step(s, req["action"], req)
+        self.assertEqual(after["pacing"]["narrative_beats"], prior + 1)
+        self.assertIn("inlet_withdrawal", after["flags"])
+        self.assertEqual(after["location"], s["location"])
+        self.assertEqual(after["discoveries"], s["discoveries"])
+        with self.assertRaises(ValueError):
+            mythos.step(after, req["action"], req)
+        mythos.verify(after)

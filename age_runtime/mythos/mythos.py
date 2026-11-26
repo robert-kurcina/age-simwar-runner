@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -64,6 +64,8 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if rules.get("local_proposals"):
+        state["local_records"] = []
     if "pacing" in rules:
         state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:
@@ -189,7 +191,13 @@ def options(state, rules):
 
 def resolve_dxd(state, rules, action):
     """Gather only authored applicable modifiers and allocate Favor before rolling."""
-    spec = action["test"]
+    spec = copy.deepcopy(action["test"])
+    interaction = spec.get("interaction")
+    if interaction:
+        if spec["attribute"] != "PRE" or interaction not in ("ordinary", "pivotal") or action.get("npc") not in state["npcs"]:
+            raise ValueError("invalid Interaction Test")
+        if dxd.attribute_dm(state["dxd"]["attributes"]["INT"]) >= 2:
+            spec["additional_attributes"] = ["INT"]
     cfg = rules["dxd"]
     pc = state["dxd"]
     gathered = dxd_modifiers.gather(pc["attributes"], pc["skills"], pc["traits"], spec)
@@ -214,7 +222,13 @@ def resolve_dxd(state, rules, action):
     bonus = min(policy["maximum"], max(0, net))
     penalty = max(0, -net)
     args = {"favor": favor, "bonus": bonus}
-    if "npc_attribute" in spec:
+    if interaction == "pivotal":
+        npc_attrs = state["npcs"][action["npc"]]["dxd_attributes"]
+        # NPCs do not receive the PC-only additional Attribute bonus.
+        args = {"active_raw": pc["attributes"]["PRE"], "target_raw": npc_attrs["INT"],
+                "active_dm": sum(components) - dxd.attribute_dm(pc["attributes"]["PRE"]),
+                "active_bonus": bonus, "active_penalty": penalty, "active_favor": favor}
+    elif "npc_attribute" in spec:
         npc = state["npcs"][action["npc"]]
         args.update(narrative=True, dm=sum(max(0, x) for x in components),
                     adversity=sum(max(0, -x) for x in components), adversity_dice=penalty,
@@ -223,14 +237,14 @@ def resolve_dxd(state, rules, action):
     else:
         args.update(tn=spec["tn"], dm=sum(components), penalty=penalty)
     pc["favor"] -= favor
-    chance = dxd_inspiration.probability(**args)
+    chance = dxd_inspiration.opposed_probability(**args) if interaction == "pivotal" else dxd_inspiration.probability(**args)
     seed_parts = [state["seed"], state["turn"]]
     if spec.get("morale_event"):
         seed_parts.append(spec["morale_event"])
-    first = dxd.test(digest(seed_parts), **args)
+    first = (dxd.opposed if interaction == "pivotal" else dxd.test)(digest(seed_parts), **args)
     result = first
     inspired = None
-    if (not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
+    if (interaction != "pivotal" and not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
             and dxd_inspiration.eligible(chance, turn=state["turn"],
                 last_turn=pc["inspirations"][-1]["turn"] if pc["inspirations"] else None,
                 consequence=cue["consequence"], maximum=policy["maximum"],
@@ -333,7 +347,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             break
     return reason
 
-def finish_activity(state, rules, action, a, success, reason=None):
+def finish_activity(state, rules, action, a, success, reason=None, proposal=None):
     state["last_result"] = {"action": action, "success": success}
     if reason:
         state["last_result"]["interrupted"] = reason
@@ -344,7 +358,7 @@ def finish_activity(state, rules, action, a, success, reason=None):
         dxd_conditions.refresh_sleep_limit(pc["concerns"], pc["activity"], pc["attributes"])
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
-    state["history"].append(action)
+    state["history"].append(action if proposal is None else {"proposal": copy.deepcopy(proposal)})
     if not options(state, rules):
         state["ending"] = {"reason": "limit", "evidence_count": len(state["discoveries"]),
                            **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
@@ -353,12 +367,22 @@ def finish_activity(state, rules, action, a, success, reason=None):
                            "epilogue": rules["ending_text"]["limit"], "scores": scores(state, action)}
     return state
 
-def step(state, action):
+def step(state, action, proposal=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
     a = next((a for a in options(state, rules) if a["id"] == action), None)
-    if a is None:
+    if proposal is not None and action.startswith("beat:"):
+        a = beats.compile_beat(state, rules, proposal)
+    elif proposal is not None and action.startswith("local:"):
+        a = proposals.compile_local(state, rules, proposal, npc_available)
+    elif a is None:
         raise ValueError("action unavailable")
+    elif proposal is not None:
+        a = proposals.compile_action(state, rules, proposal, [a])
+        if a["id"] != action:
+            raise ValueError("proposal action mismatch")
+    if a["id"] != action:
+        raise ValueError("proposal action mismatch")
     elapsed = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
@@ -371,7 +395,7 @@ def step(state, action):
             reason = activity_segment(state, rules, a["route"]["seconds"], "travel")
             if reason:
                 # No partial edge position is modeled: retain the last anchored node.
-                return finish_activity(state, rules, action, a, False, reason)
+                return finish_activity(state, rules, action, a, False, reason, proposal)
         else:
             advance_events(state, rules, arrival)
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
@@ -381,7 +405,7 @@ def step(state, action):
         if (any(f in state["flags"] for f in a.get("excludes_flags", []))
                 or not all(f in state["flags"] for f in a.get("requires_flags", []))
                 or not npc_available(state, rules, a)):
-            return finish_activity(state, rules, action, a, False, "availability_changed")
+            return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
         mode = a.get("activity", "active")
         if action == "sleep_room":
             for key, amount in a.get("cost", {}).items():
@@ -402,9 +426,9 @@ def step(state, action):
             dxd_morale.calm(pc["morale"], safe=False, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
             return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
         if reason:
-            return finish_activity(state, rules, action, a, False, reason)
+            return finish_activity(state, rules, action, a, False, reason, proposal)
         if any(f in state["flags"] for f in a.get("excludes_flags", [])):
-            return finish_activity(state, rules, action, a, False, "availability_changed")
+            return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
         if "progression" in state or "pacing" in rules:
             advance_events(state, rules, elapsed)
@@ -423,6 +447,10 @@ def step(state, action):
     success = True
     if "test" in a:
         success = resolve_dxd(state, rules, a)
+    primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
+    if a.get("test", {}).get("interaction"):
+        # Signed margin is the Test Effect; ordinary Demeanor limits still apply.
+        change_demeanor(state, a["npc"], primary_result["margin"])
     if success:
         if a.get("arrest_progression"):
             state["progression"]["arrested"] = True
@@ -479,17 +507,25 @@ def step(state, action):
                         disability=revelation["disability"], turn=state["turn"])
     if "progression" not in state and "pacing" not in rules:
         advance_events(state, rules, elapsed)
+    if a.get("danger_beat"):
+        beats.record(state, rules, a, primary_result)
+    if a.get("local_capability"):
+        proposals.record_local(state, a, success, primary_result)
     narrative_events.complete_action(state, rules, a, success, a.get("local_seconds", a["duration_seconds"]))
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
+    if proposal is not None:
+        result = primary_result
+        state["last_result"]["adjudication"] = {k: result[k] for k in ("passed", "dos", "dof", "margin")}
+        state["last_result"]["approach"] = proposal["approach"]
     if "spatial" in rules and a["route"]["seconds"]:
         state["last_result"]["transition"] = state["transitions"][-1]
     if npc is not None:
         state["last_result"]["participant"] = npc["name"]
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
-    state["history"].append(action)
+    state["history"].append(action if proposal is None else {"proposal": copy.deepcopy(proposal)})
     terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
     if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
         state["ending"] = {"reason": action if terminal else "limit",
@@ -580,10 +616,10 @@ def verify(state):
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
-        if not isinstance(entry, str):
+        if isinstance(entry, dict) and "narrative" in entry:
             replay = narrative_step(replay, entry["narrative"])
             continue
-        replay = step(replay, entry)
+        replay = step(replay, entry["proposal"]["action"], entry["proposal"]) if isinstance(entry, dict) else step(replay, entry)
         while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
             e = edits[cursor]
             apply_memory(replay, e["event"], e["memory"])
@@ -604,6 +640,10 @@ def view(state):
         scene_view["scene"]["contacts_here"] = [p["name"] for p in state["npcs"].values() if p["encounters"] and p["location"] == state["location"]]
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
+    if rules.get("danger_beats"):
+        scene_view["danger"] = beats.available(state, rules)
+    if "local_records" in state:
+        scene_view["local_records"] = copy.deepcopy(state["local_records"][-8:])
     if "narrative_events" in state:
         scene_view["event_pressure"] = narrative_events.projection(state, rules)
     if "activity" in state["dxd"]:
@@ -626,6 +666,61 @@ def view(state):
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
         "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {})} for a in options(state, rules)]}
 
+def gm_context(state):
+    """Bounded referee packet; never render directly as player narration."""
+    story, rules = load(state["scenario"])
+    if not rules.get("gm_proposals"):
+        raise ValueError("GM context not yet supported for scenario")
+    public = view(state)
+    # Keep complete authoritative history in the checkpoint, not every prompt.
+    recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
+              "ending", "last_result", "condition", "resources", "revision", "choices")}
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger") if k in public})
+    recent["observations"] = state["observations"][-8:]
+    recent["discoveries"] = list(state["discoveries"])
+    recent["contacts"] = public["contacts"]
+    recent["inventory"] = public["inventory"]
+    recent["memories"] = public["memories"][-4:]
+    recent["memory_prompt"] = public["memory_prompt"]
+    recent["opening"] = public["opening"]
+    if "pacing" in recent and recent["pacing"]["current_spotlight"]:
+        active = copy.deepcopy(recent["pacing"]["current_spotlight"])
+        active["activities"] = active["activities"][-6:]
+        recent["pacing"]["current_spotlight"] = active
+    pc = state["dxd"]
+    legal = options(state, rules)
+    local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
+    relevant = {a["npc"] for a in local if "npc" in a}
+    return {"audience": "gm_only", "source_revision": state["source"],
+            "player_surface": recent,
+            "referee": {
+                "location_basis": next(({"features": x["features"], "dangers": x["dangers"]}
+                    for x in story["locations"] if x["name"] == state["location"]), None),
+                "participants": [{"id": key, "name": state["npcs"][key]["name"],
+                                  "motivation": state["npcs"][key]["motivation"],
+                                  "known_topics": state["npcs"][key]["known_topics"],
+                                  "disclosed": state["npcs"][key]["disclosed"],
+                                  "secret": state["npcs"][key]["secret"],
+                                  "location": state["npcs"][key]["location"]}
+                                 for key in sorted(relevant)],
+                "concerns": copy.deepcopy(pc["concerns"]),
+                "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
+                "favor": pc["favor"],
+                "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
+                "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
+                               for a in legal if a["id"] in rules.get("gm_proposals", {})},
+                "clocks": [{"id": key, "name": cfg["name"], "source": cfg["source"],
+                            "segments": cfg["segments"], **state["narrative_events"]["clocks"][key]}
+                           for key, cfg in rules.get("event_clocks", {}).items()
+                           if not state["narrative_events"]["clocks"][key]["resolved"]],
+                "last_test": {k: pc["tests"][-1]["result"][k] for k in ("passed", "margin", "dos", "dof")}
+                             if pc["tests"] and pc["tests"][-1]["turn"] == state["turn"] else None}}
+
+def inspect_gm(path):
+    state = read(path)
+    verify(state)
+    return gm_context(state)
+
 def start(sid, path, seed):
     if path.exists():
         raise ValueError("session already exists")
@@ -638,12 +733,12 @@ def inspect(path):
     verify(state)
     return view(state)
 
-def act(path, action, revision):
+def act(path, action, revision, proposal=None):
     state = read(path)
     verify(state)
     if digest(state) != revision:
         raise ValueError("stale session revision")
-    state = step(state, action)
+    state = step(state, action, proposal)
     verify(state)
     save(path, state)
     return view(state)

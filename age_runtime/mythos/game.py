@@ -37,6 +37,14 @@ def main():
         if cmd == "act":
             q.add_argument("action")
             q.add_argument("--revision", required=True)
+    gm = sub.add_parser("gm")
+    gm.add_argument("session", type=Path)
+    propose = sub.add_parser("propose")
+    propose.add_argument("session", type=Path)
+    propose.add_argument("action")
+    propose.add_argument("approach")
+    propose.add_argument("--intent", required=True)
+    propose.add_argument("--revision", required=True)
     control = sub.add_parser("narrative")
     control.add_argument("session", type=Path)
     control.add_argument("kind", choices=("scene", "open", "complete", "abandon"))
@@ -57,6 +65,11 @@ def main():
         result = mythos.start(args.scenario, args.session, args.seed)
     elif args.command == "inspect":
         result = mythos.inspect(args.session)
+    elif args.command == "gm":
+        result = mythos.inspect_gm(args.session)
+    elif args.command == "propose":
+        request = {"action": args.action, "approach": args.approach, "intent": args.intent}
+        result = mythos.act(args.session, args.action, args.revision, request)
     elif args.command == "memory":
         result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
     elif args.command == "narrative":
