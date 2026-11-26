@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -20,7 +20,10 @@
       "minutes": 60,
       "attribute": "Investigation",
       "tn": 7,
-      "discovery": "A census badge lies near the waterfront."
+      "discovery": "A census badge lies near the waterfront.",
+      "failure": {
+        "sanity": 1
+      }
     },
     {
       "id": "talk_eleanor",
@@ -29,7 +32,10 @@
       "minutes": 45,
       "attribute": "Persuasion",
       "tn": 7,
-      "discovery": "Eleanor says her brother disappeared last month."
+      "discovery": "Eleanor says her brother disappeared last month.",
+      "success": {
+        "containment": 1
+      }
     },
     {
       "id": "inspect_room",
@@ -38,7 +44,10 @@
       "minutes": 60,
       "attribute": "Investigation",
       "tn": 7,
-      "discovery": "The abandoned suitcase contains census paperwork."
+      "discovery": "The abandoned suitcase contains census paperwork.",
+      "failure": {
+        "sanity": 1
+      }
     },
     {
       "id": "visit_elias",
@@ -47,7 +56,13 @@
       "minutes": 90,
       "attribute": "Persuasion",
       "tn": 10,
-      "discovery": "Elias has kept a journal of unusual coastal events."
+      "discovery": "Elias has kept a journal of unusual coastal events.",
+      "failure": {
+        "sanity": 1
+      },
+      "success": {
+        "containment": 2
+      }
     },
     {
       "id": "report",
@@ -55,7 +70,10 @@
       "location": "Lighthouse (Western Point)",
       "minutes": 60,
       "requires": 2,
-      "terminal": true
+      "terminal": true,
+      "success": {
+        "containment": 2
+      }
     },
     {
       "id": "depart",
@@ -63,6 +81,84 @@
       "location": "Harbor Docks",
       "minutes": 60,
       "terminal": true
+    },
+    {
+      "id": "buy_meal",
+      "label": "Buy a meal and rest at the diner",
+      "location": "Harbor Diner",
+      "minutes": 60,
+      "repeatable": true,
+      "cost": {
+        "cash_cents": 75
+      },
+      "success": {
+        "fatigue": -2
+      }
+    },
+    {
+      "id": "rest_room",
+      "label": "Rest at the boarding house",
+      "location": "Sailor's Rest Boarding House",
+      "minutes": 180,
+      "repeatable": true,
+      "cost": {
+        "cash_cents": 150
+      },
+      "success": {
+        "fatigue": -3,
+        "sanity": -1
+      }
+    },
+    {
+      "id": "use_flask",
+      "label": "Take a drink from your flask",
+      "minutes": 15,
+      "repeatable": true,
+      "cost": {
+        "flask_servings": 1
+      },
+      "success": {
+        "sanity": -1,
+        "fatigue": 1
+      }
     }
-  ]
+  ],
+  "conditions": {
+    "sanity": [
+      "Steady",
+      "Uneasy",
+      "Shaken",
+      "Frayed",
+      "Unraveling",
+      "Shattered"
+    ],
+    "fatigue": [
+      "Rested",
+      "Tired",
+      "Weary",
+      "Exhausted",
+      "Spent",
+      "Catatonic"
+    ],
+    "sanity_dm": [
+      0,
+      -1,
+      -2,
+      -2,
+      -3,
+      -4
+    ],
+    "fatigue_dm": [
+      0,
+      -1,
+      -2,
+      -3,
+      -4,
+      -5
+    ]
+  },
+  "resources": {
+    "cash_cents": 2200,
+    "flask_servings": 2
+  }
 }
