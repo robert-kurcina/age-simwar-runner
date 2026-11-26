@@ -990,3 +990,16 @@ class MythosTrialTests(unittest.TestCase):
                          "vignette": "I feel concern and my hands tremble."})
         self.assertEqual(s["dxd"]["commitments"], [])
         mythos.verify(s)
+
+    def test_fear_native_character_profiles(self):
+        s = mythos.initial("boothbay", 42)
+        pc = s["dxd"]
+        self.assertEqual(len(s["character_profiles"]), 6)
+        self.assertEqual(pc["skills"]["Investigate"], 2)
+        self.assertEqual(pc["skills"]["Persuade"], 1)
+        self.assertIn("[Addict > Drunkard]", pc["traits"])
+        self.assertEqual(pc["concerns"]["capacity"]["resilience"],
+                         3 + 2 * pc["attributes"]["POW"] // 3 + pc["skills"]["Grit"])
+        self.assertEqual(s["npcs"]["elias"]["skills"]["Fishing"], 2)
+        self.assertNotIn("character_profiles", mythos.view(s))
+        mythos.verify(s)
