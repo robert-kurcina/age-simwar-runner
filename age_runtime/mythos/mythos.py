@@ -417,7 +417,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
 def step(state, action, proposal=None, commitment=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
-    request, cue = hooks.split(proposal)
+    request, _ = hooks.split(proposal)
     request, nomination = nominations.split(request)
     a = next((a for a in options(state, rules) if a["id"] == action), None)
     if request is not None and action.startswith("beat:"):
@@ -719,6 +719,9 @@ def view(state):
     if "activity" in state["dxd"]:
         clock = state["dxd"]["activity"]
         scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "overdue_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}
+    if rules.get("automatic_emphasis"):
+        scene_view["character_emphasis_xp"] = state["dxd"].get("xp", 0)
+        scene_view["latest_emphasis_award"] = next((copy.deepcopy(e) for e in reversed(state["dxd"].get("emphasis_awards", [])) if e["turn"] == state["turn"]), None)
     return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
