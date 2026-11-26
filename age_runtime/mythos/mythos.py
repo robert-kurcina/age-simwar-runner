@@ -109,8 +109,10 @@ def resolve_dxd(state, rules, action):
     hook = 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0
     cue = spec.get("inspiration")
     inspiration_dm = dxd_inspiration.applicable_dm(pc["inspirations"], [cue["tag"]] if cue else [])
-    components = [attr, skill, hook, inspiration_dm]
     policy = cfg["favor"]
+    emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
+                                 enabled=policy.get("emicted", False))
+    components = [attr, skill, hook, inspiration_dm, emicted]
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
     args = {"favor": favor}
@@ -141,7 +143,7 @@ def resolve_dxd(state, rules, action):
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
-                        "inspiration": inspiration_dm},
+                        "inspiration": inspiration_dm, "emicted": emicted},
                         "probability": [chance.numerator, chance.denominator],
                         "initial_result": first, "inspired": inspired is not None,
                         "result": result})

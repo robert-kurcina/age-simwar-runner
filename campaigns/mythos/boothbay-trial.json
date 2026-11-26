@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -417,7 +417,8 @@
         "minor": 0,
         "important": 1,
         "critical": 1
-      }
+      },
+      "emicted": true
     },
     "npc_attributes": {
       "eleanor": {

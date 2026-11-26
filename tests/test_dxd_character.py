@@ -16,3 +16,15 @@ class DXDCharacterTests(unittest.TestCase):
             c.derive(dict(raw, MOV=7), body)
         with self.assertRaises(ValueError):
             c.derive(raw, dict(body, affinity="POW"))
+
+    def test_physical_properties(self):
+        raw = dict.fromkeys(c.ROLLED, 7)
+        p = c.derive(raw, {"stature": 50, "build": 50, "trade": "Service",
+                            "affinity": "INT", "attribute_rolls": raw})
+        physical = p["physical"]
+        self.assertEqual(physical["basic_burden"], {"lift": 6, "shoulder": 3, "carry": 0})
+        self.assertEqual(physical["maximum_burden"], {"lift": 11, "shoulder": 8, "carry": 5})
+        self.assertEqual(physical["gasp_limit_turns"], 40)
+        self.assertEqual(physical["sleep_limit_hours"], 45)
+        self.assertEqual(physical["base_hitpoints"], 12)
+        self.assertIsNone(physical["bodypoints"])

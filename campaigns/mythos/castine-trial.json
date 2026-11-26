@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "start": "1927-11-02T08:00:00",
   "end": "1927-11-03T23:59:00",
   "max_turns": 20,
@@ -362,7 +362,8 @@
         "minor": 0,
         "important": 1,
         "critical": 1
-      }
+      },
+      "emicted": true
     },
     "inspiration": {
       "enabled": true
