@@ -30,7 +30,7 @@ def inventory(path):
 
 def supported(s):
     # Reuse reviewed civilian mechanics rather than scenario-specific identities.
-    if s["events"] or s["constraints"] or "economy_projects" in s or "dependent_events" in s:
+    if s["events"] or s["constraints"] or "economy_projects" in s or "dependent_events" in s or "model_factions" in s:
         raise ValueError("unsupported private scenario mechanics")
     keys = set(s["initial"])
     requests = set(s.get("action_catalog", {}))

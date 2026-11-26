@@ -24,7 +24,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -67,6 +67,14 @@ def validate(s):
     validate_dependent_events(s)
     validate_projects(s)
     validate_capacity_actions(s)
+    factions = s.get("model_factions", [])
+    if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
+        raise ValueError("invalid model faction IDs")
+    if factions and not s.get("economy_projects"):
+        raise ValueError("model factions require reviewed civilian economy projects")
+    for actor in factions:
+        if any(name not in s.get("capacity_actions", {}) for name, spec in s.get("action_catalog", {}).items() if actor in spec["actors"]):
+            raise ValueError("model factions may select only supported capacity actions")
 
 def initialize(s):
     validate(s)
@@ -91,6 +99,9 @@ def advance(s, state):
     start = state["minute"]
     if start >= s["end_minute"]:
         return copy.deepcopy(state)
+    missing = set(s.get("model_factions", [])) - {r["actor"] for r in state["requests"] if r["turn"] == state["turn"] and r.get("origin") == "model"}
+    if missing:
+        raise ValueError("model faction choices required before advancing")
     end = min(start + s["turn_minutes"], s["end_minute"])
     result = copy.deepcopy(state)
     times = sorted({x["minute"] for x in s["events"] + s["constraints"] + s.get("dependent_events", [])
@@ -119,6 +130,8 @@ def advance(s, state):
 def submit_request(s, state, actor_id, proposal):
     """Append an administrative request to a new checkpoint, without effects."""
     verify_checkpoint(s, state)
+    if actor_id in s.get("model_factions", []):
+        raise ValueError("model faction requires its own decision exchange")
     return _append_request(s, state, actor_id, proposal)
 
 def _append_request(s, state, actor_id, proposal):
@@ -126,6 +139,46 @@ def _append_request(s, state, actor_id, proposal):
     result = copy.deepcopy(state)
     record["sequence"] = len(result["requests"]) + 1
     result["requests"].append(record)
+    return result
+
+def _append_model_choice(s, state, actor_id, action):
+    if actor_id not in s.get("model_factions", []):
+        raise ValueError("not a model faction")
+    if state["minute"] >= s["end_minute"]:
+        raise ValueError("session ended")
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] for r in state["requests"]):
+        raise ValueError("faction already decided this turn")
+    if action is None:
+        result = copy.deepcopy(state)
+        result["requests"].append({"actor": actor_id, "action": None, "status": "abstained",
+                                   "turn": state["turn"], "minute": state["minute"],
+                                   "sequence": len(state["requests"]) + 1, "origin": "model"})
+    else:
+        result = _append_request(s, state, actor_id, {"action": action})
+        result["requests"][-1]["origin"] = "model"
+    return result
+
+def faction_packet(s, state, actor_id):
+    verify_checkpoint(s, state)
+    if actor_id not in s.get("model_factions", []):
+        raise ValueError("not a model faction")
+    if state["minute"] >= s["end_minute"]:
+        raise ValueError("session ended")
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] for r in state["requests"]):
+        raise ValueError("faction already decided this turn")
+    body = {"actor": actor_id, "observation": observe(s, state, actor_id)}
+    return {"packet_id": digest(body), **body}
+
+def accept_faction_choice(s, state, actor_id, packet, response):
+    if packet != faction_packet(s, state, actor_id):
+        raise ValueError("stale or altered faction packet")
+    if not isinstance(response, dict) or set(response) != {"packet_id", "action"} or response["packet_id"] != packet["packet_id"]:
+        raise ValueError("invalid faction response")
+    action = response["action"]
+    if action is not None and (not isinstance(action, str) or action not in packet["observation"]["available_requests"]):
+        raise ValueError("unsupported faction action")
+    result = _append_model_choice(s, state, actor_id, action)
+    verify_checkpoint(s, result)
     return result
 
 def verify_checkpoint(s, state):
@@ -144,7 +197,12 @@ def verify_checkpoint(s, state):
                 raise ValueError("invalid request record")
             if record["turn"] != turn:
                 break
-            expected = _append_request(s, expected, record["actor"], {"action": record["action"]})
+            if record.get("origin") == "model":
+                expected = _append_model_choice(s, expected, record["actor"], record["action"])
+            else:
+                if record["actor"] in s.get("model_factions", []):
+                    raise ValueError("model faction choice requires model origin")
+                expected = _append_request(s, expected, record["actor"], {"action": record["action"]})
             index += 1
         if turn < state["turn"]:
             expected = advance(s, expected)
@@ -174,7 +232,32 @@ def main():
     p.add_argument("--actor", help="Print only this actor’s observation; checkpoint remains referee-only")
     p.add_argument("--inspect", action="store_true", help="Read existing checkpoint without advancing or saving")
     p.add_argument("--request", help="Record a permitted administrative request before advancing; requires --actor")
+    p.add_argument("--faction-packet", metavar="ACTOR", help="Read model faction observation without advancing")
+    p.add_argument("--faction-choice", type=Path, help="Submit model response JSON for --actor without advancing")
     args = p.parse_args()
+    if args.faction_packet is not None or args.faction_choice is not None:
+        if args.validate or args.inspect or args.request is not None or args.checkpoint is None or not args.checkpoint.is_file():
+            p.error("faction exchange requires an existing checkpoint and no other operation")
+        if args.scenario.resolve() == args.checkpoint.resolve():
+            p.error("scenario and checkpoint must be different files")
+        if args.faction_packet is not None and (args.faction_choice is not None or args.actor is not None):
+            p.error("choose a single faction exchange operation")
+        if args.faction_choice is not None and args.actor is None:
+            p.error("faction choice requires --actor")
+        try:
+            s = json.loads(args.scenario.read_text())
+            state = json.loads(args.checkpoint.read_text())
+            if args.faction_packet is not None:
+                result = faction_packet(s, state, args.faction_packet)
+            else:
+                packet = faction_packet(s, state, args.actor)
+                result_state = accept_faction_choice(s, state, args.actor, packet, json.loads(args.faction_choice.read_text()))
+                save(args.checkpoint, result_state)
+                result = observe(s, result_state, args.actor)
+            print(json.dumps(result, indent=2))
+            return 0
+        except (ValueError, KeyError, TypeError, OSError) as exc:
+            p.error(str(exc))
     if args.validate:
         if args.checkpoint is not None or args.actor is not None or args.request is not None or args.inspect:
             p.error("--validate is a scenario-only operation")
