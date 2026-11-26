@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -75,7 +75,7 @@ def initial(sid, seed):
             raise ValueError("DXD major NPC coverage mismatch")
         state["dxd"] = {"attributes": derived["pc"]["attributes"], "body": derived["pc"],
                         "skills": copy.deepcopy(cfg["skills"]), "traits": copy.deepcopy(cfg.get("traits", {})),
-                        "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [],
+                        "favor": cfg["favor"]["initial"], "tests": [], "inspirations": [], "morale": dxd_morale.initial(),
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
@@ -115,7 +115,7 @@ def resolve_dxd(state, rules, action):
     policy = cfg["favor"]
     emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
                                  enabled=policy.get("emicted", False))
-    components = [attr, skill, hook, inspiration_dm, emicted] + other
+    components = [attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0)] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
     net = mods["bonus"] - mods["penalty"] - condition
@@ -132,7 +132,10 @@ def resolve_dxd(state, rules, action):
         args.update(tn=spec["tn"], dm=sum(components), penalty=penalty)
     pc["favor"] -= favor
     chance = dxd_inspiration.probability(**args)
-    first = dxd.test(digest([state["seed"], state["turn"]]), **args)
+    seed_parts = [state["seed"], state["turn"]]
+    if spec.get("morale_event"):
+        seed_parts.append(spec["morale_event"])
+    first = dxd.test(digest(seed_parts), **args)
     result = first
     inspired = None
     if (not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
@@ -144,7 +147,7 @@ def resolve_dxd(state, rules, action):
                     "tag": cue["tag"], "memory": cue["memory"]}
         pc["inspirations"].append(inspired)
         retry = dict(args, base=3)
-        result = dxd.test(digest([state["seed"], state["turn"], "inspiration"]), **retry)
+        result = dxd.test(digest(seed_parts + ["inspiration"]), **retry)
         dxd_conditions.add(pc["concerns"], weariness=1)
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
@@ -196,7 +199,22 @@ def step(state, action):
         concerns = state["dxd"]["concerns"]
         dxd_conditions.add(concerns, **a.get("concern_always", {}))
         dxd_conditions.add(concerns, **a.get("concern_success" if success else "concern_failure", {}))
+        before = dxd_conditions.degrees(concerns)["stress"]
         dxd_conditions.recover(concerns, a["minutes"], **a.get("recovery", {}))
+        dxd_morale.calm(state["dxd"]["morale"], safe=a.get("recovery", {}).get("safe", False),
+                        stress_degrees_removed=before - dxd_conditions.degrees(concerns)["stress"])
+        if success and "morale_success" in a:
+            hazard = a["morale_success"]
+            spec = dxd_morale.specification(hazard["kind"], hazard["trigger"])
+            spec["morale_event"] = a["id"] + ":morale"
+            spec["inspiration"] = hazard["inspiration"]
+            resolve_dxd(state, rules, {"id": spec["morale_event"], "test": spec})
+            outcome = state["dxd"]["tests"][-1]["result"]
+            reaction = dxd_morale.apply(state["dxd"]["morale"], concerns,
+                kind=hazard["kind"], trigger=hazard["trigger"], result=outcome,
+                event=spec["morale_event"], turn=state["turn"])
+            if not reaction["passed"]:
+                state["observations"].append(hazard["reaction"])
     for event in rules.get("events", []):
         if event["id"] not in state["events_seen"] and elapsed >= datetime.fromisoformat(event["at"]):
             state["events_seen"].append(event["id"])
@@ -247,7 +265,8 @@ def view(state):
         "contacts": [{"name": p["name"], "role": p["public_role"],
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for p in state["npcs"].values() if p["encounters"]],
-        "condition": dxd_conditions.describe(state["dxd"]["concerns"]),
+        "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
+                          fear=dxd_morale.describe(state["dxd"]["morale"])),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
         "choices": [{"id": a["id"], "label": a["label"]} for a in options(state, rules)]}
 

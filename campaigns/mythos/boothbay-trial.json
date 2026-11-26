@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 13,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "max_turns": 20,
@@ -225,8 +225,15 @@
           "consequence": "meaningful"
         }
       },
-      "concern_success": {
-        "stress": 3
+      "morale_success": {
+        "kind": "shock",
+        "trigger": "horrifying",
+        "inspiration": {
+          "tag": "composure",
+          "memory": "You draw on your wartime experience of listening to distressing accounts while remaining attentive.",
+          "consequence": "meaningful"
+        },
+        "reaction": "Eleanor's account leaves you shaken; you need a moment to collect your thoughts."
       }
     },
     {

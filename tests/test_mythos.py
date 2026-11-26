@@ -330,3 +330,20 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(t["components"]["skill"], 3)
         self.assertNotIn("gathered", str(mythos.view(s)))
         mythos.verify(s)
+
+    def test_boothbay_disclosure_triggers_separate_shock_test(self):
+        for seed in range(200):
+            s = mythos.step(mythos.initial("boothbay", seed), "talk_eleanor")
+            if "eleanor_account" not in s["flags"]:
+                continue
+            s = mythos.step(s, "follow_eleanor")
+            if "water_warning" not in s["flags"]:
+                continue
+            self.assertEqual(s["dxd"]["tests"][-1]["action"], "follow_eleanor:morale")
+            self.assertEqual(s["dxd"]["morale"]["events"][-1]["kind"], "shock")
+            self.assertEqual(s["dxd"]["morale"]["revelations"], [])
+            self.assertNotIn("morale_event", str(mythos.view(s)))
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No disclosure route")
