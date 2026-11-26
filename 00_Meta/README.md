@@ -6,3 +6,5 @@
 - [Development provenance](PROVENANCE.md)
 
 Authored framework configurations remain runtime data, not general assistant instructions. Private content remains external.
+
+- [Participant authoring guidance](PARTICIPANT_GUIDANCE.md)
