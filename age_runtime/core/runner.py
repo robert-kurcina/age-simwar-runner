@@ -12,7 +12,7 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
-from age_runtime.core import negotiation
+from age_runtime.core import negotiation, event_generator
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -27,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "event_templates"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -75,6 +75,7 @@ def validate(s):
     validate_transfers(s)
     validate_agreements(s)
     negotiation.validate(s)
+    event_generator.validate(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
@@ -97,6 +98,8 @@ def initialize(s):
         state["agreement_results"] = []
     if s.get("dynamic_negotiation"):
         state["negotiations"] = {}
+    if "event_templates" in s:
+        state["generated_events"] = {}
     return state
 
 def check_identity(s, state):
@@ -129,6 +132,7 @@ def advance(s, state):
             resolve_reviews(s, result, end)
             resolve_agreements(s, result, end)
             negotiation.resolve(s, result, end)
+            event_generator.resolve(s, result, end)
         resolve_dependent_events(s, result, minute)
         if minute == end:
             resolve_projects(s, result, minute)
@@ -140,6 +144,29 @@ def advance(s, state):
     result.update(minute=end, turn=state["turn"] + 1,
                   actors=evaluate(s, result["values"]))
     return result
+
+def event_packet(s, state):
+    verify_checkpoint(s, state)
+    return {"revision": digest(state), **event_generator.packet(s, state)}
+
+
+def _append_event(s, state, proposal):
+    result = copy.deepcopy(state)
+    event_generator.schedule(s, result, proposal)
+    result["requests"].append({"origin": "referee_event", "actor": None, "action": None,
+        "status": "scheduled_event", "turn": state["turn"], "minute": state["minute"],
+        "sequence": len(state["requests"]) + 1, "proposal": copy.deepcopy(proposal)})
+    return result
+
+
+def schedule_event(s, state, revision, proposal):
+    verify_checkpoint(s, state)
+    if revision != digest(state):
+        raise ValueError("stale referee revision")
+    result = _append_event(s, state, proposal)
+    verify_checkpoint(s, result)
+    return result
+
 
 def submit_request(s, state, actor_id, proposal):
     """Append an administrative request to a new checkpoint, without effects."""
@@ -266,7 +293,9 @@ def verify_checkpoint(s, state):
                 raise ValueError("invalid request record")
             if record["turn"] != turn:
                 break
-            if record.get("origin") == "model":
+            if record.get("origin") == "referee_event":
+                expected = _append_event(s, expected, record["proposal"])
+            elif record.get("origin") == "model":
                 expected = _append_model_choice(s, expected, record["actor"], record.get("negotiation", record["action"]))
             elif record.get("origin") == "negotiation":
                 if record["actor"] in s.get("model_factions", []):
