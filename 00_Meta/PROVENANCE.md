@@ -119,3 +119,7 @@ Private CI completed successfully; job output confirms two evidence references, 
 ## Finite civilian assistance capacity
 
 PR #28 merged after successful CI. Added optional finite household demand and configurable per-package yield to the existing civilian assistance rule, preserving legacy scenarios. Reviewed requests cannot exceed total demand; no package is consumed after demand is satisfied. Three regression tests authored; CI pending. No private source content or historical numerical claims.
+
+## Capacity deployment status
+
+PR #29 passed CI and merged. The external private pilot now has a finite-demand configuration and four hypothetical supply sensitivity cases staged for private verification. Source references remain unchanged. The numerical cases are illustrative, not calibrated historical uncertainty bounds. No private configuration data is included here.
