@@ -103,3 +103,7 @@ PR #23 merged after successful CI. Added explicit base-spec-pinned overlays for 
 ## Unified campaign session increment
 
 PR #24 passed CI and merged. Added a single local referee CLI for list/start/inspect/submit/advance/finish/report/compare, with pinned session bundles and explicit previous-session transitions. An end-to-end subprocess regression exercises restoration, assistance, council consent, resumption, baseline comparison and invalid operations. CI pending. No private source qualification, concurrent writer safety, recursive provenance authentication or remote authorization is claimed. Existing civilian fixture scope is unchanged.
+
+## Narrative evidence increment
+
+PR #25 passed CI and merged. Source qualification indicates that existing narrative dossiers and publication indexes serve different purposes; a new database is unnecessary for narrative references. Added exact-heading, commit-pinned Markdown evidence with file and section digests, without copying prose or deriving numerical inputs. Review dates are referee assertions. One synthetic regression authored; CI pending. No private source names, content or data published. Private scenario validation remains outstanding.
