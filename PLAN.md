@@ -29,12 +29,13 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - Bounded civilian scenario variation overlays (PR #24 merged after successful CI).
 
+- Unified local campaign CLI and linked end-to-end workflow (PR #25 merged after successful CI).
+
 ## WIP
-- Unified local campaign CLI implemented with linked three-stage end-to-end subprocess regression; CI pending. Private source qualification remains outstanding.
+- Pinned Markdown evidence references implemented; CI pending. Private source qualification remains partial.
 
 ## NEXT (ordered, with acceptance criteria)
 5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
-6. Campaign usability: provide a single documented workflow to list scenarios, start, inspect, submit permitted civilian requests, advance, finish and compare sessions. Acceptance: run the public campaign end to end using the documented commands.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 
