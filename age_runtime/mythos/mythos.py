@@ -762,7 +762,7 @@ def gm_context(state):
                 "character_profile": copy.deepcopy(state.get("character_profiles", {}).get("pc")),
                 "favor": pc["favor"],
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
-                "modifier_nominations": {a["id"]: offer for a in legal if (offer := nominations.offer(state, rules, a)) is not None},
+                "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
