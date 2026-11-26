@@ -30,7 +30,7 @@ def inventory(path):
 
 def supported(s):
     # Reuse reviewed civilian mechanics rather than scenario-specific identities.
-    if s["events"] or s["constraints"] or s.get("civic_agreement"):
+    if s["events"] or s["constraints"]:
         raise ValueError("unsupported private scenario mechanics")
     keys = set(s["initial"])
     requests = set(s.get("action_catalog", {}))
@@ -44,7 +44,16 @@ def supported(s):
                    and "assistance_capacity" not in s
                    and keys == {"open_service_centers", "restoration_credits"}
                    and requests == {"restore_service_center"})
-    if not (assistance or restoration):
+    agreement = (s.get("civic_agreement") is True
+                 and not s.get("community_assistance") and not s.get("service_restoration")
+                 and "assistance_capacity" not in s
+                 and keys == {"participating_councils", "council_a_joined", "council_b_joined"}
+                 and requests == {"join_council_a", "join_council_b"}
+                 and set(s.get("actors", {})) == {"council_a", "council_b"}
+                 and s["initial"]["participating_councils"] == s["initial"]["council_a_joined"] + s["initial"]["council_b_joined"])
+    if (assistance or restoration) and s.get("civic_agreement"):
+        raise ValueError("mixed mechanics unsupported")
+    if not (assistance or restoration or agreement):
         raise ValueError("unsupported private scenario mechanics")
 
 
@@ -121,7 +130,7 @@ def available_presets(path, scenario_id, owners):
     return options(entry)
 
 
-def start(path, scenario_id, actor, owners, preset="standard"):
+def start(path, scenario_id, actor, owners, preset="standard", shared=False):
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
     from presets import apply
     compiled, configuration = apply(entry, spec, compiled, preset)
@@ -129,11 +138,17 @@ def start(path, scenario_id, actor, owners, preset="standard"):
     supported(s)
     state = initialize(s)
     observe(s, state, actor)
+    if bool(s.get("civic_agreement")) != shared:
+        raise ValueError("agreement requires shared human participation; other scenarios use single perspective")
     header = {"campaign": catalog["id"], "group": group["id"],
               "title": entry["title"], "catalog_digest": digest(catalog),
               "effective_date": spec["effective_date"], "actor": actor,
               "compiled": compiled, "preset": configuration,
               "briefing_context": reviewed_context(entry, compiled, actor, spec["effective_date"])}
+    if shared:
+        header["shared"] = True
+        header["actor_contexts"] = {a: reviewed_context(entry, compiled, a, spec["effective_date"]) for a in s["actors"]}
+        header["briefing_context"] = header["actor_contexts"][actor]
     return {"version": 1, "header": header, "header_digest": digest(header), "state": state}
 
 
@@ -146,9 +161,25 @@ def verify(session):
     if digest(s) != h["compiled"]["scenario_digest"]:
         raise ValueError("compiled scenario mismatch")
     supported(s)
+    if bool(s.get("civic_agreement")) != h.get("shared", False):
+        raise ValueError("session participation mode mismatch")
+    if h.get("shared") and (set(h.get("actor_contexts", {})) != set(s["actors"]) or h["briefing_context"] != h["actor_contexts"][h["actor"]]):
+        raise ValueError("shared perspective context mismatch")
     verify_checkpoint(s, session["state"])
     observe(s, session["state"], h["actor"])
     return session
+
+
+def switch_perspective(session, actor):
+    """Trusted local referee selects the human participant; no implicit consent."""
+    verify(session)
+    h = session["header"]
+    if not h.get("shared"):
+        raise ValueError("single-perspective session cannot switch actors")
+    if actor not in h["actor_contexts"]:
+        raise ValueError("unknown participant")
+    header = {**h, "actor": actor, "briefing_context": h["actor_contexts"][actor]}
+    return verify({**session, "header": header, "header_digest": digest(header)})
 
 
 def view(session):
@@ -175,6 +206,7 @@ def briefing(session):
         "kind": "opening" if observation["turn"] == 0 else "turn",
         "campaign": current["campaign"], "scenario": current["title"],
         "perspective": actor["label"],
+        "shared": h.get("shared", False),
         "preset": h.get("preset", {"id": "standard", "label": "Standard — configured baseline"}),
         "date": (start_date + timedelta(days=elapsed // 1440)).isoformat(),
         "elapsed_minutes": elapsed, "turn": observation["turn"],
@@ -220,6 +252,7 @@ def main(argv=None):
             sub.add_argument("actor")
             sub.add_argument("session", type=Path)
             sub.add_argument("--preset", default="standard")
+            sub.add_argument("--shared", action="store_true")
     for name in ("inspect", "briefing", "submit", "advance"):
         sub = commands.add_parser(name)
         sub.add_argument("session", type=Path)
@@ -235,6 +268,9 @@ def main(argv=None):
             sub.add_argument("response", type=Path)
         if name == "confirm":
             sub.add_argument("--approve", required=True)
+    switch = commands.add_parser("switch")
+    switch.add_argument("session", type=Path)
+    switch.add_argument("actor")
     local = commands.add_parser("local-propose")
     local.add_argument("session", type=Path)
     local.add_argument("instruction")
@@ -262,9 +298,13 @@ def main(argv=None):
         elif a.command == "start":
             if a.session.exists():
                 raise ValueError("session path already exists")
-            session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset)
+            session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset, a.shared)
             save(a.session, session)
             result = view(session)
+        elif a.command == "switch":
+            session = switch_perspective(read(a.session), a.actor)
+            save(a.session, session)
+            result = briefing(session)
         elif a.command == "local-propose":
             from local_model import propose
             if a.output.exists() or a.output.resolve() == a.session.resolve():
