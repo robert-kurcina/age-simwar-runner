@@ -102,3 +102,11 @@ A strategic turn must present a changed situation, meaningful faction-level alte
 - DONE (source check only): retrieved the pinned coalition history in the existing plan via the authorized connector. The previously qualified private strategic package (vault run 45882376581, artifact 15147307624) remains listed as unexpired through 2026-12-26; it is not evidence of a reviewed executable coalition episode.
 - BLOCKED (coalition play only): reviewed executable coalition configuration and durable authorized private storage remain unverified. Keep canonical sources read-only and do not publish private content. NEXT: review the private scenario assumptions and qualify player-led play; synthetic rehearsal is not a substitute.
 - Event Generator branch remains isolated and untouched.
+
+
+## 2026-11-26 — negotiated cooperation rehearsal
+
+- DONE (implementation, PR #124 reported merged by author): standalone three-faction rehearsal and direct-transfer regression. CI status not independently verified in this checkpoint.
+- WIP (mechanical): extend the same scenario test with accepted, rejected, unanswered and countered bilateral offers, using revision-bound player commands and actor-local model packets. Test that resources remain unchanged until settlement, a third faction cannot be bound or see bilateral proposals, delayed agreement changes recovery timing, negotiation records replay exactly, and routine negotiation does not inflate the Critical Decision count. No new engine rules or scenario fields.
+- Expected outcomes under fixed test inputs (not live LLM play): immediate agreement yields three eastern recovery stages; delayed counteroffer yields two; refusal or expiry yields zero. Local and western projects complete in each route. CI and experiential acceptance remain pending.
+- NEXT (P1): actual player-led qualification with authorized scenario content; do not extend synthetic tests indefinitely. Private coalition configuration and durable private distribution remain unresolved. Event Generator branch and narrative track remain untouched.
