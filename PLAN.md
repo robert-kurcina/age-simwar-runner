@@ -193,3 +193,8 @@ Each development increment must complete an acceptance criterion or a concrete i
 - PR #59 workflows 45767452752 and 45767452737 passed. Downloaded artifact 15092004707; verified inner source checksum and extracted revision 9877441da087316389950f321ea8c2bbf9bfc4a0 (PR synthetic merge). Local Chat runtime passed all 76 tests, including eight Mythos tests. Actual game.py CLI completed an eight-action seeded Boothbay route and inspect reproduced final state. This is scripted execution evidence, not human-directed narrative acceptance.
 - Pacing issue: successful route concludes at 16:30 on the first day, before scheduled evening events. Trial scoring may exceed original authored scenario maxima; retain explicit provisional status. Next prioritize playable narrative qualification and configuration-driven Castine/Ram Island conversion, not new subsystems.
 - Standalone launch guide from PR #56 is not present on main at this review; reconcile packaging branch before claiming automated standalone distribution complete.
+
+## WIP — Repository organization
+
+- Runtime implementation moved into `age_runtime/{core,interfaces,mythos,examples}`; tests moved into `tests/`. Keep existing root launch commands and private-import compatibility. Scenario data paths remain stable. Consolidate facilitator guidance under `00_Meta/CHAT_GAMEPLAY.md` and technical CLI reference under `docs/cli.md`.
+- Verify regression and runtime bundle CI before merging. Private integration remains independently qualified against its pinned revision; do not claim latest compatibility until tested.
