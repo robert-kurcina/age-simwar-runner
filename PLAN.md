@@ -24,9 +24,11 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 
 - P3 mapped campaign continuity, provenance verification and multiple-scenario stage support (PR #21 merged after successful CI).
 
-## WIP
 - ADR-001 merged in PR #22 after successful CI.
-- Local pinned structured source compiler implemented on development branch, with four tests; CI pending. Private source qualification remains outstanding.
+- Local pinned structured source compiler (PR #23 merged after successful CI).
+
+## WIP
+- Bounded civilian scenario variation overlays implemented on development branch; CI pending. Private source qualification remains outstanding.
 
 ## NEXT (ordered, with acceptance criteria)
 5. Local model commentary: optionally connect read-only summarization of the public civilian scenario to a local model; verify actual invocation before claiming completion. No model-generated state changes.
