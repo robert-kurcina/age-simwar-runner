@@ -4,7 +4,8 @@
   "turn_minutes": 360,
   "end_minute": 720,
   "initial": {
-    "open_service_centers": 0
+    "open_service_centers": 0,
+    "restoration_credits": 2
   },
   "events": [
     {
@@ -14,27 +15,32 @@
       "delta": 2
     }
   ],
-  "constraints": [
-    {
-      "minute": 720,
-      "key": "open_service_centers",
-      "equals": 2
-    }
-  ],
+  "constraints": [],
   "actors": {
     "coordinator": {
       "label": "Civic coordinator",
       "visible_keys": [
-        "open_service_centers"
+        "open_service_centers",
+        "restoration_credits"
       ],
       "objectives": {
         "completion": {
-          "description": "Meet illustrative service milestone",
+          "description": "Open at least three service centers",
           "key": "open_service_centers",
           "comparison": "at_least",
-          "threshold": 2
+          "threshold": 3
         }
       }
+    }
+  },
+  "service_restoration": true,
+  "administrative_reviews_per_turn": 1,
+  "action_catalog": {
+    "restore_service_center": {
+      "description": "Spend one restoration credit to open one additional service center",
+      "actors": [
+        "coordinator"
+      ]
     }
   }
 }

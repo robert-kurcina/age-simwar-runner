@@ -19,7 +19,7 @@ The public civilian fixtures are a means to verify causal consequences, persiste
 - P0 campaign catalog: three synthetic scenario files and catalog validation (PR #16 merged; 39 tests passed on Python 3.10 and 3.12).
 
 ## WIP
-- P1 playable civilian recovery vertical slice is next; no implementation claimed yet.
+- P1 integrated civilian restoration rule, resource accounting, actor-visible fulfillment, replay and comparison implemented on development branch; CI verification pending. Do not mark DONE before verification.
 
 ## NEXT (ordered, with acceptance criteria)
 2. Playable civilian recovery vertical slice: integrate a narrowly scoped, human-directed public-service restoration rule with the existing runner, rather than extending the standalone example. Acceptance: two human choices lead to different service outcomes under identical initial conditions, persisted and replay-verified, with resource accounting and actor-visible reporting.

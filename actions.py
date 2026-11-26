@@ -1,7 +1,7 @@
 """Validate structured proposals without granting mutation authority.
 
 The prototype accepts only scenario-declared administrative requests.
-Registration is pure; resolution records administrative dispositions.
+Registration is pure; a bounded civilian service rule may fulfill a reviewed request.
 """
 def validate_catalog(s):
     catalog = s.get("action_catalog", {})
@@ -25,11 +25,43 @@ def validate_review_capacity(s):
     if type(capacity) is not int or capacity < 0:
         raise ValueError("invalid administrative review capacity")
 
+def validate_service_rule(s):
+    """Validate the opt-in public-service restoration fixture contract."""
+    if "service_restoration" not in s:
+        return
+    if s["service_restoration"] is not True:
+        raise ValueError("service_restoration must be true when present")
+    initial = s["initial"]
+    for key in ("open_service_centers", "restoration_credits"):
+        if key not in initial or initial[key] < 0:
+            raise ValueError("service restoration requires nonnegative " + key)
+    if "restore_service_center" not in s.get("action_catalog", {}):
+        raise ValueError("service restoration requires a restoration request")
+    if any(e["key"] == "restoration_credits" or
+           (e["key"] == "open_service_centers" and e["delta"] < 0)
+           for e in s["events"]):
+        raise ValueError("service restoration fixture forbids scheduled credit changes or closures")
+
+
+def fulfill_service_request(s, state, record, end):
+    if not s.get("service_restoration") or record["action"] != "restore_service_center":
+        return
+    if state["values"]["restoration_credits"] == 0:
+        record["fulfillment"] = "insufficient_credits"
+        return
+    for key, delta in (("restoration_credits", -1), ("open_service_centers", 1)):
+        state["values"][key] += delta
+        state["ledger"].append({"id": "service-request:" + str(record["sequence"]) + ":" + key,
+                                "minute": end, "key": key, "delta": delta,
+                                "value": state["values"][key]})
+    record["fulfillment"] = "restored"
+
+
 def resolve_reviews(s, state, end):
     """Review pending administrative requests FIFO within a fixed capacity.
 
-    A completed review is not fulfillment of the underlying request.
-    No scenario values, objectives or other actor permissions are changed.
+    Review alone does not imply fulfillment; the opt-in service rule records
+    fulfillment separately and accounts for its finite credits.
     """
     capacity = s.get("administrative_reviews_per_turn", 0)
     for record in state["requests"]:
@@ -38,6 +70,7 @@ def resolve_reviews(s, state, end):
         if record["status"] == "validated_request":
             record["status"] = "reviewed"
             record["reviewed_minute"] = end
+            fulfill_service_request(s, state, record, end)
             capacity -= 1
 
 def available_requests(s, actor_id):

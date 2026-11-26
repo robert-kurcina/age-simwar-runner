@@ -2,7 +2,7 @@
 
 Experimental script-first scenario execution component. Python 3.10+; no dependencies.
 
-**Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Request reviews change administrative dispositions only. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
+**Status:** verified deterministic administrative workflow prototype, not a complete strategic simulation engine. Scheduled world events remain independent of submitted requests. Request reviews change administrative dispositions only. The synthetic service-restoration scenario additionally supports a bounded request-dependent civilian outcome. There is no autonomous actor policy, general causal adjudication, live LLM connection or historical reconstruction. See [plan](PLAN.md) for remaining functional work.
 
 ## Campaign catalog
 
@@ -20,8 +20,19 @@ title, scope, file (relative to the manifest directory) and optional
 prerequisites (scenario IDs). IDs are unique within their respective
 campaign namespaces. Missing references and cycles are rejected.
 Prerequisites express suggested continuity, not enforced locks or state transfer.
-The three bundled scenarios are scheduled-event baselines, not yet
-request-dependent simulations.
+Two bundled scenarios remain scheduled-event baselines. Service restoration supports one additional center per reviewed request, consuming one finite credit.
+
+## Playable civilian restoration
+
+Use fresh checkpoint paths to compare identical starts:
+
+```sh
+python runner.py campaigns/civic-recovery/service-restoration.json baseline.json --turns 2
+python runner.py campaigns/civic-recovery/service-restoration.json chosen.json --actor coordinator --request restore_service_center --turns 2
+python comparison.py campaigns/civic-recovery/service-restoration.json baseline.json chosen.json
+```
+
+The baseline opens two centers; one reviewed restoration request opens a third and spends one credit. These are illustrative quantities, not empirical estimates.
 
 ## Demonstration
 
@@ -53,7 +64,7 @@ The first command emits a prompt with a packet ID. A separately operated languag
 
 ## External scenarios
 
-See [scenario configuration](docs/scenario-format.md). Use `python runner.py path/to/scenario.json --validate` before starting a local session. The supported contract remains scheduled events and administrative review.
+See [scenario configuration](docs/scenario-format.md). Use `python runner.py path/to/scenario.json --validate` before starting a local session. The supported contract is scheduled events, administrative review and the opt-in synthetic restoration rule.
 
 ## Compare completed sessions
 
