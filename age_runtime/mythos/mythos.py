@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -102,6 +102,8 @@ def initial(sid, seed):
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
+        if rules.get("emotional_commitment"):
+            state["dxd"]["commitments"] = []
         if "activity" in rules:
             state["dxd"]["activity"] = dxd_conditions.activity_initial(derived["pc"]["attributes"], rules["activity"]["initial_awake_seconds"])
         for nid, profile in state["npcs"].items():
@@ -217,7 +219,8 @@ def resolve_dxd(state, rules, action):
                                  enabled=policy.get("emicted", False))
     psychology = dxd_psychology.effects(pc["morale"], spec.get("psychology_context"))
     progression_dm = -(state["progression"]["stage"] - 1) if "progression" in state and spec["attribute"] == "POW" else 0
-    components = [attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
+    emotional_dm = dxd_commitment.modifier(pc, action)
+    components = [emotional_dm, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
     favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
                                 significance=spec["significance"], desired=policy["desired"])
     net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"]
@@ -261,6 +264,7 @@ def resolve_dxd(state, rules, action):
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, "relationship": hook,
+                        **({"emotional_commitment": emotional_dm} if "commitments" in pc else {}),
                         "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
                         "gathered": gathered, "net_bonus": bonus, "net_penalty": penalty,
                         "probability": [chance.numerator, chance.denominator],
@@ -349,6 +353,11 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             break
     return reason
 
+def history_entry(action, proposal, commitment):
+    if commitment is not None:
+        return {"action": action, "proposal": copy.deepcopy(proposal), "commitment": copy.deepcopy(commitment)}
+    return action if proposal is None else {"proposal": copy.deepcopy(proposal)}
+
 def finish_activity(state, rules, action, a, success, reason=None, proposal=None):
     state["last_result"] = {"action": action, "success": success}
     if reason:
@@ -360,7 +369,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
         dxd_conditions.refresh_sleep_limit(pc["concerns"], pc["activity"], pc["attributes"])
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
-    state["history"].append(action if proposal is None else {"proposal": copy.deepcopy(proposal)})
+    state["history"].append(history_entry(action, proposal, a.get("commitment")))
     if not options(state, rules):
         state["ending"] = {"reason": "limit", "evidence_count": len(state["discoveries"]),
                            **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
@@ -369,7 +378,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
                            "epilogue": rules["ending_text"]["limit"], "scores": scores(state, action)}
     return state
 
-def step(state, action, proposal=None):
+def step(state, action, proposal=None, commitment=None):
     state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
     a = next((a for a in options(state, rules) if a["id"] == action), None)
@@ -385,6 +394,9 @@ def step(state, action, proposal=None):
             raise ValueError("proposal action mismatch")
     if a["id"] != action:
         raise ValueError("proposal action mismatch")
+    if commitment is not None:
+        dxd_commitment.validate(state, rules, a, commitment)
+        a = dict(a, commitment=copy.deepcopy(commitment))
     elapsed = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
@@ -452,6 +464,8 @@ def step(state, action, proposal=None):
     if "test" in a:
         success = resolve_dxd(state, rules, a)
     primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
+    if commitment is not None:
+        dxd_commitment.record(state, a, primary_result)
     if a.get("test", {}).get("interaction"):
         # Signed margin is the Test Effect; ordinary Demeanor limits still apply.
         change_demeanor(state, a["npc"], primary_result["margin"])
@@ -529,7 +543,7 @@ def step(state, action, proposal=None):
         state["last_result"]["participant"] = npc["name"]
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
-    state["history"].append(action if proposal is None else {"proposal": copy.deepcopy(proposal)})
+    state["history"].append(history_entry(action, proposal, a.get("commitment")))
     terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
     if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
         state["ending"] = {"reason": action if terminal else "limit",
@@ -623,7 +637,10 @@ def verify(state):
         if isinstance(entry, dict) and "narrative" in entry:
             replay = narrative_step(replay, entry["narrative"])
             continue
-        replay = step(replay, entry["proposal"]["action"], entry["proposal"]) if isinstance(entry, dict) else step(replay, entry)
+        if isinstance(entry, dict) and "commitment" in entry:
+            replay = step(replay, entry["action"], entry.get("proposal"), entry["commitment"])
+        else:
+            replay = step(replay, entry["proposal"]["action"], entry["proposal"]) if isinstance(entry, dict) else step(replay, entry)
         while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
             e = edits[cursor]
             apply_memory(replay, e["event"], e["memory"])
@@ -646,6 +663,8 @@ def view(state):
         scene_view["pacing"] = pacing.projection(state, rules)
     if rules.get("danger_beats"):
         scene_view["danger"] = beats.available(state, rules)
+    if "commitments" in state["dxd"]:
+        scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
     if "local_records" in state:
         scene_view["local_records"] = copy.deepcopy(state["local_records"][-8:])
     if "narrative_events" in state:
@@ -679,7 +698,7 @@ def gm_context(state):
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
-    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger") if k in public})
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments") if k in public})
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]
@@ -710,6 +729,7 @@ def gm_context(state):
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
                 "favor": pc["favor"],
+                "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
                 "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
@@ -738,12 +758,12 @@ def inspect(path):
     verify(state)
     return view(state)
 
-def act(path, action, revision, proposal=None):
+def act(path, action, revision, proposal=None, commitment=None):
     state = read(path)
     verify(state)
     if digest(state) != revision:
         raise ValueError("stale session revision")
-    state = step(state, action, proposal)
+    state = step(state, action, proposal, commitment)
     verify(state)
     save(path, state)
     return view(state)
