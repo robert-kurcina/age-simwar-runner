@@ -788,6 +788,7 @@ def gm_context(state):
                 "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
                 "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
                 "character_hooks": {a["id"]: h for a in legal if (h := hooks.offers(state, rules, a))},
+                "persistent_circumstances": {a["id"]: h for a in legal if (h := hooks.circumstances(state, rules, a))},
                 "character_emphasis_xp": pc.get("xp", 0),
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
