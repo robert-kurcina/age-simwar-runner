@@ -35,7 +35,7 @@ def local_capabilities(state, rules, npc_available):
     result = []
     for key, npc in sorted(state["npcs"].items()):
         if npc["encounters"] and npc_available(state, rules, {"npc": key, "location": state["location"]}):
-            for kind in ("build_rapport", "seek_distance"):
+            for kind in ("build_rapport",):
                 action = "local:" + kind + ":" + key
                 if action not in state["used"]:
                     result.append({"action": action, "approach": kind, "target": key})
@@ -60,7 +60,7 @@ def compile_local(state, rules, request, npc_available):
               "duration_seconds": 600, "local_seconds": 600, "interval_seconds": 600,
               "activity": "active", "route": {"nodes": [loc], "seconds": 0, "minutes": 0, "terrain": []},
               "local_capability": kind}
-    if kind in ("build_rapport", "seek_distance"):
+    if kind in ("build_rapport",):
         action.update(npc=target, test={"attribute": "PRE", "skill": "Interview",
                     "interaction": "ordinary", "tn": 7, "significance": "minor", "decision": True},
                     concern_failure={"stress": 1})
