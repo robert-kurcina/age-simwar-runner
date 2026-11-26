@@ -132,3 +132,33 @@ class SourceCompilerTest(unittest.TestCase):
                 {"events": []}):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 compile_variation(self.spec, {**good, **change}, self.owners)
+
+    def test_narrative_evidence_without_numeric_extraction(self):
+        (self.root / "history.md").write_text("# History\n\n## Recovery\nCivic services resumed.\n")
+        self.git("add", "history.md")
+        self.git("commit", "-qm", "narrative fixture")
+        spec = copy.deepcopy(self.spec)
+        spec["scenario"]["initial"]["restoration_credits"] = 2
+        spec["initial_refs"] = {}
+        ref = {"owner": "synthetic", "revision": self.git("rev-parse", "HEAD").strip(),
+               "path": "history.md", "heading": "Recovery", "reviewed_for": spec["effective_date"],
+               "classification": "canonical"}
+        spec["evidence_refs"] = {"context": ref}
+        snapshot = compile_scenario(spec, self.owners)
+        self.assertEqual(snapshot, compile_scenario(spec, self.owners))
+        self.assertNotIn("Civic services resumed", json.dumps(snapshot))
+        self.assertEqual(snapshot["dependencies"], {})
+        self.assertEqual(len(snapshot["evidence"]["context"]["section_sha256"]), 64)
+        self.assertEqual(stale_dependencies(snapshot, self.owners), [])
+        verify_checkpoint(snapshot["scenario"], initialize(snapshot["scenario"]))
+        (self.root / "history.md").write_text("# History\n## Recovery\nUpdated.\n## Recovery\nDuplicate.\n")
+        self.git("add", "history.md")
+        self.git("commit", "-qm", "ambiguous heading")
+        self.assertEqual(stale_dependencies(snapshot, self.owners), ["evidence:context"])
+        self.assertEqual(snapshot, compile_scenario(spec, self.owners))
+        ref["revision"] = self.git("rev-parse", "HEAD").strip()
+        with self.assertRaisesRegex(ValueError, "ambiguous"):
+            compile_scenario(spec, self.owners)
+        ref["reviewed_for"] = "2044-01-01"
+        with self.assertRaisesRegex(ValueError, "review date"):
+            compile_scenario(spec, self.owners)

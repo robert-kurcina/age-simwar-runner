@@ -77,8 +77,55 @@ def resolve_reference(ref, owners, effective_date):
     return value, {**ref, "content_sha256": hashlib.sha256(raw).hexdigest(), "value": value}
 
 
+def resolve_evidence(ref, owners):
+    """Bind reviewed narrative evidence without treating prose as a numeric fact."""
+    fields = {"owner", "revision", "path", "heading", "reviewed_for", "classification"}
+    if not isinstance(ref, dict) or set(ref) != fields or not all(
+            isinstance(v, str) and v for v in ref.values()):
+        raise ValueError("invalid evidence reference")
+    if ref["owner"] not in owners:
+        raise ValueError("unapproved evidence owner")
+    if not re.fullmatch(r"[0-9a-f]{40}", ref["revision"]):
+        raise ValueError("evidence requires full commit SHA")
+    path = PurePosixPath(ref["path"])
+    if path.is_absolute() or ".." in path.parts or path.suffix != ".md" or str(path) != ref["path"]:
+        raise ValueError("evidence must reference a relative Markdown path")
+    if ref["classification"] not in {"canonical", "historical"}:
+        raise ValueError("invalid evidence classification")
+    checked_date(ref["reviewed_for"])
+    root = Path(owners[ref["owner"]]).resolve()
+    if git(root, "cat-file", "-t", ref["revision"]).strip() != b"commit":
+        raise ValueError("evidence revision is not a commit")
+    raw = git(root, "show", ref["revision"] + ":" + str(path))
+    lines = raw.decode("utf-8").splitlines()
+    headings = []
+    fence = None
+    for i, line in enumerate(lines):
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if marker:
+            token = marker.group(1)
+            if fence is None:
+                fence = token
+            elif token[0] == fence[0] and len(token) >= len(fence):
+                fence = None
+            continue
+        if fence is not None:
+            continue
+        match = re.match(r"^ {0,3}(#{1,6})\s+(.+?)\s*$", line)
+        if match:
+            headings.append((i, len(match.group(1)), match.group(2)))
+    matches = [(i, level) for i, level, name in headings if name == ref["heading"]]
+    if len(matches) != 1:
+        raise ValueError("missing or ambiguous evidence heading")
+    start, level = matches[0]
+    end = next((i for i, depth, _ in headings if i > start and depth <= level), len(lines))
+    section = "\n".join(lines[start:end])
+    return {**ref, "content_sha256": hashlib.sha256(raw).hexdigest(),
+            "section_sha256": hashlib.sha256(section.encode()).hexdigest()}
+
+
 def compile_scenario(spec, owners):
-    if not isinstance(spec, dict) or set(spec) != {"version", "effective_date", "scenario", "initial_refs"}:
+    if not isinstance(spec, dict) or not {"version", "effective_date", "scenario", "initial_refs"} <= set(spec) or set(spec) - {"version", "effective_date", "scenario", "initial_refs", "evidence_refs"}:
         raise ValueError("invalid compiler specification")
     if type(spec["version"]) is not int or spec["version"] != VERSION:
         raise ValueError("unsupported compiler specification")
@@ -87,8 +134,16 @@ def compile_scenario(spec, owners):
     refs = spec["initial_refs"]
     if not isinstance(scenario, dict) or not isinstance(scenario.get("initial"), dict):
         raise ValueError("missing scenario initial state")
-    if not isinstance(refs, dict) or not refs:
-        raise ValueError("missing initial references")
+    if not isinstance(refs, dict):
+        raise ValueError("invalid initial references")
+    evidence_refs = spec.get("evidence_refs", {})
+    if not isinstance(evidence_refs, dict) or not (refs or evidence_refs):
+        raise ValueError("missing source references")
+    evidence = {}
+    for key, ref in sorted(evidence_refs.items()):
+        if not isinstance(ref, dict) or ref.get("reviewed_for") != spec["effective_date"]:
+            raise ValueError("evidence review date differs from scenario")
+        evidence[key] = resolve_evidence(ref, owners)
     dependencies = {}
     for key, ref in sorted(refs.items()):
         if key in scenario["initial"]:
@@ -99,7 +154,7 @@ def compile_scenario(spec, owners):
     validate(scenario)
     return {"version": VERSION, "spec_digest": digest(spec),
             "scenario_digest": digest(scenario), "dependencies": dependencies,
-            "scenario": scenario}
+            "scenario": scenario, **({"evidence": evidence} if evidence else {})}
 
 
 def compile_variation(spec, variation, owners):
@@ -159,7 +214,7 @@ def compile_variation(spec, variation, owners):
 def stale_dependencies(snapshot, owners):
     """Compare pinned source file bytes with local HEAD; never mutate snapshot."""
     stale = []
-    for key, ref in snapshot["dependencies"].items():
+    for key, ref in list(snapshot["dependencies"].items()) + [("evidence:" + key, ref) for key, ref in snapshot.get("evidence", {}).items()]:
         if ref["owner"] not in owners:
             raise ValueError("unapproved source owner")
         root = Path(owners[ref["owner"]]).resolve()
