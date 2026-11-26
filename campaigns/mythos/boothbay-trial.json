@@ -1,5 +1,5 @@
 {
-  "version": 33,
+  "version": 34,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -849,11 +849,11 @@
     },
     "skills": {
       "Investigate": 2,
-      "Persuade": 1,
+      "Persuade": 2,
       "Reasoning": 1,
       "Gossip": 1,
-      "Grit": 1,
-      "Discipline": 1
+      "Grit": 2,
+      "Discipline": 2
     },
     "favor": {
       "initial": 3,
@@ -1053,7 +1053,7 @@
           "region": null,
           "settlement": null,
           "age_group": "Adult",
-          "age_years": null,
+          "age_years": 34,
           "sex": null,
           "gender": null,
           "heritage": "WWI veteran",
@@ -1063,7 +1063,8 @@
           "beliefs": null,
           "current_region": "Maine, United States",
           "current_settlement": "Boothbay",
-          "employment_base": "Portland"
+          "employment_base": "Portland",
+          "age_rank": 4
         },
         "intrinsics": {
           "species": "Human",
@@ -1073,16 +1074,25 @@
           "wealth_rank": 2,
           "attribute_profile": "pc",
           "pml": null,
-          "zed_policy": "derived compatibility field; no magic affordance"
+          "zed_policy": "derived compatibility field; no magic affordance",
+          "professional_rank": 2,
+          "occupational_title": "Journalist",
+          "prior_careers": [
+            {
+              "trade": "Warrior",
+              "profession": "Veteran",
+              "attained_rank": 2
+            }
+          ]
         },
         "proficiencies": {
           "skills": {
             "Investigate": 2,
-            "Persuade": 1,
+            "Persuade": 2,
             "Reasoning": 1,
             "Gossip": 1,
-            "Grit": 1,
-            "Discipline": 1
+            "Grit": 2,
+            "Discipline": 2
           },
           "traits": {
             "[Addict > Drunkard]": {
@@ -1099,6 +1109,64 @@
           },
           "languages": {
             "English": null
+          },
+          "skill_sources": {
+            "Investigate": "profession:Journalist",
+            "Persuade": "profession:Journalist",
+            "Reasoning": "profession:Journalist",
+            "Gossip": "profession:Journalist",
+            "Grit": "prior:Warrior/Veteran",
+            "Discipline": "prior:Warrior/Veteran"
+          },
+          "progression": {
+            "xp": 0,
+            "skillpoints": 0,
+            "attribute_increments": {},
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Investigate",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Persuade",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Reasoning",
+                  "level": 1,
+                  "im": 4,
+                  "cost": 4
+                },
+                {
+                  "name": "Gossip",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                },
+                {
+                  "name": "Grit",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Discipline",
+                  "level": 2,
+                  "im": 3,
+                  "cost": 9
+                }
+              ],
+              "skill_cost_total": 32,
+              "bonus_skillpoint_budget": 40,
+              "unallocated_budget": 8,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1116,8 +1184,8 @@
         "background": {
           "region": null,
           "settlement": null,
-          "age_group": null,
-          "age_years": null,
+          "age_group": "Adult",
+          "age_years": 26,
           "sex": null,
           "gender": null,
           "heritage": null,
@@ -1126,7 +1194,8 @@
           "tragedy_seed": "Brother's disappearance/transformation",
           "beliefs": null,
           "current_region": "Maine, United States",
-          "current_settlement": "Boothbay"
+          "current_settlement": "Boothbay",
+          "age_rank": 4
         },
         "intrinsics": {
           "species": "Human",
@@ -1136,16 +1205,49 @@
           "wealth_rank": 1,
           "attribute_profile": "eleanor",
           "pml": null,
-          "zed_policy": "derived compatibility field; no magic affordance"
+          "zed_policy": "derived compatibility field; no magic affordance",
+          "professional_rank": 1,
+          "occupational_title": "Waitress",
+          "prior_careers": []
         },
         "proficiencies": {
           "skills": {
             "Suss": 1,
-            "Gossip": 1
+            "Gossip": 2
           },
           "traits": {},
           "languages": {
             "English": null
+          },
+          "skill_sources": {
+            "Suss": "profession:Waitress",
+            "Gossip": "profession:Waitress"
+          },
+          "progression": {
+            "xp": 0,
+            "skillpoints": 0,
+            "attribute_increments": {},
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Suss",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                },
+                {
+                  "name": "Gossip",
+                  "level": 2,
+                  "im": 1,
+                  "cost": 3
+                }
+              ],
+              "skill_cost_total": 4,
+              "bonus_skillpoint_budget": 29,
+              "unallocated_budget": 25,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1164,7 +1266,7 @@
           "region": null,
           "settlement": null,
           "age_group": "Elder",
-          "age_years": null,
+          "age_years": 76,
           "sex": null,
           "gender": null,
           "heritage": null,
@@ -1173,7 +1275,8 @@
           "tragedy_seed": null,
           "beliefs": null,
           "current_region": "Maine, United States",
-          "current_settlement": "Boothbay"
+          "current_settlement": "Boothbay",
+          "age_rank": 7
         },
         "intrinsics": {
           "species": "Human",
@@ -1183,18 +1286,65 @@
           "wealth_rank": 1,
           "attribute_profile": "elias",
           "pml": null,
-          "zed_policy": "derived compatibility field; no magic affordance"
+          "zed_policy": "derived compatibility field; no magic affordance",
+          "professional_rank": 3,
+          "occupational_title": "Retired fisherman",
+          "prior_careers": []
         },
         "proficiencies": {
           "skills": {
             "Fishing": 2,
             "Seafaring > Sea-going": 2,
             "Survival > Coastal": 2,
-            "Discipline": 1
+            "Discipline": 2
           },
           "traits": {},
           "languages": {
             "English": null
+          },
+          "skill_sources": {
+            "Fishing": "profession:Retired fisherman",
+            "Seafaring > Sea-going": "profession:Retired fisherman",
+            "Survival > Coastal": "profession:Retired fisherman",
+            "Discipline": "profession:Retired fisherman"
+          },
+          "progression": {
+            "xp": 0,
+            "skillpoints": 0,
+            "attribute_increments": {},
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Fishing",
+                  "level": 2,
+                  "im": 1,
+                  "cost": 3
+                },
+                {
+                  "name": "Seafaring > Sea-going",
+                  "level": 2,
+                  "im": 4,
+                  "cost": 12
+                },
+                {
+                  "name": "Survival > Coastal",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Discipline",
+                  "level": 2,
+                  "im": 3,
+                  "cost": 9
+                }
+              ],
+              "skill_cost_total": 30,
+              "bonus_skillpoint_budget": 85,
+              "unallocated_budget": 55,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1212,8 +1362,8 @@
         "background": {
           "region": null,
           "settlement": null,
-          "age_group": null,
-          "age_years": null,
+          "age_group": "Mature",
+          "age_years": 45,
           "sex": null,
           "gender": null,
           "heritage": null,
@@ -1222,27 +1372,68 @@
           "tragedy_seed": null,
           "beliefs": null,
           "current_region": "Maine, United States",
-          "current_settlement": "Boothbay"
+          "current_settlement": "Boothbay",
+          "age_rank": 5
         },
         "intrinsics": {
           "species": "Human",
           "lineage": "Earth Human",
           "trade": "Warrior",
-          "profession": "Police chief",
+          "profession": "Enforcer",
           "wealth_rank": 3,
           "attribute_profile": "burroughs",
           "pml": null,
-          "zed_policy": "derived compatibility field; no magic affordance"
+          "zed_policy": "derived compatibility field; no magic affordance",
+          "professional_rank": 3,
+          "occupational_title": "Police chief",
+          "prior_careers": []
         },
         "proficiencies": {
           "skills": {
-            "Investigate": 1,
+            "Investigate": 2,
             "Intimidate": 2,
             "Leadership": 2
           },
           "traits": {},
           "languages": {
             "English": null
+          },
+          "skill_sources": {
+            "Investigate": "profession:Enforcer",
+            "Intimidate": "profession:Enforcer",
+            "Leadership": "profession:Enforcer"
+          },
+          "progression": {
+            "xp": 0,
+            "skillpoints": 0,
+            "attribute_increments": {},
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Investigate",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Intimidate",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Leadership",
+                  "level": 2,
+                  "im": 3,
+                  "cost": 9
+                }
+              ],
+              "skill_cost_total": 21,
+              "bonus_skillpoint_budget": 54,
+              "unallocated_budget": 33,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1260,8 +1451,8 @@
         "background": {
           "region": null,
           "settlement": null,
-          "age_group": null,
-          "age_years": null,
+          "age_group": "Mature",
+          "age_years": 50,
           "sex": null,
           "gender": null,
           "heritage": null,
@@ -1270,7 +1461,8 @@
           "tragedy_seed": null,
           "beliefs": null,
           "current_region": "Maine, United States",
-          "current_settlement": "Boothbay"
+          "current_settlement": "Boothbay",
+          "age_rank": 5
         },
         "intrinsics": {
           "species": "Human",
@@ -1280,7 +1472,10 @@
           "wealth_rank": 3,
           "attribute_profile": "Mayor Gilman",
           "pml": null,
-          "zed_policy": "derived compatibility field; no magic affordance"
+          "zed_policy": "derived compatibility field; no magic affordance",
+          "professional_rank": 2,
+          "occupational_title": "Mayor",
+          "prior_careers": []
         },
         "proficiencies": {
           "skills": {
@@ -1291,6 +1486,43 @@
           "traits": {},
           "languages": {
             "English": null
+          },
+          "skill_sources": {
+            "Politics > Boothbay": "profession:Mayor",
+            "Persuade": "profession:Mayor",
+            "Leadership": "profession:Mayor"
+          },
+          "progression": {
+            "xp": 0,
+            "skillpoints": 0,
+            "attribute_increments": {},
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Politics > Boothbay",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Persuade",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Leadership",
+                  "level": 1,
+                  "im": 3,
+                  "cost": 3
+                }
+              ],
+              "skill_cost_total": 15,
+              "bonus_skillpoint_budget": 56,
+              "unallocated_budget": 41,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1308,8 +1540,8 @@
         "background": {
           "region": null,
           "settlement": null,
-          "age_group": null,
-          "age_years": null,
+          "age_group": "Mature",
+          "age_years": 48,
           "sex": null,
           "gender": null,
           "heritage": null,
@@ -1318,7 +1550,8 @@
           "tragedy_seed": null,
           "beliefs": null,
           "current_region": "Maine, United States",
-          "current_settlement": "Boothbay"
+          "current_settlement": "Boothbay",
+          "age_rank": 5
         },
         "intrinsics": {
           "species": "Human",
@@ -1328,7 +1561,10 @@
           "wealth_rank": 2,
           "attribute_profile": "Mrs. Croft",
           "pml": null,
-          "zed_policy": "derived compatibility field; no magic affordance"
+          "zed_policy": "derived compatibility field; no magic affordance",
+          "professional_rank": 1,
+          "occupational_title": "Boarding house proprietor",
+          "prior_careers": []
         },
         "proficiencies": {
           "skills": {
@@ -1339,6 +1575,43 @@
           "traits": {},
           "languages": {
             "English": null
+          },
+          "skill_sources": {
+            "Service > Lodging": "profession:Boarding house proprietor",
+            "Gossip": "profession:Boarding house proprietor",
+            "Suss": "profession:Boarding house proprietor"
+          },
+          "progression": {
+            "xp": 0,
+            "skillpoints": 0,
+            "attribute_increments": {},
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Service > Lodging",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Gossip",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                },
+                {
+                  "name": "Suss",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                }
+              ],
+              "skill_cost_total": 8,
+              "bonus_skillpoint_budget": 51,
+              "unallocated_budget": 43,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1352,6 +1625,323 @@
           "derived_attributes": "runtime"
         }
       }
+    },
+    "professional_progression": {
+      "version": 1,
+      "policy": "Fear! adaptation; career lists provisional; Veteran preserves attained Soldier rank, not active authority. Rank is qualification, not automatic promotion.",
+      "careers": {
+        "Soldier": {
+          "ladder": [
+            "Athletics",
+            "Drill",
+            "Expert",
+            "Fight",
+            "Grit",
+            "Discipline",
+            "Trained",
+            "Survival",
+            "Navigation"
+          ],
+          "A": [
+            "Leadership",
+            "Tactics",
+            "Warfare",
+            "§Military",
+            "Medic"
+          ],
+          "B": [
+            "Read",
+            "Language",
+            "Office",
+            "Engineer"
+          ],
+          "C": [
+            "Politics",
+            "Connections",
+            "Reasoning"
+          ]
+        },
+        "Veteran": {
+          "ladder": [
+            "Athletics",
+            "Drill",
+            "Expert",
+            "Fight",
+            "Grit",
+            "Discipline",
+            "Trained",
+            "Survival",
+            "Navigation"
+          ],
+          "A": [
+            "Leadership",
+            "Tactics",
+            "Warfare",
+            "§Military",
+            "Medic"
+          ],
+          "B": [
+            "Read",
+            "Language",
+            "Office",
+            "Engineer"
+          ],
+          "C": [
+            "Politics",
+            "Connections",
+            "Reasoning"
+          ]
+        },
+        "Enforcer": {
+          "ladder": [
+            "Investigate",
+            "Intimidate",
+            "Suss",
+            "Persuade",
+            "Fight",
+            "Discipline",
+            "Grit",
+            "Expert",
+            "Navigation"
+          ],
+          "A": [
+            "Leadership",
+            "Reasoning",
+            "Tactics",
+            "Tracking",
+            "Medic"
+          ],
+          "B": [
+            "Office",
+            "Read",
+            "Language",
+            "Politics"
+          ],
+          "C": [
+            "Connections",
+            "Cryptography",
+            "§Military"
+          ]
+        },
+        "Government": {
+          "ladder": [
+            "Investigate",
+            "Reasoning",
+            "Suss",
+            "Disguise",
+            "Persuade",
+            "Discipline",
+            "Office",
+            "Language",
+            "Read"
+          ],
+          "A": [
+            "Politics",
+            "Infiltrate",
+            "Cryptography",
+            "Leadership",
+            "Tactics"
+          ],
+          "B": [
+            "Connections",
+            "Navigation",
+            "History",
+            "Lore"
+          ],
+          "C": [
+            "§Military",
+            "§Letters",
+            "Science"
+          ]
+        },
+        "Trooper": {
+          "ladder": [
+            "Investigate",
+            "Navigation",
+            "Discipline",
+            "Intimidate",
+            "Steer",
+            "Suss",
+            "Persuade",
+            "Grit",
+            "Expert"
+          ],
+          "A": [
+            "Leadership",
+            "Tracking",
+            "Tactics",
+            "Medic",
+            "Reasoning"
+          ],
+          "B": [
+            "Office",
+            "Read",
+            "Language",
+            "Politics"
+          ],
+          "C": [
+            "Connections",
+            "Cryptography",
+            "§Military"
+          ]
+        },
+        "Journalist": {
+          "ladder": [
+            "Investigate",
+            "Persuade",
+            "Gossip",
+            "Reasoning",
+            "Read",
+            "Language",
+            "Suss",
+            "History",
+            "Lore"
+          ],
+          "A": [
+            "Politics",
+            "Office",
+            "Connections",
+            "§Letters",
+            "Teach"
+          ],
+          "B": [
+            "Cryptography",
+            "Science",
+            "Maths",
+            "Disguise"
+          ],
+          "C": [
+            "Leadership",
+            "Infiltrate",
+            "§Academics"
+          ]
+        },
+        "Waitress": {
+          "ladder": [
+            "Service",
+            "Gossip",
+            "Suss",
+            "Banter",
+            "Manners",
+            "Persuade",
+            "Labor",
+            "Domus",
+            "Barter"
+          ],
+          "A": [
+            "Office",
+            "Connections",
+            "Leadership",
+            "Reasoning",
+            "Language"
+          ],
+          "B": [
+            "Read",
+            "Wares",
+            "Mercantile",
+            "Teach"
+          ],
+          "C": [
+            "Politics",
+            "§Commerce",
+            "History"
+          ]
+        },
+        "Retired fisherman": {
+          "ladder": [
+            "Fishing",
+            "Seafaring",
+            "Survival",
+            "Navigation",
+            "Swim",
+            "Climb",
+            "Brawl",
+            "Banter",
+            "Grit"
+          ],
+          "A": [
+            "Discipline",
+            "Leadership",
+            "Tactics",
+            "Steer",
+            "Language"
+          ],
+          "B": [
+            "Read",
+            "Office",
+            "Wares",
+            "Medic"
+          ],
+          "C": [
+            "Connections",
+            "Politics",
+            "Engineer"
+          ]
+        },
+        "Mayor": {
+          "ladder": [
+            "Politics",
+            "Persuade",
+            "Leadership",
+            "Office",
+            "Suss",
+            "Gossip",
+            "Barter",
+            "Mercantile",
+            "Manners"
+          ],
+          "A": [
+            "Connections",
+            "Reasoning",
+            "History",
+            "§Commerce",
+            "Language"
+          ],
+          "B": [
+            "Read",
+            "Lore",
+            "Teach",
+            "Maths"
+          ],
+          "C": [
+            "§Letters",
+            "§Courtcraft",
+            "Warfare"
+          ]
+        },
+        "Boarding house proprietor": {
+          "ladder": [
+            "Service",
+            "Gossip",
+            "Suss",
+            "Barter",
+            "Domus",
+            "Wares",
+            "Mercantile",
+            "Manners",
+            "Banter"
+          ],
+          "A": [
+            "Office",
+            "Connections",
+            "Reasoning",
+            "Leadership",
+            "Language"
+          ],
+          "B": [
+            "Read",
+            "Politics",
+            "Maths",
+            "Teach"
+          ],
+          "C": [
+            "§Commerce",
+            "History",
+            "§Letters"
+          ]
+        }
+      },
+      "source": "frameworks/mythos/professional-progression.json (bundled snapshot)"
     }
   },
   "scene": {
@@ -1381,7 +1971,7 @@
         "text": "Your inquiries have attracted official attention. You can explain yourself, seek another route, or leave."
       }
     ],
-    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration. The cave node denotes an exterior observation point; retreat is unrestricted and interior entry remains unsupported. v19: 20 advisory Critical Decisions, authored decision identities and optional GM classification; mechanical actions no longer end the game at 20. Default observation 10 minutes. Existing fictional deadline retained. v20: advisory target revised to 24 Critical Decisions; no change to fictional deadline or mechanical resolution. v21: advisory Spotlight lifecycle and eligible Scene frames, not scripted event sequences; Scene and Spotlight controls do not advance time. v22: elapsed-time activity and sleep at the boarding house; initial awake duration zero is provisional. No location is assumed safe; ordinary meals are not necessarily restorative. Sleep and rest may stop at explicitly authored interruptions. v23: canonical Weariness-adjusted Sleep Limit; prospective overdue-hour accounting. See vault-sarnalen PR #214. v24: generalized named clocks; Eleanor's warning distribution takes one hour after agreement (provisional); ecological Encounter Tension uses source-described crabs and filaments and offers an alternate evidence route. No actual infection or patrol combat. Sleep Limit revised: subtract Degrees of Weariness and Stress in Index space, superseding raw Weariness (vault-sarnalen PR #215). v26: reconcile alternate GM approaches with combined Degree Sleep Limit. Native individual Interaction Tests: ordinary PRE TN7, pivotal opposed PRE vs INT, conditional PC secondary INT; Demeanor uses signed Test margin bounded by existing ordinary limits. v27: generated local activities and persistent bounded records, with no invented evidence or facts. v28: optional decisive danger Beats at existing inlet and lighthouse nodes; authored stakes and approaches are provisional, no infection or injury adjudication. Midnight relay requires patrol passage; retreat remains available. v29: Elias withdraws into isolation at dawn (provisional timing based on authored illness and isolation); previously granted journal access persists. Independent ecological/almanac inference is not witness testimony. GM-only function projection derives availability from current flags and actions. v30: optional player-authorized initial Emotional Commitment at level 1 in an established local NPC interaction, once per scenario session. No automatic outburst, background Hook or escalation across sessions. v31: curated five-stage Fear! DXD profiles for PC and five major NPCs; unknown biography remains null. Native Skill names replace legacy aliases; additional Skills and contextual Disabilities are provisional. No imported PML or setting-specific profession grants. v32: local danger uses native Narrative TN penalty conversion; Burroughs applies Investigate when evaluating the reporter's account; contextual Emotional penalties limited to one Test per trait per session, with acquired Commitment disability recorded as a native Trait. Explicit wartime analogy approach only when player chooses it. No automatic emotional inference. v33: optional contextual nominations select owned capabilities from bounded action scopes; native gathering determines effective levels. No arbitrary DM or trigger overrides.",
+    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration. The cave node denotes an exterior observation point; retreat is unrestricted and interior entry remains unsupported. v19: 20 advisory Critical Decisions, authored decision identities and optional GM classification; mechanical actions no longer end the game at 20. Default observation 10 minutes. Existing fictional deadline retained. v20: advisory target revised to 24 Critical Decisions; no change to fictional deadline or mechanical resolution. v21: advisory Spotlight lifecycle and eligible Scene frames, not scripted event sequences; Scene and Spotlight controls do not advance time. v22: elapsed-time activity and sleep at the boarding house; initial awake duration zero is provisional. No location is assumed safe; ordinary meals are not necessarily restorative. Sleep and rest may stop at explicitly authored interruptions. v23: canonical Weariness-adjusted Sleep Limit; prospective overdue-hour accounting. See vault-sarnalen PR #214. v24: generalized named clocks; Eleanor's warning distribution takes one hour after agreement (provisional); ecological Encounter Tension uses source-described crabs and filaments and offers an alternate evidence route. No actual infection or patrol combat. Sleep Limit revised: subtract Degrees of Weariness and Stress in Index space, superseding raw Weariness (vault-sarnalen PR #215). v26: reconcile alternate GM approaches with combined Degree Sleep Limit. Native individual Interaction Tests: ordinary PRE TN7, pivotal opposed PRE vs INT, conditional PC secondary INT; Demeanor uses signed Test margin bounded by existing ordinary limits. v27: generated local activities and persistent bounded records, with no invented evidence or facts. v28: optional decisive danger Beats at existing inlet and lighthouse nodes; authored stakes and approaches are provisional, no infection or injury adjudication. Midnight relay requires patrol passage; retreat remains available. v29: Elias withdraws into isolation at dawn (provisional timing based on authored illness and isolation); previously granted journal access persists. Independent ecological/almanac inference is not witness testimony. GM-only function projection derives availability from current flags and actions. v30: optional player-authorized initial Emotional Commitment at level 1 in an established local NPC interaction, once per scenario session. No automatic outburst, background Hook or escalation across sessions. v31: curated five-stage Fear! DXD profiles for PC and five major NPCs; unknown biography remains null. Native Skill names replace legacy aliases; additional Skills and contextual Disabilities are provisional. No imported PML or setting-specific profession grants. v32: local danger uses native Narrative TN penalty conversion; Burroughs applies Investigate when evaluating the reporter's account; contextual Emotional penalties limited to one Test per trait per session, with acquired Commitment disability recorded as a native Trait. Explicit wartime analogy approach only when player chooses it. No automatic emotional inference. v33: optional contextual nominations select owned capabilities from bounded action scopes; native gathering determines effective levels. No arbitrary DM or trigger overrides. v34: PML-independent professional qualification and career histories; provisional ages and ranks; no lifetime XP simulation.",
     "initial_frame": "town_inquiry",
     "frames": {
       "town_inquiry": {

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -72,6 +72,10 @@ def initial(sid, seed):
         if set(profiles) != {"pc", *rules["dxd"]["body_profiles"].keys()}:
             raise ValueError("character profile coverage mismatch")
         state["character_profiles"] = copy.deepcopy(profiles)
+        if "professional_progression" in rules["dxd"]:
+            careers = rules["dxd"]["professional_progression"]["careers"]
+            for profile in state["character_profiles"].values():
+                profile["proficiencies"]["qualification"] = dxd_progression.describe(profile, careers)
     if "pacing" in rules:
         state["pacing"] = pacing.initial(rules["pacing"], rules["scene"], state["location"])
     if "spatial" in rules:

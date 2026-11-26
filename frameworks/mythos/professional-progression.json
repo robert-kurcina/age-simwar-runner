@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "policy": "Fear! adaptation; career lists provisional; Veteran preserves attained Soldier rank, not active authority. Rank is qualification, not automatic promotion.",
+  "careers": {
+    "Soldier": {
+      "ladder": [
+        "Athletics",
+        "Drill",
+        "Expert",
+        "Fight",
+        "Grit",
+        "Discipline",
+        "Trained",
+        "Survival",
+        "Navigation"
+      ],
+      "A": [
+        "Leadership",
+        "Tactics",
+        "Warfare",
+        "§Military",
+        "Medic"
+      ],
+      "B": [
+        "Read",
+        "Language",
+        "Office",
+        "Engineer"
+      ],
+      "C": [
+        "Politics",
+        "Connections",
+        "Reasoning"
+      ]
+    },
+    "Veteran": {
+      "ladder": [
+        "Athletics",
+        "Drill",
+        "Expert",
+        "Fight",
+        "Grit",
+        "Discipline",
+        "Trained",
+        "Survival",
+        "Navigation"
+      ],
+      "A": [
+        "Leadership",
+        "Tactics",
+        "Warfare",
+        "§Military",
+        "Medic"
+      ],
+      "B": [
+        "Read",
+        "Language",
+        "Office",
+        "Engineer"
+      ],
+      "C": [
+        "Politics",
+        "Connections",
+        "Reasoning"
+      ]
+    },
+    "Enforcer": {
+      "ladder": [
+        "Investigate",
+        "Intimidate",
+        "Suss",
+        "Persuade",
+        "Fight",
+        "Discipline",
+        "Grit",
+        "Expert",
+        "Navigation"
+      ],
+      "A": [
+        "Leadership",
+        "Reasoning",
+        "Tactics",
+        "Tracking",
+        "Medic"
+      ],
+      "B": [
+        "Office",
+        "Read",
+        "Language",
+        "Politics"
+      ],
+      "C": [
+        "Connections",
+        "Cryptography",
+        "§Military"
+      ]
+    },
+    "Government": {
+      "ladder": [
+        "Investigate",
+        "Reasoning",
+        "Suss",
+        "Disguise",
+        "Persuade",
+        "Discipline",
+        "Office",
+        "Language",
+        "Read"
+      ],
+      "A": [
+        "Politics",
+        "Infiltrate",
+        "Cryptography",
+        "Leadership",
+        "Tactics"
+      ],
+      "B": [
+        "Connections",
+        "Navigation",
+        "History",
+        "Lore"
+      ],
+      "C": [
+        "§Military",
+        "§Letters",
+        "Science"
+      ]
+    },
+    "Trooper": {
+      "ladder": [
+        "Investigate",
+        "Navigation",
+        "Discipline",
+        "Intimidate",
+        "Steer",
+        "Suss",
+        "Persuade",
+        "Grit",
+        "Expert"
+      ],
+      "A": [
+        "Leadership",
+        "Tracking",
+        "Tactics",
+        "Medic",
+        "Reasoning"
+      ],
+      "B": [
+        "Office",
+        "Read",
+        "Language",
+        "Politics"
+      ],
+      "C": [
+        "Connections",
+        "Cryptography",
+        "§Military"
+      ]
+    },
+    "Journalist": {
+      "ladder": [
+        "Investigate",
+        "Persuade",
+        "Gossip",
+        "Reasoning",
+        "Read",
+        "Language",
+        "Suss",
+        "History",
+        "Lore"
+      ],
+      "A": [
+        "Politics",
+        "Office",
+        "Connections",
+        "§Letters",
+        "Teach"
+      ],
+      "B": [
+        "Cryptography",
+        "Science",
+        "Maths",
+        "Disguise"
+      ],
+      "C": [
+        "Leadership",
+        "Infiltrate",
+        "§Academics"
+      ]
+    },
+    "Waitress": {
+      "ladder": [
+        "Service",
+        "Gossip",
+        "Suss",
+        "Banter",
+        "Manners",
+        "Persuade",
+        "Labor",
+        "Domus",
+        "Barter"
+      ],
+      "A": [
+        "Office",
+        "Connections",
+        "Leadership",
+        "Reasoning",
+        "Language"
+      ],
+      "B": [
+        "Read",
+        "Wares",
+        "Mercantile",
+        "Teach"
+      ],
+      "C": [
+        "Politics",
+        "§Commerce",
+        "History"
+      ]
+    },
+    "Retired fisherman": {
+      "ladder": [
+        "Fishing",
+        "Seafaring",
+        "Survival",
+        "Navigation",
+        "Swim",
+        "Climb",
+        "Brawl",
+        "Banter",
+        "Grit"
+      ],
+      "A": [
+        "Discipline",
+        "Leadership",
+        "Tactics",
+        "Steer",
+        "Language"
+      ],
+      "B": [
+        "Read",
+        "Office",
+        "Wares",
+        "Medic"
+      ],
+      "C": [
+        "Connections",
+        "Politics",
+        "Engineer"
+      ]
+    },
+    "Mayor": {
+      "ladder": [
+        "Politics",
+        "Persuade",
+        "Leadership",
+        "Office",
+        "Suss",
+        "Gossip",
+        "Barter",
+        "Mercantile",
+        "Manners"
+      ],
+      "A": [
+        "Connections",
+        "Reasoning",
+        "History",
+        "§Commerce",
+        "Language"
+      ],
+      "B": [
+        "Read",
+        "Lore",
+        "Teach",
+        "Maths"
+      ],
+      "C": [
+        "§Letters",
+        "§Courtcraft",
+        "Warfare"
+      ]
+    },
+    "Boarding house proprietor": {
+      "ladder": [
+        "Service",
+        "Gossip",
+        "Suss",
+        "Barter",
+        "Domus",
+        "Wares",
+        "Mercantile",
+        "Manners",
+        "Banter"
+      ],
+      "A": [
+        "Office",
+        "Connections",
+        "Reasoning",
+        "Leadership",
+        "Language"
+      ],
+      "B": [
+        "Read",
+        "Politics",
+        "Maths",
+        "Teach"
+      ],
+      "C": [
+        "§Commerce",
+        "History",
+        "§Letters"
+      ]
+    }
+  }
+}

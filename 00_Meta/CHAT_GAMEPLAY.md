@@ -107,3 +107,7 @@ Danger Beats use native Narrative TN conversion; pivotal Burroughs interactions 
 ### Boothbay v33 — contextual nominations
 
 For a supported approach, consult private `referee.modifier_nominations`. When the player's intent independently justifies an offered owned source, use `--nomination FILE.json` with `game.py propose` (or `commit` with paired approach/intent). The file contains only `skills` and `traits` arrays of names, and a brief `basis` string. Never submit numerical effects, invent a capability or use the rationale as established fictional fact. Native diminishing Levels may yield zero. The engine validates scope, flags, ownership and stacking before action time advances. Do not use this mechanism to bypass explicit Disability triggers. Restart earlier Boothbay sessions.
+
+### Boothbay v34 — experienced professionals
+
+Consult private character profile qualification and career history; use actual owned Skills, not generic rank bonuses. Former Warrior/Veteran competence does not confer active military authority. Ages/ranks and career lists are curated Fear! adaptations. PML is inapplicable. Skill-only fast-track audit is not spendable XP or Skillpoints. No live promotion or training command; do not award advancement through prose. Restart older Boothbay sessions.
