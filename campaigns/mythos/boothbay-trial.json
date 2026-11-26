@@ -1463,7 +1463,10 @@
       "carriers": [
         {
           "action": "read_journal",
-          "kind": "record"
+          "kind": "record",
+          "access_carriers": {
+            "elias": "journal"
+          }
         },
         {
           "action": "inspect_inlet_pattern",
