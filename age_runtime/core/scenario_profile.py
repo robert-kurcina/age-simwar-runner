@@ -33,7 +33,9 @@ def profile(campaign_id, scenario_id):
             if status == "trial":
                 rules = read(path.parent / entry["rules"])
                 result["duration"] = {"clock": "action-dependent",
-                                      "max_turns": rules["max_turns"],
+                                      **({"target_decisions": rules["pacing"]["target_decisions"],
+                                          "decision_budget_advisory": True} if "pacing" in rules
+                                         else {"max_turns": rules["max_turns"]}),
                                       "start": rules["start"], "end": rules["end"]}
                 result["conclusion"] = {"mode": "epilogue",
                     "metrics": ["Truth Preserved", "Self Preserved", "Horror Contained"],

@@ -2,7 +2,7 @@
 import re
 
 INTERVALS = (10, 60, 600, 3600)
-BUDGETS = (6, 12, 20, 24)
+BUDGETS = (6, 12, 24)
 
 def duration(record):
     if "seconds" in record and "minutes" in record:

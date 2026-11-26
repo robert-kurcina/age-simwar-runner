@@ -560,9 +560,9 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.step(s, "observe", {"id": "watch_harbor", "label": "Different commitment"})
         self.assertEqual(mythos.digest(s), before)
-        for n in range(20):
+        for n in range(24):
             s = mythos.step(s, "observe", {"id": "trial_" + str(n), "label": "Synthetic decision " + str(n)})
-        self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 21)
+        self.assertEqual(mythos.view(s)["pacing"]["committed_decisions"], 25)
         self.assertEqual(mythos.view(s)["pacing"]["remaining_decisions"], 0)
         self.assertIsNone(s["ending"])
         mythos.verify(s)
@@ -606,3 +606,11 @@ class MythosTrialTests(unittest.TestCase):
                 s = mythos.step(s, "observe")
         self.assertGreater(s["turn"], 20)
         mythos.verify(s)
+
+    def test_supported_critical_decision_budgets(self):
+        from age_runtime.mythos import pacing
+        for target in (6, 12, 24):
+            self.assertEqual(pacing.initial({"target_decisions": target})["target"], target)
+        with self.assertRaises(ValueError):
+            pacing.initial({"target_decisions": 20})
+        self.assertEqual(mythos.view(mythos.initial("boothbay", 42))["pacing"]["target_decisions"], 24)
