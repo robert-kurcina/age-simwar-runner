@@ -4,15 +4,15 @@
 
 Run a complete scenario in one ordinary ChatGPT conversation, using either an authorized GitHub connector or an uploaded standalone ZIP. ChatGPT interprets decisions and presents narrative or staff briefings; the Python runtime validates and commits state. The same frozen scenario, engine revision, seed and resolved inputs must reproduce the same mechanical results across independent runs. Different player choices may produce different outcomes. Dialogue wording need not be identical.
 
-Keep Python and JSON, existing strategic and Mythos engines, and existing CLI entry points. No new platform architecture unless actual gameplay exposes a concrete need. Supported execution remains bounded fictional investigation and civilian/institutional simulation; no operational military targeting or predictive claims.
+Keep Python and JSON, existing strategic engine and narrative execution loop, and existing CLI entry points. Migrate narrative resolution to bounded DXD; reclassify Mythos-inspired content as Fear!. No new platform architecture unless actual gameplay exposes a concrete need. Supported execution remains bounded fictional investigation and civilian/institutional simulation; no operational military targeting or predictive claims.
 
 ## Status at reset (2026-11-26)
 
 DONE on main: four public strategic fixtures, Boothbay trial, actor observations/objectives, resource accounting, scheduled events, time, checkpoint/replay, source compiler, campaign discovery, Chat launch guidance, runtime ZIP workflow, repository organization. PR #62 tests and bundle CI passed. PR #56 closed as superseded. Earlier private CI verified bounded recovery fixtures against pinned revisions; current-main private Chat gameplay and standalone upload need qualification.
 
-DONE: PR #66 merged scenario/participant profiles; combined Tests 45801596447 and Chat runtime bundle 45801596576 passed. WIP milestone 1: Boothbay v4 binds active NPCs to native authored records, records encounters and earned disclosures, and uses authored Willpower for a provisional disclosure threshold adjustment. PR #67 merged; v3 checkpoints require restart. Next: qualify actual play and extend to Castine rather than creating another participant engine.
+DONE: PR #66 merged scenario/participant profiles; combined Tests 45801596447 and Chat runtime bundle 45801596576 passed. WIP milestone 1: Boothbay v4 binds active NPCs to native authored records, records encounters and earned disclosures, and uses authored Willpower for a provisional disclosure threshold adjustment. PR #67 merged; v3 checkpoints require restart.
 
-WIP: Castine trial v1 adds a second narrative scenario using existing NPC, event and conclusion mechanics; provisional rules, CI pending. Imported, not playable: Ram Island. Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
+PR #68 merged Castine trial v1 using the existing NPC, event and conclusion mechanics; actual Chat qualification remains pending. Imported, not playable: Ram Island. WIP: bounded DXD Test kernel (not yet wired into gameplay); see [DXD migration](docs/dxd-migration.md). Private SH44SER/Conflagration packages pending; Sarna Len integration is not yet playable.
 
 ## NEXT — five milestones
 
@@ -28,7 +28,7 @@ Milestones are ordered by dependency, not separate infrastructure projects. Use 
 
 ## Practical content queue
 
-- First: improve Boothbay and convert Castine/Ram Island as close-up tests; avoid reproducing the entire AIMythos ruleset.
+- First: implement the bounded DXD Test kernel, migrate Boothbay and Castine to Fear! with explicit character adaptations, then complete Ram Island using DXD. Do not port the entire DXD ruleset.
 - In parallel where useful: use an existing civilian scenario to exercise participant behavior and persistent background events.
 - Then qualify one authorized SH44SER recovery scenario in ordinary Chat; retain Conflagration inventory without claiming unsupported scenarios are playable.
 - Add one bounded Sarna Len scenario only after useful source mappings and applicable DXD rules are established. Great War and Solo City are supporting sources, not additional engines to port.
@@ -40,7 +40,7 @@ A scenario needs only six logical components: scenario metadata/objectives, part
 
 Mechanical repeatability requires identical configuration, engine revision, seed and resolved inputs, including any model-proposed participant decisions. For independent runs without recorded model decisions, use bounded deterministic/seeded policies where required. Behavioral consistency means respecting motivations, capabilities and constraints, not producing identical dialogue.
 
-Use vault-age as terminology/design reference, not an implementation checklist. Its Property Sheets map to existing JSON records; scope facets to scenario metadata; TickPolicy to existing clocks; event generators to bounded tables if needed; durable semantic facts to simple validated records. Source owners remain authoritative: SH44SER for its setting, vault-sarnalen/DXD for Sarna Len, Great War and Solo City for applicable specialized material. Do not infer full DXD attributes from compressed MEST/Solo City values or back-project later national metrics.
+Use vault-age as terminology/design reference, not an implementation checklist. Its Property Sheets map to existing JSON records; scope facets to scenario metadata; TickPolicy to existing clocks; event generators to bounded tables if needed; durable semantic facts to simple validated records. Source owners remain authoritative: SH44SER for its setting and native rules; current vault-sarnalen DXD for Sarna Len, Mai Appollonia Yo!, Apocalyptic Seizure!, and Fear!. Future SH44SER influence on DXD is deferred until the source rules change. Great War and Solo City supply applicable specialized material. Do not infer full DXD attributes from compressed MEST/Solo City values or back-project later national metrics.
 
 ## Verification and delivery
 
