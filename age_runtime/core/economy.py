@@ -106,3 +106,62 @@ def resolve_projects(s, state, minute):
                                     "minute": minute, "key": key, "delta": delta, "value": v[key]})
         state["project_results"].append({"id": p["id"], "participant": p["participant"],
                                          "minute": minute, **result})
+
+
+def validate_capacity_actions(s):
+    """Explicit, funded capacity improvements; no model-authored deltas."""
+    actions = s.get("capacity_actions")
+    if actions is None and "capacity_actions" not in s:
+        return
+    if not isinstance(actions, dict) or not actions or not s.get("economy_projects"):
+        raise ValueError("capacity actions require economy projects")
+    projects = {p["id"]: p for p in s["economy_projects"]}
+    inputs = {a["key"] for p in projects.values() for a in p["axes"]}
+    counters = {p[k] for p in projects.values() for k in ("progress", "delay", "complications")}
+    external = {e["key"] for e in s["events"]} | {
+        k for e in s.get("dependent_events", []) for k in e["updates"]}
+    for name, a in actions.items():
+        if name not in s.get("action_catalog", {}) or not isinstance(a, dict) or set(a) != {
+                "project", "capacity", "resource", "cost"}:
+            raise ValueError("invalid capacity action")
+        if not all(isinstance(a[k], str) for k in ("project", "capacity", "resource")):
+            raise ValueError("invalid capacity action binding")
+        p = projects.get(a["project"])
+        if p is None or a["capacity"] not in {x["key"] for x in p["axes"]}:
+            raise ValueError("unknown project capacity")
+        actor_id = p["participant"]
+        if s["action_catalog"][name]["actors"] != [actor_id]:
+            raise ValueError("capacity action must belong to project sponsor")
+        # Shared ratings could silently benefit another sponsor; defer that
+        # mechanic until a scenario explicitly needs joint investment.
+        if any(other["id"] != p["id"] and a["capacity"] in
+               {x["key"] for x in other["axes"]} for other in projects.values()):
+            raise ValueError("capacity action requires project-local rating")
+        stock = a["resource"]
+        if (stock not in s["initial"] or stock in inputs | counters or
+                s["initial"][stock] < 0 or {stock, a["capacity"]} & external):
+            raise ValueError("capacity action requires stable resource and rating keys")
+        actor = s["actors"][actor_id]
+        if stock not in actor.get("visible_keys", []) or actor.get("report_delay_minutes", {}).get(stock, 0):
+            raise ValueError("resource must be currently observable")
+        if type(a["cost"]) is not int or a["cost"] <= 0:
+            raise ValueError("capacity action cost must be positive")
+
+def fulfill_capacity_action(s, state, record, minute):
+    a = s.get("capacity_actions", {}).get(record["action"])
+    if a is None:
+        return
+    p = next(p for p in s["economy_projects"] if p["id"] == a["project"])
+    v = state["values"]
+    if v[p["progress"]] >= p["stages"]:
+        record["fulfillment"] = "project_complete"
+    elif v[a["capacity"]] >= 5:
+        record["fulfillment"] = "capacity_at_limit"
+    elif v[a["resource"]] < a["cost"]:
+        record["fulfillment"] = "insufficient_resources"
+    else:
+        for key, delta in ((a["resource"], -a["cost"]), (a["capacity"], 1)):
+            v[key] += delta
+            state["ledger"].append({"id": "capacity-request:" + str(record["sequence"]) + ":" + key,
+                                    "minute": minute, "key": key, "delta": delta, "value": v[key]})
+        record["fulfillment"] = "capacity_improved"

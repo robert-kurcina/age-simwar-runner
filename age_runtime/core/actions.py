@@ -3,6 +3,9 @@
 The prototype accepts only scenario-declared administrative requests.
 Registration is pure; a bounded civilian service rule may fulfill a reviewed request.
 """
+from age_runtime.core.economy import fulfill_capacity_action
+
+
 def validate_catalog(s):
     catalog = s.get("action_catalog", {})
     if not isinstance(catalog, dict):
@@ -142,6 +145,7 @@ def resolve_reviews(s, state, end):
             record["reviewed_minute"] = end
             fulfill_service_request(s, state, record, end)
             fulfill_civic_request(s, state, record, end)
+            fulfill_capacity_action(s, state, record, end)
             capacity -= 1
 
 def available_requests(s, actor_id):

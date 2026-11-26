@@ -1,7 +1,7 @@
 import copy
 import unittest
 from age_runtime.core.economy import bottleneck
-from age_runtime.core.runner import initialize, advance, verify_checkpoint
+from age_runtime.core.runner import initialize, advance, verify_checkpoint, submit_request
 from age_runtime.core.observations import observe
 
 def fixture():
@@ -72,3 +72,42 @@ class EconomyTests(unittest.TestCase):
                 s["economy_projects"][0]["progress"] = "labor"
             with self.subTest(kind=kind), self.assertRaises(ValueError):
                 initialize(s)
+
+
+    def test_funded_capacity_decision_changes_outcome_and_replays(self):
+        s = fixture()
+        s["events"] = []
+        s["initial"]["credits"] = 1
+        s["actors"]["council"]["visible_keys"].append("credits")
+        s["action_catalog"] = {"recruit": {"description": "Commit one credit to labor capacity",
+                                           "actors": ["council"]}}
+        s["administrative_reviews_per_turn"] = 2
+        s["capacity_actions"] = {"recruit": {"project": "repair", "capacity": "labor",
+                                             "resource": "credits", "cost": 1}}
+        a = initialize(s)
+        with self.assertRaises(ValueError):
+            submit_request(s, a, "other", {"action": "recruit"})
+        with self.assertRaises(ValueError):
+            submit_request(s, a, "council", {"action": "recruit", "cost": 0})
+        b = submit_request(s, a, "council", {"action": "recruit"})
+        b = submit_request(s, b, "council", {"action": "recruit"})
+        self.assertEqual(b["values"], a["values"])
+        a, b = advance(s, a), advance(s, b)
+        self.assertEqual(a["values"]["stage"], 0)
+        self.assertEqual(b["values"]["stage"], 1)
+        self.assertEqual(b["values"]["credits"], 0)
+        self.assertEqual([r["fulfillment"] for r in b["requests"]],
+                         ["capacity_improved", "insufficient_resources"])
+        b = advance(s, b)
+        self.assertEqual(b["values"]["stage"], 2)
+        verify_checkpoint(s, b)
+
+    def test_capacity_action_rejects_conflicting_events(self):
+        s = fixture()
+        s["initial"]["credits"] = 1
+        s["actors"]["council"]["visible_keys"].append("credits")
+        s["action_catalog"] = {"recruit": {"description": "Improve capacity", "actors": ["council"]}}
+        s["capacity_actions"] = {"recruit": {"project": "repair", "capacity": "labor",
+                                             "resource": "credits", "cost": 1}}
+        with self.assertRaisesRegex(ValueError, "stable resource"):
+            initialize(s)

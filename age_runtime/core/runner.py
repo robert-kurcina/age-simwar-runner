@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 from age_runtime.core.actors import validate_actors, evaluate
 from age_runtime.core.events import validate_dependent_events, resolve_dependent_events
-from age_runtime.core.economy import validate_projects, resolve_projects
+from age_runtime.core.economy import validate_projects, resolve_projects, validate_capacity_actions
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules
 
@@ -24,7 +24,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -66,6 +66,7 @@ def validate(s):
     validate_civic_rules(s)
     validate_dependent_events(s)
     validate_projects(s)
+    validate_capacity_actions(s)
 
 def initialize(s):
     validate(s)
