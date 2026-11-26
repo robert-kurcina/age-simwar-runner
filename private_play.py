@@ -282,6 +282,9 @@ def main(argv=None):
             sub.add_argument("response", type=Path)
         if name == "confirm":
             sub.add_argument("--approve", required=True)
+    dashboard = commands.add_parser("dashboard")
+    dashboard.add_argument("session", type=Path)
+    dashboard.add_argument("--output", type=Path)
     switch = commands.add_parser("switch")
     switch.add_argument("session", type=Path)
     switch.add_argument("actor")
@@ -316,6 +319,15 @@ def main(argv=None):
                             read(a.from_session) if a.from_session else None)
             save(a.session, session)
             result = view(session)
+        elif a.command == "dashboard":
+            from visualization import snapshot, render
+            session = verify(read(a.session))
+            if a.output:
+                with a.output.open("x", encoding="utf-8") as output:
+                    output.write(render(session))
+                result = {"output": str(a.output), "read_only": True}
+            else:
+                result = snapshot(session)
         elif a.command == "switch":
             session = switch_perspective(read(a.session), a.actor)
             save(a.session, session)
