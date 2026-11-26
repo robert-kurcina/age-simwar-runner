@@ -202,6 +202,43 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(len(briefing(shared)["own_requests"]), 1)
             with self.assertRaises(ValueError):
                 switch_perspective(session, "relief")
+            # Explicit continuation of the same civilian catchment, not a new canonical event.
+            follow = copy.deepcopy(spec)
+            follow["scenario"]["id"] = "external-relief-follow-on"
+            follow["effective_date"] = "2000-01-02"
+            follow["evidence_refs"]["context"]["reviewed_for"] = "2000-01-02"
+            save(root / "follow.json", follow)
+            mapping = {"scenario": "external-relief",
+                       "variables": {"households_assisted": "households_assisted", "aid_packages": "aid_packages"},
+                       "reason": "Same illustrative catchment and inventory",
+                       "source_spec_digest": digest(spec), "target_spec_digest": digest(follow)}
+            follow_entry = {"id": "external-relief-follow-on", "title": "Follow-on relief",
+                            "spec": "follow.json", "status": "reviewed-illustrative",
+                            "carry_from": mapping}
+            catalog["groups"][0]["scenarios"].append(follow_entry)
+            save(path, catalog)
+            first = start(path, "external-relief", "relief", owners)
+            with self.assertRaisesRegex(ValueError, "completed"):
+                start(path, follow_entry["id"], "relief", owners, previous=first)
+            first = update(first, "deliver_aid", 3)
+            before = digest(first)
+            second = start(path, follow_entry["id"], "relief", owners, previous=first)
+            self.assertEqual(second["state"]["values"], {"households_assisted": 10, "aid_packages": 1})
+            self.assertTrue(briefing(second)["continued"])
+            self.assertNotIn("aid_packages", briefing(second)["reports"])
+            self.assertEqual(second["header"]["continuity"]["source_session_digest"], before)
+            self.assertEqual(digest(first), before)
+            save(root / "follow-session.json", second)
+            second = verify(json.loads((root / "follow-session.json").read_text()))
+            second = update(second, "deliver_aid", 3)
+            self.assertEqual(second["state"]["values"], {"households_assisted": 15, "aid_packages": 0})
+            self.assertEqual(follow["scenario"]["initial"]["aid_packages"], 2)
+            with self.assertRaises(ValueError):
+                start(path, "external-agreement", "council_a", owners, shared=True, previous=first)
+            mapping["variables"] = {"aid_packages": "aid_packages"}
+            save(path, catalog)
+            with self.assertRaises(ValueError):
+                start(path, follow_entry["id"], "relief", owners, previous=first)
             # Resume without the source files or inventory.
             path.unlink()
             (root / "spec.json").unlink()

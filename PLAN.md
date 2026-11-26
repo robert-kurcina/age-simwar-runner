@@ -49,7 +49,7 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Private campaign inventory merged after direct source-reference review; stage discovery metadata established, original scenario roster still incomplete.
 - Private launcher and actor-visible briefing packets merged after successful CI; actual private launcher integration verified.
 - Reviewed perspective-specific context binding merged and actual private briefing verified (PR #34 and private integration). Index metadata discovery utility merged; actual index query remains unverified.
-- Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Shared human participation for civic agreement merged after CI (PR #42). Third private scenario authored and awaiting private execution verification. Local referee handoff is explicit, and each participant controls its own consent. No autonomous consent or remote multiplayer authorization.
+- Private service restoration support merged after CI (PR #35); second private scenario execution verified in private CI. Shared human participation for civic agreement merged after CI (PR #42). Third private scenario verified in private CI. Local referee handoff is explicit, and each participant controls its own consent. No autonomous consent or remote multiplayer authorization.
 - Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
 - Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
 - Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
@@ -58,15 +58,16 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Existing private geographic assets inventoried by reference; raster registration and temporal applicability remain unverified.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
+- Private continuity implementation pending CI: explicit same-unit civilian accounting mappings, completed source checkpoints, pinned source/target specifications, chronological guard, separate derived session; actual private linked workflow still pending.
+
 ## NEXT (ordered, with acceptance criteria)
 
-1. Recover the original private campaign inventory from authorized sources; record stage/scenario identities, chronology, perspective labels and provenance without inventing missing entries. Keep unsupported scenarios catalog-only. Acceptance: private catalog distinguishes documented, provisional and unsupported entries; no private content in public repo.
-2. Deliver a private-compatible player setup and session launcher for supported civilian scenarios: select scenario and perspective, inspect opening briefing, resume pinned state, list permitted requests, submit and advance. Reuse compiler and runner; avoid a second engine. Acceptance: one private source-referenced scenario operates through the same interface as the public fixture.
-3. Add model-independent read-only briefing packets from actor-visible observations and approved source context. Include date, objectives, known/unknown conditions and available civilian requests. Separate private referee material from player context. Acceptance: no hidden-state leakage and no model output accepted as state.
-4. Offer natural-language civilian request interpretation as a proposal mapped to an existing action ID, requiring explicit player confirmation. Unknown or ambiguous requests fail safely. Acceptance: demonstrated local model invocation if available, with deterministic manual fallback.
-5. Add named information-presentation presets and reviewed civilian scenario variants; pin configuration per session. Difficulty and realism labels must describe actual implemented differences, not cosmetic toggles or accuracy claims. Acceptance: compare documented variants without changing base canon.
-6. Demonstrate complete private campaign workflow for supported scenarios, including resumption, reporting and authorized continuity. Do not block playable UX on exhaustive historical calibration; label uncertainty explicitly.
-7. Reassess MCP delivery after the local workflow is demonstrated; preserve the existing authorization and hosting requirements.
+1. Verify private continuity with one source-linked follow-on exercise and a completed-session report. Retain source and target specification digests; transfer only explicitly approved same-unit civilian accounting pairs, with no consent transfer. Acceptance: linked execution, resumption, replay and provenance verified privately; independent branches are not pooled.
+2. Expand source-qualified private scenario coverage and recover the original roster where possible. Distinguish documented, provisional and unsupported entries. Do not invent canon or block playability on exhaustive calibration.
+3. Deliver the Gameplay Map and Visualization milestone below, starting with session-derived resource views and an actual lightweight browser map.
+4. Qualify optional live local model inference and reviewed context discovery. Manual gameplay remains available; model connectivity is not a release gate.
+5. Deliver the post-stabilization MCP milestone below.
+6. Implement late-priority Automated Scenario Exploration only after the supported interactive workflow is stable.
 
 ## SOURCE-REFERENCE ARCHITECTURE (author-approved)
 

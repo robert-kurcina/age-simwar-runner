@@ -7,6 +7,23 @@ from campaign import load_campaign
 from runner import digest, initialize, validate, verify_checkpoint, save
 
 
+def transfer_values(source_scenario, source_state, target, variables):
+    """Apply a caller-approved mapping to a detached target template."""
+    verify_checkpoint(source_scenario, source_state)
+    if source_state["minute"] != source_scenario["end_minute"]:
+        raise ValueError("continuity requires a completed session")
+    result = copy.deepcopy(target)
+    transferred = {}
+    for dest, src in variables.items():
+        value = source_state["values"][src]
+        if dest not in result["initial"]:
+            raise ValueError("unknown target continuity variable")
+        result["initial"][dest] = value
+        transferred[dest] = {"source_key": src, "value": value}
+    validate(result)
+    return result, transferred
+
+
 def export_transition(manifest, source_scenario, source_state, target_id):
     manifest = Path(manifest).resolve()
     catalog = load_campaign(manifest)
@@ -27,17 +44,8 @@ def export_transition(manifest, source_scenario, source_state, target_id):
     if any(v != template["initial"][k] and k not in allowed
            for k, v in source_scenario["initial"].items()):
         raise ValueError("source initial changes outside approved mapping")
-    verify_checkpoint(source_scenario, source_state)
-    if source_state["minute"] != source_scenario["end_minute"]:
-        raise ValueError("continuity requires a completed session")
     target = json.loads((manifest.parent / entry["file"]).read_text())
-    result = copy.deepcopy(target)
-    transferred = {}
-    for dest, src in rule["variables"].items():
-        value = source_state["values"][src]
-        result["initial"][dest] = value
-        transferred[dest] = {"source_key": src, "value": value}
-    validate(result)
+    result, transferred = transfer_values(source_scenario, source_state, target, rule["variables"])
     return {"version": 1, "campaign": catalog["id"], "catalog_digest": digest(catalog),
             "source_id": source_scenario["id"], "source_scenario_digest": digest(source_scenario),
             "source_checkpoint_digest": digest(source_state), "target_template_digest": digest(target),
