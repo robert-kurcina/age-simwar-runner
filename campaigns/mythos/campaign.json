@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "id": "mythos",
+  "title": "Mythos",
+  "framework": "mythos",
+  "scenarios": [
+    {
+      "id": "boothbay",
+      "title": "The Boothbay Incident",
+      "file": "boothbay.json",
+      "rules": "boothbay-trial.json",
+      "status": "trial"
+    },
+    {
+      "id": "castine",
+      "title": "The Salt-Stained Silence",
+      "file": "castine.json",
+      "status": "imported"
+    },
+    {
+      "id": "ram-island",
+      "title": "The Keeper at Ram Island",
+      "file": "ram-island.json",
+      "status": "imported"
+    }
+  ]
+}
