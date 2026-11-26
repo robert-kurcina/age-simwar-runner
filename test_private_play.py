@@ -131,6 +131,32 @@ class PrivatePlayTest(unittest.TestCase):
             self.assertEqual(final["state"]["values"]["households_assisted"], 15)
             self.assertTrue(view(final)["complete"])
             self.assertTrue(any("Scenario complete" in line for line in output))
+            # Reviewed hypothetical presets change resources and reporting, not canon.
+            from private_play import available_presets
+            entry["presets"] = {"scarce": {"label": "Scarce resources / delayed reports",
+                "reason": "Illustrative stress case", "base_spec_digest": digest(spec),
+                "resources": {"aid_packages": 1},
+                "report_delays": {"relief": {"households_assisted": 60}}}}
+            save(path, catalog)
+            self.assertEqual([p["id"] for p in available_presets(path, "external-relief", owners)],
+                             ["standard", "scarce"])
+            variant = start(path, "external-relief", "relief", owners, "scarce")
+            self.assertEqual(briefing(variant)["reports"]["households_assisted"]["status"], "unknown")
+            self.assertEqual(briefing(variant)["preset"]["id"], "scarce")
+            variant = update(variant, "deliver_aid", 1)
+            self.assertEqual(briefing(variant)["reports"]["households_assisted"]["value"], 0)
+            variant = update(variant, "deliver_aid", 2)
+            self.assertEqual(variant["state"]["values"]["households_assisted"], 10)
+            self.assertEqual(briefing(variant)["reports"]["households_assisted"]["value"], 10)
+            self.assertEqual(variant["state"]["values"]["aid_packages"], 0)
+            self.assertEqual(variant["header"]["compiled"]["evidence"], session["header"]["compiled"]["evidence"])
+            self.assertEqual(spec["scenario"]["initial"]["aid_packages"], 2)
+            with self.assertRaises(ValueError):
+                start(path, "external-relief", "relief", owners, "missing")
+            entry["presets"]["scarce"]["resources"] = {"households_assisted": 10}
+            save(path, catalog)
+            with self.assertRaises(ValueError):
+                start(path, "external-relief", "relief", owners, "scarce")
             # Resume without the source files or inventory.
             path.unlink()
             (root / "spec.json").unlink()
