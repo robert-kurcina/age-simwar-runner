@@ -76,8 +76,29 @@ def record_local(state, action, success, result):
     record = {"kind": kind, "target": action.get("npc", state["location"]),
               "at": state["time"], "turn": state["turn"], "passed": success,
               "effect": result["margin"]}
+    if kind == "compose_notes":
+        record["evidence_count"] = len(state["discoveries"])
     state["local_records"].append(record)
     # A successful local survey or note preparation can support later
     # ordinary GM interpretation, but grants no canonical clue or score.
     if success and kind in ("survey", "compose_notes"):
         record["established"] = "survey_completed" if kind == "survey" else "notes_organized"
+
+def prepared_duration(state, action, seconds):
+    """Apply one authored local preparation benefit, before travel is added.
+
+    Derive it from completed records; no consumable bonus or parallel state.
+    Only fixed-duration, nonrepeatable activities can be configured.
+    """
+    cfg = action.get("preparation")
+    if cfg is None:
+        return seconds, 0
+    kind, saving = cfg["kind"], cfg["seconds"]
+    if (kind not in ("survey", "compose_notes") or type(saving) is not int
+            or not 0 < saving < seconds or action.get("repeatable")
+            or "until" in action or not action.get("location")):
+        raise ValueError("invalid preparation duration")
+    eligible = any(r["kind"] == kind and r["target"] == action["location"]
+                   and r["passed"] and r.get("evidence_count", 0) >= cfg.get("min_evidence", 0)
+                   for r in state.get("local_records", []))
+    return (seconds - saving, saving) if eligible else (seconds, 0)

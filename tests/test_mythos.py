@@ -893,6 +893,40 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.step(s, "local:survey:Harbor Diner", dict(request, action="local:survey:Harbor Diner"))
 
+    def test_local_survey_saves_time_without_granting_evidence(self):
+        request = {"action": "local:survey:Harbor Docks", "approach": "survey",
+                   "intent": "Survey the waterfront before examining it."}
+        for seed in range(100):
+            s = mythos.initial("boothbay", seed)
+            after = mythos.step(s, request["action"], request)
+            if after["local_records"][-1]["passed"]:
+                break
+        else:
+            self.fail("No successful survey")
+        self.assertEqual(after["discoveries"], s["discoveries"])
+        choice = next(a for a in mythos.view(after)["choices"] if a["id"] == "inspect_docks")
+        self.assertEqual(choice["seconds"], 2400)
+        self.assertEqual(choice["preparation_saved_seconds"], 1200)
+        finished = mythos.step(after, "inspect_docks")
+        self.assertEqual(finished["time"], "1927-10-13T08:50:00")
+        self.assertEqual(finished["last_result"]["preparation_saved_seconds"], 1200)
+        mythos.verify(finished)
+
+    def test_preparation_is_scoped_to_success_location_and_evidence(self):
+        from age_runtime.mythos import proposals
+        _, rules = mythos.load("boothbay")
+        report = next(a for a in rules["actions"] if a["id"] == "report")
+        s = mythos.initial("boothbay", 42)
+        s["local_records"] = [{"kind": "compose_notes", "target": report["location"],
+                               "passed": True, "evidence_count": 1}]
+        self.assertEqual(proposals.prepared_duration(s, report, 3600), (3600, 0))
+        s["local_records"][0]["evidence_count"] = 2
+        self.assertEqual(proposals.prepared_duration(s, report, 3600), (2400, 1200))
+        s["local_records"][0]["passed"] = False
+        self.assertEqual(proposals.prepared_duration(s, report, 3600), (3600, 0))
+        s["local_records"][0].update(passed=True, target="Harbor Docks")
+        self.assertEqual(proposals.prepared_duration(s, report, 3600), (3600, 0))
+
     def test_local_rapport_requires_contact(self):
         s = mythos.initial("boothbay", 42)
         request = {"action": "local:build_rapport:eleanor", "approach": "build_rapport",

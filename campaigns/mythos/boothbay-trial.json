@@ -1,5 +1,5 @@
 {
-  "version": 38,
+  "version": 40,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -15,6 +15,10 @@
   "actions": [
     {
       "id": "inspect_docks",
+      "preparation": {
+        "kind": "survey",
+        "seconds": 1200
+      },
       "label": "Examine the waterfront",
       "location": "Harbor Docks",
       "minutes": 60,
@@ -133,6 +137,11 @@
     },
     {
       "id": "report",
+      "preparation": {
+        "kind": "compose_notes",
+        "seconds": 1200,
+        "min_evidence": 2
+      },
       "label": "Prepare a written account of your findings",
       "location": "Lighthouse (Western Point)",
       "minutes": 60,
