@@ -182,3 +182,8 @@ Each development increment must complete an acceptance criterion or a concrete i
 - Add bounded sanity/fatigue conditions and modifiers, cash/flask consumption, rest and meal choices, visible descriptors and three provisional ending metrics. Conditions and resource costs live in the trial overlay. Fatigue cadence and score rubric are illustrative, not faithful reproduction of all AIMythos rules. No automatic publication or actual containment is inferred from a written account; containment points are a trial proxy only.
 - Existing v1 sessions require restart because replay pins the rules digest. Existing strategic sessions unaffected.
 - Next: verify CI, qualify actual Chat play, add scenario-specific NPC and earned revelation progression and improve ending semantics before expanding to Castine/Ram Island. No additional infrastructure.
+
+### Boothbay trial v3 — proposed
+
+- Conditional NPC conversations and relationships, earned clue flags, once-only timed observations and distinct account preparation, relay, custody and departure endings. Failed relay does not count as successful delivery; writing or relaying evidence is not itself containment. Rules and epilogue prose are provisional adaptations. Restart v2 sessions after update.
+- Next: verify CI and actual end-to-end Chat play; review narrative pacing and outcome fidelity. Adapt Castine and Ram Island using the same mechanism rather than inventing new subsystems. Preserve original source configurations.
