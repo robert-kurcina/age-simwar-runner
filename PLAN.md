@@ -46,7 +46,8 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - External private recovery pilot finite-demand deployment and four supply sensitivity cases verified by private CI. Hypothetical parameters remain uncalibrated.
 
 ## WIP
-- Refocus on corpus-first playable experience.
+- Private campaign inventory merged after direct source-reference review; stage discovery metadata established, original scenario roster still incomplete.
+- Private launcher implemented for finite civilian assistance, including actor selection, pinned compiled snapshot, actor-visible observations and resume. Targeted CI and actual private integration pending.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
@@ -92,4 +93,4 @@ Acceptance: a user can operate a supported civilian campaign from ChatGPT throug
 - New infrastructure without a demonstrated scenario requirement.
 
 ## Execution discipline
-Each development increment must complete an acceptance criterion or a concrete implementation step toward it, or explicitly document a blocker. Update this file after each increment. Review CI before merging; do not count an unverified branch as done.
+Each development increment must complete an acceptance criterion or a concrete implementation step toward it, or explicitly document a blocker. Update this file after each increment. Review verification appropriate to the change before merging: direct review for documentation and inventory, targeted execution/regression tests for code. Do not count an unverified branch as done.
