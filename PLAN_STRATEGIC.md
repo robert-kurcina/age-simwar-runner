@@ -17,6 +17,12 @@ Source reference (pinned audit revision `2700b3939d13df4811f8b8565e753c6f8143a5e
 
 External standards are optional semantic references, not required schemas: W3C ORG/PROV, BPMN/DMN, stock-and-flow accounting, NIMS/SCOR, GeoJSON and SISO scenario guidance. Reuse useful conventions only; no compliance or new standards subsystem.
 
+## Critical Decisions and simulation time
+
+Author-approved target lengths: 6, 12 or 24 Critical Decisions per game (the strategic counterpart of narrative Spot-lights). The 20-decision target is REJECTED. Select the target at scenario setup. A Critical Decision is a committed faction-level choice among consequential alternatives, including intentional inaction when it materially affects the faction's objectives. A simulation Turn is an interval for adjudication, not inherently a Critical Decision. Reading briefings, inspecting maps, discussing alternatives, clarifying intent, executing already committed orders, mechanical resolution and autonomous faction decisions do not independently consume the player's budget.
+
+WIP (P1): implement a scenario-level advisory decision target and replayable record of committed Critical Decisions using existing request/checkpoint patterns. Use stable identity and explicit significance classification; avoid duplicate counts for follow-through. Keep the fictional clock, scenario deadlines and autonomous faction decisions independent. Do not invent pressure, force a decision, or terminate the game solely because the target is reached. Validate pacing in actual play before imposing further rules. Preserve existing fixed-interval mechanical fixtures; the Fiji 12-week test is not automatically a qualified 12-Critical-Decision game.
+
 ## NEXT — lean implementation sequence
 
 | Step | Deliverable | Exit test |
@@ -33,8 +39,8 @@ Keep existing civic fixtures for regression. Do not build another generic campai
 
 - DONE (PR #97; tests 45878260145 and bundle 45878260151 passed): actor-local derived project assessments, conditional single-investment costs and capacity effects, report-cutoff deltas, pending orders and latest project results. No new scenario properties or adjudication rules. Focused regression checks passed.
 - DONE (mechanical, PR #97): revision-bound one-turn resolution with exact pending faction response map; existing packet validation and checkpoint replay reused. Chat facilitator procedure documented. Model behavior and actual player-led gameplay not yet qualified.
-- WIP (P0): connector-backed pinned source resolver for JSON, Markdown and PNG; exact blob bytes checked; same compilation/provenance contract. Synthetic equivalence/tamper tests added; CI pending. No local checkout requirement for transferred sources.
-- NEXT (P1): verify source adapter CI and actual private source transfer, then execute the authorized Fiji 12-week scenario in ordinary Chat using the integrated procedure. Collect author feedback and resolve concrete gameplay gaps before broadening the scenario set.
+- WIP (P0): connector-backed pinned source resolver for JSON, Markdown and PNG; exact blob bytes checked; same compilation/provenance contract. PR #99 merged; connector equivalence/tamper tests passed, but shared scenario-profile regression failed both workflows (45880014941, 45880014822). Narrative track owns the duration-contract correction; requalify bundle before play. No local checkout requirement for transferred sources.
+- NEXT (P1): verify repaired shared CI and actual private source transfer, then execute the authorized Fiji 12-week scenario in ordinary Chat using the integrated procedure. Collect author feedback and resolve concrete gameplay gaps before broadening the scenario set.
 
 ## Gameplay qualification
 
