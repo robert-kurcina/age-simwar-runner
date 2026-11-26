@@ -1122,7 +1122,51 @@
             "xp": 0,
             "skillpoints": 0,
             "attribute_increments": {},
-            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional"
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Investigate",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Persuade",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Reasoning",
+                  "level": 1,
+                  "im": 4,
+                  "cost": 4
+                },
+                {
+                  "name": "Gossip",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                },
+                {
+                  "name": "Grit",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Discipline",
+                  "level": 2,
+                  "im": 3,
+                  "cost": 9
+                }
+              ],
+              "skill_cost_total": 32,
+              "bonus_skillpoint_budget": 40,
+              "unallocated_budget": 8,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1183,7 +1227,27 @@
             "xp": 0,
             "skillpoints": 0,
             "attribute_increments": {},
-            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional"
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Suss",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                },
+                {
+                  "name": "Gossip",
+                  "level": 2,
+                  "im": 1,
+                  "cost": 3
+                }
+              ],
+              "skill_cost_total": 4,
+              "bonus_skillpoint_budget": 29,
+              "unallocated_budget": 25,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1248,7 +1312,39 @@
             "xp": 0,
             "skillpoints": 0,
             "attribute_increments": {},
-            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional"
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Fishing",
+                  "level": 2,
+                  "im": 1,
+                  "cost": 3
+                },
+                {
+                  "name": "Seafaring > Sea-going",
+                  "level": 2,
+                  "im": 4,
+                  "cost": 12
+                },
+                {
+                  "name": "Survival > Coastal",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Discipline",
+                  "level": 2,
+                  "im": 3,
+                  "cost": 9
+                }
+              ],
+              "skill_cost_total": 30,
+              "bonus_skillpoint_budget": 85,
+              "unallocated_budget": 55,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1311,7 +1407,33 @@
             "xp": 0,
             "skillpoints": 0,
             "attribute_increments": {},
-            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional"
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Investigate",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Intimidate",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Leadership",
+                  "level": 2,
+                  "im": 3,
+                  "cost": 9
+                }
+              ],
+              "skill_cost_total": 21,
+              "bonus_skillpoint_budget": 54,
+              "unallocated_budget": 33,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1374,7 +1496,33 @@
             "xp": 0,
             "skillpoints": 0,
             "attribute_increments": {},
-            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional"
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Politics > Boothbay",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Persuade",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Leadership",
+                  "level": 1,
+                  "im": 3,
+                  "cost": 3
+                }
+              ],
+              "skill_cost_total": 15,
+              "bonus_skillpoint_budget": 56,
+              "unallocated_budget": 41,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
@@ -1437,7 +1585,33 @@
             "xp": 0,
             "skillpoints": 0,
             "attribute_increments": {},
-            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional"
+            "provenance": "curated fast-tracked profile; ages, ranks and skill levels provisional",
+            "fast_track_audit": {
+              "skill_costs": [
+                {
+                  "name": "Service > Lodging",
+                  "level": 2,
+                  "im": 2,
+                  "cost": 6
+                },
+                {
+                  "name": "Gossip",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                },
+                {
+                  "name": "Suss",
+                  "level": 1,
+                  "im": 1,
+                  "cost": 1
+                }
+              ],
+              "skill_cost_total": 8,
+              "bonus_skillpoint_budget": 51,
+              "unallocated_budget": 43,
+              "scope": "Skill costs only; not a complete character-creation ledger or spendable balance"
+            }
           }
         },
         "utilities": {
