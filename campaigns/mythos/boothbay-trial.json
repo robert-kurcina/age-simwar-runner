@@ -1,5 +1,5 @@
 {
-  "version": 25,
+  "version": 29,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -48,9 +48,6 @@
       "minutes": 45,
       "discovery": "Eleanor says her brother disappeared last month.",
       "success": {},
-      "relationship": {
-        "eleanor": 1
-      },
       "grant": [
         "eleanor_account"
       ],
@@ -59,17 +56,15 @@
       "test": {
         "attribute": "PRE",
         "skill": "Interview",
-        "npc_attribute": "POW",
         "significance": "minor",
         "decision": true,
         "inspiration": {
           "tag": "interview",
           "memory": "You recall that listening carefully is part of your work as a reporter.",
           "consequence": "meaningful"
-        }
-      },
-      "relationship_failure": {
-        "eleanor": -1
+        },
+        "interaction": "ordinary",
+        "tn": 7
       },
       "failure_observation": "Eleanor becomes more guarded.",
       "interval_seconds": 600,
@@ -111,9 +106,6 @@
       "discovery": "Elias has kept a journal of unusual coastal events.",
       "failure": {},
       "success": {},
-      "relationship": {
-        "elias": 1
-      },
       "grant": [
         "journal"
       ],
@@ -122,21 +114,18 @@
       "test": {
         "attribute": "PRE",
         "skill": "Interview",
-        "npc_attribute": "POW",
-        "npc_adversity": 1,
         "significance": "important",
         "decision": true,
         "inspiration": {
           "tag": "interview",
           "memory": "You remember the patience required when interviewing reluctant sources.",
           "consequence": "meaningful"
-        }
+        },
+        "interaction": "ordinary",
+        "tn": 7
       },
       "concern_failure": {
         "stress": 3
-      },
-      "relationship_failure": {
-        "elias": -1
       },
       "failure_observation": "Elias declines to share his journal for now.",
       "interval_seconds": 3600,
@@ -224,23 +213,21 @@
       "grant": [
         "water_warning"
       ],
-      "relationship": {
-        "eleanor": 1
-      },
       "success": {},
       "npc": "eleanor",
       "disclosure": "water_warning",
       "test": {
         "attribute": "PRE",
         "skill": "Interview",
-        "npc_attribute": "POW",
         "significance": "important",
         "decision": true,
         "inspiration": {
           "tag": "interview",
           "memory": "You draw on your experience of listening to difficult accounts without interrupting.",
           "consequence": "meaningful"
-        }
+        },
+        "interaction": "ordinary",
+        "tn": 7
       },
       "morale_success": {
         "kind": "shock",
@@ -251,9 +238,6 @@
           "consequence": "meaningful"
         },
         "reaction": "Eleanor's account leaves you shaken; you need a moment to collect your thoughts."
-      },
-      "relationship_failure": {
-        "eleanor": -1
       },
       "failure_observation": "Eleanor becomes more guarded.",
       "interval_seconds": 3600,
@@ -527,12 +511,6 @@
         "police_clearance"
       ],
       "discovery": "Burroughs accepts your explanation for now, but advises you to leave town.",
-      "relationship": {
-        "burroughs": 1
-      },
-      "relationship_failure": {
-        "burroughs": -1
-      },
       "grant_failure": [
         "police_refusal"
       ],
@@ -540,9 +518,9 @@
       "test": {
         "attribute": "PRE",
         "skill": "Interview",
-        "npc_attribute": "POW",
         "significance": "important",
-        "decision": true
+        "decision": true,
+        "interaction": "pivotal"
       },
       "excludes_flags": [
         "police_clearance",
@@ -581,7 +559,10 @@
         "decision": true
       },
       "interval_seconds": 3600,
-      "activity": "active"
+      "activity": "active",
+      "excludes_flags": [
+        "patrol_risk"
+      ]
     },
     {
       "id": "relay_with_clearance",
@@ -626,12 +607,6 @@
         "police_clearance"
       ],
       "discovery": "Burroughs accepts your explanation for now, but advises you to leave town.",
-      "relationship": {
-        "burroughs": 1
-      },
-      "relationship_failure": {
-        "burroughs": -1
-      },
       "grant_failure": [
         "police_refusal"
       ],
@@ -639,9 +614,9 @@
       "test": {
         "attribute": "PRE",
         "skill": "Interview",
-        "npc_attribute": "POW",
         "significance": "important",
-        "decision": true
+        "decision": true,
+        "interaction": "pivotal"
       },
       "excludes_flags": [
         "police_clearance",
@@ -675,8 +650,7 @@
       "minutes": 45,
       "activity": "active",
       "requires_flags": [
-        "water_risk_known",
-        "tide_clue"
+        "water_risk_known"
       ],
       "excludes_flags": [
         "local_warning"
@@ -688,7 +662,72 @@
         "containment": 2
       },
       "discovery": "Eleanor agrees to warn people she trusts about the unusual conditions.",
-      "npc": "eleanor"
+      "npc": "eleanor",
+      "requires_any_flags": [
+        "tide_clue",
+        "ecological_tide_pattern"
+      ]
+    },
+    {
+      "id": "relay_after_patrol",
+      "label": "Seek the keeper and relay your written account",
+      "location": "Lighthouse (Western Point)",
+      "minutes": 90,
+      "requires_flags": [
+        "written_account",
+        "patrol_passage"
+      ],
+      "requires_any_flags": [],
+      "grant": [
+        "account_relayed"
+      ],
+      "terminal": true,
+      "terminal_on_success": true,
+      "discovery": "The keeper confirms that your account has been relayed; no response has arrived.",
+      "failure_observation": "The approach is obstructed; your account has not been relayed.",
+      "concern_failure": {
+        "fatigue": 2,
+        "stress": 3
+      },
+      "test": {
+        "attribute": "PRE",
+        "skill": "Interview",
+        "tn": 7,
+        "significance": "critical",
+        "decision": true
+      },
+      "interval_seconds": 3600,
+      "activity": "active",
+      "excludes_flags": []
+    },
+    {
+      "id": "inspect_inlet_pattern",
+      "label": "Compare the inlet growth with the tide almanac from dry ground",
+      "location": "Creek Inlet South",
+      "minutes": 30,
+      "requires_flags": [
+        "water_risk_known",
+        "tide_window_known"
+      ],
+      "excludes_flags": [
+        "tide_clue"
+      ],
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigation",
+        "tn": 7,
+        "significance": "important",
+        "decision": false
+      },
+      "grant": [
+        "ecological_tide_pattern"
+      ],
+      "discovery": "The observed wet channels and the almanac suggest that the tide matters to the unusual coastal growth; this is not Elias's testimony.",
+      "concern_failure": {
+        "stress": 1
+      },
+      "activity": "active",
+      "interval_seconds": 600
     }
   ],
   "resources": {
@@ -721,6 +760,17 @@
         "patrol_risk"
       ],
       "observation": "It is midnight; moving toward the lighthouse now risks encountering patrols."
+    },
+    {
+      "id": "elias_isolation",
+      "at": "1927-10-14T06:00:00",
+      "grant": [
+        "elias_isolated"
+      ],
+      "visible_requires": [
+        "journal"
+      ],
+      "observation": "Elias has withdrawn into isolation; his earlier journal access remains usable."
     }
   ],
   "ending_text": {
@@ -729,7 +779,8 @@
     "depart": "You leave Boothbay with whatever evidence you have gathered.",
     "limit": "Your allotted investigation time has ended; the remaining uncertainties are unresolved.",
     "relay_after_pressure": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved.",
-    "relay_with_clearance": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved."
+    "relay_with_clearance": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved.",
+    "relay_after_patrol": "You have attempted to send your findings beyond Boothbay. The fate of the warning remains unresolved."
   },
   "npcs": {
     "eleanor": {
@@ -755,6 +806,9 @@
       "reference_rating": 3,
       "eligible_locations": [
         "Creek Inlet South"
+      ],
+      "unavailable_flags": [
+        "elias_isolated"
       ]
     },
     "burroughs": {
@@ -998,7 +1052,7 @@
         "text": "Your inquiries have attracted official attention. You can explain yourself, seek another route, or leave."
       }
     ],
-    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration. The cave node denotes an exterior observation point; retreat is unrestricted and interior entry remains unsupported. v19: 20 advisory Critical Decisions, authored decision identities and optional GM classification; mechanical actions no longer end the game at 20. Default observation 10 minutes. Existing fictional deadline retained. v20: advisory target revised to 24 Critical Decisions; no change to fictional deadline or mechanical resolution. v21: advisory Spotlight lifecycle and eligible Scene frames, not scripted event sequences; Scene and Spotlight controls do not advance time. v22: elapsed-time activity and sleep at the boarding house; initial awake duration zero is provisional. No location is assumed safe; ordinary meals are not necessarily restorative. Sleep and rest may stop at explicitly authored interruptions. v23: canonical Weariness-adjusted Sleep Limit; prospective overdue-hour accounting. See vault-sarnalen PR #214. v24: generalized named clocks; Eleanor's warning distribution takes one hour after agreement (provisional); ecological Encounter Tension uses source-described crabs and filaments and offers an alternate evidence route. No actual infection or patrol combat. Sleep Limit revised: subtract Degrees of Weariness and Stress in Index space, superseding raw Weariness (vault-sarnalen PR #215).",
+    "adaptation": "AGE provisional scene framing, low-tide access window (02:00–02:30), action durations, and warning follow-up; source specifies 02:14 low tide, ecology, cave and lighthouse features, not these exact procedures. No infection, cave interior, patrol encounter or confirmed protection adjudicated. v17: provisional social pressure clock, official interference and alternate relay routes; no physical patrol combat or infection adjudicated. v18: provisional point-map topology, route durations and encounter locations; movement is charged separately from local action duration. The cave node denotes an exterior observation point; retreat is unrestricted and interior entry remains unsupported. v19: 20 advisory Critical Decisions, authored decision identities and optional GM classification; mechanical actions no longer end the game at 20. Default observation 10 minutes. Existing fictional deadline retained. v20: advisory target revised to 24 Critical Decisions; no change to fictional deadline or mechanical resolution. v21: advisory Spotlight lifecycle and eligible Scene frames, not scripted event sequences; Scene and Spotlight controls do not advance time. v22: elapsed-time activity and sleep at the boarding house; initial awake duration zero is provisional. No location is assumed safe; ordinary meals are not necessarily restorative. Sleep and rest may stop at explicitly authored interruptions. v23: canonical Weariness-adjusted Sleep Limit; prospective overdue-hour accounting. See vault-sarnalen PR #214. v24: generalized named clocks; Eleanor's warning distribution takes one hour after agreement (provisional); ecological Encounter Tension uses source-described crabs and filaments and offers an alternate evidence route. No actual infection or patrol combat. Sleep Limit revised: subtract Degrees of Weariness and Stress in Index space, superseding raw Weariness (vault-sarnalen PR #215). v26: reconcile alternate GM approaches with combined Degree Sleep Limit. Native individual Interaction Tests: ordinary PRE TN7, pivotal opposed PRE vs INT, conditional PC secondary INT; Demeanor uses signed Test margin bounded by existing ordinary limits. v27: generated local activities and persistent bounded records, with no invented evidence or facts. v28: optional decisive danger Beats at existing inlet and lighthouse nodes; authored stakes and approaches are provisional, no infection or injury adjudication. Midnight relay requires patrol passage; retreat remains available. v29: Elias withdraws into isolation at dawn (provisional timing based on authored illness and isolation); previously granted journal access persists. Independent ecological/almanac inference is not witness testimony. GM-only function projection derives availability from current flags and actions.",
     "initial_frame": "town_inquiry",
     "frames": {
       "town_inquiry": {
@@ -1248,5 +1302,227 @@
       ],
       "observation": "Violet filaments cling to the wet margin; you can investigate without entering the water."
     }
-  ]
+  ],
+  "gm_proposals": {
+    "inspect_docks": {
+      "systematic_search": {
+        "attribute": "INT",
+        "skill": "Investigation"
+      },
+      "watch_patterns": {
+        "attribute": "REF",
+        "skill": "Investigation"
+      }
+    },
+    "inspect_room": {
+      "compare_records": {
+        "attribute": "KNO",
+        "skill": "Investigation"
+      }
+    },
+    "read_journal": {
+      "cross_reference": {
+        "attribute": "KNO",
+        "skill": "Investigation"
+      }
+    },
+    "clear_dock_obstruction": {
+      "leverage": {
+        "attribute": "INT",
+        "tn": 7
+      }
+    },
+    "talk_eleanor": {
+      "patient_listening": {
+        "attribute": "PRE",
+        "skill": "Interview"
+      }
+    },
+    "visit_elias": {
+      "professional_rapport": {
+        "attribute": "PRE",
+        "skill": "Interview"
+      }
+    }
+  },
+  "local_proposals": true,
+  "danger_beats": {
+    "beat:inlet_withdrawal": {
+      "location": "Creek Inlet South",
+      "requires_flags": [
+        "filament_anomaly"
+      ],
+      "objective": "Withdraw from the wet margin without coming into contact with the growth",
+      "stakes": "A hurried retreat across the rough margin risks a fall and distress; the dry-ground route remains available.",
+      "terrain": "Rough wet margin adjacent to dry ground",
+      "objects": [
+        "Elias's shack (landward landmark)"
+      ],
+      "seconds": 60,
+      "approaches": {
+        "careful_footing": {
+          "description": "Move deliberately toward dry ground",
+          "test": {
+            "attribute": "REF",
+            "tn": 7,
+            "significance": "minor",
+            "decision": false
+          }
+        },
+        "plan_route": {
+          "description": "Study the dry approach and withdraw along it",
+          "test": {
+            "attribute": "INT",
+            "skill": "Investigation",
+            "tn": 7,
+            "significance": "minor",
+            "decision": true
+          }
+        }
+      },
+      "grant": [
+        "inlet_withdrawal"
+      ],
+      "grant_failure": [
+        "inlet_withdrawal"
+      ],
+      "concern_failure": {
+        "fatigue": 2,
+        "stress": 2
+      },
+      "degree_failure_concern": {
+        "fatigue": 1
+      },
+      "success_observation": "You withdraw to the dry margin without touching the growth.",
+      "failure_observation": "You stumble on the rough margin, but reach dry ground shaken and winded. No water contact is established.",
+      "degree_observation": "You identify firm footing for the remainder of the withdrawal."
+    },
+    "beat:patrol_approach": {
+      "location": "Lighthouse (Western Point)",
+      "requires_flags": [
+        "patrol_risk",
+        "written_account"
+      ],
+      "excludes_flags": [
+        "account_relayed",
+        "patrol_passage"
+      ],
+      "objective": "Avoid the patrol and approach the lighthouse",
+      "stakes": "Failure means the approach is watched and relay is delayed; withdrawing remains possible.",
+      "terrain": "Exposed coastal approach with rough ground",
+      "objects": [
+        "Lighthouse (destination landmark)"
+      ],
+      "seconds": 60,
+      "approaches": {
+        "quiet_approach": {
+          "description": "Time the approach to avoid attention",
+          "test": {
+            "attribute": "REF",
+            "tn": 10,
+            "significance": "important",
+            "decision": true
+          }
+        },
+        "observe_patrol": {
+          "description": "Study the patrol's movement before attempting passage",
+          "test": {
+            "attribute": "INT",
+            "skill": "Investigation",
+            "tn": 10,
+            "significance": "important",
+            "decision": true
+          }
+        }
+      },
+      "grant": [
+        "patrol_passage"
+      ],
+      "grant_failure": [
+        "patrol_blocked"
+      ],
+      "concern_failure": {
+        "stress": 3,
+        "fatigue": 1
+      },
+      "degree_failure_concern": {
+        "stress": 1
+      },
+      "success_observation": "You reach the lighthouse approach without attracting the patrol's attention.",
+      "failure_observation": "The patrol notices movement; you break off the approach before reaching the radio.",
+      "degree_observation": "You have a clear opportunity to seek the radio now."
+    }
+  },
+  "narrative_functions": {
+    "tide_evidence": {
+      "purpose": "Establish evidence connecting coastal anomalies and the tide",
+      "flags": [
+        "tide_clue",
+        "ecological_tide_pattern"
+      ],
+      "carriers": [
+        {
+          "action": "read_journal",
+          "kind": "record",
+          "access_carriers": {
+            "elias": "journal"
+          }
+        },
+        {
+          "action": "inspect_inlet_pattern",
+          "kind": "pattern"
+        }
+      ]
+    },
+    "water_warning": {
+      "purpose": "Establish reason to avoid contaminated water",
+      "flags": [
+        "water_warning",
+        "water_risk_known"
+      ],
+      "carriers": [
+        {
+          "action": "follow_eleanor",
+          "kind": "witness"
+        },
+        {
+          "action": "examine_inlet",
+          "kind": "pattern"
+        },
+        {
+          "action": "trace_filaments",
+          "kind": "pattern"
+        }
+      ]
+    },
+    "preserve_account": {
+      "purpose": "Preserve the investigation outside the protagonist's sole possession",
+      "flags": [
+        "account_entrusted",
+        "account_relayed"
+      ],
+      "carriers": [
+        {
+          "action": "transmit_account",
+          "kind": "relay"
+        },
+        {
+          "action": "leave_copy",
+          "kind": "support"
+        },
+        {
+          "action": "relay_after_pressure",
+          "kind": "relay"
+        },
+        {
+          "action": "relay_with_clearance",
+          "kind": "relay"
+        },
+        {
+          "action": "relay_after_patrol",
+          "kind": "relay"
+        }
+      ]
+    }
+  }
 }
