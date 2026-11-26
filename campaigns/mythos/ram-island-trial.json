@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "setting": "Fear!",
   "resolution": "dxd",
   "start": "1926-08-28T08:00:00",
@@ -275,9 +275,9 @@
     },
     {
       "id": "talk_matteo",
-      "label": "Ask Matteo about the unusual delivery",
+      "label": "Ask Matteo during the late-autumn delivery period about the unusual parcel",
       "location": "Rampart Landing",
-      "minutes": 14400,
+      "minutes": 7200,
       "npc": "matteo",
       "disclosure": "delivery_account",
       "requires_flags": [
@@ -298,7 +298,9 @@
           "memory": "You recall the patience needed to obtain a clear account from another person.",
           "consequence": "meaningful"
         }
-      }
+      },
+      "available_from": "1926-11-26T00:00:00",
+      "available_until": "1926-12-21T00:00:00"
     },
     {
       "id": "set_aside_delivery",
@@ -409,6 +411,32 @@
       }
     },
     {
+      "id": "stabilize_condition",
+      "label": "Follow the journal's protective routine within the secured refuge",
+      "location": "Lighthouse Tower",
+      "minutes": 7200,
+      "requires_flags": [
+        "ancestry_understood",
+        "sanctuary"
+      ],
+      "grant": [
+        "stabilization_attempted"
+      ],
+      "arrest_progression": true,
+      "test": {
+        "attribute": "KNO",
+        "skill": "Station keeping",
+        "tn": 10,
+        "significance": "important",
+        "decision": false,
+        "inspiration": {
+          "tag": "investigation",
+          "memory": "You remember the steady discipline required to keep the station functioning in difficult weather.",
+          "consequence": "meaningful"
+        }
+      }
+    },
+    {
       "id": "rest_station",
       "label": "Rest within the secured station",
       "location": "Lighthouse Tower",
@@ -472,7 +500,9 @@
       "grant": [
         "winter_signs"
       ],
-      "observation": "Winter approaches. Unfamiliar changes in your surroundings and appearance warrant attention."
+      "observation": "Winter approaches. Unfamiliar changes in your surroundings and appearance warrant attention.",
+      "stage": 2,
+      "manifestation": "Your skin has developed persistent crystalline deposits."
     },
     {
       "id": "delivery",
@@ -485,7 +515,9 @@
     {
       "id": "new_year",
       "at": "1927-01-01T00:00:00",
-      "observation": "The new year begins. Your unexplained symptoms have become harder to dismiss."
+      "observation": "The new year begins. Your unexplained symptoms have become harder to dismiss.",
+      "stage": 3,
+      "manifestation": "The physical changes have become more pronounced, particularly when under strain."
     },
     {
       "id": "spring",
@@ -493,18 +525,25 @@
       "grant": [
         "spring_contact"
       ],
-      "observation": "A spring supply contact is approaching; you can request relief from the station."
+      "observation": "A spring supply contact is approaching; you can request relief from the station.",
+      "stage": 4,
+      "manifestation": "Your sense of identity is increasingly difficult to reconcile with the changes you have recorded."
     }
   ],
   "ending_flags": {
     "account_prepared": "written_account",
     "account_entrusted": "account_entrusted",
     "ancestry_understood": "ancestry_understood",
-    "delivery_separated": "delivery_separated"
+    "delivery_separated": "delivery_separated",
+    "stabilization_attempted": "stabilization_attempted"
   },
   "ending_text": {
     "preserve_logbook": "Your account is secured at the station. Its discovery by others and your future remain uncertain.",
     "request_relief": "You request relief through the supply contact. The response and your future remain uncertain.",
     "limit": "The investigation reaches its limit. Your records and unresolved circumstances remain as they stand."
+  },
+  "progression": {
+    "initial_stage": 1,
+    "provenance": "Calendar phase interpretation of source stages; source also gives a conflicting turn-based cadence. Arrest is provisional, requires documented knowledge and sanctuary; no reversal."
   }
 }

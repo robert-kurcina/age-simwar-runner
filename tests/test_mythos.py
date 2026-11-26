@@ -381,3 +381,32 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("spring_contact", s["flags"])
         self.assertEqual(s["dxd"]["morale"]["revelations"], [])
         mythos.verify(s)
+
+    def test_ram_island_progression_is_calendar_driven(self):
+        s = mythos.initial("ram-island", 42)
+        self.assertEqual(s["progression"]["stage"], 1)
+        for _ in range(8):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["progression"]["stage"], 2)
+        for _ in range(5):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["progression"]["stage"], 3)
+        self.assertNotIn("talk_matteo", [a["id"] for a in mythos.view(s)["choices"]])
+        for _ in range(7):
+            s = mythos.step(s, "observe")
+        self.assertEqual(s["progression"]["stage"], 4)
+        self.assertEqual(len(s["progression"]["changes"]), 3)
+        self.assertNotIn("progression", mythos.view(s))
+        mythos.verify(s)
+
+    def test_ram_island_stabilization_never_reverses_existing_stage(self):
+        from datetime import datetime
+        _, rules = mythos.load("ram-island")
+        s = mythos.initial("ram-island", 42)
+        mythos.advance_events(s, rules, datetime.fromisoformat("1926-11-20T00:00:00"))
+        self.assertEqual(s["progression"]["stage"], 2)
+        s["progression"]["arrested"] = True
+        mythos.advance_events(s, rules, datetime.fromisoformat("1927-03-05T00:00:00"))
+        self.assertEqual(s["progression"]["stage"], 2)
+        self.assertEqual(len(s["progression"]["changes"]), 1)
+        self.assertIn("spring_contact", s["flags"])
