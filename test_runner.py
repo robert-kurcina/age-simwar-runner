@@ -348,7 +348,7 @@ class RunnerTest(unittest.TestCase):
         root = Path(__file__).parent / "campaigns/civic-recovery"
         data = load_campaign(root / "campaign.json")
         entries = [entry for group in data["groups"] for entry in group["scenarios"]]
-        self.assertEqual(len(entries), 3)
+        self.assertEqual(len(entries), 4)
         for entry in entries:
             scenario = json.loads((root / entry["file"]).read_text())
             state = initialize(scenario)
@@ -453,7 +453,7 @@ class RunnerTest(unittest.TestCase):
         for _ in range(2):
             a, b = advance(s, a), advance(s, b)
         self.assertEqual(a["values"]["households_assisted"], 20)
-        self.assertEqual(b["values"], {"households_assisted": 30, "aid_packages": 0})
+        self.assertEqual(b["values"], {"households_assisted": 30, "aid_packages": 0, "open_service_centers": 0})
         self.assertEqual(b["requests"][1]["fulfillment"], "insufficient_packages")
         self.assertTrue(observe(s, b, "coordinator")["objectives"]["completion"]["met"])
         verify_checkpoint(s, b)
@@ -486,6 +486,52 @@ class RunnerTest(unittest.TestCase):
         s["events"].append({"id": "invalid", "minute": 360, "key": "aid_packages", "delta": -3})
         with self.assertRaises(ValueError):
             initialize(s)
+
+    def test_campaign_continuity_and_replay(self):
+        from continuity import export_transition, verify_transition
+        root = Path(__file__).parent / "campaigns/civic-recovery"
+        manifest = root / "campaign.json"
+        s = json.loads((root / "service-restoration.json").read_text())
+        a = initialize(s)
+        b = submit_request(s, a, "coordinator", {"action": "restore_service_center"})
+        for _ in range(2):
+            a, b = advance(s, a), advance(s, b)
+        ta = export_transition(manifest, s, a, "community-assistance")
+        tb = export_transition(manifest, s, b, "community-assistance")
+        self.assertEqual(ta["scenario"]["initial"]["open_service_centers"], 2)
+        self.assertEqual(tb["scenario"]["initial"]["open_service_centers"], 3)
+        self.assertNotEqual(ta["source_checkpoint_digest"], tb["source_checkpoint_digest"])
+        state = verify_transition(manifest, s, b, tb)
+        derived = tb["scenario"]
+        self.assertEqual(observe(derived, state, "coordinator")["values"]["open_service_centers"], 3)
+        state = submit_request(derived, state, "coordinator", {"action": "deliver_aid"})
+        state = advance(derived, advance(derived, state))
+        verify_checkpoint(derived, state)
+        tc = export_transition(manifest, derived, state, "civic-agreement")
+        self.assertEqual(tc["scenario"]["initial"]["households_assisted"], 30)
+        verify_transition(manifest, derived, state, tc)
+        original = json.loads((root / "community-assistance.json").read_text())
+        self.assertEqual(initialize(original)["values"]["open_service_centers"], 0)
+
+    def test_continuity_rejects_invalid_source_and_tampering(self):
+        from continuity import export_transition, verify_transition
+        root = Path(__file__).parent / "campaigns/civic-recovery"
+        manifest = root / "campaign.json"
+        s = json.loads((root / "service-restoration.json").read_text())
+        a = initialize(s)
+        with self.assertRaises(ValueError):
+            export_transition(manifest, s, a, "community-assistance")
+        a = advance(s, advance(s, a))
+        with self.assertRaises(ValueError):
+            export_transition(manifest, s, a, "civic-agreement")
+        t = export_transition(manifest, s, a, "community-assistance")
+        t["scenario"]["initial"]["open_service_centers"] += 1
+        with self.assertRaises(ValueError):
+            verify_transition(manifest, s, a, t)
+        s["initial"]["restoration_credits"] += 1
+        a = advance(s, advance(s, initialize(s)))
+        with self.assertRaises(ValueError):
+            export_transition(manifest, s, a, "community-assistance")
 
     def test_duplicate_event(self):
         self.s["events"].append(copy.deepcopy(self.s["events"][0]))
