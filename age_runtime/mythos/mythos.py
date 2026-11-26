@@ -433,7 +433,6 @@ def step(state, action, proposal=None, commitment=None):
     if a["id"] != action:
         raise ValueError("proposal action mismatch")
     a = nominations.apply(state, rules, a, nomination)
-    a = hooks.apply(state, rules, a, cue)
     if commitment is not None:
         dxd_commitment.validate(state, rules, a, commitment)
         a = dict(a, commitment=copy.deepcopy(commitment))
@@ -502,10 +501,12 @@ def step(state, action, proposal=None, commitment=None):
         npc["last_contact"] = state["time"]
     success = True
     if "test" in a:
+        pacing.reconcile_scene(state, rules)
+        a = hooks.apply(state, rules, a)
         success = resolve_dxd(state, rules, a)
     primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
-    if primary_result is not None:
-        hooks.record(state, a)
+    if primary_result is not None and rules.get("automatic_emphasis"):
+        hooks.record(state, a, state["dxd"]["tests"][-1])
     if commitment is not None:
         entry = dxd_commitment.record(state, a, primary_result)
         dxd_context.acquire_commitment_disability(state["dxd"], entry)
