@@ -59,16 +59,23 @@ def describe(state):
 # Opt-in second-resolution activity accounting. Legacy callers retain recover().
 from random import Random
 from age_runtime.core import dxd
+from age_runtime.core.dxd_character import sleep_limit_hours
 
 ACTIVITIES = ("active", "quiet", "rest", "low_energy", "restorative", "travel", "sleep")
 
-def activity_initial(sleep_limit_hours, awake_seconds=0):
-    if type(sleep_limit_hours) is not int or sleep_limit_hours <= 0 or type(awake_seconds) is not int or awake_seconds < 0:
+def activity_initial(attributes, awake_seconds=0):
+    if type(awake_seconds) is not int or awake_seconds < 0:
         raise ValueError("invalid sleep timing")
-    return {"awake_seconds": awake_seconds, "limit_seconds": sleep_limit_hours * 3600,
+    return {"awake_seconds": awake_seconds, "limit_seconds": sleep_limit_hours(attributes["FOR"]) * 3600,
+            "overdue_seconds": 0,
             "sleep_seconds": 0, "required_sleep_seconds": 0, "status": "awake",
             "remainder": {}, "activity": None, "checks": [], "pending_sleep_seconds": None,
             "sleep_episode": 0, "early_stress": 0}
+
+def refresh_sleep_limit(state, clock, attributes):
+    clock["limit_seconds"] = sleep_limit_hours(attributes["FOR"], state["weariness"]) * 3600
+    if clock["status"] != "awake" or clock["awake_seconds"] <= clock["limit_seconds"]:
+        clock["overdue_seconds"] = 0
 
 def required_sleep(state, attributes):
     return max(1, 8 + dxd.attribute_dm(attributes["INT"]) + degrees(state)["weariness"]) * 3600
@@ -90,6 +97,7 @@ def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", at
     """
     if type(seconds) is not int or seconds < 0 or activity not in ACTIVITIES:
         raise ValueError("invalid activity")
+    refresh_sleep_limit(state, clock, attributes)
     if activity == "sleep":
         if clock["status"] != "asleep":
             raise ValueError("not asleep")
@@ -104,16 +112,21 @@ def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", at
     while remaining:
         awake = clock["awake_seconds"]
         limit = clock["limit_seconds"]
-        next_hour = limit + (max(0, awake - limit) // 3600 + 1) * 3600
-        chunk = min(remaining, next_hour - awake)
+        overdue = awake >= limit
+        chunk = min(remaining, 3600 - clock["overdue_seconds"] if overdue else limit - awake)
         pending = clock["pending_sleep_seconds"]
         if pending is not None:
+            if pending == 0:
+                return seconds - remaining
             chunk = min(chunk, pending)
         quiet = activity in ("quiet", "rest", "low_energy", "restorative")
         weariness_rate = rr if activity in ("quiet", "rest") else 1
         # Preserve fractional progress only while the same recovery mode applies.
         if clock["activity"] != activity:
             clock["remainder"].pop("weariness", None)
+        # Weariness recovery can change the limit; stop at that exact boundary.
+        if quiet:
+            chunk = min(chunk, 3600 - clock["remainder"].get("weariness", 0))
         fatigue = _interval(clock, "fatigue", chunk, 60, quiet)
         stress = _interval(clock, "stress", chunk, 600, quiet and safe) * rr
         weariness = _interval(clock, "weariness", chunk, 3600, quiet) * weariness_rate
@@ -128,12 +141,14 @@ def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", at
         clock["awake_seconds"] += chunk
         clock["activity"] = activity
         remaining -= chunk
+        if overdue:
+            clock["overdue_seconds"] += chunk
         if pending is not None:
             clock["pending_sleep_seconds"] -= chunk
-            if clock["pending_sleep_seconds"] == 0:
-                return seconds - remaining
-        if clock["awake_seconds"] == next_hour:
+        if clock["overdue_seconds"] == 3600:
+            clock["overdue_seconds"] = 0
             add(state, weariness=1)
+            next_hour = clock["awake_seconds"]
             if degrees(state)["weariness"] and clock["pending_sleep_seconds"] is None:
                 result = dxd.test(f"{seed}:sleep:{clock['sleep_episode']}:{next_hour}",
                                   tn=7, dm=dxd.attribute_dm(attributes["FOR"]),
@@ -141,6 +156,9 @@ def advance_activity(state, clock, seconds, activity, *, safe=False, seed="", at
                 clock["checks"].append({"awake_seconds": next_hour, "result": result})
                 if not result["passed"]:
                     clock["pending_sleep_seconds"] = 60 * (rr + Random(f"{seed}:onset:{clock['sleep_episode']}:{next_hour}").randint(1, 6))
+        refresh_sleep_limit(state, clock, attributes)
+        if clock["pending_sleep_seconds"] == 0:
+            return seconds - remaining
     return seconds
 
 def begin_sleep(state, clock, attributes):
@@ -148,7 +166,7 @@ def begin_sleep(state, clock, attributes):
         raise ValueError("already asleep")
     clock.update(status="asleep", sleep_seconds=0,
                  required_sleep_seconds=required_sleep(state, attributes),
-                 pending_sleep_seconds=None, activity="sleep", remainder={})
+                 pending_sleep_seconds=None, activity="sleep", remainder={}, overdue_seconds=0)
     clock["sleep_episode"] += 1
 
 def wake(state, clock, attributes, *, seed, forced=False):
@@ -180,5 +198,6 @@ def wake(state, clock, attributes, *, seed, forced=False):
         state["min_stress"] = max(0, state.get("min_stress", 0) - clock["early_stress"])
         clock["early_stress"] = 0
     clock.update(status="awake", awake_seconds=0, sleep_seconds=0,
-                 required_sleep_seconds=0, activity=None, remainder={})
+                 required_sleep_seconds=0, activity=None, remainder={}, overdue_seconds=0)
+    refresh_sleep_limit(state, clock, attributes)
     return True
