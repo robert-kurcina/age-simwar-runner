@@ -90,9 +90,12 @@ def initial(sid, seed):
 def options(state, rules):
     if state["ending"]:
         return []
-    candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
+    candidates = [dict(a, minutes=int((datetime.fromisoformat(a["until"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60)) if "until" in a else a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
                   and len(state["discoveries"]) >= a.get("requires", 0)
                   and all(f in state["flags"] for f in a.get("requires_flags", []))
+                  and (not a.get("requires_any_flags") or any(f in state["flags"] for f in a["requires_any_flags"]))
+                  and all(f in state["used"] for f in a.get("requires_used", []))
+                  and not any(f in state["flags"] for f in a.get("excludes_flags", []))
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
                   and ("npc" not in a or state["npcs"][a["npc"]]["location"] == a.get("location"))
                   and (not a.get("available_from") or state["time"] >= a["available_from"])
@@ -100,7 +103,7 @@ def options(state, rules):
                   and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds() / 60
-    return [a for a in candidates if a["minutes"] <= remaining
+    return [a for a in candidates if 0 < a["minutes"] <= remaining
             and (not a.get("available_until") or datetime.fromisoformat(state["time"]) + timedelta(minutes=a["minutes"]) <= datetime.fromisoformat(a["available_until"]))
             and all(state["resources"][k] >= v for k, v in a.get("cost", {}).items())]
 
@@ -322,7 +325,11 @@ def verify(state):
 
 def view(state):
     _, rules = load(state["scenario"])
-    return {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
+    scene = rules.get("scene")
+    scene_view = {} if not scene else {"scene": {"description": scene["locations"].get(state["location"], ""),
+        "pressure": [p["text"] for p in scene.get("pressure", []) if p["flag"] in state["flags"]],
+        "cues": [a["label"] for a in options(state, rules) if a.get("location", state["location"]) == state["location"]]}}
+    return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
         "setting": rules.get("setting", "Fear!"),
