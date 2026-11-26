@@ -634,6 +634,60 @@ def view(state):
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
         "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {})} for a in options(state, rules)]}
 
+def gm_context(state):
+    """Bounded referee packet; never render directly as player narration."""
+    story, rules = load(state["scenario"])
+    if not rules.get("gm_proposals"):
+        raise ValueError("GM context not yet supported for scenario")
+    public = view(state)
+    # Keep complete authoritative history in the checkpoint, not every prompt.
+    recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
+              "ending", "last_result", "condition", "resources", "revision", "choices")}
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure") if k in public})
+    recent["observations"] = state["observations"][-8:]
+    recent["discoveries"] = list(state["discoveries"])
+    recent["contacts"] = public["contacts"]
+    recent["inventory"] = public["inventory"]
+    recent["memories"] = public["memories"][-4:]
+    recent["memory_prompt"] = public["memory_prompt"]
+    recent["opening"] = public["opening"]
+    if "pacing" in recent and recent["pacing"]["current_spotlight"]:
+        active = copy.deepcopy(recent["pacing"]["current_spotlight"])
+        active["activities"] = active["activities"][-6:]
+        recent["pacing"]["current_spotlight"] = active
+    pc = state["dxd"]
+    legal = options(state, rules)
+    local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
+    relevant = {a["npc"] for a in local if "npc" in a}
+    return {"audience": "gm_only", "source_revision": state["source"],
+            "player_surface": recent,
+            "referee": {
+                "location_basis": next(({"features": x["features"], "dangers": x["dangers"]}
+                    for x in story["locations"] if x["name"] == state["location"]), None),
+                "participants": [{"id": key, "name": state["npcs"][key]["name"],
+                                  "motivation": state["npcs"][key]["motivation"],
+                                  "known_topics": state["npcs"][key]["known_topics"],
+                                  "disclosed": state["npcs"][key]["disclosed"],
+                                  "secret": state["npcs"][key]["secret"],
+                                  "location": state["npcs"][key]["location"]}
+                                 for key in sorted(relevant)],
+                "concerns": copy.deepcopy(pc["concerns"]),
+                "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
+                "favor": pc["favor"],
+                "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
+                               for a in legal if a["id"] in rules.get("gm_proposals", {})},
+                "clocks": [{"id": key, "name": cfg["name"], "source": cfg["source"],
+                            "segments": cfg["segments"], **state["narrative_events"]["clocks"][key]}
+                           for key, cfg in rules.get("event_clocks", {}).items()
+                           if not state["narrative_events"]["clocks"][key]["resolved"]],
+                "last_test": {k: pc["tests"][-1]["result"][k] for k in ("passed", "margin", "dos", "dof")}
+                             if pc["tests"] and pc["tests"][-1]["turn"] == state["turn"] else None}}
+
+def inspect_gm(path):
+    state = read(path)
+    verify(state)
+    return gm_context(state)
+
 def start(sid, path, seed):
     if path.exists():
         raise ValueError("session already exists")
