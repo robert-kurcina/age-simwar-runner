@@ -53,7 +53,8 @@ Adopt general player-experience ideas from WarGameLLM (https://wargamellm.com/):
 - Model-independent natural-language request exchange merged after CI (PR #36), with session-bound proposals and explicit confirmation.
 - Loopback OpenAI-compatible local model adapter merged after transport CI (PR #37). Actual inference on the user's host remains unverified.
 - Interactive terminal gameplay merged after CI (PR #38). Includes scenario selection, perspective selection, briefings, manual actions, optional local interpretation, confirmation and autosave/resume.
-- Optional LLM narrative briefings implemented over the same local transport; targeted CI pending. Structured observations remain authoritative.
+- Optional LLM narrative briefings merged (PR #39). Structured observations remain authoritative; live inference unverified.
+- Scenario-authored hypothetical presets implemented for civilian resource budgets and reporting delays; targeted verification pending. Presets bind to base spec digest and are pinned to session; actual private preset authoring remains next.
 - Historical numerical calibration remains outstanding. Qualify civilian service capacity and units before replacing illustrative assumptions; do not equate national demographics with local service throughput.
 
 ## NEXT (ordered, with acceptance criteria)
