@@ -219,7 +219,7 @@ def resolve_agreements(s, state, minute):
     Ordinary orders resolve first. No balance reservation or forced debt.
     A shortfall is a recorded default, never an invented negative balance.
     """
-    for aid, a in s.get("agreements", {}).items():
+    for aid, a in sorted(s.get("agreements", {}).items()):
         if minute != a["due_minute"]:
             continue
         signed = sorted(actor for actor, action in a["consent"].items()
@@ -228,24 +228,28 @@ def resolve_agreements(s, state, minute):
                                for r in state["requests"]))
         outcome = {"id": aid, "minute": minute, "consenting": signed, "status": "not_agreed"}
         if len(signed) == len(a["consent"]):
-            debits, changes = {}, {}
-            for name in a["transfers"]:
-                t = s["resource_transfers"][name]
-                source, destination, amount = t["source"], t["destination"], t["amount"]
-                debits[source] = debits.get(source, 0) + amount
-                changes[source] = changes.get(source, 0) - amount
-                changes[destination] = changes.get(destination, 0) + amount
-            if any(state["values"][k] < n for k, n in debits.items()):
-                outcome["status"] = "defaulted"
-            else:
-                for key, delta in sorted(changes.items()):
-                    if not delta:
-                        continue
-                    state["values"][key] += delta
-                    state["ledger"].append({"id": "agreement:" + aid + ":" + key,
-                        "minute": minute, "key": key, "delta": delta, "value": state["values"][key]})
-                outcome["status"] = "fulfilled"
+            settle_terms(s, state, minute, aid, a["transfers"], outcome)
         state["agreement_results"].append(outcome)
+
+
+def settle_terms(s, state, minute, aid, transfers, outcome):
+    debits, changes = {}, {}
+    for name in transfers:
+        t = s["resource_transfers"][name]
+        source, destination, amount = t["source"], t["destination"], t["amount"]
+        debits[source] = debits.get(source, 0) + amount
+        changes[source] = changes.get(source, 0) - amount
+        changes[destination] = changes.get(destination, 0) + amount
+    if any(state["values"][k] < n for k, n in debits.items()):
+        outcome["status"] = "defaulted"
+    else:
+        for key, delta in sorted(changes.items()):
+            if not delta:
+                continue
+            state["values"][key] += delta
+            state["ledger"].append({"id": "agreement:" + aid + ":" + key,
+                "minute": minute, "key": key, "delta": delta, "value": state["values"][key]})
+        outcome["status"] = "fulfilled"
 
 
 def resolve_reviews(s, state, end):
