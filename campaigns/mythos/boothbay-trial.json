@@ -1,5 +1,5 @@
 {
-  "version": 41,
+  "version": 42,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -285,6 +285,15 @@
     },
     {
       "id": "warn_eleanor",
+      "reconsideration": {
+        "group": "eleanor_warning",
+        "evidence": [
+          "water_warning",
+          "tide_clue",
+          "water_risk_known",
+          "ecological_tide_pattern"
+        ]
+      },
       "label": "Share your findings with Eleanor and agree on a precaution",
       "location": "Harbor Diner",
       "minutes": 45,
@@ -690,6 +699,15 @@
     },
     {
       "id": "warn_from_ecology",
+      "reconsideration": {
+        "group": "eleanor_warning",
+        "evidence": [
+          "water_warning",
+          "tide_clue",
+          "water_risk_known",
+          "ecological_tide_pattern"
+        ]
+      },
       "label": "Share the ecological evidence with Eleanor and agree on a precaution",
       "location": "Harbor Diner",
       "minutes": 45,
