@@ -59,3 +59,7 @@ When enabled, referee.npc_agendas includes offscreen_since, a conservative lower
 ### Settlement activity
 
 The optional referee.settlement_activity packet describes qualitative local ambience for current fictional weekday/time and nearest reviewed zone. Possible activities are examples, never established witnesses, NPCs, events, open services or guaranteed opportunities. Quiet does not mean empty; busy does not imply a particular person is present. Use context to narrate plausible background and propose relevant encounters, while preserving all established facts and availability rules. No background roster is required. Boothbay profiles are provisional scenario assumptions, not historical census or operating-hour claims.
+
+### Incidental people
+
+Introduce only a narratively relevant individual through `{"incidental_person":{"kind":"introduce","id":"person:harbor_worker","description":"A harbor worker in a weathered coat.","basis":"An ordinary local encounter."}}`. At a later distinct encounter at the same node use kind recognize with id and basis; when actually introduced by name use kind promote with id, name, role and basis. Preserve the identity across encounters. Player-facing records describe last observed whereabouts, not current availability; never interpret ambience as proof of presence. Supporting promotion establishes identity and role, not a native character sheet, permissions, testimony, resources or mechanical capabilities. Do not invent cross-node whereabouts using this pilot. Keep ordinary background people unrecorded unless relevant.
