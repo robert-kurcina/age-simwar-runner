@@ -56,5 +56,5 @@ def select_rehearsal(path, scenario_id):
     return catalog, group, entry, spec, compiled
 
 
-def start_rehearsal(path, scenario_id, actor):
-    return verify(start_selected(select_rehearsal(path, scenario_id), actor, {}))
+def start_rehearsal(path, scenario_id, actor, opportunity_latitude=None):
+    return verify(start_selected(select_rehearsal(path, scenario_id), actor, {}, opportunity_latitude=opportunity_latitude))
