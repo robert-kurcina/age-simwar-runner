@@ -352,6 +352,7 @@ def briefing(session):
         "date": (start_date + timedelta(days=elapsed // 1440)).isoformat(),
         "elapsed_minutes": elapsed, "turn": observation["turn"],
         "complete": current["complete"],
+        "objective_outcomes": observation.get("objective_outcomes", {}),
         "objectives": {oid: {"description": obj["description"],
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
