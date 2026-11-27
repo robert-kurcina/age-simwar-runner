@@ -495,3 +495,63 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertNotIn("custodian", record)
         self.assertNotIn("properties", record)
         mythos.verify(state)
+
+    def test_native_variable_local_duration_and_certain_resolution(self):
+        from age_runtime.core import dxd
+        from datetime import datetime
+        from age_runtime.mythos import proposals
+        for seed in range(100):
+            state = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
+            if state["discoveries"]:
+                break
+        else:
+            self.fail("No earned discovery")
+        request = {"action": "local:review_notes:Harbor Docks",
+                   "approach": "review_notes", "intent": "Review the existing notes."}
+        before = copy.deepcopy(state)
+        cap = next(c for c in mythos.gm_context(state)["referee"]["local_capabilities"]
+                   if c["action"] == request["action"])
+        self.assertEqual(cap["duration_range_seconds"], [30, 180])
+        self.assertNotIn("dice", cap)
+        self.assertEqual(state, before)
+        after = mythos.step(state, request["action"], request)
+        roll = after["last_result"]["task_duration"]
+        self.assertEqual(roll, dxd.task_duration(
+            f"{state['seed']}:task-duration:{state['turn'] + 1}:{request['action']}", 10))
+        self.assertEqual((datetime.fromisoformat(after["time"]) -
+                          datetime.fromisoformat(state["time"])).total_seconds(), roll["seconds"])
+        self.assertEqual(after["dxd"]["tests"], state["dxd"]["tests"])
+        self.assertEqual(after["dxd"]["favor"], state["dxd"]["favor"])
+        self.assertEqual(after["discoveries"], state["discoveries"])
+        self.assertIsNone(after["local_records"][-1]["effect"])
+        self.assertEqual(after["last_result"]["adjudication"],
+                         {"passed": True, "resolution": "certain"})
+        self.assertEqual(mythos.step(state, request["action"], request), after)
+        mythos.verify(after)
+        self.assertEqual(state, before)
+        with self.assertRaises(ValueError):
+            mythos.step(after, request["action"], request)
+        with self.assertRaises(ValueError):
+            mythos.step(mythos.initial("boothbay", 42), request["action"], request)
+        _, rules = mythos.load("boothbay")
+        invalid = copy.deepcopy(rules)
+        invalid["local_proposals"]["review_notes"]["seconds"] = 60
+        with self.assertRaises(ValueError):
+            proposals.validate_local(invalid)
+
+    def test_variable_complex_task_rolls_before_completion_test(self):
+        from datetime import datetime
+        state = mythos.initial("boothbay", 42)
+        request = {"action": "local:compose_notes:Harbor Docks",
+                   "approach": "compose_notes", "intent": "Organize my investigative notes."}
+        after = mythos.step(state, request["action"], request)
+        roll = after["last_result"]["task_duration"]
+        self.assertEqual(len(roll["dice"]), 3)
+        self.assertTrue(all(1 <= die <= 6 for die in roll["dice"]))
+        self.assertEqual(roll["seconds"], sum(roll["dice"]) * 60)
+        self.assertEqual((datetime.fromisoformat(after["time"]) -
+                          datetime.fromisoformat(state["time"])).total_seconds(), roll["seconds"])
+        self.assertEqual(len(after["dxd"]["tests"]), len(state["dxd"]["tests"]) + 1)
+        self.assertEqual(after["local_records"][-1]["task_duration"], roll)
+        self.assertEqual(after["discoveries"], state["discoveries"])
+        mythos.verify(after)
