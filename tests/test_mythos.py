@@ -813,6 +813,62 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_permission_key_controls_incidental_examination(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
+               "description": "Eleanor holds a ceramic cup.",
+               "basis": "Mundane diner object", "custodian": "eleanor"}
+        s = mythos.establish_step(s, {"details": [cup]})
+        lock = {"id": "lock:cup", "permission": "agr:cup", "object": "inc:cup",
+                "basis": "Eleanor permits close examination of her cup"}
+        action = "examine:lock:cup"
+
+        def say(state, speaker, claim):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": speaker,
+                                               "claim": claim, "stance": "unstated",
+                                               "intent": "unstated"})
+
+        def choices(state):
+            return {x["id"] for x in mythos.view(state)["choices"]}
+
+        self.assertNotIn(action, choices(s))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"lock": lock})
+        s = say(s, "pc", "May I examine the cup?")
+        s = say(s, "eleanor", "Certainly, look as closely as you like.")
+        grant = {"operation": "create", "id": "agr:cup", "kind": "permission",
+                 "npc": "eleanor", "issuer": "eleanor", "terms": "Examine the cup",
+                 "condition": None, "claim_ids": [1, 2]}
+        conditional = mythos.establish_step(s, {"agreement": dict(grant, condition="Only later")})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(conditional, {"lock": lock})
+        s = mythos.establish_step(s, {"agreement": grant})
+        s = mythos.establish_step(s, {"lock": lock})
+        self.assertIn(action, choices(s))
+        self.assertNotIn("basis", str(mythos.view(s)["choices"]))
+        self.assertEqual(mythos.gm_context(s)["referee"]["narrative_locks"][0]["status"], "ready")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"lock": dict(lock, id="lock:duplicate")})
+        moved = mythos.step(s, "move:Harbor Docks")
+        self.assertNotIn(action, choices(moved))
+        with self.assertRaises(ValueError):
+            mythos.step(moved, action)
+        returned = mythos.step(moved, "move:Harbor Diner")
+        self.assertIn(action, choices(returned))
+        played = mythos.step(returned, action)
+        self.assertEqual(played["last_result"]["action"], action)
+        self.assertEqual(len(played["dxd"]["tests"]), len(returned["dxd"]["tests"]) + 1)
+        self.assertEqual(played["discoveries"], returned["discoveries"])
+        self.assertNotIn(action, choices(played))
+        mythos.verify(played)
+        revoked = say(returned, "eleanor", "I have changed my mind. Leave the cup alone.")
+        revoked = mythos.establish_step(revoked, {"agreement": {
+            "operation": "resolve", "id": "agr:cup", "status": "revoked", "claim_ids": [3]}})
+        self.assertNotIn(action, choices(revoked))
+        with self.assertRaises(ValueError):
+            mythos.step(revoked, action)
+        mythos.verify(revoked)
+
     def test_narrative_agreement_lifecycle_and_claim_provenance(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
 
