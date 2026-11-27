@@ -167,8 +167,10 @@ class NarrativeConsolidationTests(unittest.TestCase):
                 public = mythos.view(state)
                 packet = mythos.gm_context(state)
                 self.assertEqual(packet["audience"], "gm_only")
-                self.assertEqual(packet["referee"]["mode"], "authored_actions_only")
-                self.assertFalse(any(packet["referee"]["capabilities"].values()))
+                self.assertEqual(packet["referee"]["mode"], "authored_actions_with_continuity")
+                self.assertTrue(packet["referee"]["capabilities"]["persistent_dialogue"])
+                self.assertFalse(packet["referee"]["capabilities"]["npc_agency"])
+                self.assertFalse(packet["referee"]["capabilities"]["free_form_proposals"])
                 self.assertEqual(packet["referee"]["allowed_actions"],
                                  [a["id"] for a in public["choices"]])
                 self.assertEqual(packet["player_surface"]["revision"], public["revision"])
@@ -196,3 +198,58 @@ class NarrativeConsolidationTests(unittest.TestCase):
                 self.assertEqual(result["scores"], mythos.scores(state, "observe"))
                 for field, flag in rules.get("ending_flags", {}).items():
                     self.assertEqual(result[field], flag in state["flags"])
+
+
+    def test_cross_trial_continuity_and_encounter_guard(self):
+        from age_runtime.mythos import epistemic
+        for sid, npc in (("castine", "martha"), ("ram-island", "matteo")):
+            with self.subTest(scenario=sid):
+                state = mythos.initial(sid, 42)
+                _, rules = mythos.load(sid)
+                claim = {"npc": npc, "speaker": "pc", "claim": "May we talk again?",
+                         "stance": "unstated", "intent": "unstated"}
+                with self.assertRaises(ValueError):
+                    mythos.dialogue_step(state, claim)
+                # Isolate encounter/window guard from authored Test outcomes.
+                local = copy.deepcopy(state)
+                local["location"] = local["npcs"][npc]["location"]
+                with self.assertRaises(ValueError):
+                    mythos.dialogue_step(local, claim)
+                local["npcs"][npc]["encounters"] = 1
+                if sid == "ram-island":
+                    local["time"] = "1926-12-21T00:00:00"
+                    self.assertFalse(epistemic.conversation_available(local, rules, npc, mythos.npc_available))
+                    local["time"] = "1926-11-30T00:00:00"
+                before = copy.deepcopy(local)
+                answer = dict(claim, speaker=npc, claim="Certainly.",
+                              reaction={"emotion": "wary", "significance": "Agreed to speak again."})
+                agreement = {"operation": "create", "id": "agr:talk",
+                             "kind": "commitment", "npc": npc, "issuer": npc,
+                             "terms": "Speak again", "condition": None, "claim_ids": [1, 2]}
+                after = mythos.batch_step(local, {"operations": [
+                    {"dialogue": claim}, {"dialogue": answer},
+                    {"establish": {"agreement": agreement}}]})
+                self.assertEqual(local, before)
+                for key in ("time", "turn", "flags", "discoveries", "dxd", "resources"):
+                    self.assertEqual(after[key], before[key])
+                public = mythos.view(after)
+                self.assertNotIn("npc_reaction", public["dialogue"][-1])
+                self.assertEqual(public["narrative_agreements"][0]["status"], "active")
+                gm = mythos.gm_context(after)["referee"]
+                self.assertEqual(gm["relational_context"][npc]["current"]["emotion"]["text"], "wary")
+                self.assertTrue(gm["contextual_reminders"][npc]["active_agreements"])
+                pid = "family_connection" if sid == "castine" else "delivery_account"
+                linked = dict(answer, proposition=pid, asserts=True)
+                with self.assertRaisesRegex(ValueError, "canonical disclosures"):
+                    mythos.dialogue_step(after, linked)
+
+    def test_cross_trial_mundane_establishment_replays(self):
+        for sid in ("castine", "ram-island"):
+            state = mythos.initial(sid, 42)
+            after = mythos.establish_step(state, {"details": [
+                {"id": "inc:bench", "kind": "fixture", "label": "Bench",
+                 "description": "A plain bench.", "basis": "Mundane local furnishing"}]})
+            mythos.verify(after)
+            self.assertEqual(after["turn"], state["turn"])
+            self.assertEqual(after["flags"], state["flags"])
+            self.assertEqual(mythos.view(after)["established_details"][0]["id"], "inc:bench")

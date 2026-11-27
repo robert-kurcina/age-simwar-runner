@@ -1,4 +1,21 @@
 {
+  "epistemic_dialogue": true,
+  "dialogue_requires_encounter": true,
+  "relational_continuity": true,
+  "narrative_establishment": true,
+  "narrative_properties": true,
+  "narrative_agreements": true,
+  "narrative_batch": true,
+  "propositions": {
+    "delivery_account": {
+      "text": "Matteo acknowledges that the unusual parcel was deliberately included in the delivery.",
+      "kind": "report",
+      "flag": "delivery_account",
+      "initial_knowers": [
+        "matteo"
+      ]
+    }
+  },
   "version": 3,
   "setting": "Fear!",
   "resolution": "dxd",
