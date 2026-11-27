@@ -501,7 +501,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "Local civic and religious intermediaries seek cessation and protection of life. A particular local organization is illustrative.",
+          "value": "Local civic and religious intermediaries seek protection of life and voluntary cessation; the specific network is hypothetical and the later peace announcement is not yet known.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -529,7 +529,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Witness, relief and mediation; no sovereign authority or universal control over other Adherents.",
+          "value": "Local witness, relief and mediation only; no universal command of Adherents or later formal advisory mandate.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {

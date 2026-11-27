@@ -622,7 +622,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "Support surviving administrations through funding, coordination and recommendations.",
+          "value": "Support surviving administrations through reconstruction funding and recommendations; the later hardened Charter order is not an opening authority.",
           "classification": "hypothetical",
           "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
           "evidence": {
@@ -650,7 +650,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Voluntary funding and recommendations only; no sovereign authority.",
+          "value": "Exercise authority limited to voluntary funding, recommendations and separately consented reviews; provisional historical enforcement provisions do not confer executable sovereign powers.",
           "classification": "hypothetical",
           "reason": "Exercise authority boundary; no additional legal power inferred.",
           "evidence": {

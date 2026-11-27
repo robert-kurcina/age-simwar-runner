@@ -171,10 +171,10 @@
           }
         },
         "strategy": {
-          "motivation": "Seek interfaith legitimacy and practical support for implementation.",
+          "motivation": "Seek broad voluntary assent to regional principles before pursuing interfaith witnessing and practical consultation; do not assume national authority.",
           "priorities": [
-            "religious_witness",
             "regional_principles",
+            "religious_witness",
             "claims_consultation"
           ]
         }
@@ -436,7 +436,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "Regional councils are preparing implementation following the announcement. Shanter participation in a specific council is illustrative.",
+          "value": "Regional consultations follow the peace announcement; the particular council and participation are hypothetical. Later Charter outcomes are not known.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -464,7 +464,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Delegation may negotiate and recommend; no unilateral authority over other states.",
+          "value": "Delegation may negotiate and recommend within exercise terms; no later Charter enforcement powers.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {
@@ -495,7 +495,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "Local participation in the Agreement is established; precise negotiating mandate is not known.",
+          "value": "Local Adherents participated in the December 2009 peace action; the particular delegation and its mandate in this exercise are hypothetical.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -523,7 +523,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Delegation may negotiate within reviewed exercise terms; no unilateral authority over others.",
+          "value": "Voluntary regional consultation within exercise terms; no later ratification or unilateral authority over others.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {
@@ -554,7 +554,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "Catholic leadership participated in the peace announcement; a specific working delegation is illustrative.",
+          "value": "Catholic leadership participated in the peace announcement; this particular working delegation is hypothetical.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -582,7 +582,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Moral counsel, convening and voluntary assent; not a sovereign government.",
+          "value": "Moral counsel, convening and voluntary assent only; no sovereign or later formal enforcement authority.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {
@@ -613,7 +613,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "The Grand Mufti participated in the peace announcement; a specific working delegation is illustrative.",
+          "value": "The Grand Mufti participated in the peace announcement; this particular working delegation is hypothetical.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -627,7 +627,7 @@
         },
         "motivations.priority": {
           "unit": "text",
-          "value": "Seek interfaith legitimacy and practical support for implementation.",
+          "value": "Seek broad voluntary assent to regional principles before pursuing interfaith witnessing and practical consultation; do not assume national authority.",
           "classification": "hypothetical",
           "reason": "Proposed exercise priorities; not established historical policy.",
           "evidence": {
@@ -641,7 +641,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Religious representation and voluntary negotiation; not authority over Arabian national policy.",
+          "value": "Religious representation and voluntary negotiation; no authority over Arabian national policy or later Charter enforcement.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {
