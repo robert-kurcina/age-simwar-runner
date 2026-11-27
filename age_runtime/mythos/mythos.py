@@ -197,6 +197,12 @@ def _local_action_available(state, rules, action):
     """Revalidate the same prerequisites at arrival and after local activity."""
     return (not any(f in state["flags"] for f in action.get("excludes_flags", []))
             and all(f in state["flags"] for f in action.get("requires_flags", []))
+            and (not action.get("requires_any_flags") or any(f in state["flags"] for f in action["requires_any_flags"]))
+            and all(f in state["used"] for f in action.get("requires_used", []))
+            and len(state["discoveries"]) >= action.get("requires", 0)
+            and all(state["relationships"][k] >= v for k, v in action.get("requires_relationship", {}).items())
+            and (not action.get("available_from") or state["time"] >= action["available_from"])
+            and (not action.get("available_until") or state["time"] <= action["available_until"])
             and npc_available(state, rules, action)
             and locks.action_available(state, rules, action, npc_available, establishment.local_entities))
 
@@ -444,7 +450,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     state["last_result"] = {"action": action, "success": success}
     if reason:
         state["last_result"]["interrupted"] = reason
-    if state["transitions"] and state["transitions"][-1]["turn"] == state["turn"]:
+    if state.get("transitions") and state["transitions"][-1]["turn"] == state["turn"]:
         state["last_result"]["transition"] = state["transitions"][-1]
     if "activity" in state["dxd"]:
         pc = state["dxd"]
@@ -452,7 +458,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
     state["history"].append(history_entry(action, proposal, a.get("commitment")))
-    if not options(state, rules):
+    if ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
         state["ending"] = ending_projection(state, rules, "limit", action)
     return state
 
@@ -537,10 +543,14 @@ def _step(state, rules, action, proposal=None, commitment=None):
         if not _local_action_available(state, rules, a):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
-        if "progression" in state or "pacing" in rules:
-            advance_events(state, rules, elapsed)
+        # Dated milestones precede completion effects, including at a tie.
+        advance_events(state, rules, elapsed)
         state["time"] = elapsed.isoformat()
         npc_time.advance_abstract(state, rules, started, elapsed, engaged=a.get("npc"))
+        if not _local_action_available(state, rules, a):
+            for key, amount in a.get("cost", {}).items():
+                state["resources"][key] -= amount
+            return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     if action != "observe" and not a.get("repeatable"):
         state["used"].append(action)
     if not clock:
@@ -625,8 +635,6 @@ def _step(state, rules, action, proposal=None, commitment=None):
                     dxd_psychology.acquire(state["dxd"]["morale"], concerns,
                         revelation=revelation["revelation"], understood=True, destabilized=True,
                         disability=revelation["disability"], turn=state["turn"])
-    if "progression" not in state and "pacing" not in rules:
-        advance_events(state, rules, elapsed)
     if a.get("danger_beat"):
         beats.record(state, rules, a, primary_result)
     if a.get("local_capability"):
@@ -814,6 +822,8 @@ def verify(state):
     """
     sid = state["scenario"]
     story, rules = load(sid)
+    if state.get("source") != digest([story, rules]):
+        raise ValueError("session source revision mismatch; use matching scenario sources or start a fresh session")
     replay = _initial(sid, state["seed"], copy.deepcopy(story), copy.deepcopy(rules))
     edits = state["dxd"]["memory_edits"]
     cursor = 0
