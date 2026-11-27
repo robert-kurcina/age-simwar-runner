@@ -78,8 +78,8 @@ def validate(s):
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
-    if factions and not s.get("economy_projects"):
-        raise ValueError("model factions require reviewed civilian economy projects")
+    if factions and not (s.get("economy_projects") or s.get("agreements")):
+        raise ValueError("model factions require reviewed civilian projects or institutional commitments")
     for actor in factions:
         if any(name not in (s.get("capacity_actions", {}).keys() | s.get("resource_transfers", {}).keys() | agreement_actions(s)) for name, spec in s.get("action_catalog", {}).items() if actor in spec["actors"]):
             raise ValueError("model factions may select only supported capacity, transfer or consent actions")
