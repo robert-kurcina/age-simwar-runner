@@ -522,6 +522,11 @@ def main(argv=None):
     commands = p.add_subparsers(dest="command", required=True)
     ls = commands.add_parser("list")
     ls.add_argument("inventory")
+    preview = commands.add_parser("transition-preview", help="Unapproved actor-local historical transition preview")
+    preview.add_argument("inventory")
+    preview.add_argument("session", type=Path)
+    preview.add_argument("target")
+    preview.add_argument("--selectors", type=Path)
     discover = commands.add_parser("discover", help="Player-facing available campaign openings")
     discover.add_argument("inventory")
     discover.add_argument("--owners", type=Path)
@@ -646,6 +651,10 @@ def main(argv=None):
             return
         if a.command == "list":
             result = inventory(a.inventory)
+        elif a.command == "transition-preview":
+            from age_runtime.core.transition_preview import transition_preview
+            result = transition_preview(a.inventory, read(a.session), a.target,
+                                        read(a.selectors) if a.selectors else None)
         elif a.command == "discover":
             from age_runtime.core.campaign_discovery import discover
             result = discover(a.inventory, read(a.owners) if a.owners else None)
