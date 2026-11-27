@@ -80,6 +80,8 @@ def initial(sid, seed):
         state["narrative_locks"] = []
     if rules.get("interpersonal_duress"):
         state["emotional_episodes"] = []
+    if rules.get("consequential_objects"):
+        state["object_actions"] = []
     if rules.get("timed_detail_event"):
         state["timed_detail_events"] = []
     if rules.get("local_proposals"):
@@ -922,6 +924,7 @@ def gm_context(state):
                 **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
                 **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
+                **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
                 **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
