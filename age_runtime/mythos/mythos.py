@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -908,6 +908,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
+                **({"contextual_reminders": reminders.projection(state, conversational)} if rules.get("epistemic_dialogue") else {}),
                 **({"emotional_context": emotions.projection(state, conversational)} if rules.get("interpersonal_duress") else {}),
                 **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
                 **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
