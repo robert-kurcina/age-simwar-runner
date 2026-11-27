@@ -22,6 +22,10 @@ Stop adding generic diagnostics, synthetic recovery frameworks and speculative m
 
 Implemented `private transition-preview INVENTORY SESSION TARGET [--selectors JSON]` for completed unreviewed single-perspective sessions. Reuses historical carry validation for explicitly selected actor-visible records, checks identical catalog revision, chronological gap, stable eligible actor and target spec; preview creates no session or registration. Tests use Mainlander Ingress to Early Reconstruction, with private record isolation and rejection of backward/incomplete transitions. CI pending. Next expose actual campaign progression and explicit reviewed continuation choices; no automatic carry or UAT gate.
 
+## Current checkpoint — executable draft continuation
+
+PR #244 merged and Tests 46084656813 / bundle 46084656928 passed. Add explicit digest-confirmed `continue-rehearsal` command using the existing historical memory derivation against a fresh target opening. Preserve qualification, target accounting, source session, actor-local records and inherited Opportunity Latitude. No reviewed promotion or inventory changes. Tests cover deterministic repeat, hidden memory, stale confirmation and subsequent turn. CI pending. Immediate-source records only; multi-hop historical retention and model-faction continuity are not yet implemented. Next: campaign progression options and selective multi-hop memory if warranted. UAT deferred.
+
 ## Historical development record (superseded ordering)
 
 ## Shared consequential information — strategic adoption (P1)

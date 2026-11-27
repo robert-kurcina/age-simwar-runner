@@ -64,3 +64,35 @@ def transition_preview(path, previous, target_id, selectors=None):
             "prior_objectives": view(previous)["observation"].get("objective_outcomes", {}),
             "authority": "None; historical records only. No resources, live commitments, or current knowledge carried.",
             "approved": False, "registered": False}
+
+
+def continue_rehearsal(path, previous, target_id, selectors, expected_preview_digest):
+    """Start a fresh draft episode with explicitly confirmed historical memory.
+
+    Never route a rehearsal through reviewed start or modify the inventory.
+    Bind confirmation to the exact source checkpoint, target and selection.
+    """
+    from age_runtime.core.draft_rehearsal import start_rehearsal
+    from age_runtime.core.runner import initialize
+
+    preview = transition_preview(path, previous, target_id, selectors)
+    if preview["proposed_mapping"] is None:
+        raise ValueError("explicit historical selectors required")
+    if digest(preview) != expected_preview_digest:
+        raise ValueError("stale or unconfirmed transition preview")
+    catalog, _, entry, spec, compiled = select_rehearsal(path, target_id)
+    if compiled["spec_digest"] != preview["proposed_mapping"]["target_spec_digest"]:
+        raise ValueError("target changed after preview")
+    actor = preview["actor"]
+    opening = start_rehearsal(path, target_id, actor,
+                              opportunity_latitude=previous["header"].get("opportunity_latitude"))
+    header = opening["header"]
+    if (header["catalog_digest"] != digest(catalog)
+            or header["compiled"]["spec_digest"] != compiled["spec_digest"]):
+        raise ValueError("target changed during initialization")
+    snapshot, link = derive(catalog, {**entry, "remember_from": preview["proposed_mapping"]},
+                            spec, header["compiled"], previous)
+    header = {**header, "compiled": snapshot, "continuity": link,
+              "preset": {"id": "standard", "label": "Unreviewed continuation — historical memory"}}
+    return verify({**opening, "header": header, "header_digest": digest(header),
+                   "state": initialize(snapshot["scenario"])})

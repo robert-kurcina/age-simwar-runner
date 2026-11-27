@@ -6,7 +6,7 @@ import unittest
 from age_runtime.core.draft_rehearsal import start_rehearsal
 from age_runtime.core.private_play import establish_context, pending_factions, model_packet, model_choice, update
 from age_runtime.core.runner import digest
-from age_runtime.core.transition_preview import transition_preview
+from age_runtime.core.transition_preview import transition_preview, continue_rehearsal
 
 ROOT = Path(__file__).resolve().parents[1] / "scenarios/sh44ser/conflagration/inventory.json"
 SOURCE = "mainlander-ingress-regional-draft"
@@ -53,3 +53,28 @@ class TransitionPreviewTests(unittest.TestCase):
         for target in (SOURCE, "fallout-coalition-relief-draft"):
             with self.assertRaises(ValueError):
                 transition_preview(ROOT, session, target)
+
+
+    def test_confirmed_continuation_preserves_target_baseline(self):
+        from age_runtime.core.private_play import briefing, verify
+        previous = self.complete()
+        original = digest(previous)
+        selectors = [{"kind": "established_context", "id": "inc:fiji_room"}]
+        preview = transition_preview(ROOT, previous, TARGET, selectors)
+        fresh = start_rehearsal(ROOT, TARGET, "fiji")
+        session = continue_rehearsal(ROOT, previous, TARGET, selectors, digest(preview))
+        self.assertEqual(session["state"]["values"], fresh["state"]["values"])
+        self.assertEqual(session["state"]["minute"], 0)
+        self.assertEqual(session["header"]["compiled"]["qualification"], "unreviewed-rehearsal")
+        self.assertEqual(session["header"]["continuity"]["source_session_digest"], original)
+        self.assertEqual(briefing(session)["phase_memory"], preview["selected_history"])
+        self.assertFalse(model_packet(session, "shanter")["observation"]["phase_memory"])
+        self.assertEqual(digest(previous), original)
+        self.assertEqual(session, continue_rehearsal(ROOT, previous, TARGET, selectors, digest(preview)))
+        with self.assertRaises(ValueError):
+            continue_rehearsal(ROOT, previous, TARGET, selectors, "stale")
+        for actor in pending_factions(session):
+            packet = model_packet(session, actor)
+            session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
+        session = verify(update(session, turns=1))
+        self.assertEqual(briefing(session)["phase_memory"], preview["selected_history"])
