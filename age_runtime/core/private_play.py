@@ -542,6 +542,9 @@ def main(argv=None):
     discover = commands.add_parser("discover", help="Player-facing available campaign openings")
     discover.add_argument("inventory")
     discover.add_argument("--owners", type=Path)
+    progression = commands.add_parser("progression", help="Player-facing choices after a completed draft episode")
+    progression.add_argument("inventory")
+    progression.add_argument("session", type=Path)
     rehearsal = commands.add_parser("rehearse", help="Explicit unreviewed source-independent draft rehearsal")
     rehearsal.add_argument("inventory")
     rehearsal.add_argument("scenario")
@@ -680,6 +683,9 @@ def main(argv=None):
             result = transition_preview(a.inventory, read(a.session), a.target,
                                         read(a.selectors) if a.selectors else None)
             result = {**result, "preview_digest": digest(result)}
+        elif a.command == "progression":
+            from age_runtime.core.campaign_discovery import progression
+            result = progression(a.inventory, read(a.session))
         elif a.command == "discover":
             from age_runtime.core.campaign_discovery import discover
             result = discover(a.inventory, read(a.owners) if a.owners else None)
