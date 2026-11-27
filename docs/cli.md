@@ -168,3 +168,13 @@ Export validates deterministic replay. Verify and restore require matching pinne
 ## Offline Chat runtime transfer
 
 The **Chat runtime bundle** Actions workflow exports the tested public tracked source as an artifact containing `runner-source.zip`, `ENGINE_REVISION.txt` and `SHA256SUMS`. Prefer retrieving a successful **main** run's artifact directly through the GitHub Connector's artifact download capability into Chat's execution environment. Verify the archive checksum and revision and extract into a fresh execution directory. Manual download/upload is an optional fallback if direct transfer fails. PR runs may use a synthetic merge commit; prefer main for stable provenance. The artifact expires after 14 days. Direct artifact transfer has been demonstrated in ordinary Chat; availability is not guaranteed in every conversation. Never include private sources or sessions in this public workflow.
+
+## Private diplomatic deliberation (opt-in)
+
+When the strategic scenario enables `diplomatic_history`, the trusted referee may record an actual actor's private intention or relationship assessment without making a public statement or spending a turn:
+
+```sh
+python play.py private record-diplomacy SESSION ACTOR RECORD.json --revision REVISION
+```
+
+An intention record has exactly kind (intention), id, counterpart, topic, text, status (active or withdrawn), and revises (null initially, then the latest own claim ID or private record ID for the same counterpart/topic). Private record IDs are unique within their actor's history; do not reuse them as that actor's communication IDs. A relationship assessment uses kind (assessment), id, counterpart, topic, text, revises and basis instead of status. Basis is a nonempty list of objects with kind (communications, proposals or agreements) and id (the corresponding actor-visible record ID). The engine captures the dated evidence snapshot; do not provide an evidence field. Outgoing dispatch and unanswered own proposals do not establish counterpart conduct. A received statement is not proof of its truth, and expiry or unsigned commitments do not prove intent. Use the actor's actual authorized deliberation, not invented player thoughts. Neither record establishes consent, authority, fulfillment, objective truth or mechanical effects. Use the returned revision. The actor-local diplomatic history and institutional memory expose these records only to their owner; referee checkpoint access remains privileged.

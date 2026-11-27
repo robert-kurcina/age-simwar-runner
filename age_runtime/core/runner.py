@@ -12,7 +12,7 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
-from age_runtime.core import negotiation, communications
+from age_runtime.core import negotiation, communications, diplomacy
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -218,7 +218,7 @@ def _append_model_choice(s, state, actor_id, action):
         raise ValueError("not a model faction")
     if state["minute"] >= s["end_minute"]:
         raise ValueError("session ended")
-    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") not in ("communication", "assessment") for r in state["requests"]):
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") not in ("communication", "assessment", "diplomatic_record") for r in state["requests"]):
         raise ValueError("faction already decided this turn")
     if isinstance(action, dict):
         return _append_negotiation(s, state, actor_id, action, "model")
@@ -238,7 +238,7 @@ def faction_packet(s, state, actor_id):
         raise ValueError("not a model faction")
     if state["minute"] >= s["end_minute"]:
         raise ValueError("session ended")
-    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") not in ("communication", "assessment") for r in state["requests"]):
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") not in ("communication", "assessment", "diplomatic_record") for r in state["requests"]):
         raise ValueError("faction already decided this turn")
     body = {"actor": actor_id, "observation": observe(s, state, actor_id)}
     return {"packet_id": digest(body), **body}
@@ -274,6 +274,15 @@ def assess_proposition(s, state, actor, revision, command):
     return result
 
 
+def record_diplomacy(s, state, actor, revision, command):
+    verify_checkpoint(s, state)
+    if revision != digest(state):
+        raise ValueError("stale diplomatic revision")
+    result = diplomacy.append(s, state, actor, command)
+    verify_checkpoint(s, result)
+    return result
+
+
 def verify_checkpoint(s, state):
     expected = initialize(s)
     check_identity(s, state)
@@ -293,6 +302,9 @@ def verify_checkpoint(s, state):
             if record.get("origin") == "assessment":
                 expected = communications.assess(s, expected, record["actor"],
                     {k: v for k, v in record["assessment"].items() if k != "report_evidence"})
+            elif record.get("origin") == "diplomatic_record":
+                expected = diplomacy.append(s, expected, record["actor"],
+                    {k: v for k, v in record["diplomatic_record"].items() if k != "evidence"})
             elif record.get("origin") == "communication":
                 expected = communications.append(s, expected, record["actor"], record["communication"])
             elif record.get("origin") == "model":
