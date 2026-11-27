@@ -10,6 +10,24 @@
       "scenarios": []
     },
     {
+      "id": "disaster-response",
+      "title": "Disaster Response — urgent relief allocation",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "disaster-response-regional-draft",
+          "title": "Disaster Response — urgent relief allocation (draft)",
+          "status": "draft-unreviewed",
+          "spec": "disaster-response/scenario-spec.json",
+          "player_factions": [
+            "shanter",
+            "fiji",
+            "vanuatu"
+          ]
+        }
+      ]
+    },
+    {
       "id": "fallout",
       "title": "Fallout",
       "status": "supported-pilot",
@@ -46,19 +64,20 @@
       ]
     },
     {
-      "id": "reconstruction",
-      "title": "Reconstruction",
+      "id": "early-reconstruction",
+      "title": "Early Reconstruction — independent RWF grants",
       "status": "provisional",
       "scenarios": [
         {
-          "id": "reconstruction-regional-draft",
-          "title": "Reconstruction — linked port and power investments (draft)",
+          "id": "early-reconstruction-regional-draft",
+          "title": "Early Reconstruction — independent RWF grants (draft)",
           "status": "draft-unreviewed",
-          "spec": "reconstruction/scenario-spec.json",
+          "spec": "early-reconstruction/scenario-spec.json",
           "player_factions": [
             "shanter",
             "fiji",
-            "vanuatu"
+            "vanuatu",
+            "rwf"
           ]
         }
       ]
@@ -103,34 +122,15 @@
       ]
     },
     {
-      "id": "early-reconstruction",
-      "title": "Early Reconstruction — independent RWF grants",
+      "id": "reconstruction",
+      "title": "Reconstruction",
       "status": "provisional",
       "scenarios": [
         {
-          "id": "early-reconstruction-regional-draft",
-          "title": "Early Reconstruction — independent RWF grants (draft)",
+          "id": "reconstruction-regional-draft",
+          "title": "Reconstruction — linked port and power investments (draft)",
           "status": "draft-unreviewed",
-          "spec": "early-reconstruction/scenario-spec.json",
-          "player_factions": [
-            "shanter",
-            "fiji",
-            "vanuatu",
-            "rwf"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "disaster-response",
-      "title": "Disaster Response — urgent relief allocation",
-      "status": "provisional",
-      "scenarios": [
-        {
-          "id": "disaster-response-regional-draft",
-          "title": "Disaster Response — urgent relief allocation (draft)",
-          "status": "draft-unreviewed",
-          "spec": "disaster-response/scenario-spec.json",
+          "spec": "reconstruction/scenario-spec.json",
           "player_factions": [
             "shanter",
             "fiji",
