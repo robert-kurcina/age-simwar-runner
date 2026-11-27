@@ -289,6 +289,10 @@ class CommunicationsTest(unittest.TestCase):
         self.assertEqual(observe(s, state, "east")["communications"], [])
         self.assertEqual(reminder_index(observe(s, state, "east"))["active_intentions"][0]["record_id"], "private1")
         self.assertEqual(observe(s, state, "foundation")["diplomatic_history"], {})
+        # Another actor may independently choose the same private ID.
+        other = dict(intent, counterpart="west", text="Review alternative funding.")
+        state = record_diplomacy(s, state, "foundation", digest(state), other)
+        self.assertEqual(observe(s, state, "west")["diplomatic_history"], {})
         with self.assertRaises(ValueError):
             record_diplomacy(s, state, "east", digest(old), intent)
         msg = {"id": "speech1", "recipients": ["foundation"], "claim": "We propose an inspection.",
