@@ -560,3 +560,7 @@ PR #225 merged but Tests 46064016938 and Chat runtime bundle 46064016913 failed 
 ### Contextual presence (WIP)
 
 PR #228 verified in both CI workflows. Boothbay v76 opts into sparse off-screen eligibility tracking for agenda NPCs. Conservative continuous off-screen interval resets at potential PC observation, sleep, travel, task or activity commitments. GM establishes current whereabouts through npc_presence only if anchored, available and reachable within unused elapsed time via ungated reviewed routes. Reuse travel ledger with abstract marker; no new time credit, recovery, evidence or backdated observation. Actual arrival is established now, not at an invented intermediate time. Existing detailed travel remains required for observed or consequential journeys. Tests cover elapsed time, commitment, observation, replay and privacy. Next: settlement ambience and incidental identity promotion; UAT deferred.
+
+### Aggregate settlement activity (WIP)
+
+PR #231 merged; Tests passed, bundle pending at inspection. Boothbay v77 adds optional qualitative zone profiles with weekday windows, defaults, examples and provisional provenance. Nearest reviewed ancestor zone provides the profile. Private GM projection resolves only current location/time; no population ledger, residents, witnesses, encounter rolls or services are created. Tests cover calendar, inheritance, privacy, validation and replay. Next: selective incidental identity establishment and promotion without automatic mechanical capabilities. UAT deferred.
