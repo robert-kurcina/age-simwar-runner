@@ -21,3 +21,7 @@ This offline procedure replaces only the GitHub retrieval steps in CHAT_GAMEPLAY
 - runner-source.zip: tracked public engine, configuration, tests and documentation.
 
 The public archive contains no private SH44SER sources.
+
+## Authorized private strategic opening archive
+
+A trusted referee may additionally supply a private opening ZIP exported by `python -m age_runtime.core.private_openings export INVENTORY OWNERS ARCHIVE SCENARIO_ID --engine-revision REV`. It is a companion to the exact pinned public runtime ZIP, not a replacement. Use `python -m age_runtime.core.private_openings list ARCHIVE --engine-revision REV` to discover the verified openings. Use `python -m age_runtime.core.private_openings restore ARCHIVE SCENARIO_ID ACTOR SESSION --engine-revision REV` to create a fresh private session outside the runtime. Follow the ordinary private-play procedure. No network or source owner files are needed after export. Only explicitly reviewed fresh standard single-perspective openings without image assets are supported. Keep the archive and session private; integrity checks do not authenticate an untrusted publisher. Do not use this to promote drafts. The seven Conflagration drafts are not yet eligible.
