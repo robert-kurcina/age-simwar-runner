@@ -63,7 +63,8 @@ def projection(state, rules):
             constraints.append("different_established_location")
         result[nid] = {"expected": routine, "established_location": npc["location"],
                        "constraints": constraints, "authority": "advisory_only",
-                       "weekly_windows": copy.deepcopy(windows)}
+                       "weekly_windows": copy.deepcopy(windows),
+                       "offscreen_since": npc.get("offscreen_since")}
     return result
 
 
@@ -95,7 +96,7 @@ def initialize_presence(state, rules):
             state["npcs"][nid]["offscreen_since"] = None
 
 
-def observe_boundary(state, rules, *, traveling_pc=False, engaged=None):
+def observe_boundary(state, rules, *, engaged=None):
     """Track only uninterrupted opportunities, not a schedule or position log.
 
     Co-location is conservatively treated as potential observation. Reset
