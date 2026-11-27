@@ -103,10 +103,12 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 | Shared foundation | DONE for existing verified capabilities; WIP for demonstrated gaps | Shared authoritative runtime, source bindings, replay and delivery. Evolve as gameplay experiments require. |
 | [Narrative sub-game](PLAN_NARRATIVE.md) | WIP (P1) | GM-directed, character-scale gameplay; qualify Boothbay, then other Fear! scenarios. |
 | [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; establish phase-specific Conflagration factions and qualify meaningful independent faction decisions. |
-| [Planned and ad hoc narrative scenarios](PLAN_NARRATIVE.md#subsequent-phase--planned-and-ad-hoc-scenario-facility-deferred-p2) | DEFERRED (P2) | After main narrative engine implementation and readiness gates, enable detailed scenario preparation and gist-led play through one native runtime. |
+| [Planned and ad hoc narrative scenarios](PLAN_NARRATIVE.md#subsequent-phase--planned-and-ad-hoc-scenario-facility-deferred-p2) | DEFERRED (P2) | After main narrative engine implementation and mechanical readiness, enable detailed scenario preparation and gist-led play through one native runtime. UAT remains a separate deferred acceptance requirement. |
 | Full-stack service | DEFERRED (P3) | Final experimental phase; see the last section of this plan. |
 
 Narrative and strategic phases run concurrently, not sequentially. Each has its own plan, priorities and acceptance criteria; neither must wait for the other to finish. Both exercise one shared engine and feed lessons back into AGE. Coordinate changes to shared contracts and regression-test both modes when affected. Prioritize the smallest useful vertical slices independently; shared blockers take precedence when they actually impede play. ChatGPT gameplay acceptance is the joint exit gate of these concurrent phases, not a separate infrastructure project. Record actual player feedback separately from deterministic execution and CI results.
+
+Narrative implementation follows the [current ordered roadmap](PLAN_NARRATIVE.md#current-ordered-implementation-roadmap--2026-11-27). Author-led narrative UAT is deferred for now by author direction; continue implementation and mechanical verification without claiming experiential acceptance. The final full-stack entry gate is unchanged.
 
 ## Consistency and verification
 
