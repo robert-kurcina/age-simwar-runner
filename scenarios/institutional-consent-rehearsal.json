@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "id": "institutional-consent-rehearsal",
+  "turn_minutes": 10080,
+  "end_minute": 20160,
+  "initial": {
+    "protection_agreed": 0,
+    "settlement_agreed": 0
+  },
+  "events": [],
+  "constraints": [],
+  "actors": {
+    "council": {
+      "label": "Local Administration",
+      "visible_keys": [
+        "protection_agreed",
+        "settlement_agreed"
+      ],
+      "objectives": {
+        "protection_agreed": {
+          "key": "protection_agreed",
+          "comparison": "equal",
+          "threshold": 1,
+          "description": "Secure collective protection commitment"
+        },
+        "settlement_agreed": {
+          "key": "settlement_agreed",
+          "comparison": "equal",
+          "threshold": 1,
+          "description": "Secure lawful claims review commitment"
+        }
+      },
+      "strategy": {
+        "motivation": "Retain lawful local authority while reaching a settlement.",
+        "priorities": [
+          "protection_agreed",
+          "settlement_agreed"
+        ]
+      }
+    },
+    "mediators": {
+      "label": "Independent Mediators",
+      "visible_keys": [
+        "protection_agreed",
+        "settlement_agreed"
+      ],
+      "objectives": {
+        "protection_agreed": {
+          "key": "protection_agreed",
+          "comparison": "equal",
+          "threshold": 1,
+          "description": "Secure collective protection commitment"
+        },
+        "settlement_agreed": {
+          "key": "settlement_agreed",
+          "comparison": "equal",
+          "threshold": 1,
+          "description": "Secure lawful claims review commitment"
+        }
+      },
+      "strategy": {
+        "motivation": "Seek a credible claims process grounded in protection.",
+        "priorities": [
+          "settlement_agreed",
+          "protection_agreed"
+        ]
+      }
+    },
+    "relief": {
+      "label": "Relief Network",
+      "visible_keys": [
+        "protection_agreed"
+      ],
+      "objectives": {
+        "protection_agreed": {
+          "key": "protection_agreed",
+          "comparison": "equal",
+          "threshold": 1,
+          "description": "Secure collective protection commitment"
+        }
+      },
+      "strategy": {
+        "motivation": "Protect civilian access to relief and confidential records.",
+        "priorities": [
+          "protection_agreed"
+        ]
+      }
+    }
+  },
+  "action_catalog": {
+    "council_protection": {
+      "description": "Consent to protection commitment.",
+      "actors": [
+        "council"
+      ]
+    },
+    "mediators_protection": {
+      "description": "Consent to protection commitment.",
+      "actors": [
+        "mediators"
+      ]
+    },
+    "relief_protection": {
+      "description": "Consent to protection commitment.",
+      "actors": [
+        "relief"
+      ]
+    },
+    "council_settlement": {
+      "description": "Consent to settlement commitment.",
+      "actors": [
+        "council"
+      ]
+    },
+    "mediators_settlement": {
+      "description": "Consent to settlement commitment.",
+      "actors": [
+        "mediators"
+      ]
+    }
+  },
+  "administrative_reviews_per_turn": 3,
+  "agreements": {
+    "protection": {
+      "description": "Commit to independent civilian protection and confidential records custody.",
+      "consent": {
+        "council": "council_protection",
+        "mediators": "mediators_protection",
+        "relief": "relief_protection"
+      },
+      "due_minute": 10080,
+      "outcome": "protection_agreed",
+      "requires": []
+    },
+    "settlement": {
+      "description": "Adopt a shared claims review process after the protection commitment.",
+      "consent": {
+        "council": "council_settlement",
+        "mediators": "mediators_settlement"
+      },
+      "due_minute": 20160,
+      "outcome": "settlement_agreed",
+      "requires": [
+        "protection"
+      ]
+    }
+  },
+  "model_factions": [
+    "mediators",
+    "relief"
+  ],
+  "game_length": "Short"
+}
