@@ -164,7 +164,8 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
         if rules.get("native_injury"):
-            state["dxd"]["injury"] = dxd_injury.initial(derived["pc"]["physical"]["bodypoints"])
+            state["dxd"]["injury"] = dxd_injury.initial(derived["pc"]["physical"]["bodypoints"], derived["pc"]["attributes"]["SIZ"],
+                                                    state["dxd"]["concerns"]["capacity"]["recovery_rate"])
         if rules.get("emotional_commitment"):
             state["dxd"]["commitments"] = []
         if "character_profiles" in state:
@@ -256,6 +257,17 @@ def spatial_options(state, rules, candidates):
 def options(state, rules):
     if state["ending"]:
         return []
+    injury = state["dxd"].get("injury")
+    if dxd_injury.incapacitated(injury):
+        if dxd_injury.projection(injury)["status"] == "dead":
+            return []
+        remaining = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
+        duration = min(remaining, dxd_injury.next_boundary(injury) or 600)
+        if duration <= 0:
+            return []
+        return [{"id": "await_assistance", "label": "Advance time while incapacitated", "location": state["location"],
+                 "duration_seconds": duration, "local_seconds": duration, "interval_seconds": 60,
+                 "repeatable": True, "route": {"nodes": [state["location"]], "seconds": 0, "minutes": 0, "terrain": []}}]
     clock = state["dxd"].get("activity")
     if clock and clock["status"] == "asleep":
         remaining = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
@@ -441,10 +453,16 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             interval = narrative_events.next_boundary(state, rules)
             if interval is not None:
                 boundary = min(boundary, cursor + timedelta(seconds=interval))
+        injury = pc.get("injury")
+        interval = dxd_injury.next_boundary(injury)
+        if interval is not None:
+            boundary = min(boundary, cursor + timedelta(seconds=interval))
         span = int((boundary - cursor).total_seconds())
         before = dxd_conditions.degrees(pc["concerns"])["stress"]
-        actual = dxd_conditions.advance_activity(pc["concerns"], clock, span, mode, safe=safe,
+        actual = span if mode == "incapacitated" else dxd_conditions.advance_activity(pc["concerns"], clock, span, mode, safe=safe,
                                                  seed=state["seed"], attributes=pc["attributes"])
+        if injury:
+            dxd_injury.advance(injury, actual)
         dxd_morale.calm(pc["morale"], safe=safe, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
         cursor += timedelta(seconds=actual)
         state["time"] = cursor.isoformat()
@@ -454,7 +472,10 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         npc_travel.resolve(state, rules, cursor)
         timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
         npc_agenda.observe_boundary(state, rules, engaged=engaged)
-        if mode != "sleep" and clock["pending_sleep_seconds"] == 0:
+        if injury and dxd_injury.projection(injury)["status"] == "dead":
+            reason = "character_death"
+            break
+        if mode not in ("sleep", "incapacitated") and clock["pending_sleep_seconds"] == 0:
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
             reason = "involuntary_sleep"
             break
@@ -493,6 +514,8 @@ def step(state, action, proposal=None, commitment=None):
 
 
 def _step(state, rules, action, proposal=None, commitment=None):
+    if dxd_injury.incapacitated(state["dxd"].get("injury")) and (action != "await_assistance" or proposal is not None or commitment is not None):
+        raise ValueError("physical incapacity prevents voluntary action")
     request, _ = hooks.split(proposal)
     request, nomination = nominations.split(request)
     a = next((a for a in options(state, rules) if a["id"] == action), None)
@@ -521,6 +544,9 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if rules.get("routine_observations"):
         state["routine_source"] = None
     clock = state["dxd"].get("activity")
+    if action == "await_assistance":
+        activity_segment(state, rules, a["duration_seconds"], "incapacitated")
+        return finish_activity(state, rules, action, a, True)
     if "spatial" in rules and a["route"]["seconds"]:
         departure = state["time"]
         arrival = datetime.fromisoformat(departure) + timedelta(seconds=a["route"]["seconds"])
@@ -721,12 +747,14 @@ def advance_events(state, rules, elapsed):
 
 def ending_projection(state, rules, reason, action):
     """Common terminal record for completed and interrupted activities."""
+    if state["dxd"].get("injury") and dxd_injury.projection(state["dxd"]["injury"])["status"] == "dead":
+        reason = "character_death"
     flags = rules.get("ending_flags", {
         "account_prepared": "written_account", "account_relayed": "account_relayed",
         "account_entrusted": "account_entrusted"})
     return {"reason": reason, "evidence_count": len(state["discoveries"]),
             **{key: flag in state["flags"] for key, flag in flags.items()},
-            "epilogue": rules["ending_text"][reason], "scores": scores(state, action)}
+            "epilogue": rules["ending_text"].get(reason, "Your character has died. Previously established outcomes remain." if reason == "character_death" else rules["ending_text"]["limit"]), "scores": scores(state, action)}
 
 
 def scores(state, action):
@@ -779,6 +807,8 @@ def narrative(path, request, revision):
     return _commit(path, revision, narrative_step, request)
 
 def _apply_dialogue(state, rules, request):
+    if dxd_injury.incapacitated(state["dxd"].get("injury")):
+        raise ValueError("physical incapacity prevents dialogue")
     epistemic.record(state, rules, request, npc_available)
     npc_time.interrupt(state, request["npc"])
     state["history"].append({"dialogue": copy.deepcopy(request)})
@@ -794,6 +824,8 @@ def dialogue(path, request, revision):
     return _commit(path, revision, dialogue_step, request)
 
 def _apply_establishment(state, rules, request):
+    if dxd_injury.incapacitated(state["dxd"].get("injury")):
+        raise ValueError("physical incapacity prevents ordinary establishment")
     if isinstance(request, dict) and set(request) == {"consequential_demeanor"}:
         consequential_demeanor(state, rules, request["consequential_demeanor"])
     elif isinstance(request, dict) and set(request) == {"social_demeanor"}:
