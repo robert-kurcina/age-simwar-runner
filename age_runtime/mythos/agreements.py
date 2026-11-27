@@ -57,9 +57,8 @@ def record(state, rules, request, npc_available):
         npc, issuer = current[eid]["npc"], current[eid]["issuer"]
     else:
         raise ValueError("invalid agreement operation")
-    if (not isinstance(npc, str) or npc not in state["npcs"]
-            or state["npcs"][npc]["location"] != state["location"]
-            or not npc_available(state, rules, {"npc": npc, "location": state["location"]})):
+    from age_runtime.mythos.epistemic import conversation_available
+    if not isinstance(npc, str) or not conversation_available(state, rules, npc, npc_available):
         raise ValueError("agreement participant unavailable")
     event = {"id": eid, "operation": operation, "turn": state["turn"],
              "at": state["time"], "location": state["location"]}
