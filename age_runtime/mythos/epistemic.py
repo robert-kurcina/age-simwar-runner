@@ -5,6 +5,7 @@ scenario facts and mechanical effects remain authoritative. This module
 deliberately does not infer truth, deception, or PC belief from prose.
 """
 import copy
+import re
 
 def _text(value, limit):
     if not isinstance(value, str) or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
@@ -15,7 +16,7 @@ def record(state, rules, request, npc_available):
     if not rules.get("epistemic_dialogue") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("dialogue unavailable")
     required = {"npc", "speaker", "claim", "stance", "intent"}
-    if not isinstance(request, dict) or not required <= set(request) or set(request) - required - {"proposition", "asserts", "listener_stance", "reaction"}:
+    if not isinstance(request, dict) or not required <= set(request) or set(request) - required - {"proposition", "asserts", "listener_stance", "reaction", "relay"}:
         raise ValueError("invalid dialogue fields")
     npc, speaker = request["npc"], request["speaker"]
     if not isinstance(npc, str) or npc not in state["npcs"] or speaker not in ("pc", npc):
@@ -45,7 +46,7 @@ def record(state, rules, request, npc_available):
         asserts = request.get("asserts")
         if not isinstance(pid, str) or type(asserts) is not bool:
             raise ValueError("linked claim requires proposition and boolean assertion")
-        spec = rules.get("propositions", {}).get(pid)
+        spec = registry(state, rules).get(pid)
         if spec is None:
             raise ValueError("unknown proposition")
         # A reference may not disclose an unearned canonical fact. PC may
@@ -53,7 +54,7 @@ def record(state, rules, request, npc_available):
         known = sources(state, rules, speaker, pid)
         if not known:
             raise ValueError("speaker lacks proposition access")
-        if speaker != "pc" and not sources(state, rules, "pc", pid):
+        if speaker != "pc" and spec["kind"] != "hypothesis" and not sources(state, rules, "pc", pid):
             raise ValueError("new canonical disclosures require authored action")
         listener_stance = request.get("listener_stance", "unstated")
         if listener_stance not in ("unstated", "believes", "doubts", "disbelieves", "unknown"):
@@ -61,6 +62,19 @@ def record(state, rules, request, npc_available):
         if speaker != "pc" and listener_stance != "unstated":
             raise ValueError("do not infer PC belief")
         entry.update(proposition=pid, asserts=asserts, listener_stance=listener_stance)
+    if "relay" in request:
+        if not rules.get("social_epistemic") or speaker == "pc":
+            raise ValueError("NPC relay unavailable")
+        source = request["relay"]
+        prior = next((c for c in ledger if type(source) is int and c["id"] == source
+                      and npc in (c["speaker"], c["listener"])), None)
+        if not prior:
+            raise ValueError("relay requires own participated claim")
+        if prior.get("proposition") != entry.get("proposition"):
+            raise ValueError("relay proposition mismatch")
+        if "proposition" in prior and prior["asserts"] != entry["asserts"] and intent not in ("deceive", "fabricate"):
+            raise ValueError("changed relay assertion requires explicit distortion")
+        entry["relay_source"] = source
     if "reaction" in request:
         if not rules.get("relational_continuity"):
             raise ValueError("relational continuity unavailable")
@@ -78,7 +92,8 @@ def record(state, rules, request, npc_available):
 def record_testimony(state, rules, request, npc_available):
     """Private NPC-to-NPC exchange in the same authoritative dialogue ledger."""
     required = {"speaker", "listener", "claim", "stance", "intent", "listener_stance", "source"}
-    if not rules.get("npc_testimony") or not isinstance(request, dict) or set(request) != required:
+    optional = {"asserts"} if rules.get("social_epistemic") else set()
+    if not rules.get("npc_testimony") or not isinstance(request, dict) or not required <= set(request) or set(request)-required-optional:
         raise ValueError("invalid NPC testimony")
     speaker, listener = request["speaker"], request["listener"]
     if any(not isinstance(a, str) or a not in state["npcs"] for a in (speaker, listener)) or speaker == listener:
@@ -114,6 +129,12 @@ def record_testimony(state, rules, request, npc_available):
             metadata.update(proposition=c["proposition"], asserts=c["asserts"])
     else:
         raise ValueError("unsupported testimony source")
+    if "asserts" in request:
+        if "proposition" not in metadata or type(request["asserts"]) is not bool:
+            raise ValueError("distortion requires linked assertion")
+        if request["asserts"] != metadata["asserts"] and intent not in ("deceive", "fabricate"):
+            raise ValueError("changed relay assertion requires explicit distortion")
+        metadata["asserts"] = request["asserts"]
     entry = {"id": len(ledger) + 1, "turn": state["turn"], "at": state["time"],
              "location": location, "speaker": speaker, "listener": listener, "claim": claim,
              "speaker_stance": stance, "speaker_intent": intent, "listener_stance": received,
@@ -124,7 +145,7 @@ def record_testimony(state, rules, request, npc_available):
 
 def public_projection(state):
     """Only what was actually communicated; no truth or intent annotation."""
-    return [{k: v for k, v in e.items() if k not in ("speaker_stance", "speaker_intent", "proposition", "asserts", "listener_stance", "npc_reaction")}
+    return [{k: v for k, v in e.items() if k not in ("speaker_stance", "speaker_intent", "proposition", "asserts", "listener_stance", "npc_reaction", "relay_source")}
             for e in state.get("dialogue", []) if "pc" in (e["speaker"], e["listener"])]
 
 def referee_projection(state, participants):
@@ -147,13 +168,68 @@ def validate_propositions(rules):
         if not isinstance(spec["initial_knowers"], list) or not set(spec["initial_knowers"]) <= set(rules["npcs"]):
             raise ValueError("invalid initial knowers")
 
+def registry(state, rules):
+    return {**rules.get("propositions", {}), **state.get("dynamic_propositions", {})}
+
+def establish_hypothesis(state, rules, request, npc_available):
+    """A proposition under consideration, never an established world fact."""
+    if not rules.get("social_epistemic") or not isinstance(request, dict) or set(request) != {"id", "npc", "text", "source"}:
+        raise ValueError("invalid hypothesis")
+    pid, nid, cid = request["id"], request["npc"], request["source"]
+    if not isinstance(pid, str) or not re.fullmatch(r"hyp:[a-z][a-z0-9_]{0,63}", pid) or pid in registry(state, rules):
+        raise ValueError("invalid or duplicate hypothesis identity")
+    if not isinstance(nid, str) or nid not in state["npcs"]:
+        raise ValueError("unknown hypothesis actor")
+    location = state["npcs"][nid]["location"]
+    if location is None or not npc_available(state, rules, {"npc": nid, "location": location}):
+        raise ValueError("hypothesis requires available anchored actor")
+    claim = next((c for c in state["dialogue"] if type(cid) is int and c["id"] == cid and nid in (c["speaker"], c["listener"])), None)
+    if not claim or len(state["dynamic_propositions"]) >= 64:
+        raise ValueError("hypothesis requires actor-scoped claim or record limit")
+    text = _text(request["text"], 400)
+    if any(spec["text"].casefold() == text.casefold() for spec in registry(state, rules).values()):
+        raise ValueError("reuse existing proposition")
+    state["dynamic_propositions"][pid] = {"kind": "hypothesis", "text": text, "initial_knowers": [nid],
+                                          "source": cid, "at": state["time"]}
+
+def revise_belief(state, rules, request, npc_available):
+    if not rules.get("social_epistemic") or not isinstance(request, dict) or set(request) != {"npc", "proposition", "stance", "asserts", "sources", "basis"}:
+        raise ValueError("invalid belief revision")
+    nid, pid = request["npc"], request["proposition"]
+    if not isinstance(nid, str) or nid not in state["npcs"] or not isinstance(pid, str) or pid not in registry(state, rules):
+        raise ValueError("unknown belief actor or proposition")
+    location = state["npcs"][nid]["location"]
+    if location is None or not npc_available(state, rules, {"npc": nid, "location": location}):
+        raise ValueError("belief revision requires available anchored NPC")
+    if not sources(state, rules, nid, pid):
+        raise ValueError("actor lacks proposition access")
+    if request["stance"] not in ("believes", "doubts", "disbelieves", "unknown") or type(request["asserts"]) is not bool:
+        raise ValueError("invalid subjective stance")
+    refs = request["sources"]
+    if not isinstance(refs, list) or not 1 <= len(refs) <= 4 or any(type(i) is not int for i in refs) or len(set(refs)) != len(refs):
+        raise ValueError("invalid belief sources")
+    spec = registry(state, rules)[pid]
+    eligible = {c["id"] for c in state["dialogue"] if nid in (c["speaker"], c["listener"]) and c.get("proposition") == pid}
+    if spec.get("kind") == "hypothesis" and nid in spec["initial_knowers"]:
+        eligible.add(spec["source"])
+    if not set(refs) <= eligible:
+        raise ValueError("belief sources must concern proposition and be actor-scoped")
+    entry = {"npc": nid, "proposition": pid, "stance": request["stance"], "asserts": request["asserts"],
+             "sources": list(refs), "basis": _text(request["basis"], 240),
+             "at": state["time"], "turn": state["turn"], "sequence": len(state["history"]),
+             "claim_cursor": len(state["dialogue"])}
+    ledger = state["belief_revisions"]
+    if len(ledger) >= 128 or any(all(e[k] == entry[k] for k in ("npc", "proposition", "stance", "asserts", "sources")) for e in ledger):
+        raise ValueError("duplicate belief revision or record limit")
+    ledger.append(entry)
+
 def sources(state, rules, actor, pid):
     """Access is not belief. Keep authored access and received claims distinct."""
-    spec = rules["propositions"][pid]
+    spec = registry(state, rules)[pid]
     result = []
     if actor in spec["initial_knowers"]:
-        result.append({"kind": "authored_access"})
-    if actor == "pc" and spec["flag"] in state["flags"]:
+        result.append({"kind": "hypothesis_origin", "id": spec["source"]} if spec["kind"] == "hypothesis" else {"kind": "authored_access"})
+    if actor == "pc" and spec.get("flag") in state["flags"]:
         result.append({"kind": "earned", "flag": spec["flag"]})
     for e in state.get("dialogue", []):
         if e.get("proposition") == pid and e["listener"] == actor:
@@ -163,7 +239,7 @@ def sources(state, rules, actor, pid):
 def proposition_projection(state, rules, participants):
     """Private, derived on demand from flags and the existing claim ledger."""
     result = []
-    for pid, spec in rules.get("propositions", {}).items():
+    for pid, spec in registry(state, rules).items():
         actors = {}
         for actor in sorted(set(participants) | {"pc"}):
             access = sources(state, rules, actor, pid)
@@ -177,10 +253,18 @@ def proposition_projection(state, rules, participants):
                     revisions.append({"id": e["id"], "stance": e["speaker_stance"], "asserts": e["asserts"]})
                 if e["listener"] == actor and e["listener_stance"] != "unstated":
                     revisions.append({"id": e["id"], "stance": e["listener_stance"], "asserts": e["asserts"]})
-            actors[actor] = {"access": access, "latest_stance": revisions[-1] if revisions else None}
+            latest = revisions[-1] if revisions else None
+            explicit = [e for e in state.get("belief_revisions", []) if e["npc"] == actor and e["proposition"] == pid]
+            if explicit and (latest is None or explicit[-1]["claim_cursor"] >= latest["id"]):
+                latest = copy.deepcopy(explicit[-1])
+            actors[actor] = {"access": access, "latest_stance": latest}
+            if rules.get("social_epistemic"):
+                received = [e for e in state["dialogue"] if e.get("proposition") == pid and e["listener"] == actor]
+                actors[actor]["conflicting_accounts"] = bool({e["asserts"] for e in received} == {True, False})
+                actors[actor]["account_ids"] = [e["id"] for e in received]
         if actors:
             result.append({"id": pid, "text": spec["text"], "kind": spec["kind"],
-                           "established": spec["flag"] in state["flags"], "actors": actors})
+                           "established": spec.get("flag") in state["flags"], "actors": actors})
     return result
 
 def relational_projection(state, participants):
