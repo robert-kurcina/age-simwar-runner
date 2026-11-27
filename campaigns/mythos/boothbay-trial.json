@@ -1,5 +1,6 @@
 {
-  "version": 63,
+  "version": 64,
+  "routine_observations": {"activities": {"buy_meal": "Bought a meal and rested at the diner"}},
   "npc_travel": true,
   "npc_testimony": true,
   "consequential_demeanor": {"minor": -1, "significant": -2, "severe": -3},
