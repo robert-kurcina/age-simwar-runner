@@ -27,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -218,7 +218,7 @@ def _append_model_choice(s, state, actor_id, action):
         raise ValueError("not a model faction")
     if state["minute"] >= s["end_minute"]:
         raise ValueError("session ended")
-    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") != "communication" for r in state["requests"]):
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") not in ("communication", "assessment") for r in state["requests"]):
         raise ValueError("faction already decided this turn")
     if isinstance(action, dict):
         return _append_negotiation(s, state, actor_id, action, "model")
@@ -238,7 +238,7 @@ def faction_packet(s, state, actor_id):
         raise ValueError("not a model faction")
     if state["minute"] >= s["end_minute"]:
         raise ValueError("session ended")
-    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") != "communication" for r in state["requests"]):
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") not in ("communication", "assessment") for r in state["requests"]):
         raise ValueError("faction already decided this turn")
     body = {"actor": actor_id, "observation": observe(s, state, actor_id)}
     return {"packet_id": digest(body), **body}
@@ -265,6 +265,15 @@ def communicate(s, state, actor, revision, command):
     return result
 
 
+def assess_proposition(s, state, actor, revision, command):
+    verify_checkpoint(s, state)
+    if revision != digest(state):
+        raise ValueError("stale assessment revision")
+    result = communications.assess(s, state, actor, command)
+    verify_checkpoint(s, result)
+    return result
+
+
 def verify_checkpoint(s, state):
     expected = initialize(s)
     check_identity(s, state)
@@ -281,7 +290,9 @@ def verify_checkpoint(s, state):
                 raise ValueError("invalid request record")
             if record["turn"] != turn:
                 break
-            if record.get("origin") == "communication":
+            if record.get("origin") == "assessment":
+                expected = communications.assess(s, expected, record["actor"], record["assessment"])
+            elif record.get("origin") == "communication":
                 expected = communications.append(s, expected, record["actor"], record["communication"])
             elif record.get("origin") == "model":
                 expected = _append_model_choice(s, expected, record["actor"], record.get("negotiation", record["action"]))
