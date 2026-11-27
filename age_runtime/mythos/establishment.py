@@ -14,6 +14,12 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
+    if isinstance(request, dict) and set(request) == {"hypothesis"}:
+        from age_runtime.mythos import epistemic
+        return epistemic.establish_hypothesis(state, rules, request["hypothesis"], npc_available)
+    if isinstance(request, dict) and set(request) == {"belief_revision"}:
+        from age_runtime.mythos import epistemic
+        return epistemic.revise_belief(state, rules, request["belief_revision"], npc_available)
     if isinstance(request, dict) and set(request) == {"npc_objective"}:
         return npc_agency.objective(state, rules, request["npc_objective"], npc_available, text)
     if isinstance(request, dict) and set(request) == {"npc_social_test"}:
