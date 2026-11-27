@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
+from age_runtime.mythos import projections
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
@@ -812,14 +813,7 @@ def narrative_step(state, request):
     return result
 
 def narrative(path, request, revision):
-    state = read(path)
-    verify(state)
-    if digest(state) != revision:
-        raise ValueError("stale session revision")
-    state = narrative_step(state, request)
-    verify(state)
-    save(path, state)
-    return view(state)
+    return _commit(path, revision, narrative_step, request)
 
 def dialogue_step(state, request):
     result = copy.deepcopy(state)
@@ -830,14 +824,7 @@ def dialogue_step(state, request):
     return result
 
 def dialogue(path, request, revision):
-    state = read(path)
-    verify(state)
-    if digest(state) != revision:
-        raise ValueError("stale session revision")
-    state = dialogue_step(state, request)
-    verify(state)
-    save(path, state)
-    return view(state)
+    return _commit(path, revision, dialogue_step, request)
 
 def establish_step(state, request):
     result = copy.deepcopy(state)
@@ -882,14 +869,8 @@ def batch_step(state, request):
     return result
 
 def establish(path, request, revision):
-    state = read(path)
-    verify(state)
-    if digest(state) != revision:
-        raise ValueError("stale session revision")
-    state = batch_step(state, request) if isinstance(request, dict) and "operations" in request else establish_step(state, request)
-    verify(state)
-    save(path, state)
-    return view(state)
+    transition = batch_step if isinstance(request, dict) and "operations" in request else establish_step
+    return _commit(path, revision, transition, request)
 
 def verify(state):
     replay = initial(state["scenario"], state["seed"])
@@ -916,185 +897,65 @@ def verify(state):
     if cursor != len(edits) or replay != state:
         raise ValueError("session replay mismatch")
 
-def view(state):
+def view(state, *, full_history=False):
     _, rules = load(state["scenario"])
-    scene = rules.get("scene")
-    scene_view = {} if not scene else {"scene": {"description": scene["locations"].get(state["location"], ""),
-        "pressure": [p["text"] for p in scene.get("pressure", []) if p["flag"] in state["flags"]],
-        "cues": [a["label"] for a in options(state, rules) if a.get("location", state["location"]) == state["location"]]}}
-    if scene and "spatial" in rules:
-        config = rules["spatial"]
-        scene_view["scene"]["zone"] = config["nodes"][state["location"]]["zone"]
-        scene_view["scene"]["routes"] = [r for r in spatial.reachable(config, state) if r["seconds"] <= (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()] if not state["ending"] else []
-        scene_view["scene"]["contacts_here"] = [p["name"] for nid, p in state["npcs"].items() if p["encounters"] and p["location"] == state["location"] and npc_available(state, rules, {"npc": nid, "location": state["location"]})]
-    if "pacing" in state:
-        scene_view["pacing"] = pacing.projection(state, rules)
-    if rules.get("danger_beats"):
-        scene_view["danger"] = beats.available(state, rules)
-    if "commitments" in state["dxd"]:
-        scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
-    if "established_details" in state:
-        scene_view["established_details"] = establishment.projection(state)
-    if "agreement_history" in state:
-        scene_view["narrative_agreements"] = agreements.public_projection(state)
-    if "dialogue" in state:
-        scene_view["dialogue"] = epistemic.public_projection(state)
-    if "local_records" in state:
-        scene_view["local_records"] = copy.deepcopy(state["local_records"][-8:])
-    if "narrative_events" in state:
-        scene_view["event_pressure"] = narrative_events.projection(state, rules)
-    if "activity" in state["dxd"]:
-        clock = state["dxd"]["activity"]
-        scene_view["activity"] = {k: clock[k] for k in ("status", "awake_seconds", "limit_seconds", "overdue_seconds", "sleep_seconds", "required_sleep_seconds", "activity", "pending_sleep_seconds")}
-    if rules.get("automatic_emphasis"):
-        scene_view["character_emphasis_xp"] = state["dxd"].get("xp", 0)
-        scene_view["latest_emphasis_award"] = next((copy.deepcopy(e) for e in reversed(state["dxd"].get("emphasis_awards", [])) if e["turn"] == state["turn"]), None)
-    return scene_view | {k: state[k] for k in ("scenario","time","location","turn","discoveries","observations","ending","last_result")} | {
-        "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
-        "resources": state["resources"],
-        "setting": rules.get("setting", "Fear!"),
-        "memories": [x["memory"] for x in state.get("dxd", {}).get("inspirations", [])],
-        "memory_prompt": next(({"event": x["action"], "basis": x["basis"]}
-            for x in state["dxd"]["inspirations"] if x["turn"] == state["turn"]
-            and x["source"] == "authored"), None),
-        "contacts": [{"name": p["name"], "role": p["public_role"],
-                      **({"demeanor": DEMEANORS[dxd_commitment.effective_demeanor(state, nid) + 6]} if rules.get("demeanor") else {}),
-                      "encounters": p["encounters"], "last_contact": p["last_contact"]}
-                     for nid, p in state["npcs"].items() if p["encounters"]],
-        "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
-                          fear=dxd_morale.describe(state["dxd"]["morale"])),
-        "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
-        "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {}), **({"preparation_saved_seconds": a["preparation_saved_seconds"]} if a.get("preparation_saved_seconds") else {})} for a in options(state, rules)]}
+    return projections.player_view(state, rules, options(state, rules),
+                                   npc_available, digest, DEMEANORS,
+                                   full_history=full_history)
 
-def gm_context(state):
-    """Bounded referee packet; never render directly as player narration."""
+
+def gm_context(state, *, compact=False):
     story, rules = load(state["scenario"])
     if not rules.get("gm_proposals"):
         raise ValueError("GM context not yet supported for scenario")
-    public = view(state)
-    # Keep complete authoritative history in the checkpoint, not every prompt.
-    recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
-              "ending", "last_result", "condition", "resources", "revision", "choices")}
-    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments", "established_details", "narrative_agreements") if k in public})
-    recent["observations"] = state["observations"][-8:]
-    recent["discoveries"] = list(state["discoveries"])
-    recent["contacts"] = public["contacts"]
-    recent["inventory"] = public["inventory"]
-    recent["memories"] = public["memories"][-4:]
-    recent["memory_prompt"] = public["memory_prompt"]
-    recent["opening"] = public["opening"]
-    if "pacing" in recent and recent["pacing"]["current_spotlight"]:
-        active = copy.deepcopy(recent["pacing"]["current_spotlight"])
-        active["activities"] = active["activities"][-6:]
-        recent["pacing"]["current_spotlight"] = active
-    pc = state["dxd"]
-    legal = options(state, rules)
-    local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
-    relevant = {a["npc"] for a in local if "npc" in a}
-    # Dialogue does not end when the last mechanical topic is spent.
-    # Only anchored, currently available participants can converse without
-    # an action. An unanchored contact still needs an authorized encounter.
-    conversational = {key for key, npc in state["npcs"].items()
-                      if npc["location"] == state["location"]
-                      and npc_available(state, rules, {"npc": key, "location": state["location"]})}
-    if state["ending"] or pc.get("activity", {}).get("status") == "asleep":
-        conversational = set()
-    relevant |= conversational
-    return {"audience": "gm_only", "source_revision": state["source"],
-            "player_surface": recent,
-            "referee": {
-                "location_basis": next(({"features": x["features"], "dangers": x["dangers"]}
-                    for x in story["locations"] if x["name"] == state["location"]), None),
-                "participants": [{"id": key, "name": state["npcs"][key]["name"],
-                                  "motivation": state["npcs"][key]["motivation"],
-                                  "known_topics": state["npcs"][key]["known_topics"],
-                                  "disclosed": state["npcs"][key]["disclosed"],
-                                  "secret": state["npcs"][key]["secret"],
-                                  "location": state["npcs"][key]["location"],
-                                  "conversation_available": key in conversational,
-                                  "encounters": state["npcs"][key]["encounters"],
-                                  "last_contact": state["npcs"][key]["last_contact"],
-                                  "demeanor": state["relationships"].get(key),
-                                  "source_traits": copy.deepcopy(state["npcs"][key]["traits"]),
-                                  "local_actions": [a["id"] for a in local if a.get("npc") == key],
-                                  "skills": copy.deepcopy(state["npcs"][key].get("skills", {})),
-                                  "traits": copy.deepcopy(state["npcs"][key].get("dxd_traits", {}))}
-                                 for key in sorted(relevant)],
-                **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
-                "propositions": epistemic.proposition_projection(state, rules, relevant),
-                **({"npc_temporal": npc_time.projection(state, state['npcs'] if rules.get('npc_lifecycle') else conversational)} if rules.get("npc_temporal") else {}),
-                **({"contextual_reminders": reminders.projection(state, conversational)} if rules.get("epistemic_dialogue") else {}),
-                **({"emotional_context": emotions.projection(state, conversational)} if rules.get("interpersonal_duress") else {}),
-                **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
-                **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
-                **({"npc_travel": npc_travel.projection(state)} if rules.get("npc_travel") else {}),
-                **({"npc_agency": npc_agency.projection(state)} if rules.get("npc_agency") else {}),
-                **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
-                **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
-                **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
-                **({"action_observations": action_observations.projection(state, conversational)} if rules.get("action_observations") else {}),
-                **({"consequential_demeanor": {nid: copy.deepcopy([e for e in state["relationship_changes"] if e["npc"] == nid and e.get("source") in ("consequential_conduct", "social_conduct")][-6:]) for nid in sorted(conversational)}} if rules.get("consequential_demeanor") else {}),
-                **({"behavioral_context": behavior.projection(state, conversational)} if rules.get("behavioral_recognition") else {}),
-                **({"routine_source": copy.deepcopy(state["routine_source"])} if rules.get("routine_observations") else {}),
-                **({"npc_expectations": expectations.projection(state, conversational),
-                    "literary_synthesis": "Before composing significant NPC responses, reconcile observed conduct, expectations, attachments, emotional history, current Concerns, Demeanor and competing motivations. Braid relevant influences into speech and physical behavior with concise contextual reminders. Do not erase prior conflict merely because Stress recovered or invent shared history."} if rules.get("npc_expectations") else {}),
-                **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
-                "concerns": copy.deepcopy(pc["concerns"]),
-                "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
-                "traits": copy.deepcopy(pc["traits"]),
-                "character_profile": copy.deepcopy(state.get("character_profiles", {}).get("pc")),
-                "addiction_check": copy.deepcopy(pc.get("addiction_check")),
-                "addicted": pc.get("addicted", False),
-                "favor": pc["favor"],
-                "commitment_options": [{"action": a["id"], "context": a["npc"], "level": 1} for a in legal if dxd_commitment.eligible(state, rules, a)],
-                "modifier_nominations": nominations.projection(state, rules, legal, npc_available),
-                "character_hooks": {a["id"]: h for a in legal if (h := hooks.offers(state, rules, a))},
-                "persistent_circumstances": {a["id"]: h for a in legal if (h := hooks.circumstances(state, rules, a))},
-                "character_emphasis_xp": pc.get("xp", 0),
-                "narrative_functions": continuity.projection(state, rules, legal),
-                "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
-                "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
-                               for a in legal if a["id"] in rules.get("gm_proposals", {})},
-                "clocks": [{"id": key, "name": cfg["name"], "source": cfg["source"],
-                            "segments": cfg["segments"], **state["narrative_events"]["clocks"][key]}
-                           for key, cfg in rules.get("event_clocks", {}).items()
-                           if not state["narrative_events"]["clocks"][key]["resolved"]],
-                "last_test": {k: pc["tests"][-1]["result"][k] for k in ("passed", "margin", "dos", "dof")}
-                             if pc["tests"] and pc["tests"][-1]["turn"] == state["turn"] else None}}
+    return projections.referee_view(state, story, rules, options(state, rules),
+                                     npc_available, digest, DEMEANORS,
+                                     compact=compact)
 
-def inspect_gm(path):
-    state = read(path)
-    verify(state)
-    return gm_context(state)
+
+def inspect_gm(path, *, compact=False):
+    return gm_context(_verified_read(path), compact=compact)
 
 def start(sid, path, seed):
     if path.exists():
         raise ValueError("session already exists")
     state = initial(sid, seed)
+    public = view(state)
     save(path, state)
-    return view(state)
+    return public
 
-def inspect(path):
-    state = read(path)
-    verify(state)
-    return view(state)
+def inspect(path, *, full_history=False):
+    return view(_verified_read(path), full_history=full_history)
 
 def act(path, action, revision, proposal=None, commitment=None):
-    state = read(path)
-    verify(state)
-    if digest(state) != revision:
-        raise ValueError("stale session revision")
-    state = step(state, action, proposal, commitment)
-    verify(state)
-    save(path, state)
-    return view(state)
+    return _commit(path, revision, step, action, proposal, commitment)
 
 def enrich_memory(path, event, memory, revision):
+    def edit(state, event, memory):
+        apply_memory(state, event, memory)
+        return state
+    return _commit(path, revision, edit, event, memory)
+
+
+def _verified_read(path):
     state = read(path)
     verify(state)
+    return state
+
+
+def _commit(path, revision, transition, *args):
+    """One mutation boundary for every narrative session operation.
+
+    Verify before accepting input; verify and project the new state before
+    atomically replacing the checkpoint. A failed transition or projection
+    never writes a partial result. Concurrent writers remain unsupported.
+    """
+    state = _verified_read(path)
     if digest(state) != revision:
         raise ValueError("stale session revision")
-    apply_memory(state, event, memory)
-    verify(state)
-    save(path, state)
-    return view(state)
+    result = transition(state, *args)
+    verify(result)
+    public = view(result)
+    save(path, result)
+    return public
+
