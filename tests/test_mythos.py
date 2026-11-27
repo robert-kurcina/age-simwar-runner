@@ -813,6 +813,38 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_npc_testimony_is_private_received_claim_not_direct_observation(self):
+        import copy
+        from age_runtime.mythos import epistemic
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.dialogue_step(s, {"npc": "eleanor", "speaker": "pc",
+            "claim": "I am looking for your brother.", "stance": "unstated", "intent": "unstated"})
+        req = {"speaker": "eleanor", "listener": "burroughs",
+               "claim": "The newspaper man is looking for my brother.",
+               "stance": "believes", "intent": "sincere", "listener_stance": "doubts",
+               "source": {"kind": "claim", "id": 1}}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_testimony": req})
+        # Isolate the authority validator with a co-location fixture. This
+        # synthetic anchor is not a replayable campaign movement.
+        s["npcs"]["burroughs"]["location"] = "Harbor Diner"
+        s["flags"].append("police_attention")
+        s = mythos.step(s, "move:Harbor Docks")
+        before = copy.deepcopy(s)
+        after = mythos.establish_step(s, {"npc_testimony": req})
+        self.assertEqual(s, before)
+        self.assertEqual(after["time"], s["time"])
+        self.assertEqual(after["flags"], s["flags"])
+        self.assertEqual(after["relationships"], s["relationships"])
+        self.assertEqual(after["action_observations"], [])
+        self.assertEqual(len(epistemic.public_projection(after)), 1)
+        self.assertEqual(epistemic.referee_projection(after, {"burroughs"})[0]["listener_stance"], "doubts")
+        self.assertEqual(epistemic.referee_projection(after, {"elias"}), [])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"npc_testimony": req})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"npc_testimony": dict(req, source={"kind": "claim", "id": 99})})
+
     def test_consequential_demeanor_is_attributed_bounded_and_persistent(self):
         import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")

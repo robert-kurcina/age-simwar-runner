@@ -75,10 +75,57 @@ def record(state, rules, request, npc_available):
         raise ValueError("duplicate dialogue claim")
     ledger.append(entry)
 
+def record_testimony(state, rules, request, npc_available):
+    """Private NPC-to-NPC exchange in the same authoritative dialogue ledger."""
+    required = {"speaker", "listener", "claim", "stance", "intent", "listener_stance", "source"}
+    if not rules.get("npc_testimony") or not isinstance(request, dict) or set(request) != required:
+        raise ValueError("invalid NPC testimony")
+    speaker, listener = request["speaker"], request["listener"]
+    if any(not isinstance(a, str) or a not in state["npcs"] for a in (speaker, listener)) or speaker == listener:
+        raise ValueError("invalid testimony participants")
+    location = state["npcs"][speaker]["location"]
+    if location is None or state["npcs"][listener]["location"] != location or any(
+            not npc_available(state, rules, {"npc": a, "location": location}) for a in (speaker, listener)):
+        raise ValueError("testimony requires available co-located NPCs")
+    claim = _text(request["claim"], 400)
+    stance, intent, received = request["stance"], request["intent"], request["listener_stance"]
+    if stance not in ("unstated", "believes", "doubts", "disbelieves", "unknown") or received not in ("unstated", "believes", "doubts", "disbelieves", "unknown"):
+        raise ValueError("invalid testimony stance")
+    if intent not in ("unstated", "sincere", "deceive", "fabricate") or (intent == "sincere" and stance == "disbelieves"):
+        raise ValueError("invalid testimony intent")
+    source = request["source"]
+    if not isinstance(source, dict) or set(source) != {"kind", "id"}:
+        raise ValueError("invalid testimony source")
+    kind, sid = source["kind"], source["id"]
+    metadata = {}
+    ledger = state["dialogue"]
+    if kind == "observation":
+        o = next((o for o in state.get("action_observations", []) if o["id"] == sid and o["npc"] == speaker), None)
+        if not o:
+            raise ValueError("speaker lacks observation")
+    elif kind == "claim":
+        c = next((c for c in ledger if c["id"] == sid and speaker in (c["speaker"], c["listener"])), None)
+        if not c:
+            raise ValueError("speaker lacks prior claim")
+        if "proposition" in c:
+            if not sources(state, rules, speaker, c["proposition"]):
+                raise ValueError("speaker lacks proposition access")
+            # Pilot relays the same assertion, not a new proposition.
+            metadata.update(proposition=c["proposition"], asserts=c["asserts"])
+    else:
+        raise ValueError("unsupported testimony source")
+    entry = {"id": len(ledger) + 1, "turn": state["turn"], "at": state["time"],
+             "location": location, "speaker": speaker, "listener": listener, "claim": claim,
+             "speaker_stance": stance, "speaker_intent": intent, "listener_stance": received,
+             "testimony_source": copy.deepcopy(source), **metadata}
+    if len(ledger) >= 256 or any({k: v for k, v in e.items() if k != "id"} == {k: v for k, v in entry.items() if k != "id"} for e in ledger):
+        raise ValueError("duplicate testimony or record limit")
+    ledger.append(entry)
+
 def public_projection(state):
     """Only what was actually communicated; no truth or intent annotation."""
     return [{k: v for k, v in e.items() if k not in ("speaker_stance", "speaker_intent", "proposition", "asserts", "listener_stance", "npc_reaction")}
-            for e in state.get("dialogue", [])]
+            for e in state.get("dialogue", []) if "pc" in (e["speaker"], e["listener"])]
 
 def referee_projection(state, participants):
     """Return relevant private records, with stable references to prior claims."""
@@ -149,6 +196,8 @@ def relational_projection(state, participants):
         experiences = []
         for entry in state.get("dialogue", []):
             if npc not in (entry["speaker"], entry["listener"]):
+                continue
+            if "pc" not in (entry["speaker"], entry["listener"]):
                 continue
             reaction = entry.get("npc_reaction", {})
             for field, value in reaction.items():

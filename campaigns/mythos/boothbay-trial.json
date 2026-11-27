@@ -1,5 +1,6 @@
 {
-  "version": 61,
+  "version": 62,
+  "npc_testimony": true,
   "consequential_demeanor": {"minor": -1, "significant": -2, "severe": -3},
   "npc_initiative": {"delays_minutes": [10, 30, 60], "before": "Dusty", "after": "Clean"},
   "npc_expectations": true,
