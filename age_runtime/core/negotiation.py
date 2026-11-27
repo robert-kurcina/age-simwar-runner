@@ -1,6 +1,6 @@
 """Replayable runtime negotiations; only reviewed transfer terms are permitted."""
 from copy import deepcopy
-from age_runtime.core.actions import settle_terms
+from age_runtime.core.actions import settle_terms, stock_owners
 
 
 def validate(s):
@@ -12,8 +12,7 @@ def validate(s):
 def options(s, state, actor):
     if not s.get("dynamic_negotiation"):
         return {}
-    projects = {p["id"]: p["participant"] for p in s["economy_projects"]}
-    owners = {a["resource"]: projects[a["project"]] for a in s["capacity_actions"].values()}
+    owners = stock_owners(s)
     pairs = {}
     for name, t in s["resource_transfers"].items():
         parties = {owners[t["source"]], owners[t["destination"]]}
