@@ -12,7 +12,7 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
-from age_runtime.core import negotiation, communications, diplomacy, establishment
+from age_runtime.core import negotiation, communications, diplomacy, establishment, event_generator
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -27,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment", "permission_terms"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment", "permission_terms", "event_templates"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -77,6 +77,7 @@ def validate(s):
     negotiation.validate(s)
     communications.validate(s)
     establishment.validate(s)
+    event_generator.validate(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
@@ -99,6 +100,8 @@ def initialize(s):
         state["agreement_results"] = []
     if s.get("dynamic_negotiation"):
         state["negotiations"] = {}
+    if "event_templates" in s:
+        state["generated_events"] = {}
     return state
 
 def check_identity(s, state):
@@ -132,6 +135,7 @@ def advance(s, state):
             resolve_agreements(s, result, end)
             negotiation.resolve(s, result, end)
         resolve_dependent_events(s, result, minute)
+        event_generator.resolve(s, result, minute)
         if minute == end:
             resolve_projects(s, result, minute)
         for check in s["constraints"]:
@@ -284,6 +288,15 @@ def record_diplomacy(s, state, actor, revision, command):
     return result
 
 
+def schedule_development(s, state, revision, command):
+    verify_checkpoint(s, state)
+    if revision != digest(state):
+        raise ValueError("stale development revision")
+    result = event_generator.append(s, state, command)
+    verify_checkpoint(s, result)
+    return result
+
+
 def establish_context(s, state, revision, command):
     """Trusted referee only: establish bounded descriptive session context."""
     verify_checkpoint(s, state)
@@ -316,6 +329,8 @@ def verify_checkpoint(s, state):
             elif record.get("origin") == "diplomatic_record":
                 expected = diplomacy.append(s, expected, record["actor"],
                     {k: v for k, v in record["diplomatic_record"].items() if k != "evidence"})
+            elif record.get("origin") == "generated_development":
+                expected = event_generator.append(s, expected, record["development"])
             elif record.get("origin") == "strategic_establishment":
                 expected = establishment.append(s, expected, record["establishment"])
             elif record.get("origin") == "communication":
