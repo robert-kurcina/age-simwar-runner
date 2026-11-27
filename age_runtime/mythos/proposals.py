@@ -3,7 +3,7 @@ import copy
 import re
 from datetime import datetime
 from age_runtime.core import dxd
-from age_runtime.mythos import pacing
+from age_runtime.mythos import pacing, establishment, object_actions
 
 
 def validate_request(request):
@@ -49,11 +49,18 @@ def validate_local(rules):
         if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", kind) or not isinstance(spec, dict):
             raise ValueError("invalid capability identity")
         required = {"target", "resolution"}
-        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence"}
+        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect"}
         if not required <= set(spec) or set(spec) - allowed:
             raise ValueError("invalid capability fields")
-        if spec["target"] not in ("location", "npc"):
+        if spec["target"] not in ("location", "npc", "object"):
             raise ValueError("invalid capability scope")
+        if spec["target"] == "object":
+            if not rules.get("narrative_custody") or not rules.get("consequential_objects"):
+                raise ValueError("object capabilities require custody and lifecycle authority")
+            if spec.get("object_effect") != "inspect":
+                raise ValueError("local object capabilities support inspection only")
+        elif "object_effect" in spec:
+            raise ValueError("object effect requires object target")
         duration_range(spec)
         if type(spec.get("requires_evidence", 0)) is not int or spec.get("requires_evidence", 0) < 0:
             raise ValueError("invalid capability evidence prerequisite")
@@ -63,7 +70,7 @@ def validate_local(rules):
         if marker is not None and (not isinstance(marker, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", marker)):
             raise ValueError("invalid capability completion marker")
         if spec["resolution"] == "certain":
-            if spec["target"] != "location" or "test" in spec or "concern_failure" in spec:
+            if spec["target"] == "npc" or "test" in spec or "concern_failure" in spec:
                 raise ValueError("certain capability cannot adjudicate NPCs or Test effects")
         elif spec["resolution"] == "test":
             test = spec.get("test")
@@ -111,6 +118,26 @@ def resolve_duration(state, action):
                 task_duration=roll)
 
 
+def object_available(entity):
+    """Inspect only usable PC-held incidental objects. Locks govern NPC property."""
+    return bool(entity and entity["kind"] == "object"
+                and entity.get("custodian") == "pc" and object_actions.usable(entity))
+
+
+def completion_available(state, rules, action, npc_available):
+    spec = action.get("local_spec")
+    if spec is None:
+        return True
+    if spec["target"] == "object":
+        entity = establishment.local_entities(state).get(action["object_target"])
+        return (object_available(entity)
+                and entity.get("lifecycle", "intact") == action["object_before"])
+    if spec["target"] == "npc":
+        from age_runtime.mythos.epistemic import conversation_available
+        return conversation_available(state, rules, action["npc"], npc_available)
+    return True
+
+
 def local_capabilities(state, rules, npc_available):
     """Derive eligible targets, never manufacture an entity or a Test."""
     cfg = rules.get("local_proposals")
@@ -123,9 +150,14 @@ def local_capabilities(state, rules, npc_available):
         minimum, maximum = duration_range(spec)
         if maximum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
             continue
-        targets = [state["location"]] if spec["target"] == "location" else [
-            nid for nid, npc in sorted(state["npcs"].items())
-            if npc["encounters"] and conversation_available(state, rules, nid, npc_available)]
+        if spec["target"] == "object":
+            entities = establishment.local_entities(state)
+            targets = [oid for oid, entity in sorted(entities.items()) if object_available(entity)]
+        elif spec["target"] == "npc":
+            targets = [nid for nid, npc in sorted(state["npcs"].items())
+                       if npc["encounters"] and conversation_available(state, rules, nid, npc_available)]
+        else:
+            targets = [state["location"]]
         for target in targets:
             action = "local:" + kind + ":" + target
             if action not in state["used"]:
@@ -152,6 +184,9 @@ def compile_local(state, rules, request, npc_available):
               "local_capability": kind, "local_spec": copy.deepcopy(spec)}
     if spec["target"] == "npc":
         action["npc"] = target
+    elif spec["target"] == "object":
+        action["object_target"] = target
+        action["object_before"] = establishment.local_entities(state)[target].get("lifecycle", "intact")
     if spec["resolution"] == "test":
         action["test"] = copy.deepcopy(spec["test"])
         action["concern_failure"] = copy.deepcopy(spec.get("concern_failure", {}))
@@ -161,9 +196,11 @@ def compile_local(state, rules, request, npc_available):
 def record_local(state, action, success, result):
     """Record only source-authorized completion; no manufactured Test margin."""
     kind, spec = action["local_capability"], action["local_spec"]
-    record = {"kind": kind, "target": action.get("npc", state["location"]),
+    record = {"kind": kind, "target": action.get("object_target", action.get("npc", state["location"])),
               "at": state["time"], "turn": state["turn"], "passed": success,
               "effect": result["margin"] if result is not None else None}
+    if "object_target" in action:
+        record["location"] = state["location"]
     if "task_duration" in action:
         record["task_duration"] = copy.deepcopy(action["task_duration"])
     if spec.get("count_evidence"):

@@ -205,7 +205,8 @@ def _local_action_available(state, rules, action):
             and (not action.get("available_from") or state["time"] >= action["available_from"])
             and (not action.get("available_until") or state["time"] <= action["available_until"])
             and npc_available(state, rules, action)
-            and locks.action_available(state, rules, action, npc_available, establishment.local_entities))
+            and locks.action_available(state, rules, action, npc_available, establishment.local_entities)
+            and proposals.completion_available(state, rules, action, npc_available))
 
 def spatial_options(state, rules, candidates):
     config = rules["spatial"]

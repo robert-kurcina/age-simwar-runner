@@ -555,3 +555,49 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertEqual(after["local_records"][-1]["task_duration"], roll)
         self.assertEqual(after["discoveries"], state["discoveries"])
         mythos.verify(after)
+
+    def test_object_inspection_requires_custody_and_preserves_lifecycle(self):
+        from age_runtime.mythos import proposals
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        state = mythos.establish_step(state, {"details": [{
+            "id": "inc:cup", "kind": "object", "label": "Cup",
+            "description": "A ceramic cup.", "basis": "Mundane diner furnishing",
+            "custodian": "eleanor"}]})
+        request = {"action": "local:inspect_object:inc:cup",
+                   "approach": "inspect_object", "intent": "Examine the cup closely."}
+        with self.assertRaises(ValueError):
+            mythos.step(state, request["action"], request)
+        state = mythos.establish_step(state, {"transfers": [{
+            "id": "inc:cup", "from": "eleanor", "to": "pc",
+            "pc_authorization": "I accept the cup.", "npc_consent": "Here you are.",
+            "basis": "Voluntary transfer"}]})
+        before = copy.deepcopy(state)
+        offers = mythos.gm_context(state)["referee"]["local_capabilities"]
+        self.assertIn(request["action"], {x["action"] for x in offers})
+        self.assertFalse(any(x["approach"] in ("damage", "destroy") for x in offers))
+        after = mythos.step(state, request["action"], request)
+        self.assertEqual(state, before)
+        self.assertEqual(after["object_actions"], state["object_actions"])
+        self.assertEqual(after["discoveries"], state["discoveries"])
+        self.assertEqual(after["local_records"][-1]["target"], "inc:cup")
+        self.assertEqual(after["local_records"][-1]["location"], "Harbor Diner")
+        self.assertEqual(len(after["dxd"]["tests"]), len(state["dxd"]["tests"]) + 1)
+        mythos.verify(after)
+        _, rules = mythos.load("boothbay")
+        compiled = proposals.compile_local(state, rules, request, mythos.npc_available)
+        damaged = mythos.establish_step(state, {"object_action": {
+            "id": "act:chip", "object": "inc:cup", "before": "intact",
+            "outcome": "damaged", "authorization": "I chip the cup.",
+            "basis": "Certain incidental damage", "remnants": "Chipped rim"}})
+        self.assertFalse(proposals.completion_available(damaged, rules, compiled, mythos.npc_available))
+        destroyed = mythos.establish_step(damaged, {"object_action": {
+            "id": "act:break", "object": "inc:cup", "before": "damaged",
+            "outcome": "destroyed", "authorization": "I drop the cup.",
+            "basis": "Certain incidental breakage", "remnants": "Ceramic fragments"}})
+        with self.assertRaises(ValueError):
+            mythos.step(destroyed, request["action"], request)
+        mythos.verify(destroyed)
+        invalid = copy.deepcopy(rules)
+        invalid["local_proposals"]["inspect_object"]["object_effect"] = "destroy"
+        with self.assertRaises(ValueError):
+            proposals.validate_local(invalid)
