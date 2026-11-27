@@ -76,3 +76,69 @@ class NPCAgendaTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.establish_step(state, {"npc_agenda_depart": {
                 "npc": "eleanor", "destination": "Harbor Docks", "basis": "Again."}})
+
+
+    def test_contextual_presence_consumes_elapsed_offscreen_time(self):
+        state = mythos.initial("boothbay", 42)
+        request = {"npc_presence": {"npc": "eleanor", "destination": "Harbor Docks",
+                                   "basis": "A routine waterfront errand."}}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, request)
+        # Player remains at the docks while Eleanor is at the diner.
+        _, rules = mythos.load("boothbay")
+        state["location"] = "Harbor Docks"
+        state["npcs"]["eleanor"]["offscreen_since"] = state["time"]
+        state["time"] = "1927-10-13T08:04:59"
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, request)
+        state["time"] = "1927-10-13T08:05:00"
+        before = copy.deepcopy(state)
+        moved = mythos.establish_step(state, request)
+        self.assertEqual(state, before)
+        self.assertEqual(moved["npcs"]["eleanor"]["location"], "Harbor Docks")
+        self.assertEqual(moved["time"], before["time"])
+        self.assertEqual(moved["npcs"]["eleanor"]["concerns"], before["npcs"]["eleanor"]["concerns"])
+        self.assertTrue(moved["npc_travel"][-1]["abstract"])
+        self.assertIsNone(moved["npcs"]["eleanor"]["offscreen_since"])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(moved, {"npc_presence": {"npc": "eleanor",
+                "destination": "Harbor Diner", "basis": "Return."}})
+
+    def test_contextual_presence_replays_real_actions(self):
+        state = mythos.initial("boothbay", 42)
+        if state["location"] != "Harbor Docks":
+            state = mythos.step(state, "move:Harbor Docks")
+        # Moving away from the diner establishes an off-screen interval.
+        state = mythos.step(state, "observe")
+        npc = state["npcs"]["eleanor"]
+        if npc["offscreen_since"] is None:
+            self.fail("Expected off-screen opportunity at docks")
+        from datetime import timedelta
+        elapsed = datetime.fromisoformat(state["time"]) - datetime.fromisoformat(npc["offscreen_since"])
+        while elapsed < timedelta(minutes=5):
+            state = mythos.step(state, "observe")
+            elapsed = datetime.fromisoformat(state["time"]) - datetime.fromisoformat(state["npcs"]["eleanor"]["offscreen_since"])
+        moved = mythos.establish_step(state, {"npc_presence": {"npc": "eleanor",
+            "destination": "Harbor Docks", "basis": "An ordinary waterfront errand."}})
+        mythos.verify(moved)
+        self.assertEqual(moved["npcs"]["eleanor"]["location"], moved["location"])
+        self.assertNotIn("npc_travel", mythos.view(moved))
+        moved["npcs"]["eleanor"]["location"] = "Harbor Diner"
+        with self.assertRaises(ValueError):
+            mythos.verify(moved)
+
+    def test_contextual_presence_respects_observation_and_commitment(self):
+        _, rules = mythos.load("boothbay")
+        state = mythos.initial("boothbay", 42)
+        npc = state["npcs"]["eleanor"]
+        state["location"] = "Harbor Docks"
+        npc["offscreen_since"] = state["time"]
+        npc["activity"]["status"] = "asleep"
+        npc_agenda.observe_boundary(state, rules)
+        self.assertIsNone(npc["offscreen_since"])
+        npc["activity"]["status"] = "awake"
+        npc_agenda.observe_boundary(state, rules)
+        self.assertEqual(npc["offscreen_since"], state["time"])
+        state["location"] = npc["location"]
+        npc_agenda.observe_boundary(state, rules)
+        self.assertIsNone(npc["offscreen_since"])

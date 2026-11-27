@@ -42,6 +42,7 @@ def record(state, rules, request, npc_available=None):
         "routine_observation": behavior.record_routine,
         "npc_travel": npc_travel.record,
         "npc_agenda_depart": npc_agenda.depart,
+        "npc_presence": npc_agenda.materialize,
         "expectation": expectations.record,
         "behavior": behavior.record,
         "npc_activity": npc_time.record,
