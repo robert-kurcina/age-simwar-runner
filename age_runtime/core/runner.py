@@ -238,7 +238,7 @@ def faction_packet(s, state, actor_id):
         raise ValueError("not a model faction")
     if state["minute"] >= s["end_minute"]:
         raise ValueError("session ended")
-    if any(r["actor"] == actor_id and r["turn"] == state["turn"] for r in state["requests"]):
+    if any(r["actor"] == actor_id and r["turn"] == state["turn"] and r.get("origin") != "communication" for r in state["requests"]):
         raise ValueError("faction already decided this turn")
     body = {"actor": actor_id, "observation": observe(s, state, actor_id)}
     return {"packet_id": digest(body), **body}
