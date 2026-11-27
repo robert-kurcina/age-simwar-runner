@@ -815,27 +815,35 @@ def narrative_step(state, request):
 def narrative(path, request, revision):
     return _commit(path, revision, narrative_step, request)
 
+def _apply_dialogue(state, rules, request):
+    epistemic.record(state, rules, request, npc_available)
+    npc_time.interrupt(state, request["npc"])
+    state["history"].append({"dialogue": copy.deepcopy(request)})
+
+
 def dialogue_step(state, request):
     result = copy.deepcopy(state)
     _, rules = load(result["scenario"])
-    epistemic.record(result, rules, request, npc_available)
-    npc_time.interrupt(result, request["npc"])
-    result["history"].append({"dialogue": copy.deepcopy(request)})
+    _apply_dialogue(result, rules, request)
     return result
 
 def dialogue(path, request, revision):
     return _commit(path, revision, dialogue_step, request)
 
+def _apply_establishment(state, rules, request):
+    if isinstance(request, dict) and set(request) == {"consequential_demeanor"}:
+        consequential_demeanor(state, rules, request["consequential_demeanor"])
+    elif isinstance(request, dict) and set(request) == {"social_demeanor"}:
+        social_demeanor(state, rules, request["social_demeanor"])
+    else:
+        establishment.record(state, rules, request, npc_available)
+    state["history"].append({"establish": copy.deepcopy(request)})
+
+
 def establish_step(state, request):
     result = copy.deepcopy(state)
     _, rules = load(result["scenario"])
-    if isinstance(request, dict) and set(request) == {"consequential_demeanor"}:
-        consequential_demeanor(result, rules, request["consequential_demeanor"])
-    elif isinstance(request, dict) and set(request) == {"social_demeanor"}:
-        social_demeanor(result, rules, request["social_demeanor"])
-    else:
-        establishment.record(result, rules, request, npc_available)
-    result["history"].append({"establish": copy.deepcopy(request)})
+    _apply_establishment(result, rules, request)
     return result
 
 def batch_step(state, request):
@@ -852,16 +860,17 @@ def batch_step(state, request):
     operations = request["operations"]
     if not isinstance(operations, list) or not 1 <= len(operations) <= 24:
         raise ValueError("narrative batch requires 1 to 24 operations")
-    # Existing validators and history writers remain authoritative.
-    result = state
+    # Existing validators and history writers remain authoritative. One
+    # private working copy suffices for the whole atomic batch.
+    result = copy.deepcopy(state)
     for index, op in enumerate(operations, 1):
         if not isinstance(op, dict) or len(op) != 1:
             raise ValueError(f"invalid narrative operation {index}")
         try:
             if "dialogue" in op:
-                result = dialogue_step(result, op["dialogue"])
+                _apply_dialogue(result, rules, op["dialogue"])
             elif "establish" in op:
-                result = establish_step(result, op["establish"])
+                _apply_establishment(result, rules, op["establish"])
             else:
                 raise ValueError("unsupported narrative operation")
         except ValueError as exc:
