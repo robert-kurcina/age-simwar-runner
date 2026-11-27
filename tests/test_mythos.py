@@ -813,6 +813,49 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_npc_temporal_recovery_uses_established_activity_and_shared_clock(self):
+        import copy
+        from age_runtime.core import dxd_conditions
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.dialogue_step(s, {"npc": "eleanor", "speaker": "eleanor",
+                 "claim": "I need a quiet moment.", "stance": "unstated", "intent": "unstated"})
+        s = mythos.establish_step(s, {"emotion": {
+            "id": "emo:distress", "npc": "eleanor", "claim_ids": [1],
+            "emotion": "Distress", "intensity": "acute", "expression": "Her voice falters.",
+            "cause": "A significant emotional encounter", "stress": {"eleanor": "severe"}}})
+        request = {"npc": "eleanor", "mode": "rest", "safe": True, "minutes": 10,
+                   "basis": "She takes a quiet break from work in safety."}
+        before = copy.deepcopy(s)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_activity": dict(request, npc="elias")})
+        planned = mythos.establish_step(s, {"npc_activity": request})
+        self.assertEqual(s, before)
+        self.assertEqual(planned["time"], s["time"])
+        self.assertEqual(planned["npcs"]["eleanor"]["concerns"], s["npcs"]["eleanor"]["concerns"])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(planned, {"npc_activity": request})
+        moved = mythos.step(planned, "move:Harbor Docks")
+        elapsed = mythos.step(moved, "observe")
+        npc = elapsed["npcs"]["eleanor"]
+        expected = max(0, 6 - npc["concerns"]["capacity"]["recovery_rate"])
+        self.assertEqual(npc["concerns"]["stress"], expected)
+        self.assertIsNone(npc["activity_plan"])
+        for nid in elapsed["npcs"]:
+            from datetime import datetime
+            seconds = int((datetime.fromisoformat(elapsed["time"]) -
+                           datetime.fromisoformat(s["time"])).total_seconds())
+            self.assertEqual(elapsed["npcs"][nid]["activity"]["awake_seconds"],
+                             s["npcs"][nid]["activity"]["awake_seconds"] + seconds)
+        self.assertEqual(elapsed["emotional_episodes"], s["emotional_episodes"])
+        baseline = mythos.step(mythos.step(s, "move:Harbor Docks"), "observe")
+        self.assertEqual(baseline["npcs"]["eleanor"]["concerns"]["stress"], 6)
+        interrupted = mythos.dialogue_step(planned, {"npc": "eleanor", "speaker": "pc",
+            "claim": "One more question.", "stance": "unstated", "intent": "unstated"})
+        self.assertIsNone(interrupted["npcs"]["eleanor"]["activity_plan"])
+        mythos.verify(elapsed)
+        mythos.verify(interrupted)
+        self.assertNotIn("npc_temporal", mythos.view(elapsed))
+
     def test_contextual_reminders_are_shared_bounded_and_read_only(self):
         import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
