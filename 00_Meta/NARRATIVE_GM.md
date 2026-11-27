@@ -5,7 +5,7 @@ Use this operational guide for Fear! trials after acquiring and verifying the ac
 ## At opening or resumption
 
 1. Use the live catalog and start the selected trial. Keep a verified checkpoint and its revision.
-2. Use inspect and recap for player-visible context; use gm privately. In authored_actions_only mode, restrict adjudication to offered authored actions. Boothbay supports additional reviewed proposals, dialogue, establishment and NPC operations; consult their detailed historical command specifications only when enabled.
+2. Use inspect and recap for player-visible context; use gm privately. In authored_actions_only or authored_actions_with_continuity mode, restrict mechanical adjudication to offered authored actions. In the latter mode, use the explicitly enabled continuity operations for established local encounters only. Boothbay supports additional reviewed proposals, dialogue, establishment and NPC operations; consult their detailed historical command specifications only when enabled.
 3. Present the immediate situation, elapsed time, relevant known contacts, earned information and meaningful options. Do not present source secrets, private NPC assessments or unexplained mechanical metadata.
 
 ## Each meaningful exchange
@@ -23,4 +23,6 @@ Present the engine-supported result and unresolved uncertainty. Close an active 
 
 ## Scope
 
-Boothbay is the advanced narrative development trial. Castine and Ram Island support authored actions and native DXD resolution, not the full Boothbay agency and establishment suite. Common presentation does not imply feature parity. Player-led literary qualification remains pending.
+Boothbay is the advanced narrative development trial. Castine and Ram Island support authored mechanical actions and native DXD resolution, plus persistent local dialogue, subjective NPC reactions, mundane details/properties, acknowledged agreements and atomic narrative batches. They do not yet support Boothbay's free-form mechanical proposals, independent NPC agency, spatial routing, native social consequences or Scenes/Spotlights. Common presentation does not imply feature parity. Player-led literary qualification remains pending.
+
+For Castine and Ram Island, a completed authored encounter is required before further recorded dialogue; the NPC must be local and inside an authored encounter time window. Linked reports may not bypass their original disclosure action. Unlinked prose is still GM-judged and must not disclose unearned facts. Agreement records are acknowledgments, not permission to bypass mechanical prerequisites. Mundane details may not introduce evidence, hazards, equipment or new access. Use fresh sessions after scenario revision changes.
