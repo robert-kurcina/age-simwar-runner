@@ -813,6 +813,53 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_incidental_custody_travels_and_preserves_provenance(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
+               "description": "Eleanor holds a ceramic cup.", "basis": "Ordinary diner object",
+               "custodian": "eleanor", "properties": {"condition": "Chipped"}}
+        bell = {"id": "inc:bell", "kind": "fixture", "label": "Bell",
+                "description": "A bell hangs above the door.", "basis": "Ordinary fixture"}
+        s = mythos.establish_step(s, {"details": [cup, bell]})
+        give = {"id": "inc:cup", "from": "eleanor", "to": "pc",
+                "pc_authorization": "I accept the cup.", "npc_consent": "Please keep it for me.",
+                "basis": "Eleanor voluntarily entrusts the cup to the reporter."}
+        before = mythos.digest(s)
+        for bad in (dict(give, npc_consent=""), dict(give, pc_authorization=""),
+                    dict(give, id="inc:bell"), dict(give, from="elias"),
+                    dict(give, to="elias"), dict(give, grant=["badge"])):
+            with self.assertRaises(ValueError):
+                mythos.establish_step(s, {"transfers": [bad]})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"transfers": [give, give]})
+        self.assertEqual(mythos.digest(s), before)
+        after = mythos.establish_step(s, {"transfers": [give]})
+        for key in ("time", "turn", "flags", "discoveries", "inventory", "resources",
+                    "relationships", "dxd", "npcs", "established_details"):
+            self.assertEqual(after[key], s[key])
+        moved = mythos.step(after, "move:Harbor Docks")
+        visible = mythos.view(moved)["established_details"]
+        self.assertEqual(len(visible), 1)
+        self.assertEqual(visible[0]["custodian"], "pc")
+        self.assertEqual(visible[0]["location"], "Harbor Docks")
+        self.assertNotIn("custody_history", visible[0])
+        back = dict(give, **{"from": "pc", "to": "eleanor",
+                            "pc_authorization": "I return it.", "npc_consent": "Thank you."})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(moved, {"transfers": [back]})
+        returned = mythos.step(moved, "move:Harbor Diner")
+        returned = mythos.establish_step(returned, {"transfers": [back]})
+        private = next(x for x in mythos.gm_context(returned)["referee"]["established_details"]
+                       if x["id"] == "inc:cup")
+        self.assertEqual(private["custodian"], "eleanor")
+        self.assertEqual(len(private["custody_history"]), 2)
+        mythos.verify(returned)
+        import copy
+        tampered = copy.deepcopy(returned)
+        tampered["custody_transfers"][0]["to"] = "elias"
+        with self.assertRaises(ValueError):
+            mythos.verify(tampered)
+
     def test_incidental_properties_preserve_history_and_require_current_value(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
