@@ -110,9 +110,10 @@ def append(s, state, actor, command):
     counterpart = command["counterpart"]
     if not isinstance(counterpart, str) or counterpart == actor or counterpart not in s["actors"]:
         raise ValueError("invalid diplomatic counterpart")
-    records = [r for r in state["requests"] if r.get("origin") == "diplomatic_record"]
+    records = [r for r in state["requests"] if r.get("origin") == "diplomatic_record"
+               and r["actor"] == actor]
     if (len(records) >= 256 or any(r["diplomatic_record"]["id"] == rid for r in records)
-            or any(r.get("origin") == "communication" and r["communication"]["id"] == rid
+            or any(r.get("origin") == "communication" and r["actor"] == actor and r["communication"]["id"] == rid
                    for r in state["requests"])):
         raise ValueError("duplicate diplomatic ID or record limit")
     payload = {**deepcopy(command), "id": rid, "topic": text_field(command["topic"], 80),
@@ -120,13 +121,20 @@ def append(s, state, actor, command):
     previous = latest(state, actor, counterpart, payload["topic"], kind)
     validate_revision(previous, payload)
     if kind == "assessment":
-        rel = observe(s, state, actor)["diplomatic_history"].get(counterpart, {})
+        observation = observe(s, state, actor)
+        rel = observation["diplomatic_history"].get(counterpart, {})
+        proposals = {p["id"]: p for p in observation.get("negotiation", {}).get("proposals", [])}
         allowed = {}
         for category in ("communications", "proposals", "agreements"):
             for entry in rel.get(category, []):
                 # Outgoing dispatch does not demonstrate counterpart conduct.
                 if category == "communications" and entry["direction"] != "incoming":
                     continue
+                if category == "proposals":
+                    proposal = proposals[entry["id"]]
+                    if proposal["proposer"] == actor and entry["status"] == "proposed":
+                        continue  # An unanswered own proposal is not counterpart conduct.
+                    entry = {**entry, "proposer": proposal["proposer"], "recipient": proposal["recipient"]}
                 allowed[(category, entry["id"])] = entry
         basis = command["basis"]
         if not isinstance(basis, list) or not basis or len(basis) > 32:
