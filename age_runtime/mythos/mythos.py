@@ -259,7 +259,7 @@ def options(state, rules):
         available = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
         duration = min(available, dxd_conditions.required_sleep(state["dxd"]["concerns"], state["dxd"]["attributes"]))
         if duration > 0:
-            candidates.append({"id": "sleep_room", "label": "Sleep at the boarding house",
+            candidates.append({"id": "sleep_room", "label": "Sleep at the boarding house" if rules["activity"]["sleep_location"] == "Sailor's Rest Boarding House" else "Sleep at " + rules["activity"]["sleep_location"],
                                "location": state["location"], "seconds": duration, "activity": "sleep",
                                "interval_seconds": 3600, "repeatable": True,
                                "cost": {"cash_cents": rules["activity"]["sleep_cost_cents"]}})
@@ -453,11 +453,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     pacing.record(state, a)
     state["history"].append(history_entry(action, proposal, a.get("commitment")))
     if not options(state, rules):
-        state["ending"] = {"reason": "limit", "evidence_count": len(state["discoveries"]),
-                           **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
-                               "account_prepared": "written_account", "account_relayed": "account_relayed",
-                               "account_entrusted": "account_entrusted"}).items()},
-                           "epilogue": rules["ending_text"]["limit"], "scores": scores(state, action)}
+        state["ending"] = ending_projection(state, rules, "limit", action)
     return state
 
 def step(state, action, proposal=None, commitment=None):
@@ -657,13 +653,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
     state["history"].append(history_entry(action, proposal, a.get("commitment")))
     terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
     if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
-        state["ending"] = {"reason": action if terminal else "limit",
-                           "evidence_count": len(state["discoveries"]),
-                           **{key: flag in state["flags"] for key, flag in rules.get("ending_flags", {
-                               "account_prepared": "written_account", "account_relayed": "account_relayed",
-                               "account_entrusted": "account_entrusted"}).items()},
-                           "epilogue": rules["ending_text"][action if terminal else "limit"],
-                           "scores": scores(state, action)}
+        state["ending"] = ending_projection(state, rules, action if terminal else "limit", action)
     return state
 
 def advance_events(state, rules, elapsed):
@@ -687,6 +677,16 @@ def advance_events(state, rules, elapsed):
                 state["observations"].append("The changes previously recorded appear to have stabilized for now.")
         if all(flag in state["flags"] for flag in event.get("visible_requires", [])):
             state["observations"].append(event["observation"])
+
+def ending_projection(state, rules, reason, action):
+    """Common terminal record for completed and interrupted activities."""
+    flags = rules.get("ending_flags", {
+        "account_prepared": "written_account", "account_relayed": "account_relayed",
+        "account_entrusted": "account_entrusted"})
+    return {"reason": reason, "evidence_count": len(state["discoveries"]),
+            **{key: flag in state["flags"] for key, flag in flags.items()},
+            "epilogue": rules["ending_text"][reason], "scores": scores(state, action)}
+
 
 def scores(state, action):
     # Provisional trial rubric; integer tenths avoid floating point accumulation.
@@ -851,8 +851,6 @@ def view(state, *, full_history=False):
 
 def gm_context(state, *, compact=False):
     story, rules = load(state["scenario"])
-    if not rules.get("gm_proposals"):
-        raise ValueError("GM context not yet supported for scenario")
     return projections.referee_view(state, story, rules, options(state, rules),
                                      npc_available, digest, DEMEANORS,
                                      compact=compact)
