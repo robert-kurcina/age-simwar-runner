@@ -284,7 +284,7 @@ class NarrativeConsolidationTests(unittest.TestCase):
         from datetime import datetime
         minutes = min(20, int((datetime.fromisoformat(after["time"]) -
                               datetime.fromisoformat(planned["time"])).total_seconds()) // 60)
-        dxd_conditions.recover(expected, minutes, safe=True, restful=True)
+        dxd_conditions.recover_rest_overlap(expected, 0, minutes * 60, safe=True)
         self.assertEqual(after["npcs"]["martha"]["concerns"], expected)
         self.assertEqual(mythos.step(state, "observe")["npcs"]["martha"]["concerns"],
                          state["npcs"]["martha"]["concerns"])
@@ -309,7 +309,7 @@ class NarrativeConsolidationTests(unittest.TestCase):
             "until": (start + timedelta(minutes=10)).isoformat(),
             "location": npc["location"], "safe": False, "mode": "rest"}
         expected = copy.deepcopy(npc["concerns"])
-        dxd_conditions.recover(expected, 10, safe=False, restful=True)
+        dxd_conditions.recover_rest_overlap(expected, 0, 600, safe=False)
         npc_time.advance_abstract(state, rules, start, start + timedelta(days=5))
         self.assertEqual(npc["concerns"], expected)
         self.assertEqual(npc["concerns"]["stress"], 12)
@@ -401,3 +401,32 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.establish_step(state, {"npc_social_test": {
                 "id": "social:test", "claim": cid, "basis": "Unsupported Test"}})
+
+    def test_abstract_rest_partition_invariance_and_duplicate_credit(self):
+        from age_runtime.mythos import npc_time
+        from age_runtime.core import dxd_conditions
+        from datetime import datetime, timedelta
+        original = mythos.initial("ram-island", 42)
+        _, rules = mythos.load("ram-island")
+        npc = original["npcs"]["matteo"]
+        dxd_conditions.add(npc["concerns"], fatigue=90, stress=60, weariness=40)
+        start = datetime.fromisoformat(original["time"])
+        finish = start + timedelta(minutes=65)
+        npc["activity_plan"] = {"at": start.isoformat(), "until": finish.isoformat(),
+                                "location": npc["location"], "safe": True, "mode": "rest"}
+        whole = copy.deepcopy(original)
+        split = copy.deepcopy(original)
+        npc_time.advance_abstract(whole, rules, start, finish)
+        middle = start + timedelta(minutes=7, seconds=30)
+        npc_time.advance_abstract(split, rules, start, middle)
+        snapshot = copy.deepcopy(split)
+        npc_time.advance_abstract(split, rules, start, middle)
+        self.assertEqual(split, snapshot)
+        second = start + timedelta(minutes=59, seconds=45)
+        npc_time.advance_abstract(split, rules, middle, second)
+        npc_time.advance_abstract(split, rules, second, finish)
+        self.assertEqual(split, whole)
+        expected = copy.deepcopy(npc["concerns"])
+        dxd_conditions.recover_rest_overlap(expected, 0, 65 * 60, safe=True)
+        self.assertEqual(whole["npcs"]["matteo"]["concerns"], expected)
+        self.assertIsNone(whole["npcs"]["matteo"]["activity_plan"])
