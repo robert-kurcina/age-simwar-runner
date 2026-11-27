@@ -84,13 +84,17 @@ def advance(state, rules, seconds):
             if plan and (npc["location"] != plan["location"] or cursor >= datetime.fromisoformat(plan["until"])):
                 npc["activity_plan"] = plan = None
             span = min(remaining, int((datetime.fromisoformat(plan["until"])-cursor).total_seconds())) if plan else remaining
-            mode, safe = (plan["mode"], plan["safe"]) if plan else ("active", False)
+            traveling = next((e for e in state.get("npc_travel", []) if e["npc"] == nid and e["status"] == "traveling"), None)
+            mode, safe = (plan["mode"], plan["safe"]) if plan else ("travel" if traveling else "active", False)
             actual = dxd_conditions.advance_activity(concerns, clock, span, mode, safe=safe, seed=seed, attributes=attrs)
             remaining -= actual
             dxd_morale.calm(npc["morale"], safe=safe, stress_degrees_removed=before-dxd_conditions.degrees(concerns)["stress"])
             if clock["pending_sleep_seconds"] == 0:
                 npc["activity_plan"] = None
                 dxd_conditions.begin_sleep(concerns, clock, attrs)
+                if traveling:
+                    traveling["status"] = "interrupted"
+                    traveling["resolved_at"] = (end - timedelta(seconds=remaining)).isoformat()
             elif actual != span:
                 raise ValueError("unexpected NPC activity interruption")
         if npc["activity_plan"] and end >= datetime.fromisoformat(npc["activity_plan"]["until"]):
