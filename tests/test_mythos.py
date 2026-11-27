@@ -813,6 +813,45 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_proposition_access_and_belief_revision(self):
+        s = mythos.initial("boothbay", 42)
+        self.assertNotIn("propositions", mythos.view(s))
+        s = mythos.step(s, "move:Harbor Diner")
+        request = {"npc": "eleanor", "speaker": "eleanor", "claim": "I never reported my brother missing.",
+                   "stance": "disbelieves", "intent": "deceive",
+                   "proposition": "eleanor_disappearance", "asserts": False}
+        with self.assertRaises(ValueError):
+            mythos.dialogue_step(s, request)
+        for seed in range(50):
+            s = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
+            if "badge" in s["flags"]:
+                break
+        else:
+            self.fail("No earned badge")
+        s = mythos.step(s, "move:Harbor Diner")
+        tell = {"npc": "eleanor", "speaker": "pc", "claim": "I found a census badge.",
+                "stance": "unstated", "intent": "unstated", "proposition": "badge_found",
+                "asserts": True, "listener_stance": "doubts"}
+        s = mythos.dialogue_step(s, tell)
+        p = next(x for x in mythos.gm_context(s)["referee"]["propositions"] if x["id"] == "badge_found")
+        self.assertTrue(p["established"])
+        self.assertEqual(p["actors"]["eleanor"]["access"], [{"kind": "received_claim", "id": 1, "asserts": True}])
+        self.assertEqual(p["actors"]["eleanor"]["latest_stance"]["stance"], "doubts")
+        response = {"npc": "eleanor", "speaker": "eleanor", "claim": "I believe you found it.",
+                    "stance": "believes", "intent": "sincere", "proposition": "badge_found", "asserts": True}
+        s = mythos.dialogue_step(s, response)
+        p = next(x for x in mythos.gm_context(s)["referee"]["propositions"] if x["id"] == "badge_found")
+        self.assertEqual(p["actors"]["eleanor"]["latest_stance"]["stance"], "believes")
+        self.assertIsNone(p["actors"]["pc"]["latest_stance"])
+        self.assertNotIn("proposition", mythos.view(s)["dialogue"][-1])
+        with self.assertRaises(ValueError):
+            mythos.dialogue_step(s, dict(response, listener_stance="believes"))
+        s = mythos.step(s, "move:Creek Inlet South")
+        p = next(x for x in mythos.gm_context(s)["referee"]["propositions"] if x["id"] == "badge_found")
+        self.assertNotIn("elias", p["actors"])
+        self.assertNotIn("eleanor", p["actors"])
+        mythos.verify(s)
+
     def test_epistemic_dialogue_replay_and_visibility(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         request = {"npc": "eleanor", "speaker": "eleanor", "claim": "I have never seen unusual growth.",
