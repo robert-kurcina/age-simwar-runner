@@ -357,3 +357,8 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 
 - DONE (mechanical): PR #200 Tests 46057775523 and Chat runtime bundle 46057775397 passed. Actual canonical compilation remains pending; synthetic compilation is not canon verification.
 - WIP (CI pending): extend five remaining regional drafts with scoped communications, report-bound propositions, private diplomatic history and bounded descriptive establishment. Add explicit consent for aggregate procedural review in Mainlander Ingress, voluntary consultation permissions in Purge and Agreement, and exercise-specific reporting latency. Review completion is not adjudication, disclosure of personal records, funding entitlement or ratification. Existing Fallout and RWF slices retain their earlier mechanics. Added scoped communication and accepted/revoked/refused review regressions. All scenarios remain unreviewed; no new engine code or vault edits. Next qualify CI and broaden contrasting decision routes before ST-D.
+
+
+## ST-D — contrasting campaign outcomes
+
+- WIP (CI pending): add scripted full-horizon divergent routes for Disaster Response, Mainlander Ingress, Reconstruction, Purge and Agreement, complementing existing Fallout and RWF routes. Exercise resource opportunity costs, multi-axis bottlenecks, independent consent, withheld assent and prerequisite failure; verify deterministic replay. No new mechanics or scenario changes. Mechanical tests do not qualify independent LLM judgment, pacing or author acceptance. Actual pinned-source compilation and reviewed registration remain separate pending gates.
