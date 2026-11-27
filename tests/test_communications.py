@@ -270,3 +270,57 @@ class CommunicationsTest(unittest.TestCase):
         damaged["requests"][-1]["communication"]["private_intention"]["revises"] = "approach"
         with self.assertRaises(ValueError):
             verify_checkpoint(s, damaged)
+
+    def test_independent_diplomatic_records(self):
+        from age_runtime.core.runner import record_diplomacy
+        from age_runtime.core.institutional_memory import reminder_index
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s.update(material_communications=True, diplomatic_history=True,
+                 communication_delay_minutes={"east": {"foundation": 10080}})
+        state = initialize(s)
+        old = copy.deepcopy(state)
+        intent = {"kind": "intention", "id": "private1", "counterpart": "foundation",
+                  "topic": "funding", "text": "Consider inspection.", "status": "active", "revises": None}
+        state = record_diplomacy(s, state, "east", digest(state), intent)
+        self.assertEqual(state["values"], old["values"])
+        self.assertEqual(state["minute"], old["minute"])
+        self.assertEqual(state["ledger"], old["ledger"])
+        self.assertEqual(observe(s, state, "east")["communications"], [])
+        self.assertEqual(reminder_index(observe(s, state, "east"))["active_intentions"][0]["record_id"], "private1")
+        self.assertEqual(observe(s, state, "foundation")["diplomatic_history"], {})
+        with self.assertRaises(ValueError):
+            record_diplomacy(s, state, "east", digest(old), intent)
+        msg = {"id": "speech1", "recipients": ["foundation"], "claim": "We propose an inspection.",
+               "private_intention": {"counterpart": "foundation", "topic": "funding",
+                                     "text": "Accept inspection.", "status": "active", "revises": "private1"}}
+        state = communicate(s, state, "east", digest(state), msg)
+        revised = dict(intent, id="private2", text="Defer request.", status="withdrawn", revises="speech1")
+        state = record_diplomacy(s, state, "east", digest(state), revised)
+        assessment = {"kind": "assessment", "id": "assessment1", "counterpart": "east",
+                      "topic": "funding", "text": "Offer may be constructive, pending verification.",
+                      "revises": None, "basis": [{"kind": "communications", "id": "speech1"}]}
+        with self.assertRaises(ValueError):
+            record_diplomacy(s, state, "foundation", digest(state), assessment)
+        for actor in s["model_factions"]:
+            packet = faction_packet(s, state, actor)
+            state = accept_faction_choice(s, state, actor, packet,
+                                          {"packet_id": packet["packet_id"], "action": None})
+        state = advance(s, state)
+        state = record_diplomacy(s, state, "foundation", digest(state), assessment)
+        own = observe(s, state, "foundation")
+        latest = own["diplomatic_history"]["east"]["relationship_assessments"]["funding"]["latest"]
+        self.assertEqual(latest["evidence"][0]["id"], "speech1")
+        self.assertEqual(latest["minute"], state["minute"])
+        self.assertEqual(observe(s, state, "east")["diplomatic_history"]["foundation"].get("relationship_assessments"), None)
+        self.assertEqual(observe(s, state, "west")["diplomatic_history"], {})
+        self.assertEqual(reminder_index(observe(s, state, "east"))["active_intentions"], [])
+        with self.assertRaises(ValueError):
+            record_diplomacy(s, state, "foundation", digest(state),
+                             dict(assessment, id="assessment2", revises="assessment1"))
+        verify_checkpoint(s, state)
+        damaged = copy.deepcopy(state)
+        damaged["requests"][-1]["diplomatic_record"]["evidence"][0]["sent_minute"] += 1
+        with self.assertRaises(ValueError):
+            verify_checkpoint(s, damaged)
+
