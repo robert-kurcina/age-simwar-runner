@@ -651,3 +651,50 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.establish_step(after, {"object_action": dict(request, id="act:restore_watch",
                 function_before="nonfunctional", function_after="operational")})
+
+    def test_objective_pursuit_deferral_resumption_and_reconsideration(self):
+        from age_runtime.mythos import npc_agency
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        goal = {"operation": "create", "id": "goal:marks", "npc": "eleanor",
+                "goal": "Understand the old markings.", "priority": "normal",
+                "intention": "Examine my tin.", "basis": "Her own possession", "sources": []}
+        state = mythos.establish_step(state, {"npc_objective": goal})
+        state = mythos.establish_step(state, {"details": [{"id": "inc:tin", "kind": "object",
+            "label": "Tin", "description": "An old tin.", "basis": "Her own possession",
+            "custodian": "eleanor", "properties": {"appearance": "Faded initials"}}]})
+        request = {"id": "evt:marks", "npc": "eleanor", "object": "inc:tin",
+                   "objective": "goal:marks", "basis": "Examine the old markings."}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, {"npc_native_test": dict(request, objective="goal:unknown")})
+        scheduled = mythos.establish_step(state, {"npc_native_test": request})
+        review = {k: v for k, v in goal.items() if k != "goal"}
+        review.update(operation="review", status="deferred", intention="Attend to immediate duties.")
+        paused = mythos.establish_step(scheduled, {"npc_objective": review})
+        event = paused["timed_detail_events"][-1]
+        self.assertEqual(event["status"], "interrupted")
+        self.assertEqual(event["work_seconds"], 0)
+        self.assertEqual(event["interruption"], "objective_deferred")
+        self.assertNotIn("test", event)
+        resume = {"operation": "resume", "id": "evt:marks", "npc": "eleanor", "basis": "Return to the tin."}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(paused, {"npc_task": resume})
+        paused = mythos.step(paused, "observe")
+        self.assertNotIn("test", paused["timed_detail_events"][-1])
+        active = mythos.establish_step(paused, {"npc_objective": dict(review,
+            status="active", intention="Return to the tin.", sources=[{"kind": "activity", "id": "evt:marks"}])})
+        self.assertEqual(active["timed_detail_events"][-1]["status"], "interrupted")
+        resumed = mythos.establish_step(active, {"npc_task": resume})
+        finished = mythos.step(resumed, "observe")
+        self.assertEqual(finished["timed_detail_events"][-1]["status"], "completed")
+        self.assertEqual(finished["timed_detail_events"][-1]["work_seconds"], 600)
+        self.assertTrue(npc_agency.active_objective(finished, "eleanor", "goal:marks"))
+        self.assertFalse(npc_agency.owned_source(finished, "elias", {"kind": "activity", "id": "evt:marks"}))
+        self.assertNotIn("npc_agency", mythos.view(finished))
+        self.assertEqual(mythos.gm_context(finished)["referee"]["npc_agency"]["eleanor"]["pursuit"][-1]["status"], "completed")
+        mythos.verify(finished)
+        abandoned = mythos.establish_step(scheduled, {"npc_objective": dict(review,
+            status="abandoned", intention="No longer pursue these markings.")})
+        self.assertEqual(abandoned["timed_detail_events"][-1]["status"], "cancelled")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(abandoned, {"npc_task": resume})
+        mythos.verify(abandoned)
