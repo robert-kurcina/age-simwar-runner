@@ -170,9 +170,19 @@ def available_presets(path, scenario_id, owners):
 
 
 def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None, game_length=None):
-    catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
+    return start_selected(select(path, scenario_id, owners), actor, owners, preset, shared, previous, game_length)
+
+
+def start_selected(selection, actor, owners, preset="standard", shared=False, previous=None, game_length=None):
+    """Internal initialization shared by reviewed selection and explicit rehearsals."""
+    catalog, group, entry, spec, compiled = selection
     if actor not in eligible_perspectives(entry, compiled["scenario"]):
         raise ValueError("ineligible player faction")
+    rehearsal = compiled.get("qualification") == "unreviewed-rehearsal"
+    if rehearsal and (previous is not None or shared or preset != "standard"):
+        raise ValueError("rehearsals require fresh standard single-perspective setup")
+    if previous is not None and previous["header"]["compiled"].get("qualification") == "unreviewed-rehearsal":
+        raise ValueError("unreviewed rehearsal cannot establish reviewed continuity")
     if previous is not None and ("player_factions" in entry or "remember_from" in entry) and actor != previous["header"]["actor"]:
         raise ValueError("continuation cannot change player faction")
     from age_runtime.core.presets import apply
@@ -283,6 +293,7 @@ def view(session):
     s = h["compiled"]["scenario"]
     return {"campaign": h["campaign"], "group": h["group"], "title": h["title"],
             "effective_date": h["effective_date"], "turn_minutes": s["turn_minutes"],
+            **({"qualification": h["compiled"]["qualification"]} if "qualification" in h["compiled"] else {}),
             "complete": session["state"]["minute"] == s["end_minute"],
             "observation": observe(s, session["state"], h["actor"])}
 
@@ -297,7 +308,9 @@ def decision_brief(session):
     from age_runtime.core.decision_support import decision_brief as project
     current = view(session)
     return {"revision": digest(session), "complete": current["complete"],
-            "title": current["title"], **project(current["observation"])}
+            "title": current["title"],
+            **({"qualification": current["qualification"]} if "qualification" in current else {}),
+            **project(current["observation"])}
 
 
 def briefing(session):
@@ -312,6 +325,7 @@ def briefing(session):
     context = h.get("briefing_context", [])
     from age_runtime.core.institutional_memory import reminder_index
     return {
+        **({"qualification": current["qualification"]} if "qualification" in current else {}),
         "reminders": reminder_index(observation),
         "kind": "opening" if observation["turn"] == 0 else "turn",
         "campaign": current["campaign"], "scenario": current["title"],
@@ -491,6 +505,11 @@ def main(argv=None):
     commands = p.add_subparsers(dest="command", required=True)
     ls = commands.add_parser("list")
     ls.add_argument("inventory")
+    rehearsal = commands.add_parser("rehearse", help="Explicit unreviewed source-independent draft rehearsal")
+    rehearsal.add_argument("inventory")
+    rehearsal.add_argument("scenario")
+    rehearsal.add_argument("actor")
+    rehearsal.add_argument("session", type=Path)
     for name in ("perspectives", "presets", "start"):
         sub = commands.add_parser(name)
         sub.add_argument("inventory")
@@ -603,6 +622,13 @@ def main(argv=None):
             result = perspectives(a.inventory, a.scenario, read(a.owners))
         elif a.command == "presets":
             result = available_presets(a.inventory, a.scenario, read(a.owners))
+        elif a.command == "rehearse":
+            from age_runtime.core.draft_rehearsal import start_rehearsal
+            if a.session.exists():
+                raise ValueError("session path already exists")
+            session = start_rehearsal(a.inventory, a.scenario, a.actor)
+            save(a.session, session)
+            result = briefing(session)
         elif a.command == "start":
             if a.session.exists():
                 raise ValueError("session path already exists")
