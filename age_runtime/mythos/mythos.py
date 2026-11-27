@@ -60,6 +60,7 @@ def initial(sid, seed):
 def _initial(sid, seed, story, rules):
     continuity.validate(rules)
     epistemic.validate_propositions(rules)
+    proposals.validate_local(rules)
     if rules.get("resolution") != "dxd":
         raise ValueError("unsupported narrative resolver")
     state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
@@ -448,6 +449,8 @@ def history_entry(action, proposal, commitment):
 
 def finish_activity(state, rules, action, a, success, reason=None, proposal=None):
     state["last_result"] = {"action": action, "success": success}
+    if "task_duration" in a:
+        state["last_result"]["task_duration"] = copy.deepcopy(a["task_duration"])
     if reason:
         state["last_result"]["interrupted"] = reason
     if state.get("transitions") and state["transitions"][-1]["turn"] == state["turn"]:
@@ -487,6 +490,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if commitment is not None:
         dxd_commitment.validate(state, rules, a, commitment)
         a = dict(a, commitment=copy.deepcopy(commitment))
+    a = proposals.resolve_duration(state, a)
     started = datetime.fromisoformat(state["time"])
     elapsed = started + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
@@ -643,6 +647,8 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
+    if "task_duration" in a:
+        state["last_result"]["task_duration"] = copy.deepcopy(a["task_duration"])
     if rules.get("routine_observations"):
         available = _available_local_npcs(state, rules)
         state["routine_source"] = {"turn": state["turn"], "location": state["location"],
@@ -651,8 +657,10 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if a.get("preparation_saved_seconds"):
         state["last_result"]["preparation_saved_seconds"] = a["preparation_saved_seconds"]
     if proposal is not None:
-        result = primary_result
-        state["last_result"]["adjudication"] = {k: result[k] for k in ("passed", "dos", "dof", "margin")}
+        if primary_result is not None:
+            state["last_result"]["adjudication"] = {k: primary_result[k] for k in ("passed", "dos", "dof", "margin")}
+        else:
+            state["last_result"]["adjudication"] = {"passed": success, "resolution": "certain"}
         state["last_result"]["approach"] = proposal["approach"]
     if "spatial" in rules and a["route"]["seconds"]:
         state["last_result"]["transition"] = state["transitions"][-1]

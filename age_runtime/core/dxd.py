@@ -109,3 +109,12 @@ def emicted_favor(*, available, maximum, enabled):
     if type(enabled) is not bool:
         raise ValueError("invalid emicted favor policy")
     return maximum if enabled and available == 0 else 0
+
+
+def task_duration(seed, interval_seconds):
+    """Native 3D Time Interval duration; independent of Test modifiers."""
+    _int(interval_seconds, "Time Interval", 1)
+    rng = Random(seed)
+    dice = [rng.randint(1, 6) for _ in range(3)]
+    return {"dice": dice, "interval_seconds": interval_seconds,
+            "seconds": sum(dice) * interval_seconds}

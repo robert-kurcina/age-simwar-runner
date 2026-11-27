@@ -1,11 +1,12 @@
 """GM-proposed approaches, not model-owned outcomes or world mutations."""
 import copy
+import re
+from datetime import datetime
+from age_runtime.core import dxd
+from age_runtime.mythos import pacing
 
-def compile_action(state, rules, request, choices):
-    if not rules.get("gm_proposals") or state["ending"]:
-        raise ValueError("GM proposals unavailable")
-    if state["dxd"].get("activity", {}).get("status") != "awake":
-        raise ValueError("character unavailable")
+
+def validate_request(request):
     if not isinstance(request, dict) or set(request) != {"action", "approach", "intent"}:
         raise ValueError("invalid proposal fields")
     if any(not isinstance(v, str) for v in request.values()):
@@ -13,6 +14,13 @@ def compile_action(state, rules, request, choices):
     intent = request["intent"]
     if not intent.strip() or len(intent) > 240 or any(ord(c) < 32 for c in intent):
         raise ValueError("invalid intent")
+
+def compile_action(state, rules, request, choices):
+    if not rules.get("gm_proposals") or state["ending"]:
+        raise ValueError("GM proposals unavailable")
+    if state["dxd"].get("activity", {}).get("status") != "awake":
+        raise ValueError("character unavailable")
+    validate_request(request)
     target = next((a for a in choices if a["id"] == request["action"]), None)
     if target is None:
         raise ValueError("objective unavailable")
@@ -28,61 +36,142 @@ def compile_action(state, rules, request, choices):
     action["test"].update(copy.deepcopy(approach))
     return action
 
+def validate_local(rules):
+    """Validate reviewed source definitions, not GM-supplied mechanical effects."""
+    cfg = rules.get("local_proposals", False)
+    if cfg is False:
+        return
+    if not isinstance(cfg, dict) or not cfg or len(cfg) > 24:
+        raise ValueError("invalid local capability configuration")
+    if not rules.get("activity") or not rules.get("gm_proposals"):
+        raise ValueError("local capabilities require detailed proposal runtime")
+    for kind, spec in cfg.items():
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", kind) or not isinstance(spec, dict):
+            raise ValueError("invalid capability identity")
+        required = {"target", "resolution"}
+        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence"}
+        if not required <= set(spec) or set(spec) - allowed:
+            raise ValueError("invalid capability fields")
+        if spec["target"] not in ("location", "npc"):
+            raise ValueError("invalid capability scope")
+        duration_range(spec)
+        if type(spec.get("requires_evidence", 0)) is not int or spec.get("requires_evidence", 0) < 0:
+            raise ValueError("invalid capability evidence prerequisite")
+        if type(spec.get("count_evidence", False)) is not bool:
+            raise ValueError("invalid evidence count policy")
+        marker = spec.get("established")
+        if marker is not None and (not isinstance(marker, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", marker)):
+            raise ValueError("invalid capability completion marker")
+        if spec["resolution"] == "certain":
+            if spec["target"] != "location" or "test" in spec or "concern_failure" in spec:
+                raise ValueError("certain capability cannot adjudicate NPCs or Test effects")
+        elif spec["resolution"] == "test":
+            test = spec.get("test")
+            fields = {"attribute", "skill", "tn", "significance", "decision"}
+            if not isinstance(test, dict) or not fields <= set(test) or set(test) - fields - {"interaction"}:
+                raise ValueError("invalid capability Test")
+            if (test["attribute"] not in rules["dxd"]["attributes"] or test["skill"] not in rules["dxd"]["skills"]
+                    or type(test["tn"]) is not int or not 2 <= test["tn"] <= 18
+                    or test["significance"] not in ("routine", "minor", "important", "critical")
+                    or type(test["decision"]) is not bool):
+                raise ValueError("invalid native capability Test")
+            if "interaction" in test and (test["interaction"] != "ordinary" or spec["target"] != "npc"
+                    or test["attribute"] != "PRE" or not rules.get("demeanor")):
+                raise ValueError("invalid capability Interaction Test")
+            costs = spec.get("concern_failure", {})
+            if not isinstance(costs, dict) or set(costs) - {"fatigue", "stress", "weariness"} or any(type(v) is not int or not 0 <= v <= 6 for v in costs.values()):
+                raise ValueError("invalid capability Concern consequence")
+        else:
+            raise ValueError("unsupported capability resolution")
+
+
+def duration_range(spec):
+    """A capability has exactly one reviewed duration model."""
+    if ("seconds" in spec) == ("variable_interval_seconds" in spec):
+        raise ValueError("specify exactly one capability duration model")
+    if "seconds" in spec:
+        seconds = spec["seconds"]
+        if type(seconds) is not int or not 10 <= seconds <= 3600:
+            raise ValueError("invalid fixed capability duration")
+        return seconds, seconds
+    interval = spec["variable_interval_seconds"]
+    if type(interval) is not int or interval not in pacing.INTERVALS:
+        raise ValueError("unsupported variable Time Interval")
+    return 3 * interval, 18 * interval
+
+
+def resolve_duration(state, action):
+    """Resolve only after accepted proposal validation; previews never roll."""
+    spec = action.get("local_spec", {})
+    if "variable_interval_seconds" not in spec:
+        return action
+    interval = spec["variable_interval_seconds"]
+    roll = dxd.task_duration(f"{state['seed']}:task-duration:{state['turn'] + 1}:{action['id']}", interval)
+    return dict(action, duration_seconds=roll["seconds"], local_seconds=roll["seconds"],
+                task_duration=roll)
+
+
 def local_capabilities(state, rules, npc_available):
-    """Derive proposal targets from current world state, not from invented entities."""
-    if not rules.get("local_proposals") or state["ending"] or state["dxd"].get("activity", {}).get("status") != "awake":
+    """Derive eligible targets, never manufacture an entity or a Test."""
+    cfg = rules.get("local_proposals")
+    if not cfg or state["ending"] or state["dxd"].get("activity", {}).get("status") != "awake":
         return []
+    from age_runtime.mythos.epistemic import conversation_available
+    remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()
     result = []
-    for key, npc in sorted(state["npcs"].items()):
-        if npc["encounters"] and npc_available(state, rules, {"npc": key, "location": state["location"]}):
-            for kind in ("build_rapport",):
-                action = "local:" + kind + ":" + key
-                if action not in state["used"]:
-                    result.append({"action": action, "approach": kind, "target": key})
-    for kind in ("survey", "compose_notes"):
-        action = "local:" + kind + ":" + state["location"]
-        if action not in state["used"]:
-            result.append({"action": action, "approach": kind, "target": state["location"]})
+    for kind, spec in cfg.items():
+        minimum, maximum = duration_range(spec)
+        if maximum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
+            continue
+        targets = [state["location"]] if spec["target"] == "location" else [
+            nid for nid, npc in sorted(state["npcs"].items())
+            if npc["encounters"] and conversation_available(state, rules, nid, npc_available)]
+        for target in targets:
+            action = "local:" + kind + ":" + target
+            if action not in state["used"]:
+                result.append({"action": action, "approach": kind, "target": target,
+                               "resolution": spec["resolution"],
+                               **({"duration_range_seconds": [minimum, maximum],
+                                   "time_interval_seconds": spec["variable_interval_seconds"]}
+                                  if "variable_interval_seconds" in spec else {"seconds": minimum})})
     return result
 
+
 def compile_local(state, rules, request, npc_available):
-    if not isinstance(request, dict) or set(request) != {"action", "approach", "intent"} or any(not isinstance(v, str) for v in request.values()):
-        raise ValueError("invalid local proposal")
-    if not request["intent"].strip() or len(request["intent"]) > 240 or any(ord(c) < 32 for c in request["intent"]):
-        raise ValueError("invalid intent")
+    validate_request(request)
     cap = next((c for c in local_capabilities(state, rules, npc_available)
                 if c["action"] == request["action"] and c["approach"] == request["approach"]), None)
     if cap is None:
         raise ValueError("local capability unavailable")
     kind, target = cap["approach"], cap["target"]
-    loc = state["location"]
+    spec = rules["local_proposals"][kind]
+    loc, seconds = state["location"], duration_range(spec)[1]
     action = {"id": cap["action"], "label": kind, "location": loc,
-              "duration_seconds": 600, "local_seconds": 600, "interval_seconds": 600,
+              "duration_seconds": seconds, "local_seconds": seconds, "interval_seconds": spec.get("variable_interval_seconds", 600),
               "activity": "active", "route": {"nodes": [loc], "seconds": 0, "minutes": 0, "terrain": []},
-              "local_capability": kind}
-    if kind in ("build_rapport",):
-        action.update(npc=target, test={"attribute": "PRE", "skill": "Persuade" if "Persuade" in state["dxd"]["skills"] else "Interview",
-                    "interaction": "ordinary", "tn": 7, "significance": "minor", "decision": True},
-                    concern_failure={"stress": 1})
-    else:
-        action["test"] = {"attribute": "INT", "skill": "Investigate" if "Investigate" in state["dxd"]["skills"] else "Investigation", "tn": 7,
-                          "significance": "minor", "decision": False}
-        action["concern_failure"] = {"fatigue": 1}
+              "local_capability": kind, "local_spec": copy.deepcopy(spec)}
+    if spec["target"] == "npc":
+        action["npc"] = target
+    if spec["resolution"] == "test":
+        action["test"] = copy.deepcopy(spec["test"])
+        action["concern_failure"] = copy.deepcopy(spec.get("concern_failure", {}))
     return action
 
+
 def record_local(state, action, success, result):
-    """Bounded semantic record: no invented observations, evidence, or promises."""
-    kind = action["local_capability"]
+    """Record only source-authorized completion; no manufactured Test margin."""
+    kind, spec = action["local_capability"], action["local_spec"]
     record = {"kind": kind, "target": action.get("npc", state["location"]),
               "at": state["time"], "turn": state["turn"], "passed": success,
-              "effect": result["margin"]}
-    if kind == "compose_notes":
+              "effect": result["margin"] if result is not None else None}
+    if "task_duration" in action:
+        record["task_duration"] = copy.deepcopy(action["task_duration"])
+    if spec.get("count_evidence"):
         record["evidence_count"] = len(state["discoveries"])
+    if success and spec.get("established"):
+        record["established"] = spec["established"]
     state["local_records"].append(record)
-    # A successful local survey or note preparation can support later
-    # ordinary GM interpretation, but grants no canonical clue or score.
-    if success and kind in ("survey", "compose_notes"):
-        record["established"] = "survey_completed" if kind == "survey" else "notes_organized"
+
 
 def prepared_duration(state, action, seconds):
     """Apply one authored local preparation benefit, before travel is added.
