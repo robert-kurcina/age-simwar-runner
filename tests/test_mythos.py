@@ -1039,6 +1039,37 @@ class MythosTrialTests(unittest.TestCase):
             mythos.establish_step(resolved, {"expectation": assess})
         mythos.verify(resolved)
 
+    def test_observed_ordinary_routines_support_expectations(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        arrival = {"id": "routine:first", "npc": "eleanor", "kind": "arrival",
+                   "basis": "She sees him enter."}
+        s = mythos.establish_step(s, {"routine_observation": arrival})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"routine_observation": dict(arrival, id="routine:duplicate")})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"routine_observation": dict(arrival, id="routine:remote", npc="elias")})
+        s = mythos.step(s, "buy_meal")
+        meal = {"id": "routine:meal", "npc": "eleanor", "kind": "activity",
+                "basis": "She served his meal and saw him rest."}
+        s = mythos.establish_step(s, {"routine_observation": meal})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"routine_observation": dict(arrival, id="routine:late")})
+        s = mythos.step(mythos.step(s, "move:Harbor Docks"), "move:Harbor Diner")
+        s = mythos.establish_step(s, {"routine_observation": dict(arrival, id="routine:return")})
+        s = mythos.step(s, "buy_meal")
+        s = mythos.establish_step(s, {"routine_observation": dict(meal, id="routine:meal2")})
+        s = mythos.establish_step(s, {"behavior": {"id": "pat:meals", "npc": "eleanor",
+            "kind": "recurring", "evidence": ["routine:meal", "routine:meal2"],
+            "interpretation": "He often eats at the diner."}})
+        s = mythos.establish_step(s, {"expectation": {"operation": "create", "id": "exp:meal",
+            "npc": "eleanor", "pattern": "pat:meals", "expectation": "He may order another meal."}})
+        packet = mythos.gm_context(s)["referee"]
+        self.assertEqual(packet["behavioral_context"]["eleanor"]["evidence"]["routine:meal"]["kind"], "activity")
+        self.assertEqual(packet["npc_expectations"]["eleanor"][0]["status"], "pending")
+        self.assertNotIn("routine_observations", mythos.view(s))
+        self.assertNotIn("routine_source", mythos.view(s))
+        mythos.verify(s)
+
     def test_behavioral_recognition_requires_observed_distinct_turns(self):
         import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
