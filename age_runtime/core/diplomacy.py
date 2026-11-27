@@ -34,7 +34,10 @@ def history(observation, state=None):
         relationship(other)["proposals"].append({
             "id": proposal["id"], "status": proposal["status"],
             "due_minute": proposal["due_minute"],
-            **({"parent": proposal["parent"]} if "parent" in proposal else {})})
+            **({"parent": proposal["parent"]} if "parent" in proposal else {}),
+            **({k: deepcopy(proposal[k]) for k in ("permission", "issuer", "grantee",
+                "proposed_minute", "accepted_minute", "resolved_minute") if k in proposal}
+               if "permission" in proposal else {})})
     for aid, agreement in observation.get("strategic_support", {}).get("agreements", {}).items():
         # Signatory identities are disclosed only within an authorized
         # agreement projection. Do not infer consent from participation.
