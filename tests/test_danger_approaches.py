@@ -10,7 +10,6 @@ class DangerApproachTests(unittest.TestCase):
     def fixture(self):
         story, rules = mythos.load("boothbay")
         rules = copy.deepcopy(rules)
-        rules["start_location"] = "Lighthouse (Western Point)"
         return story, rules
 
     def request(self, approach):
@@ -22,6 +21,7 @@ class DangerApproachTests(unittest.TestCase):
         with patch.object(mythos, "load", return_value=(story, rules)):
             for seed in range(12):
                 state = mythos.initial("boothbay", seed)
+                state["location"] = "Lighthouse (Western Point)"
                 state["flags"].extend(["patrol_risk", "written_account"])
                 before = copy.deepcopy(state)
                 request = self.request("withdraw")
@@ -41,6 +41,7 @@ class DangerApproachTests(unittest.TestCase):
         spec["excludes_flags"] = ["shelter_closed"]
         with patch.object(mythos, "load", return_value=(story, rules)):
             state = mythos.initial("boothbay", 42)
+            state["location"] = "Lighthouse (Western Point)"
             state["flags"].extend(["patrol_risk", "written_account"])
             request = self.request("withdraw")
             with self.assertRaises(ValueError):
