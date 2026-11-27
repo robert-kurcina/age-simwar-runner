@@ -61,6 +61,10 @@ def main():
     control.add_argument("id")
     control.add_argument("--label")
     control.add_argument("--revision", required=True)
+    dialogue = sub.add_parser("dialogue")
+    dialogue.add_argument("session", type=Path)
+    dialogue.add_argument("request", type=Path)
+    dialogue.add_argument("--revision", required=True)
     memory = sub.add_parser("memory")
     memory.add_argument("session", type=Path)
     memory.add_argument("event")
@@ -92,6 +96,8 @@ def main():
             proposal["nomination"] = json.loads(args.nomination.read_text(encoding="utf-8"))
         result = mythos.act(args.session, args.action, args.revision, proposal,
                             {"context": args.context, "level": 1, "vignette": args.vignette})
+    elif args.command == "dialogue":
+        result = mythos.dialogue(args.session, json.loads(args.request.read_text(encoding="utf-8")), args.revision)
     elif args.command == "memory":
         result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
     elif args.command == "narrative":
