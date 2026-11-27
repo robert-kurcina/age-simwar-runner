@@ -1,0 +1,674 @@
+{
+  "version": 1,
+  "effective_date": "2007-01-01",
+  "scenario": {
+    "version": 1,
+    "id": "early-reconstruction-regional-draft",
+    "turn_minutes": 10080,
+    "end_minute": 50400,
+    "initial": {
+      "shanter_credits": 1,
+      "fiji_credits": 0,
+      "vanuatu_credits": 0,
+      "rwf_credits": 2,
+      "technical_services_progress": 0,
+      "technical_services_delay": 0,
+      "technical_services_complications": 0,
+      "technical_services_capacity": 2,
+      "port_repairs_progress": 0,
+      "port_repairs_delay": 0,
+      "port_repairs_complications": 0,
+      "port_repairs_capacity": 2,
+      "water_services_progress": 0,
+      "water_services_delay": 0,
+      "water_services_complications": 0,
+      "water_services_capacity": 2,
+      "fiji_review_completed": 0,
+      "vanuatu_review_completed": 0
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "shanter": {
+        "label": "Shanter",
+        "visible_keys": [
+          "shanter_credits",
+          "technical_services_progress",
+          "technical_services_delay",
+          "technical_services_complications",
+          "technical_services_capacity"
+        ],
+        "objectives": {
+          "technical_services": {
+            "key": "technical_services_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete technical services"
+          },
+          "reserve": {
+            "key": "shanter_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize feasible restoration projects and voluntary funding agreements; retain service continuity.",
+          "priorities": [
+            "technical_services",
+            "reserve"
+          ]
+        }
+      },
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "fiji_credits",
+          "port_repairs_progress",
+          "port_repairs_delay",
+          "port_repairs_complications",
+          "port_repairs_capacity",
+          "fiji_review_completed"
+        ],
+        "objectives": {
+          "port_repairs": {
+            "key": "port_repairs_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete port repairs"
+          },
+          "reserve": {
+            "key": "fiji_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize civilian services and accountable project funding; maintain reserve capacity. Negotiate the scope of any external review; acceptance of review is not acceptance of funding or external control.",
+          "priorities": [
+            "port_repairs",
+            "reserve"
+          ]
+        },
+        "report_delay_minutes": {
+          "fiji_review_completed": 10080
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "vanuatu_credits",
+          "water_services_progress",
+          "water_services_delay",
+          "water_services_complications",
+          "water_services_capacity",
+          "vanuatu_review_completed"
+        ],
+        "objectives": {
+          "water_services": {
+            "key": "water_services_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete water services"
+          },
+          "reserve": {
+            "key": "vanuatu_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize dispersed communities, feasible infrastructure projects and consent of local authorities. Negotiate the scope of any external review; acceptance of review is not acceptance of funding or external control.",
+          "priorities": [
+            "water_services",
+            "reserve"
+          ]
+        },
+        "report_delay_minutes": {
+          "vanuatu_review_completed": 10080
+        }
+      },
+      "rwf": {
+        "label": "Rebuilding the World Foundation",
+        "visible_keys": [
+          "rwf_credits",
+          "technical_services_progress",
+          "port_repairs_progress",
+          "water_services_progress",
+          "fiji_review_completed",
+          "vanuatu_review_completed"
+        ],
+        "objectives": {
+          "technical_services": {
+            "key": "technical_services_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Support technical services"
+          },
+          "port_repairs": {
+            "key": "port_repairs_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Support port repairs"
+          },
+          "water_services": {
+            "key": "water_services_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Support water services"
+          },
+          "reserve": {
+            "key": "rwf_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize feasible civilian recovery and accountable funding; no sovereign enforcement or unilateral control of recipient administrations. Consider separately authorized program reviews, dated reports and competing grant requests. Review completion is not a finding or a compulsory funding condition.",
+          "priorities": [
+            "technical_services",
+            "port_repairs",
+            "water_services",
+            "reserve"
+          ]
+        },
+        "report_delay_minutes": {
+          "port_repairs_progress": 10080,
+          "water_services_progress": 10080
+        }
+      }
+    },
+    "action_catalog": {
+      "invest_technical_services": {
+        "description": "Invest one program credit in technical services",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "invest_port_repairs": {
+        "description": "Invest one program credit in port repairs",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "invest_water_services": {
+        "description": "Invest one program credit in water services",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "rwf_grant_shanter": {
+        "description": "Voluntarily allocate one credit to shanter",
+        "actors": [
+          "rwf"
+        ]
+      },
+      "rwf_grant_fiji": {
+        "description": "Voluntarily allocate one credit to fiji",
+        "actors": [
+          "rwf"
+        ]
+      },
+      "rwf_grant_vanuatu": {
+        "description": "Voluntarily allocate one credit to vanuatu",
+        "actors": [
+          "rwf"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 4,
+    "economy_projects": [
+      {
+        "id": "technical_services",
+        "participant": "shanter",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "industrial",
+            "key": "technical_services_capacity"
+          }
+        ],
+        "stages": 3,
+        "progress": "technical_services_progress",
+        "delay": "technical_services_delay",
+        "complications": "technical_services_complications"
+      },
+      {
+        "id": "port_repairs",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "materials",
+            "key": "port_repairs_capacity"
+          }
+        ],
+        "stages": 3,
+        "progress": "port_repairs_progress",
+        "delay": "port_repairs_delay",
+        "complications": "port_repairs_complications"
+      },
+      {
+        "id": "water_services",
+        "participant": "vanuatu",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "logistics",
+            "key": "water_services_capacity"
+          }
+        ],
+        "stages": 3,
+        "progress": "water_services_progress",
+        "delay": "water_services_delay",
+        "complications": "water_services_complications"
+      }
+    ],
+    "capacity_actions": {
+      "invest_technical_services": {
+        "project": "technical_services",
+        "capacity": "technical_services_capacity",
+        "resource": "shanter_credits",
+        "cost": 1
+      },
+      "invest_port_repairs": {
+        "project": "port_repairs",
+        "capacity": "port_repairs_capacity",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "invest_water_services": {
+        "project": "water_services",
+        "capacity": "water_services_capacity",
+        "resource": "vanuatu_credits",
+        "cost": 1
+      }
+    },
+    "resource_transfers": {
+      "rwf_grant_shanter": {
+        "source": "rwf_credits",
+        "destination": "shanter_credits",
+        "amount": 1
+      },
+      "rwf_grant_fiji": {
+        "source": "rwf_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      },
+      "rwf_grant_vanuatu": {
+        "source": "rwf_credits",
+        "destination": "vanuatu_credits",
+        "amount": 1
+      }
+    },
+    "dynamic_negotiation": true,
+    "model_factions": [
+      "fiji",
+      "vanuatu",
+      "rwf"
+    ],
+    "game_length": "Short",
+    "funding_reserves": {
+      "rwf_credits": "rwf"
+    },
+    "material_communications": true,
+    "diplomatic_history": true,
+    "strategic_establishment": true,
+    "permission_terms": {
+      "fiji_supervised_review": {
+        "issuer": "fiji",
+        "grantee": "rwf",
+        "description": "Conduct a supervised review of the illustrative port repair program records. No authority to direct local operations.",
+        "max_due_minute": 50400
+      },
+      "fiji_independent_review": {
+        "issuer": "fiji",
+        "grantee": "rwf",
+        "description": "Conduct a independent review of the illustrative port repair program records. No authority to direct local operations.",
+        "max_due_minute": 50400
+      },
+      "vanuatu_supervised_review": {
+        "issuer": "vanuatu",
+        "grantee": "rwf",
+        "description": "Conduct a supervised review of the illustrative water service program records. No authority to direct local operations.",
+        "max_due_minute": 50400
+      },
+      "vanuatu_independent_review": {
+        "issuer": "vanuatu",
+        "grantee": "rwf",
+        "description": "Conduct a independent review of the illustrative water service program records. No authority to direct local operations.",
+        "max_due_minute": 50400
+      }
+    },
+    "event_templates": {
+      "fiji_independent_review": {
+        "description": "The authorized independent review of the port repair program records was completed. This does not establish a finding or grant entitlement.",
+        "participant": "rwf",
+        "audience": [
+          "fiji",
+          "rwf"
+        ],
+        "requires": {
+          "rwf_credits": 1
+        },
+        "permission": "fiji_independent_review",
+        "outcome": "fiji_review_completed"
+      },
+      "vanuatu_independent_review": {
+        "description": "The authorized independent review of the water service program records was completed. This does not establish a finding or grant entitlement.",
+        "participant": "rwf",
+        "audience": [
+          "vanuatu",
+          "rwf"
+        ],
+        "requires": {
+          "rwf_credits": 1
+        },
+        "permission": "vanuatu_independent_review",
+        "outcome": "vanuatu_review_completed"
+      }
+    },
+    "communication_propositions": {
+      "fiji_independent_review": {
+        "text": "The independent port repair program review has been completed.",
+        "initial_access": [
+          "fiji",
+          "rwf"
+        ],
+        "report_binding": {
+          "key": "fiji_review_completed",
+          "comparison": "equal",
+          "threshold": 1
+        }
+      },
+      "fiji_progress": {
+        "text": "The port repair program has completed all three illustrative stages.",
+        "initial_access": [
+          "fiji",
+          "rwf"
+        ],
+        "report_binding": {
+          "key": "port_repairs_progress",
+          "comparison": "at_least",
+          "threshold": 3
+        }
+      },
+      "vanuatu_independent_review": {
+        "text": "The independent water service program review has been completed.",
+        "initial_access": [
+          "vanuatu",
+          "rwf"
+        ],
+        "report_binding": {
+          "key": "vanuatu_review_completed",
+          "comparison": "equal",
+          "threshold": 1
+        }
+      },
+      "vanuatu_progress": {
+        "text": "The water service program has completed all three illustrative stages.",
+        "initial_access": [
+          "vanuatu",
+          "rwf"
+        ],
+        "report_binding": {
+          "key": "water_services_progress",
+          "comparison": "at_least",
+          "threshold": 3
+        }
+      }
+    }
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "phase_history": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+      "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+      "reviewed_for": "2007-01-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2007-01-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Use technical and repair capabilities for sustainable civilian reconstruction.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize feasible restoration projects and voluntary funding agreements; retain service continuity.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2007-01-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Restore port and civilian infrastructure while addressing continuing settlement and administrative pressures.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize civilian services and accountable project funding; maintain reserve capacity.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2007-01-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Improve repair, water and local service capacity without imposing unsupported assumptions about later energy systems.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize dispersed communities, feasible infrastructure projects and consent of local authorities.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "rwf": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "rwf",
+      "kind": "organization",
+      "effective_date": "2007-01-01",
+      "label": "Rebuilding the World Foundation",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Support surviving administrations through funding, coordination and recommendations.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize feasible civilian recovery and accountable funding; no sovereign enforcement or unilateral control of recipient administrations.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Voluntary funding and recommendations only; no sovereign authority.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/05_Reconstruction_Period_Milestones.md",
+            "heading": "Milestone 0: Rebuilding the World Foundation (Late 2003-2009)",
+            "reviewed_for": "2007-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    }
+  }
+}
