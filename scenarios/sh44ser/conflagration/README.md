@@ -49,3 +49,7 @@ Five additional episodes now use existing scoped communications, propositions, d
 ## Contrasting outcome qualification
 
 Run `python -m unittest -v tests.test_conflagration_outcomes` alongside the existing draft regressions. The scripted routes exercise alternative relief investments, grants, multiple capacity bottlenecks and independent institutional consent through terminal checkpoints. These are mechanical outcome tests, not historical predictions or independent LLM gameplay qualification.
+
+## Contextual decision support
+
+The strategic private-play CLI provides `decision-brief SESSION` as a read-only actor-scoped projection of current goals, options, tradeoffs, report uncertainty, recent decisions and commitments. Retrieve older relevant records using `memory SESSION` (optionally `--counterpart ID`). The brief is guidance, not an adjudication or automatic decision; preserve actual player consent and independent faction exchanges. No extra state or decision expenditure for reading.
