@@ -481,7 +481,8 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if commitment is not None:
         dxd_commitment.validate(state, rules, a, commitment)
         a = dict(a, commitment=copy.deepcopy(commitment))
-    elapsed = datetime.fromisoformat(state["time"]) + timedelta(seconds=a["duration_seconds"])
+    started = datetime.fromisoformat(state["time"])
+    elapsed = started + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
     state["turn"] += 1
@@ -539,6 +540,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
         if "progression" in state or "pacing" in rules:
             advance_events(state, rules, elapsed)
         state["time"] = elapsed.isoformat()
+        npc_time.advance_abstract(state, rules, started, elapsed, engaged=a.get("npc"))
     if action != "observe" and not a.get("repeatable"):
         state["used"].append(action)
     if not clock:
