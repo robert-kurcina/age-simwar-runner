@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -76,6 +76,8 @@ def initial(sid, seed):
         state["custody_transfers"] = []
     if rules.get("narrative_agreements"):
         state["agreement_history"] = []
+    if rules.get("narrative_locks"):
+        state["narrative_locks"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -216,6 +218,7 @@ def options(state, rules):
                                "location": state["location"], "seconds": duration, "activity": "sleep",
                                "interval_seconds": 3600, "repeatable": True,
                                "cost": {"cash_cents": rules["activity"]["sleep_cost_cents"]}})
+    candidates += locks.actions(state, rules, npc_available, establishment.local_entities)
     timed = []
     for a in candidates:
         seconds = int((datetime.fromisoformat(a["until"]) - datetime.fromisoformat(state["time"])).total_seconds()) if "until" in a else pacing.duration(a)
@@ -474,7 +477,8 @@ def step(state, action, proposal=None, commitment=None):
         # Events during travel may invalidate the intended local action.
         if (any(f in state["flags"] for f in a.get("excludes_flags", []))
                 or not all(f in state["flags"] for f in a.get("requires_flags", []))
-                or not npc_available(state, rules, a)):
+                or not npc_available(state, rules, a)
+                or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
         mode = a.get("activity", "active")
         if action == "sleep_room":
@@ -499,7 +503,8 @@ def step(state, action, proposal=None, commitment=None):
             return finish_activity(state, rules, action, a, False, reason, proposal)
         if (any(f in state["flags"] for f in a.get("excludes_flags", []))
                 or not all(f in state["flags"] for f in a.get("requires_flags", []))
-                or not npc_available(state, rules, a)):
+                or not npc_available(state, rules, a)
+                or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
         if "progression" in state or "pacing" in rules:
@@ -862,6 +867,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
+                **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
                 "concerns": copy.deepcopy(pc["concerns"]),
