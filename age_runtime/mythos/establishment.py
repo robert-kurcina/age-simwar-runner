@@ -1,7 +1,7 @@
 """Delegated, mundane narrative establishment, not mechanical adjudication."""
 import copy
 import re
-from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions, action_observations, behavior, expectations
+from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions, action_observations, behavior, expectations, npc_travel
 
 def text(value, limit):
     if not isinstance(value, str) or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
@@ -14,6 +14,8 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
+    if isinstance(request, dict) and set(request) == {"npc_travel"}:
+        return npc_travel.record(state, rules, request["npc_travel"], npc_available, text)
     if isinstance(request, dict) and set(request) == {"npc_testimony"}:
         from age_runtime.mythos import epistemic
         epistemic.record_testimony(state, rules, request["npc_testimony"], npc_available)
@@ -130,7 +132,7 @@ def local_entities(state):
         if holder == "pc":
             entity["location"] = state["location"]
         elif holder is not None:
-            entity["location"] = state["npcs"][holder]["location"]
+            entity["location"] = None if npc_travel.pending(state, holder) else state["npcs"][holder]["location"]
     return {eid: e for eid, e in entities.items() if e["location"] == state["location"]}
 
 def transfer(state, rules, transfers, npc_available):
