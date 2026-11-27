@@ -11,7 +11,7 @@ def evidence(state, npc):
     for o in state.get("action_observations", []):
         if o["npc"] == npc and o["kind"] == "witnessed" and o["actor"] == "pc":
             result[o["id"]] = {"kind": "witnessed_action", "object": o["object"],
-                "outcome": o["outcome"], "turn": o["turn"], "at": o["at"], "location": o["location"]}
+                "outcome": o["outcome"], **({"function": o["function"]} if "function" in o else {}), "turn": o["turn"], "at": o["at"], "location": o["location"]}
     for o in state.get("routine_observations", []):
         if o["npc"] == npc:
             result[o["id"]] = {k: copy.deepcopy(v) for k, v in o.items()
