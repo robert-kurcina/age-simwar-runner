@@ -924,6 +924,103 @@ class MythosTrialTests(unittest.TestCase):
         snapshot["evidence"].append("water_risk_known")
         self.assertFalse(continuity.reconsideration_allowed(after, alternate))
 
+    def test_earned_warning_routes_and_reconsideration_replay(self):
+        # Exercise genuine action histories, without inserting flags or
+        # altering dice, time, relationships, or the Test ledger.
+        _, rules = mythos.load("boothbay")
+        def legal(s, action):
+            return any(a["id"] == action for a in mythos.options(s, rules))
+
+        seen = set()
+        for seed in range(200):
+            s = mythos.initial("boothbay", seed)
+            for action, flag in (
+                ("talk_eleanor", "eleanor_account"),
+                ("follow_eleanor", "water_warning"),
+                ("visit_elias", "journal"),
+                ("read_journal", "tide_clue"),
+            ):
+                if not legal(s, action):
+                    break
+                s = mythos.step(s, action)
+                if flag not in s["flags"]:
+                    break
+            else:
+                if not legal(s, "warn_eleanor"):
+                    continue
+                s = mythos.step(s, "warn_eleanor")
+                if s["last_result"]["success"]:
+                    if "agreement" in seen:
+                        continue
+                    self.assertEqual(s["containment"], 2)
+                    self.assertNotIn("warning_distributed", s["flags"])
+                    for _ in range(6):
+                        s = mythos.step(s, "observe")
+                    self.assertIn("warning_distributed", s["flags"])
+                    self.assertTrue(legal(s, "confirm_precaution"))
+                    s = mythos.step(s, "confirm_precaution")
+                    self.assertIn("warning_confirmed", s["flags"])
+                    self.assertEqual(s["containment"], 3)
+                    s = mythos.step(s, "depart")
+                    mythos.verify(s)
+                    seen.add("agreement")
+                else:
+                    if "refusal" in seen:
+                        continue
+                    self.assertIn("warning_declined", s["flags"])
+                    self.assertFalse(legal(s, "warn_from_ecology"))
+                    self.assertEqual(s["containment"], 0)
+                    if not legal(s, "examine_inlet"):
+                        continue
+                    s = mythos.step(s, "examine_inlet")
+                    self.assertIn("water_risk_known", s["flags"])
+                    self.assertTrue(legal(s, "warn_from_ecology"))
+                    s = mythos.step(s, "warn_from_ecology")
+                    self.assertFalse(legal(s, "warn_eleanor"))
+                    self.assertFalse(legal(s, "warn_from_ecology"))
+                    self.assertEqual(s["containment"], 2 if s["last_result"]["success"] else 0)
+                    s = mythos.step(s, "depart")
+                    mythos.verify(s)
+                    seen.add("refusal")
+                if seen == {"agreement", "refusal"}:
+                    break
+        self.assertEqual(seen, {"agreement", "refusal"})
+
+    def test_earned_report_preparation_and_departure_replay(self):
+        _, rules = mythos.load("boothbay")
+        def legal(s, action):
+            return any(a["id"] == action for a in mythos.options(s, rules))
+        for seed in range(100):
+            s = mythos.step(mythos.initial("boothbay", seed), "talk_eleanor")
+            s = mythos.step(s, "inspect_docks")
+            if not legal(s, "report"):
+                continue
+            s = mythos.step(s, "move:Creek Inlet South")
+            s = mythos.step(s, "move:Lighthouse (Western Point)")
+            request = {"action": "local:compose_notes:Lighthouse (Western Point)",
+                       "approach": "compose_notes",
+                       "intent": "Organize the evidence for my written account."}
+            before = list(s["discoveries"])
+            s = mythos.step(s, request["action"], request)
+            self.assertEqual(s["discoveries"], before)
+            if not s["local_records"][-1]["passed"]:
+                continue
+            choice = next(a for a in mythos.view(s)["choices"] if a["id"] == "report")
+            self.assertEqual(choice["seconds"], 2400)
+            s = mythos.step(s, "report")
+            self.assertIn("written_account", s["flags"])
+            self.assertEqual(s["last_result"]["preparation_saved_seconds"], 1200)
+            s = mythos.step(s, "leave_copy")
+            if not s["last_result"]["success"]:
+                self.assertIsNone(s["ending"])
+                self.assertIn("written_account", s["flags"])
+                s = mythos.step(s, "depart")
+            self.assertIsNotNone(s["ending"])
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No earned prepared report route")
+
     def test_warning_confirmation_has_bounded_followthrough(self):
         # Provisional scenario payoff: confirmation follows an independently
         # resolved distribution clock, not the player's initial promise.
