@@ -32,6 +32,7 @@ def recap(public):
             "recent_observations": copy.deepcopy(public.get("observations", [])[-8:]),
             "recent_exchanges": copy.deepcopy(public.get("dialogue", [])[-8:]),
             "local_records": copy.deepcopy(public.get("local_records", [])[-8:]),
+            "established_details": copy.deepcopy(public.get("established_details", [])),
         },
         "social_continuity": {
             "contacts": copy.deepcopy(public.get("contacts", [])),
@@ -75,6 +76,8 @@ def recall(public, query, *, limit=12, offset=0):
         ("narrative_agreements", "agreement"),
         ("contacts", "contact"),
         ("memories", "memory"),
+        ("remembered_details", "historical_detail"),
+        ("established_details", "current_local_detail"),
     ):
         for index, record in enumerate(public.get(field, [])):
             if needle in json.dumps(record, ensure_ascii=False, sort_keys=True).casefold():

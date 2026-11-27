@@ -430,3 +430,68 @@ class NarrativeConsolidationTests(unittest.TestCase):
         dxd_conditions.recover_rest_overlap(expected, 0, 65 * 60, safe=True)
         self.assertEqual(whole["npcs"]["matteo"]["concerns"], expected)
         self.assertIsNone(whole["npcs"]["matteo"]["activity_plan"])
+
+    def test_dated_event_cannot_use_later_completion_discovery(self):
+        # Synthetic timing fixture: the actual Castine action succeeds,
+        # but an earlier event must not see the clue earned on completion.
+        story, rules = mythos.load("castine")
+        rules = copy.deepcopy(rules)
+        rules["events"] = [{"id": "early", "at": "1927-11-02T08:30:00",
+                            "visible_requires": ["tide_chart"], "observation": "Early clue-dependent event."}]
+        for seed in range(100):
+            state = mythos._initial("castine", seed, copy.deepcopy(story), copy.deepcopy(rules))
+            after = mythos._step(state, rules, "inspect_wharf")
+            if "tide_chart" in after["flags"]:
+                self.assertIn("early", after["events_seen"])
+                self.assertNotIn("Early clue-dependent event.", after["observations"])
+                break
+        else:
+            self.fail("No successful chart inspection")
+
+    def test_coarse_completion_revalidates_changed_flag(self):
+        story, rules = mythos.load("castine")
+        rules = copy.deepcopy(rules)
+        action = next(a for a in rules["actions"] if a["id"] == "inspect_wharf")
+        action["excludes_flags"] = ["access_closed"]
+        rules["events"] = [{"id": "closure", "at": "1927-11-02T08:30:00",
+                            "grant": ["access_closed"], "observation": "Access closes."}]
+        state = mythos._initial("castine", 42, copy.deepcopy(story), copy.deepcopy(rules))
+        before_tests = copy.deepcopy(state["dxd"]["tests"])
+        after = mythos._step(state, rules, "inspect_wharf")
+        self.assertEqual(after["last_result"]["interrupted"], "availability_changed")
+        self.assertFalse(after["last_result"]["success"])
+        self.assertNotIn("tide_chart", after["flags"])
+        self.assertEqual(after["dxd"]["tests"], before_tests)
+        self.assertEqual(after["time"], "1927-11-02T09:00:00")
+        self.assertNotIn("inspect_wharf", after["used"])
+
+    def test_source_mismatch_is_distinct_from_replay_mismatch(self):
+        state = mythos.initial("castine", 42)
+        bad_source = copy.deepcopy(state)
+        bad_source["source"] = "old-revision"
+        with self.assertRaisesRegex(ValueError, "source revision mismatch"):
+            mythos.verify(bad_source)
+        corrupt = copy.deepcopy(state)
+        corrupt["resources"]["cash_cents"] += 1
+        with self.assertRaisesRegex(ValueError, "session replay mismatch"):
+            mythos.verify(corrupt)
+
+    def test_remembered_details_do_not_reveal_current_offscene_state(self):
+        state = mythos.initial("boothbay", 42)
+        state = mythos.establish_step(state, {"details": [
+            {"id": "inc:recall_bench", "kind": "fixture", "label": "Carved bench",
+             "description": "A bench with a carved edge.", "basis": "Mundane furnishing"}]})
+        original_location = state["location"]
+        state = mythos.step(state, "move:Harbor Diner")
+        self.assertNotEqual(state["location"], original_location)
+        public = mythos.view(state)
+        self.assertNotIn("remembered_details", public)
+        self.assertEqual(player_recap.recall(public, "carved bench")["total"], 0)
+        result = player_recap.recall(mythos.view(state, full_history=True), "carved bench")
+        self.assertEqual(result["total"], 1)
+        record = result["matches"][0]["record"]
+        self.assertEqual(record["location"], original_location)
+        self.assertNotIn("basis", record)
+        self.assertNotIn("custodian", record)
+        self.assertNotIn("properties", record)
+        mythos.verify(state)
