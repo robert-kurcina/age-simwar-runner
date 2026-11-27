@@ -446,3 +446,7 @@ PR #232 merged; CI not yet confirmed. Extend preparation diagnostics with select
 ## ST-P — Guided scenario authoring (WIP)
 
 PR #234 merged; CI was pending at inspection. Add explicit LLM authoring instructions, existing economic/institutional schema examples, and isolated candidate review via scenario_preparation. Candidate must include explicit assumptions and eligible perspectives; no catalog writes or promotion. Tests cover existing economic/institutional examples and unsupported or incomplete candidates. CI pending. Next use this workflow for actual campaign content review and delivery rather than add more authoring infrastructure. Independent LLM rehearsals and author UAT remain separate.
+
+## ST-Q — Conflagration content review and chronological presentation (WIP)
+
+PR #236 merged; CI pending at inspection. Inspect all seven actual configurations, record their episode-specific decision tensions, partial success and calibration assumptions in the campaign content-review document, and order the inventory chronologically. Keep Hexaday context-only and WPC unbound. Do not alter balances, objective thresholds or faction participation without an evidenced need. Review is configuration-grounded, not renewed canonical source verification or author approval. Next: practical campaign discovery and standalone draft distribution, then reviewed registration after source and author approval. CI pending.
