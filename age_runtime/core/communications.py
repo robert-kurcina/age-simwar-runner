@@ -59,7 +59,8 @@ def append(s, state, actor, command):
     if not isinstance(recipients, list) or not recipients or any(not isinstance(x, str) or x == actor or x not in s["actors"] for x in recipients) or len(set(recipients)) != len(recipients):
         raise ValueError("invalid recipients")
     prior = [r for r in state["requests"] if r.get("origin") == "communication"]
-    if len(prior) >= 256 or any(r["communication"]["id"] == cid for r in prior):
+    if (len(prior) >= 256 or any(r["communication"]["id"] == cid for r in prior)
+            or any(r.get("origin") == "diplomatic_record" and r["diplomatic_record"]["id"] == cid for r in state["requests"])):
         raise ValueError("duplicate ID or communication limit")
     correction = command.get("corrects")
     if "corrects" in command:
@@ -85,17 +86,12 @@ def append(s, state, actor, command):
         status = intention["status"]
         if status not in ("active", "withdrawn"):
             raise ValueError("invalid intention status")
-        history = [r["communication"] for r in prior if r["actor"] == actor
-                   and r["communication"].get("private_intention", {}).get("counterpart") == counterpart
-                   and r["communication"].get("private_intention", {}).get("topic") == topic]
-        previous = history[-1]["id"] if history else None
-        if intention["revises"] != previous or (status == "withdrawn" and
-                (not history or history[-1]["private_intention"]["status"] != "active")):
-            raise ValueError("intention revision must reference latest own intention")
-        if history and history[-1]["private_intention"]["status"] == status and history[-1]["private_intention"]["text"] == statement:
-            raise ValueError("duplicate private intention")
-        payload["private_intention"] = {"counterpart": counterpart, "topic": topic,
-                                       "status": status, "text": statement, "revises": previous}
+        from age_runtime.core.diplomacy import latest, validate_revision
+        previous = latest(state, actor, counterpart, topic, "intention")
+        normalized = {"counterpart": counterpart, "topic": topic, "status": status,
+                      "text": statement, "revises": intention["revises"]}
+        validate_revision(previous, {"kind": "intention", **normalized})
+        payload["private_intention"] = normalized
     # Introduction is inseparable from the actual originating utterance.
     # It establishes a subject of discourse, never a new world fact.
     if "introduce_proposition" in command:
