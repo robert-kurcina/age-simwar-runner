@@ -398,3 +398,9 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 
 - DONE (mechanical): PR #213 Tests 46059578612 and Chat runtime bundle 46059578654 passed.
 - WIP (CI pending): optional network-enabled GitHub contents API provider in runner, explicit repository allowlist, pinned file request, bounded response, no redirects, existing blob verification and private exclusive owners export. Synthetic transport test checks authorization, mismatches and identical compilation. No vault workflows or new compiler. No live credential or network available in current Chat runtime; actual canonical compile remains blocked here. Existing connector and local Git providers remain valid. Do not treat synthetic transport as live qualification.
+
+
+## ST-F correction — separate provenance from mechanical rehearsal
+
+- Author direction: canonical verification is preparation/review, not an inherent runtime requirement for self-contained configurations. Do not block gameplay qualification on connector transport. Existing reviewed selection and distribution gates remain unchanged.
+- WIP (CI pending): explicit `rehearse` command for draft-unreviewed self-contained specs; reuse existing session initialization, literal profile validation and adjudication. No source reads, invented numeric values or evidence digests. Mark session and player briefings unreviewed-rehearsal; reject external assets, reviewed context, presets and continuity. All 25 actual draft perspectives covered by regression. Actual source verification remains pending for reviewed registration, not rehearsal. NEXT: independent LLM play using actual draft configurations; review and distribute separately. No vault changes.
