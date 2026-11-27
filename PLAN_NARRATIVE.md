@@ -572,3 +572,7 @@ Boothbay v78 adds opt-in bounded incidental people through existing establishmen
 ### Selective simulation consolidation (WIP)
 
 PR #235 merged and both CI workflows passed. Boothbay v79 permits repeat incidental recognition across explicitly reviewed public nodes when ungated routes and elapsed time permit. Preserve identity and original observation, update last observed location only; no automatic presence, travel ledger or mechanical profile. Reject unreviewed destinations and impossible travel times. This closes the bounded identity mobility gap, not native profile promotion or broad N80/N81 effects. Retain selective agenda/presence and settlement foundations; proceed to N86/N87 after regression verification. UAT deferred.
+
+### N86 — distinct danger objectives (WIP)
+
+PR #237 merged; Tests passed at review. Boothbay v80 extends reviewed Beat approaches with individual objectives, stakes, prerequisites and outcome overrides, inheriting existing defaults when unspecified. Recheck eligibility on completion; invalidated approaches cannot award effects. Add a separate landward withdrawal alternative to the patrol Beat, which never grants passage or relay and has its own failure Concerns. Existing native Tests and one-shot Beat semantics remain authoritative. Tests cover distinct outcomes and completion prerequisites. CI pending; UAT deferred. Next: native character consequences (N87), including source review of physical harm and incapacity, without Technical Combat.
