@@ -50,7 +50,7 @@ def initiative(state, rules, request, npc_available, local_entities, text):
         raise ValueError("NPC initiative unavailable")
     op = request.get("operation")
     expected = {"operation", "id", "npc", "object", "delay_minutes", "basis"} if op == "schedule" else {"operation", "id", "npc", "basis"}
-    if op not in ("schedule", "cancel") or set(request) != expected:
+    if op not in ("schedule", "cancel") or (set(request) != expected and not (op == "schedule" and set(request) == expected | {"objective"})):
         raise ValueError("invalid initiative fields")
     eid, npc = request["id"], request["npc"]
     if not isinstance(eid, str) or not re.fullmatch(r"evt:[a-z][a-z0-9_]{0,63}", eid):
@@ -70,6 +70,7 @@ def initiative(state, rules, request, npc_available, local_entities, text):
         return
     if existing or len(ledger) >= 64:
         raise ValueError("duplicate event or record limit")
+    objective = objective_link(state, rules, npc, request)
     oid, delay = request["object"], request["delay_minutes"]
     if not isinstance(oid, str) or type(delay) is not int or delay not in cfg["delays_minutes"]:
         raise ValueError("invalid initiative object or delay")
@@ -86,7 +87,17 @@ def initiative(state, rules, request, npc_available, local_entities, text):
     ledger.append({"id": eid, "object": oid, "permission": None, "npc": npc,
                    "authority": "npc_initiative", "location": location,
                    "scheduled_at": state["time"], "due": due.isoformat(),
-                   "status": "scheduled", "basis": basis})
+                   "status": "scheduled", "basis": basis, **objective})
+
+
+def objective_link(state, rules, npc, request):
+    if "objective" not in request:
+        return {}
+    from age_runtime.mythos import npc_agency
+    if not rules.get("npc_agency") or not npc_agency.active_objective(state, npc, request["objective"]):
+        raise ValueError("activity requires own active objective")
+    return {"objective": request["objective"]}
+
 
 def test_config(rules, nid):
     cfg = rules.get("npc_native_test")
@@ -96,7 +107,8 @@ def test_config(rules, nid):
 
 def native_test(state, rules, request, npc_available, local_entities, text):
     """Schedule a reviewed NPC-owned examination, not an arbitrary Test or effect."""
-    if not isinstance(request, dict) or set(request) != {"id", "npc", "object", "basis"}:
+    required = {"id", "npc", "object", "basis"}
+    if not isinstance(request, dict) or set(request) not in (required, required | {"objective"}):
         raise ValueError("invalid NPC native Test")
     eid, nid, oid = request["id"], request["npc"], request["object"]
     if not isinstance(eid, str) or not re.fullmatch(r"evt:[a-z][a-z0-9_]{0,63}", eid):
@@ -104,6 +116,7 @@ def native_test(state, rules, request, npc_available, local_entities, text):
     cfg = test_config(rules, nid) if isinstance(nid, str) else None
     if not cfg or not isinstance(oid, str):
         raise ValueError("unsupported NPC Test actor or object")
+    objective = objective_link(state, rules, nid, request)
     npc = state["npcs"][nid]
     location = npc["location"]
     if location is None or not npc_available(state, rules, {"npc": nid, "location": location}):
@@ -127,7 +140,7 @@ def native_test(state, rules, request, npc_available, local_entities, text):
     ledger.append({"id": eid, "object": oid, "permission": None, "npc": nid,
                    "authority": "npc_native_test", "location": location,
                    "scheduled_at": state["time"], "due": due.isoformat(),
-                   "status": "scheduled", "basis": basis,
+                   "status": "scheduled", "basis": basis, **objective,
                    **({"work_seconds": 0} if rules.get("npc_task_continuity") else {}),
                    **({"object_revision": object_revision(state, oid), "task_history": []} if rules.get("npc_lifecycle") else {})})
 
@@ -151,6 +164,8 @@ def task_control(state, rules, request, npc_available, local_entities, text):
     elif op == "resume":
         if e["status"] != "interrupted":
             raise ValueError("only interrupted task can resume")
+        if "objective" in e:
+            objective_link(state, rules, nid, e)
         npc = state["npcs"][nid]
         location = npc["location"]
         if location is None or location != e["location"] or not npc_available(state, rules, {"npc": nid, "location": location}):
@@ -221,6 +236,11 @@ def resolve(state, rules, elapsed, npc_available, local_entities):
     for e in sorted(state.get("timed_detail_events", []), key=lambda x: (x["due"], x["id"])):
         if e["status"] != "scheduled" or datetime.fromisoformat(e["due"]) > elapsed:
             continue
+        if "objective" in e:
+            from age_runtime.mythos import npc_agency
+            if not npc_agency.active_objective(state, e["npc"], e["objective"]):
+                e.update(status="cancelled", cancelled_at=state["time"], cancellation_basis="Objective no longer active")
+                continue
         # Evaluate NPC and object at event location, not at the PC's
         # possibly in-transit anchor. Never mutate the real PC location.
         scope = dict(state, location=e["location"])
