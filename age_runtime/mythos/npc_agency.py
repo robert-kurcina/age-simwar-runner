@@ -23,7 +23,7 @@ def owned_source(state, npc, source):
         return False
     kind, sid = source["kind"], source["id"]
     if kind == "claim" and type(sid) is int:
-        return any(e["id"] == sid and npc in (e["speaker"], e["listener"]) for e in state["dialogue"])
+        return any(e["id"] == sid and npc in (e["speaker"], e["listener"]) for e in state.get("dialogue", []))
     if kind == "observation":
         return any(e["id"] == sid and e["npc"] == npc for e in state.get("action_observations", []))
     if kind == "test":
@@ -97,6 +97,8 @@ def objective(state, rules, request, npc_available, text):
         # Achievement is explicitly the NPC's assessment, not objective truth.
         if status == "achieved" and not sources:
             raise ValueError("achievement requires actor-scoped evidence")
+        if (status, priority, entry["intention"]) == (old["status"], old["priority"], old["intention"]):
+            raise ValueError("objective review does not change its decision")
         entry["status"] = status
     ledger.append(entry)
     if op == "review":
@@ -119,8 +121,12 @@ def review_activities(state, entry):
         if event["status"] not in ("scheduled", "interrupted"):
             continue
         if entry["status"] == "deferred" and event.get("authority") == "npc_native_test":
-            event.update(status="interrupted", interrupted_at=state["time"],
-                         interruption="objective_deferred")
+            if event["status"] == "scheduled":
+                event.update(status="interrupted", interrupted_at=state["time"],
+                             interruption="objective_deferred")
+                if "task_history" in event:
+                    event["task_history"].append({"operation": "interrupt", "at": state["time"],
+                        "reason": "objective_deferred", "work_seconds": event.get("work_seconds", 0)})
         else:
             event.update(status="cancelled", cancelled_at=state["time"],
                          cancellation_basis="Objective " + entry["status"])
