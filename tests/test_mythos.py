@@ -855,6 +855,24 @@ class MythosTrialTests(unittest.TestCase):
         self.assertNotIn("test", event)
         self.assertNotIn("assessment", event)
         mythos.verify(interrupted)
+        resume = {"operation": "resume", "id": "evt:examine", "npc": "burroughs", "basis": "He returns to the same examination."}
+        resumed = mythos.establish_step(interrupted, {"npc_task": resume})
+        resumed = mythos.step(resumed, "observe")
+        event = resumed["timed_detail_events"][-1]
+        self.assertEqual(event["status"], "completed")
+        self.assertEqual(event["work_seconds"], 600)
+        self.assertEqual(event["test"], elapsed["timed_detail_events"][-1]["test"])
+        mythos.verify(resumed)
+        cancelled = mythos.establish_step(interrupted, {"npc_task": dict(resume, operation="cancel")})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(cancelled, {"npc_task": resume})
+        mythos.verify(cancelled)
+        changed = mythos.establish_step(interrupted, {"changes": [{"id": "inc:case",
+            "property": "appearance", "before": "Faded initials", "after": "Obscured initials",
+            "basis": "Established changed appearance"}]})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(changed, {"npc_task": resume})
+        mythos.verify(changed)
 
     def test_independent_npc_travel_reuses_route_and_time(self):
         import copy
@@ -1230,6 +1248,51 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(next(e for e in mythos.view(returned)["established_details"]
                               if e["id"] == "inc:cup")["lifecycle"], "destroyed")
         mythos.verify(returned)
+
+    def test_npc_lifecycle_schedule_duress_sleep_and_remote_waking(self):
+        from datetime import datetime, timedelta
+        from age_runtime.core import dxd_conditions
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        schedule = {"operation": "schedule", "npc": "eleanor", "basis": "A reviewed daily work routine",
+                    "windows": [{"start_minute": 490, "end_minute": 500,
+                                 "mode": "low_energy", "label": "Quiet accounting"}]}
+        s = mythos.establish_step(s, {"npc_lifecycle": schedule})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_lifecycle": dict(schedule, windows=schedule["windows"]*2)})
+        scheduled = mythos.step(s, "move:Harbor Docks")
+        self.assertEqual(mythos.gm_context(scheduled)["referee"]["npc_temporal"]["eleanor"]
+                         ["current_occupation"]["label"], "Quiet accounting")
+        scheduled = mythos.step(scheduled, "observe")
+        self.assertEqual(scheduled["npcs"]["eleanor"]["activity"]["activity"], "low_energy")
+        self.assertIsNone(mythos.gm_context(scheduled)["referee"]["npc_temporal"]["eleanor"]["current_occupation"])
+        scheduled = mythos.step(scheduled, "observe")
+        self.assertEqual(scheduled["npcs"]["eleanor"]["activity"]["activity"], "active")
+        duress = mythos.establish_step(scheduled, {"npc_lifecycle": {
+            "operation": "duress", "npc": "eleanor", "minutes": 20, "interval_minutes": 10,
+            "basis": "Established prolonged disturbing surroundings."}})
+        duress = mythos.step(mythos.step(duress, "observe"), "observe")
+        self.assertEqual(duress["npcs"]["eleanor"]["concerns"]["stress"], 2)
+        self.assertIsNone(duress["npcs"]["eleanor"]["activity_plan"])
+        asleep = mythos.establish_step(duress, {"npc_lifecycle": {
+            "operation": "sleep", "npc": "eleanor", "basis": "She retires to an established private resting place."}})
+        self.assertEqual(asleep["time"], duress["time"])
+        clock = asleep["npcs"]["eleanor"]["activity"]
+        self.assertEqual(clock["status"], "asleep")
+        self.assertEqual(clock["required_sleep_seconds"], dxd_conditions.required_sleep(
+            asleep["npcs"]["eleanor"]["concerns"], asleep["npcs"]["eleanor"]["dxd_attributes"]))
+        due = datetime.fromisoformat(asleep["time"]) + timedelta(seconds=clock["required_sleep_seconds"])
+        _, rules = mythos.load("boothbay")
+        self.assertFalse(mythos.npc_available(asleep, rules, {"npc": "eleanor", "location": "Harbor Diner"}))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(asleep, {"npc_lifecycle": {"operation": "awaken", "npc": "eleanor", "basis": "Remote attempt."}})
+        # Advance the protagonist independently; NPC sleep is on the same clock.
+        awake = asleep
+        while datetime.fromisoformat(awake["time"]) < due:
+            awake = mythos.step(awake, "rest_room")
+        self.assertEqual(awake["npcs"]["eleanor"]["activity"]["status"], "awake")
+        self.assertIsNotNone(awake["npcs"]["eleanor"]["morning_until"])
+        self.assertNotIn("npc_temporal", mythos.view(awake))
+        mythos.verify(awake)
 
     def test_npc_temporal_recovery_uses_established_activity_and_shared_clock(self):
         import copy
