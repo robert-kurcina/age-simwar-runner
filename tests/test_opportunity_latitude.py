@@ -135,3 +135,46 @@ class OpportunityLatitudeTest(unittest.TestCase):
         self.assertFalse(brief["recovery_assessment"]["terminal_failure_established"])
         self.assertTrue(brief["recovery_assessment"]["alternatives"])
         self.assertEqual(briefing(session)["objective_outcomes"], brief["objective_outcomes"])
+
+
+    def test_institutional_deadline_and_dependent_objective(self):
+        from age_runtime.core.private_play import pending_factions, model_packet, model_choice, update
+        sid = "purge-institutional-draft"
+        session = start_rehearsal(ROOT, sid, "fiji")
+        opening = decision_brief(session)
+        self.assertEqual(opening["objective_outcomes"]["claims"]["status"], "open")
+        self.assertEqual(opening["objective_outcomes"]["safeguards"]["status"], "open")
+        for actor in pending_factions(session):
+            packet = model_packet(session, actor)
+            session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
+        session = update(session, turns=1)
+        before = digest(session)
+        brief = decision_brief(session)
+        for ident in ("claims", "safeguards"):
+            self.assertEqual(brief["objective_outcomes"][ident]["status"], "objective_failure")
+            self.assertEqual(brief["objective_outcomes"][ident]["modeled_range"], {"minimum": 0, "maximum": 0})
+        self.assertFalse(brief["complete"])
+        self.assertFalse(brief["recovery_assessment"]["terminal_failure_established"])
+        self.assertEqual(digest(session), before)
+        # A different signatory has a separate, still attainable relief objective.
+        from age_runtime.core.observations import observe
+        scenario = session["header"]["compiled"]["scenario"]
+        other = observe(scenario, session["state"], "vanuatu")
+        self.assertEqual(other["objective_outcomes"]["local_relief"]["status"], "open")
+        self.assertNotIn("claims", other["objective_outcomes"])
+
+    def test_institutional_bounds_require_current_evidence(self):
+        agreements = {
+            "first": {"outcome": "a", "due_minute": 10, "requires": []},
+            "second": {"outcome": "b", "due_minute": 20, "requires": ["first"]},
+            "third": {"outcome": "c", "due_minute": 30, "requires": ["second"]},
+        }
+        reports = {k: {"status": "current", "value": 0} for k in ("a", "b", "c")}
+        self.assertEqual(latitude.institutional_bounds(agreements, reports, 0), {})
+        fixed = latitude.institutional_bounds(agreements, reports, 10)
+        self.assertEqual({k: v["value"] for k, v in fixed.items()}, {"a": 0, "b": 0, "c": 0})
+        reports["a"]["status"] = "stale"
+        self.assertEqual(latitude.institutional_bounds(agreements, reports, 10), {})
+        reports["a"] = {"status": "current", "value": 1}
+        fixed = latitude.institutional_bounds(agreements, reports, 10)
+        self.assertEqual({k: v["value"] for k, v in fixed.items()}, {"a": 1})
