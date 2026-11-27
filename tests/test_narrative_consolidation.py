@@ -355,3 +355,44 @@ class NarrativeConsolidationTests(unittest.TestCase):
         state["time"] = (datetime.fromisoformat(state["time"]) + timedelta(days=31)).isoformat()
         mythos.change_demeanor(state, "matteo", 3)
         self.assertEqual(state["relationships"]["matteo"], 2)
+
+    def test_scoped_objectives_and_beliefs_from_actual_castine_encounter(self):
+        for seed in range(100):
+            state = mythos.step(mythos.initial("castine", seed), "inspect_ledger")
+            if "ledger" in state["flags"]:
+                state = mythos.step(state, "talk_martha")
+                break
+        else:
+            self.fail("No eligible authored encounter")
+        request = {"npc": "martha", "speaker": "pc", "claim": "Perhaps Imogen left voluntarily.",
+                   "stance": "unstated", "intent": "unstated"}
+        state = mythos.dialogue_step(state, request)
+        cid = state["dialogue"][-1]["id"]
+        objective = {"operation": "create", "id": "goal:account", "npc": "martha",
+                     "goal": "Understand the inquiry", "priority": "normal",
+                     "intention": "Consider the suggestion", "basis": "Actual inquiry",
+                     "sources": [{"kind": "claim", "id": cid}]}
+        before = copy.deepcopy(state)
+        state = mythos.batch_step(state, {"operations": [
+            {"establish": {"npc_objective": objective}},
+            {"establish": {"hypothesis": {"id": "hyp:departure", "npc": "martha",
+                                           "text": "Imogen left voluntarily.", "source": cid}}},
+            {"establish": {"belief_revision": {"npc": "martha", "proposition": "hyp:departure",
+                "stance": "doubts", "asserts": True, "sources": [cid], "basis": "Uncertain account"}}}]})
+        for key in ("time", "turn", "flags", "discoveries", "dxd", "relationships"):
+            self.assertEqual(state[key], before[key])
+        self.assertNotIn("favor", state["npcs"]["martha"])
+        public = mythos.view(state)
+        self.assertNotIn("npc_objectives", public)
+        self.assertNotIn("dynamic_propositions", public)
+        ref = mythos.gm_context(state)["referee"]
+        self.assertEqual(ref["npc_agency"]["martha"]["objectives"][0]["id"], "goal:account")
+        self.assertNotIn("zebediah", ref["npc_agency"])
+        self.assertNotIn("favor", ref["npc_agency"]["martha"])
+        mythos.verify(state)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, {"npc_objective": dict(objective, id="goal:other",
+                sources=[{"kind": "observation", "id": "missing"}])})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, {"npc_social_test": {
+                "id": "social:test", "claim": cid, "basis": "Unsupported Test"}})
