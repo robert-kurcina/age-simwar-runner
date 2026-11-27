@@ -61,7 +61,7 @@ class GrantInspectionQualification(unittest.TestCase):
         obs = observe(s, state, "foundation")
         self.assertEqual(obs["propositions"]["inspection"]["latest_stance"], "disbelieves")
         self.assertNotIn("speaker_intent", obs["communications"][0])
-        self.assertNotIn("foundation", observe(s, state, "central")["diplomatic_history"].get("foundation", {}).get("private_intentions", {}))
+        self.assertNotIn("inspection", observe(s, state, "central")["diplomatic_history"].get("foundation", {}).get("private_intentions", {}))
         self.assertEqual(state["values"], s["initial"])
         state = self.decide(s, state, "offer", "Permit a supervised visit.", {
             "kind": "propose", "id": "supervised_offer", "recipient": "foundation",
