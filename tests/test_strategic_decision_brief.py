@@ -61,3 +61,30 @@ class StrategicDecisionBriefTest(unittest.TestCase):
         self.assertEqual(terminal["options"], [])
         self.assertEqual(terminal["remaining_turns"], 0)
         self.assertEqual(terminal["decision_pacing"]["count"], 0)
+
+    def test_faction_brief_preserves_packet_binding_and_scope(self):
+        from unittest.mock import patch
+        from age_runtime.core.private_play import model_decision_brief
+        from age_runtime.core.runner import faction_packet, accept_faction_choice
+        s = load("mainlander-ingress")["scenario"]
+        state = initialize(s)
+        state = communicate(s, state, "fiji", digest(state), {
+            "id": "restricted_status", "recipients": ["vanuatu"],
+            "claim": "Claims procedures remain incomplete.",
+            "proposition": "claims_ready", "asserts": False})
+        before = digest(state)
+        for actor in ("shanter", "vanuatu"):
+            packet = faction_packet(s, state, actor)
+            with patch("age_runtime.core.private_play.model_packet", return_value=packet) as routed:
+                exchange = model_decision_brief({}, actor)
+                routed.assert_called_once_with({}, actor)
+            self.assertEqual(exchange["packet"], packet)
+            brief = exchange["decision_brief"]
+            self.assertEqual(brief["actor"], actor)
+            self.assertIsNone(brief["decision_pacing"])
+            # The delayed communication is not yet visible to Vanuatu either.
+            self.assertFalse(brief["recent_claims"])
+            response = {"packet_id": exchange["packet"]["packet_id"], "action": None}
+            candidate = accept_faction_choice(s, state, actor, packet, response)
+            self.assertEqual(candidate["minute"], state["minute"])
+            self.assertEqual(digest(state), before)

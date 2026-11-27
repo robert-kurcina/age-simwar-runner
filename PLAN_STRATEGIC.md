@@ -368,3 +368,9 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 
 - DONE (mechanical): PR #204 Tests 46058180782 and Chat runtime bundle 46058180841 passed. Contrasting scripted outcomes cover all seven episodes.
 - WIP (CI pending): derive a read-only decision brief from the existing actor-local observation and institutional recall. Include ordered own goals, current/stale reports, changes, deadlines, pending orders, project bottlenecks, recent claims and decisions, unsettled propositions, negotiation, and supported options. Shared-budget warnings distinguish individually feasible orders from collectively unaffordable alternatives; no reservation or forecast. Expose `decision-brief SESSION` through existing private play CLI. Full briefing and memory remain authoritative projections; no new state, pacing effect, consent, or model policy. Actual literary presentation and independent faction decisions remain unqualified; canonical compilation and reviewed registration outstanding.
+
+
+## ST-D — contextual moderation integration
+
+- PR #206 Tests 46058428321 passed; bundle 46058428290 was pending at inspection.
+- WIP (CI pending): expose referee-only `faction-brief` using the original faction packet and derived decision support. Integrate player contextual briefing and independent faction deliberation into Chat facilitator instructions for batch and sequential exchanges. Preserve response and checkpoint compatibility; regression covers scope, delayed communication and accepted original packet response. No new decision policy or claim of independent LLM competence. Next portable delivery and actual source-backed qualification; broader roster remains unresolved.

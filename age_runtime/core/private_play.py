@@ -368,6 +368,14 @@ def model_packet(session, actor):
     return faction_packet(session["header"]["compiled"]["scenario"], session["state"], actor)
 
 
+def model_decision_brief(session, actor):
+    """Derived referee-only exchange; the original packet binding is unchanged."""
+    from age_runtime.core.decision_support import decision_brief as project
+    packet = model_packet(session, actor)
+    return {"packet": packet, "decision_brief": project(packet["observation"]),
+            "scope": "Use only this faction's observation; choose independently."}
+
+
 def model_choice(session, actor, response):
     packet = model_packet(session, actor)
     s = session["header"]["compiled"]["scenario"]
@@ -516,6 +524,9 @@ def main(argv=None):
         sub.add_argument("actor")
         if name == "faction-choice":
             sub.add_argument("response", type=Path)
+    faction_brief = commands.add_parser("faction-brief", help="Referee-only contextual faction exchange")
+    faction_brief.add_argument("session", type=Path)
+    faction_brief.add_argument("actor")
     decision = commands.add_parser("commit-decision")
     decision.add_argument("session", type=Path)
     decision.add_argument("decision_id")
@@ -639,6 +650,8 @@ def main(argv=None):
             session = resolve_turn(read(a.session), a.revision, read(a.responses))
             save(a.session, session)
             result = briefing(session)
+        elif a.command == "faction-brief":
+            result = model_decision_brief(read(a.session), a.actor)
         elif a.command == "faction-packet":
             result = model_packet(read(a.session), a.actor)
         elif a.command == "faction-choice":
