@@ -37,7 +37,8 @@ def append(s, state, actor, command):
     if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts", "speaker_intent"} or not {"id", "recipients", "claim"} <= set(command):
         raise ValueError("invalid communication fields")
     cid = text_field(command["id"], 80)
-    if cid == "authored_access" or cid.startswith("report:"):
+    if cid == "authored_access" or (cid.startswith("report:") and any(
+            "report_binding" in item for item in s.get("communication_propositions", {}).values())):
         raise ValueError("reserved communication ID")
     claim = text_field(command["claim"], 400)
     recipients = command["recipients"]
@@ -76,22 +77,33 @@ def append(s, state, actor, command):
     return result
 
 
+def observed_report(s, state, actor, key):
+    """Single delayed-report projection for observations and evidence."""
+    profile = s["actors"][actor]
+    if key not in profile.get("visible_keys", []):
+        return None
+    delay = profile.get("report_delay_minutes", {}).get(key, 0)
+    cutoff = state["minute"] - delay
+    if cutoff < 0:
+        return {"status": "unknown"}
+    value = s["initial"][key]
+    for entry in state["ledger"]:
+        if entry["key"] == key and entry["minute"] <= cutoff:
+            value = entry["value"]
+    return {"status": "current" if delay == 0 else "stale",
+            "as_of_minute": cutoff, "age_minutes": delay, "value": value}
+
+
 def report_source(s, state, actor, item):
     """Actor-visible snapshot only; no disclosure of unreported current values."""
     binding = item.get("report_binding")
     if binding is None:
         return None
     key = binding["key"]
-    profile = s["actors"][actor]
-    if key not in profile.get("visible_keys", []):
+    report = observed_report(s, state, actor, key)
+    if report is None or "value" not in report:
         return None
-    cutoff = state["minute"] - profile.get("report_delay_minutes", {}).get(key, 0)
-    if cutoff < 0:
-        return None
-    value = s["initial"][key]
-    for entry in state["ledger"]:
-        if entry["key"] == key and entry["minute"] <= cutoff:
-            value = entry["value"]
+    cutoff, value = report["as_of_minute"], report["value"]
     threshold = binding["threshold"]
     satisfies = {"equal": value == threshold, "at_least": value >= threshold,
                  "at_most": value <= threshold}[binding["comparison"]]
