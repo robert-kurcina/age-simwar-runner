@@ -813,6 +813,32 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_independent_npc_travel_reuses_route_and_time(self):
+        import copy
+        s = mythos.initial("boothbay", 42)
+        for action in ("talk_eleanor", "visit_elias", "inspect_room", "speak_burroughs"):
+            s = mythos.step(s, action)
+        before = copy.deepcopy(s)
+        req = {"npc": "burroughs", "destination": "Harbor Diner", "basis": "He visits the diner."}
+        traveling = mythos.establish_step(s, {"npc_travel": req})
+        self.assertEqual(s, before)
+        self.assertEqual(traveling["time"], s["time"])
+        self.assertEqual(traveling["npc_travel"][0]["route"]["seconds"], 300)
+        self.assertEqual(traveling["npcs"]["burroughs"]["location"], "Harbor Docks")
+        _, rules = mythos.load("boothbay")
+        self.assertFalse(mythos.npc_available(traveling, rules, {"npc": "burroughs", "location": "Harbor Docks"}))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(traveling, {"npc_travel": req})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_travel": dict(req, destination="Devil's Throat Sea Caves")})
+        elapsed = mythos.step(traveling, "observe")
+        self.assertEqual(elapsed["npc_travel"][0]["status"], "completed")
+        self.assertEqual(elapsed["npc_travel"][0]["resolved_at"], traveling["npc_travel"][0]["due"])
+        self.assertEqual(elapsed["npcs"]["burroughs"]["location"], "Harbor Diner")
+        self.assertEqual(elapsed["location"], "Harbor Docks")
+        self.assertNotIn("npc_travel", mythos.view(elapsed))
+        mythos.verify(elapsed)
+
     def test_npc_testimony_is_private_received_claim_not_direct_observation(self):
         import copy
         from age_runtime.mythos import epistemic
@@ -825,11 +851,18 @@ class MythosTrialTests(unittest.TestCase):
                "source": {"kind": "claim", "id": 1}}
         with self.assertRaises(ValueError):
             mythos.establish_step(s, {"npc_testimony": req})
-        # Isolate the authority validator with a co-location fixture. This
-        # synthetic anchor is not a replayable campaign movement.
-        s["npcs"]["burroughs"]["location"] = "Harbor Diner"
-        s["flags"].append("police_attention")
-        s = mythos.step(s, "move:Harbor Docks")
+        for action in ("talk_eleanor", "visit_elias", "inspect_room", "speak_burroughs"):
+            s = mythos.step(s, action)
+        self.assertEqual(s["npcs"]["burroughs"]["location"], "Harbor Docks")
+        s = mythos.establish_step(s, {"npc_travel": {"npc": "burroughs",
+            "destination": "Harbor Diner", "basis": "He seeks Eleanor's account."}})
+        self.assertEqual(s["npc_travel"][0]["status"], "traveling")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_testimony": req})
+        s = mythos.step(s, "observe")
+        self.assertEqual(s["npc_travel"][0]["status"], "completed")
+        self.assertEqual(s["npcs"]["burroughs"]["location"], "Harbor Diner")
+        self.assertEqual(s["location"], "Harbor Docks")
         before = copy.deepcopy(s)
         after = mythos.establish_step(s, {"npc_testimony": req})
         self.assertEqual(s, before)
@@ -837,8 +870,9 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(after["flags"], s["flags"])
         self.assertEqual(after["relationships"], s["relationships"])
         self.assertEqual(after["action_observations"], [])
-        self.assertEqual(len(epistemic.public_projection(after)), 1)
-        self.assertEqual(epistemic.referee_projection(after, {"burroughs"})[0]["listener_stance"], "doubts")
+        self.assertEqual(epistemic.public_projection(after), epistemic.public_projection(before))
+        self.assertEqual(epistemic.referee_projection(after, {"burroughs"})[-1]["listener_stance"], "doubts")
+        mythos.verify(after)
         self.assertEqual(epistemic.referee_projection(after, {"elias"}), [])
         with self.assertRaises(ValueError):
             mythos.establish_step(after, {"npc_testimony": req})
