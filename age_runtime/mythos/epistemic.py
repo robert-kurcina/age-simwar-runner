@@ -12,6 +12,24 @@ def _text(value, limit):
         raise ValueError("invalid dialogue text")
     return value.strip()
 
+def conversation_available(state, rules, npc, npc_available):
+    """Dialogue requires local presence, and optionally an authored encounter/window."""
+    if state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
+        return False
+    if npc not in state["npcs"] or state["npcs"][npc]["location"] != state["location"]:
+        return False
+    if not npc_available(state, rules, {"npc": npc, "location": state["location"]}):
+        return False
+    if not rules.get("dialogue_requires_encounter"):
+        return True
+    if not state["npcs"][npc]["encounters"]:
+        return False
+    return any(a.get("npc") == npc and a.get("location") == state["location"]
+               and (not a.get("available_from") or state["time"] >= a["available_from"])
+               and (not a.get("available_until") or state["time"] < a["available_until"])
+               for a in rules["actions"])
+
+
 def record(state, rules, request, npc_available):
     if not rules.get("epistemic_dialogue") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("dialogue unavailable")
@@ -21,8 +39,8 @@ def record(state, rules, request, npc_available):
     npc, speaker = request["npc"], request["speaker"]
     if not isinstance(npc, str) or npc not in state["npcs"] or speaker not in ("pc", npc):
         raise ValueError("invalid dialogue participants")
-    if state["npcs"][npc]["location"] != state["location"] or not npc_available(state, rules, {"npc": npc, "location": state["location"]}):
-        raise ValueError("dialogue participant not present")
+    if not conversation_available(state, rules, npc, npc_available):
+        raise ValueError("dialogue participant not present or encounter unavailable")
     claim = _text(request["claim"], 400)
     stance, intent = request["stance"], request["intent"]
     if stance not in ("unstated", "believes", "doubts", "disbelieves", "unknown"):
