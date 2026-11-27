@@ -2,6 +2,33 @@
 
 Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
 
+## Subsequent phase — planned and ad hoc scenario facility (DEFERRED, P2)
+
+Author-approved direction (2026-11-27): develop a common facility for preparing a complete scenario from a detailed concept and for initiating play from a minimal gist, with consequential world development during play. The existing imported experimental scenarios remain reference implementations and regression fixtures, not a requirement for indefinite scenario-by-scenario feature parity.
+
+**Entry gate:** complete the main narrative engine implementation priorities and readiness corrections first, including the existing P0/P1 native adjudication, character/NPC continuity, temporal consequences, player recall, GM presentation, replay and qualification work. Record evidence against the current narrative readiness criteria; do not use this new facility to bypass them. Do not promote this phase to WIP merely because a legacy scenario PR merges. Continue the current implementation sequence, with actual player-led qualification distinct from mechanical tests. Full-stack service remains the final P3 phase.
+
+### Common facility and operating modes
+
+Both modes use the same native rules, engine, state, transaction and replay path. Planned mode accepts a detailed outline and produces a validated playable opening package with possible developments, not a mandatory plot. Ad hoc mode accepts a short premise and establishes only the minimum coherent opening (system/setting, protagonist and Session Zero boundaries, Hook, immediate situation, stakes, starting location, relevant actors and uncertainties). Prepare additional material as it becomes relevant. Neither mode requires an external content repository, hard-coded scenario ID, exhaustive action catalog, or a separate adjudicator. Use existing JSON, CLI, source compiler and gameplay mechanisms wherever feasible.
+
+### Ordered deferred deliverables
+
+| Order | Deliverable | Status | Exit evidence |
+|---|---|---|---|
+| 1 | Common scenario contract and validation | DEFERRED | Minimal and detailed inputs accepted through the same reviewed, versioned contract; reject inconsistent references, unsupported native mechanics and invalid initial state. |
+| 2 | Generated scenario initialization | DEFERRED | Start a new local session from a validated portable package, with frozen source/configuration identity, seed, provenance, and exact replay without a registered fixture or live vault dependency. |
+| 3 | Generalized intent adjudication and consequential establishment | DEFERRED | Resolve supported non-catalog player actions using native Tests and typed, bounded consequences; establish new actors, locations, connections, objects, facts, opportunities and events only under explicit validated authority. Atomic revision checks, eligibility, visibility and prior-state guards remain authoritative. |
+| 4 | Planned scenario preparation | DEFERRED | LLM converts a detailed concept into the common playable contract, preserving fixed facts, motives, clue paths, pressure, plausible alternatives and open resolutions; validation reports actionable errors rather than silently inventing missing authority. |
+| 5 | Ad hoc scenario initiation and ongoing development | DEFERRED | Start from a gist and develop only relevant material during ordinary Chat play, using the same contract and adjudication paths. No compulsory full outline or pre-authored action tree. |
+| 6 | Integrated qualification | DEFERRED | Complete and resume a genuinely new planned scenario and a different gist-led scenario in ordinary Chat with actual player feedback, meaningful non-catalog decisions, actor-scoped knowledge, credible consequences, source fidelity and exact mechanical replay. Run legacy fixture regressions and verify standalone delivery. |
+
+### Authority and scope
+
+Keep canon, reviewed initial assumptions, established public facts, established hidden facts, flexible preparation and undefined material distinguishable. New session facts may fill genuinely undefined material; never retroactively replace established truth to defeat deductions, rescue a preferred plot or erase consequences. Separate objective fact, report, hypothesis, intention and actual action. The GM judges semantic grounding and authorization; Python checks structural rules, revision, native arithmetic, eligibility, permitted effects and replay. Record accepted generated inputs, including material additions and their provenance; do not regenerate them during replay. No arbitrary code/effect execution, unrestricted rule invention, duplicate state/memory store, mandatory simulation of every actor or universal effect DSL.
+
+Respect the selected native system and dated setting authority. Keep private/unapproved generated material in session-local authorized storage; no automatic publication or canon promotion. A generated draft is not a reviewed catalog registration. Begin with a bounded Fear!/DXD slice after the entry gate; broader native-system support follows demonstrated needs. The prior experimental scenarios remain regression evidence; further feature parity is justified by reusable engine requirements rather than completionism.
+
 ## Shared consequential information — narrative coordination
 
 Follow the [master shared contracts](PLAN.md#shared-consequential-information-and-world-establishment). Narrative v44–v49 are first-adopter pilots for material claims, proposition references, actor-scoped receipt/stance, descriptive establishment and guarded properties/custody. Preserve their existing versioned semantics and qualification history; do not claim these pilots already supply a common API.
