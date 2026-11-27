@@ -601,3 +601,53 @@ class NarrativeConsolidationTests(unittest.TestCase):
         invalid["local_proposals"]["inspect_object"]["object_effect"] = "destroy"
         with self.assertRaises(ValueError):
             proposals.validate_local(invalid)
+
+    def test_functional_consequence_without_physical_destruction(self):
+        from age_runtime.mythos import establishment, proposals, behavior
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        state = mythos.establish_step(state, {"details": [{
+            "id": "inc:watch", "kind": "object", "label": "Pocket watch",
+            "description": "A working pocket watch.", "basis": "Mundane personal item",
+            "custodian": "eleanor", "function": "operational"}]})
+        state = mythos.establish_step(state, {"transfers": [{
+            "id": "inc:watch", "from": "eleanor", "to": "pc",
+            "pc_authorization": "I accept it.", "npc_consent": "Here you are.",
+            "basis": "Voluntary transfer"}]})
+        _, rules = mythos.load("boothbay")
+        proposal = {"action": "local:inspect_object:inc:watch",
+                    "approach": "inspect_object", "intent": "Examine the watch."}
+        compiled = proposals.compile_local(state, rules, proposal, mythos.npc_available)
+        request = {"id": "act:stop_watch", "object": "inc:watch",
+                   "before": "intact", "outcome": "intact",
+                   "function_before": "operational", "function_after": "nonfunctional",
+                   "authorization": "I stop the watch permanently.",
+                   "basis": "Reviewed certain incidental outcome",
+                   "remnants": "The watch no longer works."}
+        before = copy.deepcopy(state)
+        after = mythos.establish_step(state, {"object_action": request})
+        self.assertEqual(state, before)
+        entity = establishment.local_entities(after)["inc:watch"]
+        self.assertEqual(entity["lifecycle"], "intact")
+        self.assertEqual(entity["function"], "nonfunctional")
+        self.assertEqual(entity["custodian"], "pc")
+        self.assertEqual(after["relationships"], state["relationships"])
+        self.assertEqual(after["discoveries"], state["discoveries"])
+        self.assertFalse(proposals.completion_available(after, rules, compiled, mythos.npc_available))
+        self.assertIn(proposal["action"], {c["action"] for c in mythos.gm_context(after)["referee"]["local_capabilities"]})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"object_action": dict(request, id="act:repeat")})
+        witnessed = mythos.establish_step(after, {"action_observation": {
+            "id": "obs:watch_stop", "npc": "eleanor", "action": "act:stop_watch",
+            "kind": "witnessed", "basis": "Eleanor sees the action and its result."}})
+        self.assertEqual(behavior.evidence(witnessed, "eleanor")["obs:watch_stop"]["function"], "nonfunctional")
+        self.assertEqual(witnessed["relationships"], state["relationships"])
+        discovered = mythos.establish_step(after, {"action_observation": {
+            "id": "obs:watch_found", "npc": "eleanor", "action": "act:stop_watch",
+            "kind": "discovered", "basis": "Eleanor examines the stopped watch."}})
+        self.assertIsNone(discovered["action_observations"][-1]["actor"])
+        self.assertEqual(discovered["action_observations"][-1]["function"], "nonfunctional")
+        mythos.verify(witnessed)
+        mythos.verify(discovered)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"object_action": dict(request, id="act:restore_watch",
+                function_before="nonfunctional", function_after="operational")})
