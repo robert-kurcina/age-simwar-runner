@@ -22,7 +22,7 @@ def recap(public):
         "turn": public["turn"],
         "ending": copy.deepcopy(public.get("ending")),
         "current_situation": {
-            "description": scene.get("description"),
+            "description": scene.get("description") or public.get("opening"),
             "pressure": copy.deepcopy(scene.get("pressure", [])),
             "active_spotlight": copy.deepcopy(pacing.get("current_spotlight")),
             "last_result": copy.deepcopy(public.get("last_result")),
@@ -42,6 +42,8 @@ def recap(public):
             "resources": copy.deepcopy(public.get("resources", {})),
             "condition": copy.deepcopy(public.get("condition", {})),
             "event_pressure": copy.deepcopy(public.get("event_pressure", {})),
+            "activity": copy.deepcopy(public.get("activity")),
+            "memory_prompt": copy.deepcopy(public.get("memory_prompt")),
         },
         "available_next_actions": copy.deepcopy(public.get("choices", [])),
     }
