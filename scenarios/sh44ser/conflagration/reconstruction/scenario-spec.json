@@ -1,0 +1,571 @@
+{
+  "version": 1,
+  "effective_date": "2011-01-01",
+  "scenario": {
+    "version": 1,
+    "id": "reconstruction-regional-draft",
+    "turn_minutes": 10080,
+    "end_minute": 60480,
+    "initial": {
+      "shanter_credits": 4,
+      "fiji_credits": 2,
+      "vanuatu_credits": 3,
+      "shanter_technical_progress": 0,
+      "shanter_technical_delay": 0,
+      "shanter_technical_complications": 0,
+      "shanter_technical_industrial": 3,
+      "shanter_technical_energy": 2,
+      "fiji_port_progress": 0,
+      "fiji_port_delay": 0,
+      "fiji_port_complications": 0,
+      "fiji_port_logistics": 2,
+      "fiji_port_materials": 2,
+      "fiji_housing_progress": 0,
+      "fiji_housing_delay": 0,
+      "fiji_housing_complications": 0,
+      "fiji_housing_labor": 3,
+      "vanuatu_power_progress": 0,
+      "vanuatu_power_delay": 0,
+      "vanuatu_power_complications": 0,
+      "vanuatu_power_energy": 2,
+      "vanuatu_power_labor": 3
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "shanter": {
+        "label": "Shanter",
+        "visible_keys": [
+          "shanter_credits",
+          "shanter_technical_progress",
+          "shanter_technical_delay",
+          "shanter_technical_complications",
+          "shanter_technical_industrial",
+          "shanter_technical_energy",
+          "fiji_port_progress"
+        ],
+        "objectives": {
+          "reserve": {
+            "key": "shanter_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted abstract program credit"
+          },
+          "technical": {
+            "key": "shanter_technical_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete at least 4 of 4 abstract stages of civilian technical-service restoration"
+          },
+          "regional": {
+            "key": "fiji_port_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Restore regional port-service availability"
+          }
+        },
+        "strategy": {
+          "motivation": "Restore technical and civilian services without assuming a reopened spaceport at the opening date.",
+          "priorities": [
+            "technical",
+            "regional",
+            "reserve"
+          ]
+        }
+      },
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "fiji_credits",
+          "fiji_port_progress",
+          "fiji_port_delay",
+          "fiji_port_complications",
+          "fiji_port_logistics",
+          "fiji_port_materials",
+          "fiji_housing_progress",
+          "fiji_housing_delay",
+          "fiji_housing_complications",
+          "fiji_housing_labor"
+        ],
+        "objectives": {
+          "reserve": {
+            "key": "fiji_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted abstract program credit"
+          },
+          "port": {
+            "key": "fiji_port_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete at least 4 of 4 abstract stages of civilian port service restoration"
+          },
+          "housing": {
+            "key": "fiji_housing_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete at least 4 of 4 abstract stages of civilian housing service restoration"
+          }
+        },
+        "strategy": {
+          "motivation": "Restore civilian services and lawful registry capacity while retaining resources for housing.",
+          "priorities": [
+            "port",
+            "housing",
+            "reserve"
+          ]
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "vanuatu_credits",
+          "vanuatu_power_progress",
+          "vanuatu_power_delay",
+          "vanuatu_power_complications",
+          "vanuatu_power_energy",
+          "vanuatu_power_labor",
+          "fiji_port_progress"
+        ],
+        "objectives": {
+          "reserve": {
+            "key": "vanuatu_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted abstract program credit"
+          },
+          "power": {
+            "key": "vanuatu_power_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete at least 4 of 4 abstract stages of distributed civilian power service restoration"
+          },
+          "regional": {
+            "key": "fiji_port_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Support shared maritime commerce"
+          }
+        },
+        "strategy": {
+          "motivation": "Balance dispersed community needs with port and energy development.",
+          "priorities": [
+            "power",
+            "reserve",
+            "regional"
+          ]
+        }
+      }
+    },
+    "action_catalog": {
+      "shanter_technical_improve_industrial": {
+        "description": "Allocate 1 abstract program credit(s) to improve industrial capacity for civilian technical-service restoration.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "shanter_technical_improve_energy": {
+        "description": "Allocate 2 abstract program credit(s) to improve energy capacity for civilian technical-service restoration.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "fiji_port_improve_logistics": {
+        "description": "Allocate 1 abstract program credit(s) to improve logistics capacity for civilian port service restoration.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "fiji_port_improve_materials": {
+        "description": "Allocate 2 abstract program credit(s) to improve materials capacity for civilian port service restoration.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "fiji_housing_improve_labor": {
+        "description": "Allocate 1 abstract program credit(s) to improve labor capacity for civilian housing service restoration.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "vanuatu_power_improve_energy": {
+        "description": "Allocate 2 abstract program credit(s) to improve energy capacity for distributed civilian power service restoration.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "vanuatu_power_improve_labor": {
+        "description": "Allocate 1 abstract program credit(s) to improve labor capacity for distributed civilian power service restoration.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "shanter_support_fiji": {
+        "description": "Voluntarily transfer 2 abstract program credit(s) to fiji.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "fiji_support_vanuatu": {
+        "description": "Voluntarily transfer 1 abstract program credit(s) to vanuatu.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "vanuatu_support_fiji": {
+        "description": "Voluntarily transfer 1 abstract program credit(s) to fiji.",
+        "actors": [
+          "vanuatu"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 3,
+    "economy_projects": [
+      {
+        "id": "shanter_technical",
+        "participant": "shanter",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "industrial",
+            "key": "shanter_technical_industrial"
+          },
+          {
+            "axis": "energy",
+            "key": "shanter_technical_energy"
+          }
+        ],
+        "stages": 4,
+        "progress": "shanter_technical_progress",
+        "delay": "shanter_technical_delay",
+        "complications": "shanter_technical_complications"
+      },
+      {
+        "id": "fiji_port",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "logistics",
+            "key": "fiji_port_logistics"
+          },
+          {
+            "axis": "materials",
+            "key": "fiji_port_materials"
+          }
+        ],
+        "stages": 4,
+        "progress": "fiji_port_progress",
+        "delay": "fiji_port_delay",
+        "complications": "fiji_port_complications"
+      },
+      {
+        "id": "fiji_housing",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "labor",
+            "key": "fiji_housing_labor"
+          }
+        ],
+        "stages": 4,
+        "progress": "fiji_housing_progress",
+        "delay": "fiji_housing_delay",
+        "complications": "fiji_housing_complications"
+      },
+      {
+        "id": "vanuatu_power",
+        "participant": "vanuatu",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "energy",
+            "key": "vanuatu_power_energy"
+          },
+          {
+            "axis": "labor",
+            "key": "vanuatu_power_labor"
+          }
+        ],
+        "stages": 4,
+        "progress": "vanuatu_power_progress",
+        "delay": "vanuatu_power_delay",
+        "complications": "vanuatu_power_complications"
+      }
+    ],
+    "capacity_actions": {
+      "shanter_technical_improve_industrial": {
+        "project": "shanter_technical",
+        "capacity": "shanter_technical_industrial",
+        "resource": "shanter_credits",
+        "cost": 1
+      },
+      "shanter_technical_improve_energy": {
+        "project": "shanter_technical",
+        "capacity": "shanter_technical_energy",
+        "resource": "shanter_credits",
+        "cost": 2
+      },
+      "fiji_port_improve_logistics": {
+        "project": "fiji_port",
+        "capacity": "fiji_port_logistics",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "fiji_port_improve_materials": {
+        "project": "fiji_port",
+        "capacity": "fiji_port_materials",
+        "resource": "fiji_credits",
+        "cost": 2
+      },
+      "fiji_housing_improve_labor": {
+        "project": "fiji_housing",
+        "capacity": "fiji_housing_labor",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "vanuatu_power_improve_energy": {
+        "project": "vanuatu_power",
+        "capacity": "vanuatu_power_energy",
+        "resource": "vanuatu_credits",
+        "cost": 2
+      },
+      "vanuatu_power_improve_labor": {
+        "project": "vanuatu_power",
+        "capacity": "vanuatu_power_labor",
+        "resource": "vanuatu_credits",
+        "cost": 1
+      }
+    },
+    "resource_transfers": {
+      "shanter_support_fiji": {
+        "source": "shanter_credits",
+        "destination": "fiji_credits",
+        "amount": 2
+      },
+      "fiji_support_vanuatu": {
+        "source": "fiji_credits",
+        "destination": "vanuatu_credits",
+        "amount": 1
+      },
+      "vanuatu_support_fiji": {
+        "source": "vanuatu_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      }
+    },
+    "dynamic_negotiation": true,
+    "model_factions": [
+      "shanter",
+      "vanuatu"
+    ],
+    "game_length": "Short"
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "shanter": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+      "heading": "Reconstruction Chronology",
+      "reviewed_for": "2011-01-01",
+      "classification": "canonical"
+    },
+    "fiji": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "05_Nations/Fiji/01_History.md",
+      "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+      "reviewed_for": "2011-01-01",
+      "classification": "canonical"
+    },
+    "vanuatu": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "05_Nations/Vanuatu/01_History.md",
+      "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+      "reviewed_for": "2011-01-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2011-01-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "The post-Charter order is developing; technical infrastructure recovery remains important.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+            "heading": "Reconstruction Chronology",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Restore technical and civilian services without assuming a reopened spaceport at the opening date.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+            "heading": "Reconstruction Chronology",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Domestic civilian programs and reviewed international cooperation.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+            "heading": "Reconstruction Chronology",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2011-01-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "The Suva reconstruction program includes housing, port, power and registry recovery.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Restore civilian services and lawful registry capacity while retaining resources for housing.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Domestic civilian programs and reviewed funding agreements.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2011-01-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Port-Vila reconstruction includes housing, port and geothermal development.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Balance dispersed community needs with port and energy development.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Domestic civilian programs and consent-based cooperation; no assumed completed geothermal capacity.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2011-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    }
+  }
+}
