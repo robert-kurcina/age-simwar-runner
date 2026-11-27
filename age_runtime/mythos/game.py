@@ -38,6 +38,11 @@ def main():
         if cmd == "act":
             q.add_argument("action")
             q.add_argument("--revision", required=True)
+    recall = sub.add_parser("recall")
+    recall.add_argument("session", type=Path)
+    recall.add_argument("query")
+    recall.add_argument("--limit", type=int, default=12)
+    recall.add_argument("--offset", type=int, default=0)
     gm = sub.add_parser("gm")
     gm.add_argument("session", type=Path)
     propose = sub.add_parser("propose")
@@ -86,6 +91,9 @@ def main():
         result = mythos.inspect(args.session)
     elif args.command == "recap":
         result = player_recap.recap(mythos.inspect(args.session))
+    elif args.command == "recall":
+        result = player_recap.recall(mythos.inspect(args.session), args.query,
+                                     limit=args.limit, offset=args.offset)
     elif args.command == "gm":
         result = mythos.inspect_gm(args.session)
     elif args.command == "propose":

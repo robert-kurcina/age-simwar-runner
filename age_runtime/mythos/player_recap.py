@@ -45,3 +45,41 @@ def recap(public):
         },
         "available_next_actions": copy.deepcopy(public.get("choices", [])),
     }
+
+
+def recall(public, query, *, limit=12, offset=0):
+    """Search only earned, player-visible records, keeping original provenance.
+
+    Query is literal, case-insensitive text; matching is not semantic inference.
+    Stable source ordering and pagination keep long histories usable.
+    """
+    import json
+    if "revision" not in public or "choices" not in public:
+        raise ValueError("recall requires a verified player view")
+    if not isinstance(query, str) or not 1 <= len(query.strip()) <= 160:
+        raise ValueError("recall query must contain 1 to 160 characters")
+    if type(limit) is not int or not 1 <= limit <= 50:
+        raise ValueError("recall limit must be 1 to 50")
+    if type(offset) is not int or offset < 0:
+        raise ValueError("recall offset must be a nonnegative integer")
+    needle = query.strip().casefold()
+    results = []
+    # Include old claims even after they leave the recap's recent window.
+    for field, kind in (
+        ("discoveries", "discovery"),
+        ("observations", "observation"),
+        ("dialogue", "communicated_claim"),
+        ("local_records", "local_record"),
+        ("narrative_agreements", "agreement"),
+        ("contacts", "contact"),
+        ("memories", "memory"),
+    ):
+        for index, record in enumerate(public.get(field, [])):
+            if needle in json.dumps(record, ensure_ascii=False, sort_keys=True).casefold():
+                results.append({"kind": kind, "source": field, "index": index,
+                                "record": copy.deepcopy(record)})
+    end = offset + limit
+    return {"audience": "player", "revision": public["revision"],
+            "query": query.strip(), "total": len(results), "offset": offset,
+            "next_offset": end if end < len(results) else None,
+            "matches": results[offset:end]}
