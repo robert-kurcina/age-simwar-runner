@@ -924,21 +924,19 @@ class MythosTrialTests(unittest.TestCase):
         snapshot["evidence"].append("water_risk_known")
         self.assertFalse(continuity.reconsideration_allowed(after, alternate))
 
-    def test_earned_warning_routes_and_reconsideration_replay(self):
-        # Exercise genuine action histories, without inserting flags or
-        # altering dice, time, relationships, or the Test ledger.
+    def test_earned_warning_agreement_and_confirmation_replay(self):
+        # The friendly testimony route is not a credible forced-refusal fixture.
         _, rules = mythos.load("boothbay")
         def legal(s, action):
             return any(a["id"] == action for a in mythos.options(s, rules))
-
-        seen = set()
-        for seed in range(200):
+        for seed in range(100):
             s = mythos.initial("boothbay", seed)
             for action, flag in (
                 ("talk_eleanor", "eleanor_account"),
                 ("follow_eleanor", "water_warning"),
                 ("visit_elias", "journal"),
                 ("read_journal", "tide_clue"),
+                ("warn_eleanor", "local_warning"),
             ):
                 if not legal(s, action):
                     break
@@ -946,45 +944,66 @@ class MythosTrialTests(unittest.TestCase):
                 if flag not in s["flags"]:
                     break
             else:
-                if not legal(s, "warn_eleanor"):
-                    continue
-                s = mythos.step(s, "warn_eleanor")
-                if s["last_result"]["success"]:
-                    if "agreement" in seen:
-                        continue
-                    self.assertEqual(s["containment"], 2)
-                    self.assertNotIn("warning_distributed", s["flags"])
-                    for _ in range(6):
-                        s = mythos.step(s, "observe")
-                    self.assertIn("warning_distributed", s["flags"])
-                    self.assertTrue(legal(s, "confirm_precaution"))
-                    s = mythos.step(s, "confirm_precaution")
-                    self.assertIn("warning_confirmed", s["flags"])
-                    self.assertEqual(s["containment"], 3)
-                    s = mythos.step(s, "depart")
-                    mythos.verify(s)
-                    seen.add("agreement")
-                else:
-                    if "refusal" in seen:
-                        continue
-                    self.assertIn("warning_declined", s["flags"])
-                    self.assertFalse(legal(s, "warn_from_ecology"))
-                    self.assertEqual(s["containment"], 0)
-                    if not legal(s, "examine_inlet"):
-                        continue
-                    s = mythos.step(s, "examine_inlet")
-                    self.assertIn("water_risk_known", s["flags"])
-                    self.assertTrue(legal(s, "warn_from_ecology"))
-                    s = mythos.step(s, "warn_from_ecology")
-                    self.assertFalse(legal(s, "warn_eleanor"))
-                    self.assertFalse(legal(s, "warn_from_ecology"))
-                    self.assertEqual(s["containment"], 2 if s["last_result"]["success"] else 0)
-                    s = mythos.step(s, "depart")
-                    mythos.verify(s)
-                    seen.add("refusal")
-                if seen == {"agreement", "refusal"}:
+                self.assertEqual(s["containment"], 2)
+                self.assertNotIn("warning_distributed", s["flags"])
+                for _ in range(6):
+                    s = mythos.step(s, "observe")
+                self.assertIn("warning_distributed", s["flags"])
+                self.assertTrue(legal(s, "confirm_precaution"))
+                s = mythos.step(s, "confirm_precaution")
+                self.assertIn("warning_confirmed", s["flags"])
+                self.assertEqual(s["containment"], 3)
+                s = mythos.step(s, "depart")
+                mythos.verify(s)
+                break
+        else:
+            self.fail("No earned warning agreement")
+
+    def test_earned_ecological_route_after_elias_withdraws(self):
+        # No testimony, journal, badge, or paperwork is required. Use real
+        # time, encounters, travel, Tests, and the original deadline.
+        _, rules = mythos.load("boothbay")
+        def legal(s, action):
+            return any(a["id"] == action for a in mythos.options(s, rules))
+        for seed in range(100):
+            s = mythos.step(mythos.initial("boothbay", seed), "clear_dock_obstruction")
+            if "dock_access" not in s["flags"]:
+                continue
+            s = mythos.step(s, "compare_almanac")
+            s = mythos.step(s, "move:Creek Inlet South")
+            for _ in range(36):
+                if legal(s, "trace_filaments"):
                     break
-        self.assertEqual(seen, {"agreement", "refusal"})
+                s = mythos.step(s, "observe")
+            if not legal(s, "trace_filaments"):
+                continue
+            s = mythos.step(s, "trace_filaments")
+            # Sleep in a normal paid room and let the calendar advance.
+            s = mythos.step(s, "move:Sailor's Rest Boarding House")
+            for _ in range(3):
+                if "elias_isolated" in s["flags"]:
+                    break
+                s = mythos.step(s, "sleep_room")
+            if "elias_isolated" not in s["flags"] or not legal(s, "inspect_inlet_pattern"):
+                continue
+            self.assertFalse(legal(s, "visit_elias"))
+            s = mythos.step(s, "inspect_inlet_pattern")
+            if "ecological_tide_pattern" not in s["flags"]:
+                continue
+            self.assertFalse(set(s["flags"]) & {"journal", "tide_clue", "water_warning", "badge", "paperwork"})
+            tide = next(x for x in mythos.gm_context(s)["referee"]["narrative_functions"] if x["id"] == "tide_evidence")
+            self.assertTrue(tide["established"])
+            self.assertEqual(tide["carriers"][0]["status"], "blocked")
+            self.assertTrue(legal(s, "warn_from_ecology"))
+            self.assertTrue(legal(s, "report"))
+            s = mythos.step(s, "report")
+            self.assertIn("written_account", s["flags"])
+            s = mythos.step(s, "depart")
+            self.assertIsNotNone(s["ending"])
+            mythos.verify(s)
+            break
+        else:
+            self.fail("No independent ecological evidence route after withdrawal")
 
     def test_earned_report_preparation_and_departure_replay(self):
         _, rules = mythos.load("boothbay")
