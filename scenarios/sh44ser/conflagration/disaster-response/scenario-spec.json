@@ -1,0 +1,474 @@
+{
+  "version": 1,
+  "effective_date": "2003-04-01",
+  "scenario": {
+    "version": 1,
+    "id": "disaster-response-regional-draft",
+    "turn_minutes": 10080,
+    "end_minute": 30240,
+    "initial": {
+      "shanter_credits": 1,
+      "fiji_credits": 1,
+      "vanuatu_credits": 1,
+      "utility_continuity_progress": 0,
+      "utility_continuity_delay": 0,
+      "utility_continuity_complications": 0,
+      "utility_continuity_capacity": 3,
+      "emergency_reception_progress": 0,
+      "emergency_reception_delay": 0,
+      "emergency_reception_complications": 0,
+      "emergency_reception_capacity": 2,
+      "clinic_supply_progress": 0,
+      "clinic_supply_delay": 0,
+      "clinic_supply_complications": 0,
+      "clinic_supply_capacity": 2,
+      "water_distribution_progress": 0,
+      "water_distribution_delay": 0,
+      "water_distribution_complications": 0,
+      "water_distribution_capacity": 2
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "shanter": {
+        "label": "Shanter",
+        "visible_keys": [
+          "shanter_credits",
+          "utility_continuity_progress",
+          "utility_continuity_delay",
+          "utility_continuity_complications",
+          "utility_continuity_capacity"
+        ],
+        "objectives": {
+          "utility_continuity": {
+            "key": "utility_continuity_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Complete utility continuity"
+          },
+          "reserve": {
+            "key": "shanter_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize essential utilities and immediate reception capacity; weigh domestic continuity against emergency assistance.",
+          "priorities": [
+            "utility_continuity",
+            "reserve"
+          ]
+        }
+      },
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "fiji_credits",
+          "emergency_reception_progress",
+          "emergency_reception_delay",
+          "emergency_reception_complications",
+          "emergency_reception_capacity",
+          "clinic_supply_progress",
+          "clinic_supply_delay",
+          "clinic_supply_complications",
+          "clinic_supply_capacity"
+        ],
+        "objectives": {
+          "emergency_reception": {
+            "key": "emergency_reception_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Complete emergency reception"
+          },
+          "clinic_supply": {
+            "key": "clinic_supply_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Complete clinic supply"
+          },
+          "reserve": {
+            "key": "fiji_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize immediate shelter, medical support and basic services, retaining a reserve for further arrivals.",
+          "priorities": [
+            "emergency_reception",
+            "clinic_supply",
+            "reserve"
+          ]
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "vanuatu_credits",
+          "water_distribution_progress",
+          "water_distribution_delay",
+          "water_distribution_complications",
+          "water_distribution_capacity"
+        ],
+        "objectives": {
+          "water_distribution": {
+            "key": "water_distribution_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Complete water distribution"
+          },
+          "reserve": {
+            "key": "vanuatu_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain one emergency credit"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize water, relief and island-level coordination; protect continuity of local services.",
+          "priorities": [
+            "water_distribution",
+            "reserve"
+          ]
+        }
+      }
+    },
+    "action_catalog": {
+      "invest_utility_continuity": {
+        "description": "Invest one program credit in utility continuity",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "invest_emergency_reception": {
+        "description": "Invest one program credit in emergency reception",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "invest_clinic_supply": {
+        "description": "Invest one program credit in clinic supply",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "invest_water_distribution": {
+        "description": "Invest one program credit in water distribution",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "shanter_grant_fiji": {
+        "description": "Voluntarily allocate one credit to fiji",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "vanuatu_grant_fiji": {
+        "description": "Voluntarily allocate one credit to fiji",
+        "actors": [
+          "vanuatu"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 3,
+    "economy_projects": [
+      {
+        "id": "utility_continuity",
+        "participant": "shanter",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "energy",
+            "key": "utility_continuity_capacity"
+          }
+        ],
+        "stages": 2,
+        "progress": "utility_continuity_progress",
+        "delay": "utility_continuity_delay",
+        "complications": "utility_continuity_complications"
+      },
+      {
+        "id": "emergency_reception",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "logistics",
+            "key": "emergency_reception_capacity"
+          }
+        ],
+        "stages": 2,
+        "progress": "emergency_reception_progress",
+        "delay": "emergency_reception_delay",
+        "complications": "emergency_reception_complications"
+      },
+      {
+        "id": "clinic_supply",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "materials",
+            "key": "clinic_supply_capacity"
+          }
+        ],
+        "stages": 2,
+        "progress": "clinic_supply_progress",
+        "delay": "clinic_supply_delay",
+        "complications": "clinic_supply_complications"
+      },
+      {
+        "id": "water_distribution",
+        "participant": "vanuatu",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "shipping",
+            "key": "water_distribution_capacity"
+          }
+        ],
+        "stages": 2,
+        "progress": "water_distribution_progress",
+        "delay": "water_distribution_delay",
+        "complications": "water_distribution_complications"
+      }
+    ],
+    "capacity_actions": {
+      "invest_utility_continuity": {
+        "project": "utility_continuity",
+        "capacity": "utility_continuity_capacity",
+        "resource": "shanter_credits",
+        "cost": 1
+      },
+      "invest_emergency_reception": {
+        "project": "emergency_reception",
+        "capacity": "emergency_reception_capacity",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "invest_clinic_supply": {
+        "project": "clinic_supply",
+        "capacity": "clinic_supply_capacity",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "invest_water_distribution": {
+        "project": "water_distribution",
+        "capacity": "water_distribution_capacity",
+        "resource": "vanuatu_credits",
+        "cost": 1
+      }
+    },
+    "resource_transfers": {
+      "shanter_grant_fiji": {
+        "source": "shanter_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      },
+      "vanuatu_grant_fiji": {
+        "source": "vanuatu_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      }
+    },
+    "dynamic_negotiation": true,
+    "model_factions": [
+      "fiji",
+      "vanuatu"
+    ],
+    "game_length": "Short"
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "phase_history": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "05_Nations/Inguria/09_Ingurian_History.md",
+      "heading": "The Six Day War Impact",
+      "reviewed_for": "2003-04-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2003-04-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Preserve functioning technical and public services after regional disruption.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Inguria/09_Ingurian_History.md",
+            "heading": "The Six Day War Impact",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize essential utilities and immediate reception capacity; weigh domestic continuity against emergency assistance.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Inguria/09_Ingurian_History.md",
+            "heading": "The Six Day War Impact",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Inguria/09_Ingurian_History.md",
+            "heading": "The Six Day War Impact",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2003-04-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Maintain public services while responding to arrivals from damaged mainland routes.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize immediate shelter, medical support and basic services, retaining a reserve for further arrivals.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2003-04-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Maintain local services and receive arrivals in dispersed island communities.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize water, relief and island-level coordination; protect continuity of local services.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2003-04-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    }
+  }
+}

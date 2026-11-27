@@ -4,6 +4,30 @@
   "title": "Conflagration regional drafts — unreviewed",
   "groups": [
     {
+      "id": "hexaday",
+      "title": "Hexaday — historical context only",
+      "status": "catalog-only",
+      "scenarios": []
+    },
+    {
+      "id": "fallout",
+      "title": "Fallout",
+      "status": "supported-pilot",
+      "scenarios": [
+        {
+          "id": "fallout-coalition-relief-draft",
+          "title": "Coalition relief — four-week episode (draft)",
+          "status": "draft-unreviewed",
+          "spec": "fallout/scenario-spec.json",
+          "player_factions": [
+            "shanter",
+            "fiji",
+            "vanuatu"
+          ]
+        }
+      ]
+    },
+    {
       "id": "mainlander-ingress",
       "title": "Mainlander Ingress",
       "status": "provisional",
@@ -11,8 +35,102 @@
         {
           "id": "mainlander-ingress-regional-draft",
           "title": "Mainlander Ingress — competing reception and claims services (draft)",
-          "spec": "mainlander-ingress/scenario-spec.json",
           "status": "draft-unreviewed",
+          "spec": "mainlander-ingress/scenario-spec.json",
+          "player_factions": [
+            "shanter",
+            "fiji",
+            "vanuatu"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reconstruction",
+      "title": "Reconstruction",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "reconstruction-regional-draft",
+          "title": "Reconstruction — linked port and power investments (draft)",
+          "status": "draft-unreviewed",
+          "spec": "reconstruction/scenario-spec.json",
+          "player_factions": [
+            "shanter",
+            "fiji",
+            "vanuatu"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "purge",
+      "title": "Purge",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "purge-institutional-draft",
+          "title": "Purge — regional civilian safeguards and claims commitments (draft)",
+          "status": "draft-unreviewed",
+          "spec": "purge/scenario-spec.json",
+          "player_factions": [
+            "fiji",
+            "shanter",
+            "vanuatu",
+            "local-adherents"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agreement",
+      "title": "Agreement",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "agreement-institutional-draft",
+          "title": "Agreement — regional implementation commitments before Charter ratification (draft)",
+          "status": "draft-unreviewed",
+          "spec": "agreement/scenario-spec.json",
+          "player_factions": [
+            "fiji",
+            "shanter",
+            "vanuatu",
+            "catholic-delegation",
+            "arabian-religious-delegation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "early-reconstruction",
+      "title": "Early Reconstruction — independent RWF grants",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "early-reconstruction-regional-draft",
+          "title": "Early Reconstruction — independent RWF grants (draft)",
+          "status": "draft-unreviewed",
+          "spec": "early-reconstruction/scenario-spec.json",
+          "player_factions": [
+            "shanter",
+            "fiji",
+            "vanuatu",
+            "rwf"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "disaster-response",
+      "title": "Disaster Response — urgent relief allocation",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "disaster-response-regional-draft",
+          "title": "Disaster Response — urgent relief allocation (draft)",
+          "status": "draft-unreviewed",
+          "spec": "disaster-response/scenario-spec.json",
           "player_factions": [
             "shanter",
             "fiji",

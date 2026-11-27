@@ -1,0 +1,665 @@
+{
+  "version": 1,
+  "effective_date": "2010-02-01",
+  "scenario": {
+    "version": 1,
+    "id": "agreement-institutional-draft",
+    "turn_minutes": 10080,
+    "end_minute": 50400,
+    "initial": {
+      "regional_principles_agreed": 0,
+      "national_coordination_agreed": 0,
+      "religious_witness_agreed": 0,
+      "claims_consultation_agreed": 0
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "claims_consultation_agreed",
+          "national_coordination_agreed",
+          "regional_principles_agreed"
+        ],
+        "objectives": {
+          "claims_consultation": {
+            "key": "claims_consultation_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims."
+          },
+          "national_coordination": {
+            "key": "national_coordination_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to national consultation and regional service coordination, subject to domestic authority."
+          },
+          "regional_principles": {
+            "key": "regional_principles_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification."
+          }
+        },
+        "strategy": {
+          "motivation": "Seek workable regional consent and legitimate claims processing while preserving domestic recovery.",
+          "priorities": [
+            "claims_consultation",
+            "national_coordination",
+            "regional_principles"
+          ]
+        }
+      },
+      "shanter": {
+        "label": "Shanter",
+        "visible_keys": [
+          "national_coordination_agreed",
+          "regional_principles_agreed"
+        ],
+        "objectives": {
+          "national_coordination": {
+            "key": "national_coordination_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to national consultation and regional service coordination, subject to domestic authority."
+          },
+          "regional_principles": {
+            "key": "regional_principles_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification."
+          }
+        },
+        "strategy": {
+          "motivation": "Seek durable cooperation and workable obligations while retaining local capacity.",
+          "priorities": [
+            "national_coordination",
+            "regional_principles"
+          ]
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "national_coordination_agreed",
+          "regional_principles_agreed"
+        ],
+        "objectives": {
+          "national_coordination": {
+            "key": "national_coordination_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to national consultation and regional service coordination, subject to domestic authority."
+          },
+          "regional_principles": {
+            "key": "regional_principles_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification."
+          }
+        },
+        "strategy": {
+          "motivation": "Secure practical relief commitments and preserve local community voice.",
+          "priorities": [
+            "national_coordination",
+            "regional_principles"
+          ]
+        }
+      },
+      "catholic-delegation": {
+        "label": "Catholic Church delegation",
+        "visible_keys": [
+          "religious_witness_agreed",
+          "regional_principles_agreed",
+          "claims_consultation_agreed"
+        ],
+        "objectives": {
+          "religious_witness": {
+            "key": "religious_witness_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to independent interfaith witnessing and non-coercive mediation; no authority over national governments."
+          },
+          "regional_principles": {
+            "key": "regional_principles_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification."
+          },
+          "claims_consultation": {
+            "key": "claims_consultation_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims."
+          }
+        },
+        "strategy": {
+          "motivation": "Promote shared commitments to preservation of life and credible implementation.",
+          "priorities": [
+            "religious_witness",
+            "regional_principles",
+            "claims_consultation"
+          ]
+        }
+      },
+      "arabian-religious-delegation": {
+        "label": "Arabian religious delegation",
+        "visible_keys": [
+          "religious_witness_agreed",
+          "regional_principles_agreed",
+          "claims_consultation_agreed"
+        ],
+        "objectives": {
+          "religious_witness": {
+            "key": "religious_witness_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to independent interfaith witnessing and non-coercive mediation; no authority over national governments."
+          },
+          "regional_principles": {
+            "key": "regional_principles_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification."
+          },
+          "claims_consultation": {
+            "key": "claims_consultation_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims."
+          }
+        },
+        "strategy": {
+          "motivation": "Seek interfaith legitimacy and practical support for implementation.",
+          "priorities": [
+            "religious_witness",
+            "regional_principles",
+            "claims_consultation"
+          ]
+        }
+      }
+    },
+    "action_catalog": {
+      "fiji_regional_principles": {
+        "description": "Authorize own organization’s assent: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "shanter_regional_principles": {
+        "description": "Authorize own organization’s assent: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "vanuatu_regional_principles": {
+        "description": "Authorize own organization’s assent: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "catholic-delegation_regional_principles": {
+        "description": "Authorize own organization’s assent: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification.",
+        "actors": [
+          "catholic-delegation"
+        ]
+      },
+      "arabian-religious-delegation_regional_principles": {
+        "description": "Authorize own organization’s assent: Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification.",
+        "actors": [
+          "arabian-religious-delegation"
+        ]
+      },
+      "fiji_national_coordination": {
+        "description": "Authorize own organization’s assent: Agree to national consultation and regional service coordination, subject to domestic authority.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "shanter_national_coordination": {
+        "description": "Authorize own organization’s assent: Agree to national consultation and regional service coordination, subject to domestic authority.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "vanuatu_national_coordination": {
+        "description": "Authorize own organization’s assent: Agree to national consultation and regional service coordination, subject to domestic authority.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "catholic-delegation_religious_witness": {
+        "description": "Authorize own organization’s assent: Agree to independent interfaith witnessing and non-coercive mediation; no authority over national governments.",
+        "actors": [
+          "catholic-delegation"
+        ]
+      },
+      "arabian-religious-delegation_religious_witness": {
+        "description": "Authorize own organization’s assent: Agree to independent interfaith witnessing and non-coercive mediation; no authority over national governments.",
+        "actors": [
+          "arabian-religious-delegation"
+        ]
+      },
+      "fiji_claims_consultation": {
+        "description": "Authorize own organization’s assent: Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "catholic-delegation_claims_consultation": {
+        "description": "Authorize own organization’s assent: Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims.",
+        "actors": [
+          "catholic-delegation"
+        ]
+      },
+      "arabian-religious-delegation_claims_consultation": {
+        "description": "Authorize own organization’s assent: Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims.",
+        "actors": [
+          "arabian-religious-delegation"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 5,
+    "agreements": {
+      "regional_principles": {
+        "description": "Endorse regional protection and voluntary cooperation principles for discussion at later Charter meetings; not global ratification.",
+        "consent": {
+          "fiji": "fiji_regional_principles",
+          "shanter": "shanter_regional_principles",
+          "vanuatu": "vanuatu_regional_principles",
+          "catholic-delegation": "catholic-delegation_regional_principles",
+          "arabian-religious-delegation": "arabian-religious-delegation_regional_principles"
+        },
+        "due_minute": 20160,
+        "outcome": "regional_principles_agreed",
+        "requires": []
+      },
+      "national_coordination": {
+        "description": "Agree to national consultation and regional service coordination, subject to domestic authority.",
+        "consent": {
+          "fiji": "fiji_national_coordination",
+          "shanter": "shanter_national_coordination",
+          "vanuatu": "vanuatu_national_coordination"
+        },
+        "due_minute": 40320,
+        "outcome": "national_coordination_agreed",
+        "requires": [
+          "regional_principles"
+        ]
+      },
+      "religious_witness": {
+        "description": "Agree to independent interfaith witnessing and non-coercive mediation; no authority over national governments.",
+        "consent": {
+          "catholic-delegation": "catholic-delegation_religious_witness",
+          "arabian-religious-delegation": "arabian-religious-delegation_religious_witness"
+        },
+        "due_minute": 30240,
+        "outcome": "religious_witness_agreed",
+        "requires": [
+          "regional_principles"
+        ]
+      },
+      "claims_consultation": {
+        "description": "Agree to consultation on lawful claims and sanctuary referrals without adjudicating individual claims.",
+        "consent": {
+          "fiji": "fiji_claims_consultation",
+          "catholic-delegation": "catholic-delegation_claims_consultation",
+          "arabian-religious-delegation": "arabian-religious-delegation_claims_consultation"
+        },
+        "due_minute": 50400,
+        "outcome": "claims_consultation_agreed",
+        "requires": [
+          "regional_principles"
+        ]
+      }
+    },
+    "model_factions": [
+      "fiji",
+      "vanuatu",
+      "catholic-delegation",
+      "arabian-religious-delegation"
+    ],
+    "game_length": "Short"
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "fiji": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "05_Nations/Fiji/01_History.md",
+      "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+      "reviewed_for": "2010-02-01",
+      "classification": "canonical"
+    },
+    "shanter": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_3_Agreement.md",
+      "heading": "Ratification Timeline",
+      "reviewed_for": "2010-02-01",
+      "classification": "canonical"
+    },
+    "vanuatu": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "05_Nations/Vanuatu/01_History.md",
+      "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+      "reviewed_for": "2010-02-01",
+      "classification": "canonical"
+    },
+    "catholic-delegation": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_3_Agreement.md",
+      "heading": "Midnight, December 25th, 2009",
+      "reviewed_for": "2010-02-01",
+      "classification": "canonical"
+    },
+    "arabian-religious-delegation": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_3_Agreement.md",
+      "heading": "Midnight, December 25th, 2009",
+      "reviewed_for": "2010-02-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2010-02-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Following the peace announcement, Fiji faces unresolved registry and refugee claims.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Seek workable regional consent and legitimate claims processing while preserving domestic recovery.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "National delegation and domestic civil administration; no mature Charter enforcement powers assumed.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Fiji/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2010-02-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Regional councils are preparing implementation following the announcement. Shanter participation in a specific council is illustrative.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Ratification Timeline",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Seek durable cooperation and workable obligations while retaining local capacity.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Ratification Timeline",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Delegation may negotiate and recommend; no unilateral authority over other states.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Ratification Timeline",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2010-02-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Local participation in the Agreement is established; precise negotiating mandate is not known.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Secure practical relief commitments and preserve local community voice.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Delegation may negotiate within reviewed exercise terms; no unilateral authority over others.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "05_Nations/Vanuatu/01_History.md",
+            "heading": "SIX DAY WAR & WPC FOUNDING (2003–2010)",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "catholic-delegation": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "catholic-delegation",
+      "kind": "organization",
+      "effective_date": "2010-02-01",
+      "label": "Catholic Church delegation",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Catholic leadership participated in the peace announcement; a specific working delegation is illustrative.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Midnight, December 25th, 2009",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Promote shared commitments to preservation of life and credible implementation.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Midnight, December 25th, 2009",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Moral counsel, convening and voluntary assent; not a sovereign government.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Midnight, December 25th, 2009",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "arabian-religious-delegation": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "arabian-religious-delegation",
+      "kind": "organization",
+      "effective_date": "2010-02-01",
+      "label": "Arabian religious delegation",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "The Grand Mufti participated in the peace announcement; a specific working delegation is illustrative.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Midnight, December 25th, 2009",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Seek interfaith legitimacy and practical support for implementation.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Midnight, December 25th, 2009",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Religious representation and voluntary negotiation; not authority over Arabian national policy.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "Midnight, December 25th, 2009",
+            "reviewed_for": "2010-02-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    }
+  }
+}

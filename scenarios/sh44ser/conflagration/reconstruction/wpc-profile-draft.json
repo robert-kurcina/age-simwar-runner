@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "world": "sh44ser",
+  "id": "wpc",
+  "kind": "organization",
+  "effective_date": "2011-01-01",
+  "label": "World Peace Council",
+  "rules_namespace": "sh44ser",
+  "properties": {
+    "conditions.opening": {
+      "unit": "text",
+      "value": "The 2010 Charter has been ratified; implementation capacity is evolving.",
+      "classification": "hypothetical",
+      "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+      "evidence": {
+        "owner": "robert-kurcina/vault-sh44ser",
+        "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+        "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+        "heading": "The WPC and the Hardening of Reconstruction",
+        "reviewed_for": "2011-01-01",
+        "classification": "canonical"
+      }
+    },
+    "motivations.priority": {
+      "unit": "text",
+      "value": "Support accountable service recovery and negotiated commitments.",
+      "classification": "hypothetical",
+      "reason": "Proposed exercise priorities; not established historical policy.",
+      "evidence": {
+        "owner": "robert-kurcina/vault-sh44ser",
+        "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+        "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+        "heading": "The WPC and the Hardening of Reconstruction",
+        "reviewed_for": "2011-01-01",
+        "classification": "canonical"
+      }
+    },
+    "commitments.authority": {
+      "unit": "text",
+      "value": "Only scenario-reviewed civilian coordination and funding actions; broader institutional powers not executable.",
+      "classification": "hypothetical",
+      "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+      "evidence": {
+        "owner": "robert-kurcina/vault-sh44ser",
+        "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+        "path": "01_Foundations/02_History/02_4_Reconstruction.md",
+        "heading": "The WPC and the Hardening of Reconstruction",
+        "reviewed_for": "2011-01-01",
+        "classification": "canonical"
+      }
+    },
+    "resources.available": {
+      "unit": "scenario-defined stock",
+      "value": null,
+      "classification": "unresolved",
+      "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+    }
+  }
+}

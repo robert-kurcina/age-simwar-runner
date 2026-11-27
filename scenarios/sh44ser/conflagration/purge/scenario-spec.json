@@ -1,0 +1,553 @@
+{
+  "version": 1,
+  "effective_date": "2009-09-01",
+  "scenario": {
+    "version": 1,
+    "id": "purge-institutional-draft",
+    "turn_minutes": 10080,
+    "end_minute": 40320,
+    "initial": {
+      "safeguards_agreed": 0,
+      "claims_agreed": 0,
+      "local_relief_agreed": 0,
+      "regional_referrals_agreed": 0
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "claims_agreed",
+          "safeguards_agreed"
+        ],
+        "objectives": {
+          "claims": {
+            "key": "claims_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to voluntary independent witness and lawful case-by-case claims review; no adjudication of actual claims."
+          },
+          "safeguards": {
+            "key": "safeguards_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization."
+          }
+        },
+        "strategy": {
+          "motivation": "Protect civilians, preserve confidential lawful records and maintain essential services; reconcile competing claims without collective blame.",
+          "priorities": [
+            "claims",
+            "safeguards"
+          ]
+        }
+      },
+      "shanter": {
+        "label": "Shanter",
+        "visible_keys": [
+          "regional_referrals_agreed",
+          "safeguards_agreed"
+        ],
+        "objectives": {
+          "regional_referrals": {
+            "key": "regional_referrals_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers."
+          },
+          "safeguards": {
+            "key": "safeguards_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization."
+          }
+        },
+        "strategy": {
+          "motivation": "Maintain services and protect lawful reception records while supporting regional reconciliation.",
+          "priorities": [
+            "regional_referrals",
+            "safeguards"
+          ]
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "local_relief_agreed",
+          "regional_referrals_agreed",
+          "safeguards_agreed"
+        ],
+        "objectives": {
+          "local_relief": {
+            "key": "local_relief_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to community consultation and impartial relief referrals within existing local authority."
+          },
+          "regional_referrals": {
+            "key": "regional_referrals_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers."
+          },
+          "safeguards": {
+            "key": "safeguards_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization."
+          }
+        },
+        "strategy": {
+          "motivation": "Protect access to water and relief, respect local community authority and mediate disputes.",
+          "priorities": [
+            "local_relief",
+            "regional_referrals",
+            "safeguards"
+          ]
+        }
+      },
+      "local-adherents": {
+        "label": "Local Adherent network",
+        "visible_keys": [
+          "safeguards_agreed",
+          "claims_agreed",
+          "local_relief_agreed",
+          "regional_referrals_agreed"
+        ],
+        "objectives": {
+          "safeguards": {
+            "key": "safeguards_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization."
+          },
+          "claims": {
+            "key": "claims_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to voluntary independent witness and lawful case-by-case claims review; no adjudication of actual claims."
+          },
+          "local_relief": {
+            "key": "local_relief_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to community consultation and impartial relief referrals within existing local authority."
+          },
+          "regional_referrals": {
+            "key": "regional_referrals_agreed",
+            "comparison": "equal",
+            "threshold": 1,
+            "description": "Obtain collective commitment: Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers."
+          }
+        },
+        "strategy": {
+          "motivation": "Build trust across communities, maintain access to relief and seek voluntary cessation.",
+          "priorities": [
+            "safeguards",
+            "claims",
+            "local_relief",
+            "regional_referrals"
+          ]
+        }
+      }
+    },
+    "action_catalog": {
+      "fiji_safeguards": {
+        "description": "Authorize own organization’s assent: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "local-adherents_safeguards": {
+        "description": "Authorize own organization’s assent: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization.",
+        "actors": [
+          "local-adherents"
+        ]
+      },
+      "shanter_safeguards": {
+        "description": "Authorize own organization’s assent: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "vanuatu_safeguards": {
+        "description": "Authorize own organization’s assent: Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "fiji_claims": {
+        "description": "Authorize own organization’s assent: Agree to voluntary independent witness and lawful case-by-case claims review; no adjudication of actual claims.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "local-adherents_claims": {
+        "description": "Authorize own organization’s assent: Agree to voluntary independent witness and lawful case-by-case claims review; no adjudication of actual claims.",
+        "actors": [
+          "local-adherents"
+        ]
+      },
+      "vanuatu_local_relief": {
+        "description": "Authorize own organization’s assent: Agree to community consultation and impartial relief referrals within existing local authority.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "local-adherents_local_relief": {
+        "description": "Authorize own organization’s assent: Agree to community consultation and impartial relief referrals within existing local authority.",
+        "actors": [
+          "local-adherents"
+        ]
+      },
+      "shanter_regional_referrals": {
+        "description": "Authorize own organization’s assent: Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "vanuatu_regional_referrals": {
+        "description": "Authorize own organization’s assent: Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "local-adherents_regional_referrals": {
+        "description": "Authorize own organization’s assent: Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers.",
+        "actors": [
+          "local-adherents"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 4,
+    "agreements": {
+      "safeguards": {
+        "description": "Agree to confidential record custody, non-discrimination and safe referral to civilian services. Each signatory commits only its own organization.",
+        "consent": {
+          "fiji": "fiji_safeguards",
+          "local-adherents": "local-adherents_safeguards",
+          "shanter": "shanter_safeguards",
+          "vanuatu": "vanuatu_safeguards"
+        },
+        "due_minute": 10080,
+        "outcome": "safeguards_agreed",
+        "requires": []
+      },
+      "claims": {
+        "description": "Agree to voluntary independent witness and lawful case-by-case claims review; no adjudication of actual claims.",
+        "consent": {
+          "fiji": "fiji_claims",
+          "local-adherents": "local-adherents_claims"
+        },
+        "due_minute": 30240,
+        "outcome": "claims_agreed",
+        "requires": [
+          "safeguards"
+        ]
+      },
+      "local_relief": {
+        "description": "Agree to community consultation and impartial relief referrals within existing local authority.",
+        "consent": {
+          "vanuatu": "vanuatu_local_relief",
+          "local-adherents": "local-adherents_local_relief"
+        },
+        "due_minute": 20160,
+        "outcome": "local_relief_agreed",
+        "requires": []
+      },
+      "regional_referrals": {
+        "description": "Agree to regional civilian referrals and confidential case coordination without delegated sovereign powers.",
+        "consent": {
+          "shanter": "shanter_regional_referrals",
+          "vanuatu": "vanuatu_regional_referrals",
+          "local-adherents": "local-adherents_regional_referrals"
+        },
+        "due_minute": 40320,
+        "outcome": "regional_referrals_agreed",
+        "requires": [
+          "safeguards"
+        ]
+      }
+    },
+    "model_factions": [
+      "shanter",
+      "vanuatu",
+      "local-adherents"
+    ],
+    "game_length": "Short"
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "fiji": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_2_Purge.md",
+      "heading": "Fiji - Purge as Registry War",
+      "reviewed_for": "2009-09-01",
+      "classification": "canonical"
+    },
+    "shanter": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_2_Purge.md",
+      "heading": "Near Melanesia and the Mainlander Memory",
+      "reviewed_for": "2009-09-01",
+      "classification": "canonical"
+    },
+    "vanuatu": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_2_Purge.md",
+      "heading": "Near Melanesia and the Mainlander Memory",
+      "reviewed_for": "2009-09-01",
+      "classification": "canonical"
+    },
+    "local-adherents": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/02_3_Agreement.md",
+      "heading": "The Adherents",
+      "reviewed_for": "2009-09-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2009-09-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Records supporting relief and property claims have become contested; local institutions face a legitimacy crisis.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Fiji - Purge as Registry War",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Protect civilians, preserve confidential lawful records and maintain essential services; reconcile competing claims without collective blame.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Fiji - Purge as Registry War",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civil administration, voluntary mediation and lawful claims processing only.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Fiji - Purge as Registry War",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2009-09-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Earlier maritime arrivals have created lasting disputes about belonging and relief.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Near Melanesia and the Mainlander Memory",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Maintain services and protect lawful reception records while supporting regional reconciliation.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Near Melanesia and the Mainlander Memory",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civil administration and voluntary cooperation; no regional enforcement power assumed.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Near Melanesia and the Mainlander Memory",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2009-09-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Regional refugee and local community tensions remain unresolved; exact local conditions are uncertain.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Near Melanesia and the Mainlander Memory",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Protect access to water and relief, respect local community authority and mediate disputes.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Near Melanesia and the Mainlander Memory",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civil administration and voluntary local consent; no uniform island-wide policy assumed.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_2_Purge.md",
+            "heading": "Near Melanesia and the Mainlander Memory",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    },
+    "local-adherents": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "local-adherents",
+      "kind": "organization",
+      "effective_date": "2009-09-01",
+      "label": "Local Adherent network",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Local civic and religious intermediaries seek cessation and protection of life. A particular local organization is illustrative.",
+          "classification": "hypothetical",
+          "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "The Adherents",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Build trust across communities, maintain access to relief and seek voluntary cessation.",
+          "classification": "hypothetical",
+          "reason": "Proposed exercise priorities; not established historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "The Adherents",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Witness, relief and mediation; no sovereign authority or universal control over other Adherents.",
+          "classification": "hypothetical",
+          "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/02_3_Agreement.md",
+            "heading": "The Adherents",
+            "reviewed_for": "2009-09-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No reviewed dated quantitative inventory; use scenario initial state only."
+        }
+      }
+    }
+  }
+}
