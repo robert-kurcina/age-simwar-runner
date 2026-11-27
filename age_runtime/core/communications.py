@@ -30,6 +30,8 @@ def append(s, state, actor, command):
     if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts"} or not {"id", "recipients", "claim"} <= set(command):
         raise ValueError("invalid communication fields")
     cid = text_field(command["id"], 80)
+    if cid == "authored_access":
+        raise ValueError("reserved communication ID")
     claim = text_field(command["claim"], 400)
     recipients = command["recipients"]
     if not isinstance(recipients, list) or not recipients or any(not isinstance(x, str) or x == actor or x not in s["actors"] for x in recipients) or len(set(recipients)) != len(recipients):
