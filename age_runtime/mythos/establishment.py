@@ -1,7 +1,7 @@
 """Delegated, mundane narrative establishment, not mechanical adjudication."""
 import copy
 import re
-from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions, action_observations, behavior, expectations, npc_travel
+from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions, action_observations, behavior, expectations, npc_travel, npc_agency
 
 def text(value, limit):
     if not isinstance(value, str) or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
@@ -14,6 +14,10 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
+    if isinstance(request, dict) and set(request) == {"npc_objective"}:
+        return npc_agency.objective(state, rules, request["npc_objective"], npc_available, text)
+    if isinstance(request, dict) and set(request) == {"npc_social_test"}:
+        return npc_agency.social_test(state, rules, request["npc_social_test"], npc_available, text)
     if isinstance(request, dict) and set(request) == {"npc_lifecycle"}:
         return npc_time.lifecycle(state, rules, request["npc_lifecycle"], npc_available, text)
     if isinstance(request, dict) and set(request) == {"npc_task"}:
