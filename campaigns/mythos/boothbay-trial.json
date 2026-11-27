@@ -1,5 +1,5 @@
 {
-  "version": 40,
+  "version": 42,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -285,6 +285,15 @@
     },
     {
       "id": "warn_eleanor",
+      "reconsideration": {
+        "group": "eleanor_warning",
+        "evidence": [
+          "water_warning",
+          "tide_clue",
+          "water_risk_known",
+          "ecological_tide_pattern"
+        ]
+      },
       "label": "Share your findings with Eleanor and agree on a precaution",
       "location": "Harbor Diner",
       "minutes": 45,
@@ -304,6 +313,18 @@
       "activity": "active",
       "excludes_flags": [
         "local_warning"
+      ],
+      "test": {
+        "attribute": "PRE",
+        "skill": "Persuade",
+        "interaction": "ordinary",
+        "tn": 7,
+        "significance": "important",
+        "decision": true
+      },
+      "failure_observation": "Eleanor is not willing to undertake the warning arrangements on the evidence presented.",
+      "grant_failure": [
+        "warning_declined"
       ]
     },
     {
@@ -347,7 +368,7 @@
     },
     {
       "id": "leave_copy",
-      "label": "Leave a copy of your account with Eleanor and depart",
+      "label": "Ask Eleanor to keep a copy of your account before departing",
       "location": "Harbor Diner",
       "minutes": 90,
       "requires_flags": [
@@ -361,7 +382,20 @@
       "discovery": "Eleanor accepts a copy of the account for safekeeping.",
       "npc": "eleanor",
       "interval_seconds": 3600,
-      "activity": "active"
+      "activity": "active",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Persuade",
+        "interaction": "ordinary",
+        "tn": 7,
+        "significance": "important",
+        "decision": true
+      },
+      "terminal_on_success": true,
+      "failure_observation": "Eleanor declines responsibility for keeping the account. You still have it and can pursue another route.",
+      "grant_failure": [
+        "account_custody_declined"
+      ]
     },
     {
       "id": "clear_dock_obstruction",
@@ -665,6 +699,15 @@
     },
     {
       "id": "warn_from_ecology",
+      "reconsideration": {
+        "group": "eleanor_warning",
+        "evidence": [
+          "water_warning",
+          "tide_clue",
+          "water_risk_known",
+          "ecological_tide_pattern"
+        ]
+      },
       "label": "Share the ecological evidence with Eleanor and agree on a precaution",
       "location": "Harbor Diner",
       "minutes": 45,
@@ -686,6 +729,18 @@
       "requires_any_flags": [
         "tide_clue",
         "ecological_tide_pattern"
+      ],
+      "test": {
+        "attribute": "PRE",
+        "skill": "Persuade",
+        "interaction": "ordinary",
+        "tn": 7,
+        "significance": "important",
+        "decision": true
+      },
+      "failure_observation": "Eleanor is not willing to undertake the warning arrangements on the evidence presented.",
+      "grant_failure": [
+        "warning_declined"
       ]
     },
     {
