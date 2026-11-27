@@ -232,6 +232,7 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
                  "known_topics": state["npcs"][nid]["known_topics"],
                  "disclosed": state["npcs"][nid]["disclosed"],
                  "conversation_available": nid in conversational,
+                 **({"demeanor": state["relationships"][nid]} if rules.get("demeanor") else {}),
                  "local_actions": [a["id"] for a in local if a.get("npc") == nid]}
                 for nid in sorted(relevant)],
             "allowed_actions": [a["id"] for a in legal],
@@ -240,7 +241,8 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
                              "agreements": bool(rules.get("narrative_agreements")),
                              "batch": bool(rules.get("narrative_batch")), "spatial_routing": False,
                              "npc_agency": False, "interpersonal_duress": bool(rules.get("interpersonal_duress")),
-                             "abstract_npc_recovery": bool(rules.get("npc_abstract_recovery"))},
+                             "abstract_npc_recovery": bool(rules.get("npc_abstract_recovery")),
+                             "social_demeanor": bool(rules.get("social_demeanor"))},
             "guidance":  "Resolve mechanical effects through authored actions only. "
                         "Use enabled continuity operations for actual local exchanges and mundane details. "
                         "Do not invent clues, simulate independent NPC actions, "
@@ -263,6 +265,9 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
     if rules.get("npc_abstract_recovery"):
         ref["npc_temporal"] = {nid: {"plan": copy.deepcopy(state["npcs"][nid]["activity_plan"])}
                                for nid in sorted(conversational)}
+    if rules.get("social_demeanor"):
+        ref["consequential_demeanor"] = {nid: copy.deepcopy([e for e in state["relationship_changes"]
+            if e["npc"] == nid][-6:]) for nid in sorted(conversational)}
     if compact:
         compact_history(packet)
     return copy.deepcopy(packet)
