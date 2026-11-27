@@ -900,6 +900,48 @@ class MythosTrialTests(unittest.TestCase):
         self.assertNotIn("npc_travel", mythos.view(elapsed))
         mythos.verify(elapsed)
 
+    def test_social_epistemic_hypotheses_revisions_and_reparation(self):
+        from age_runtime.mythos import epistemic
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        def say(s, speaker, claim, **extra):
+            return mythos.dialogue_step(s, {"npc": "eleanor", "speaker": speaker,
+                "claim": claim, "stance": "unstated", "intent": "unstated", **extra})
+        s = say(s, "pc", "Perhaps your brother left voluntarily.")
+        hyp = {"id": "hyp:departure", "npc": "eleanor", "text": "Her brother left voluntarily.", "source": 1}
+        s = mythos.establish_step(s, {"hypothesis": hyp})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"hypothesis": dict(hyp, id="hyp:remote", npc="elias")})
+        s = say(s, "eleanor", "Perhaps he did leave of his own accord.", proposition="hyp:departure", asserts=True)
+        s = say(s, "pc", "No, I have changed my mind.", proposition="hyp:departure", asserts=False, listener_stance="doubts")
+        s = say(s, "pc", "He may have left voluntarily after all.", proposition="hyp:departure", asserts=True)
+        req = {"npc": "eleanor", "proposition": "hyp:departure", "stance": "doubts", "asserts": True,
+               "sources": [1, 3, 4], "basis": "The accounts conflict."}
+        s = mythos.establish_step(s, {"belief_revision": req})
+        p = next(p for p in epistemic.proposition_projection(s, mythos.load("boothbay")[1], {"eleanor", "elias"}) if p["id"] == "hyp:departure")
+        self.assertFalse(p["established"])
+        self.assertTrue(p["actors"]["eleanor"]["conflicting_accounts"])
+        self.assertEqual(p["actors"]["eleanor"]["latest_stance"]["stance"], "doubts")
+        self.assertNotIn("elias", p["actors"])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"belief_revision": dict(req, npc="elias")})
+        s = say(s, "pc", "You are a liar.")
+        harm = {"npc": "eleanor", "claims": [5], "kind": "harm", "basis": "An actual personal insult."}
+        s = mythos.establish_step(s, {"social_demeanor": harm})
+        self.assertEqual(s["relationships"]["eleanor"], -1)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"social_demeanor": harm})
+        s = mythos.step(mythos.step(s, "move:Harbor Docks"), "move:Harbor Diner")
+        s = say(s, "pc", "I was wrong to insult you. I apologize.")
+        s = say(s, "eleanor", "I appreciate that, though I haven't forgotten.",
+                reaction={"tension": "Some resentment remains."})
+        s = mythos.establish_step(s, {"social_demeanor": {"npc": "eleanor", "claims": [6, 7],
+            "kind": "reparation", "basis": "She acknowledges the sincere apology as meaningful reparation."}})
+        self.assertEqual(s["relationships"]["eleanor"], 0)
+        self.assertEqual(s["relationship_changes"][-1]["requested_delta"], 1)
+        self.assertEqual(len(s["belief_revisions"]), 1)
+        self.assertNotIn("dynamic_propositions", mythos.view(s))
+        mythos.verify(s)
+
     def test_npc_agency_competing_objectives_and_independent_examination(self):
         from age_runtime.mythos import npc_agency
         from age_runtime.core import dxd
@@ -987,6 +1029,26 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.establish_step(judged, {"npc_social_test": dict(social, id="social:retry")})
         mythos.verify(judged)
+        # A private hypothesis may be transmitted, contradicted and relayed to the PC
+        # without disclosing canonical facts or private source metadata.
+        h = mythos.establish_step(after, {"hypothesis": {"id": "hyp:inquiry", "npc": "eleanor",
+            "text": "The visitor is conducting a newspaper inquiry.", "source": 1}})
+        h = mythos.dialogue_step(mythos.step(h, "move:Harbor Diner"), {"npc": "eleanor", "speaker": "eleanor",
+            "claim": "You're investigating for the paper?", "stance": "doubts", "intent": "sincere",
+            "proposition": "hyp:inquiry", "asserts": True})
+        linked = dict(req, claim="He may be investigating for the newspaper.", source={"kind": "claim", "id": h["dialogue"][-1]["id"]})
+        h = mythos.establish_step(h, {"npc_testimony": linked})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(h, {"npc_testimony": dict(linked, asserts=False)})
+        h = mythos.establish_step(h, {"npc_testimony": dict(linked, claim="He is not investigating for a newspaper.",
+            asserts=False, intent="deceive", stance="believes")})
+        cid = h["dialogue"][-1]["id"]
+        h = mythos.dialogue_step(h, {"npc": "burroughs", "speaker": "burroughs",
+            "claim": "Eleanor tells me this isn't a newspaper inquiry.", "stance": "doubts", "intent": "sincere",
+            "proposition": "hyp:inquiry", "asserts": False, "relay": cid})
+        self.assertNotIn("relay_source", epistemic.public_projection(h)[-1])
+        self.assertEqual(h["dialogue"][-1]["relay_source"], cid)
+        mythos.verify(h)
         self.assertEqual(epistemic.referee_projection(after, {"elias"}), [])
         with self.assertRaises(ValueError):
             mythos.establish_step(after, {"npc_testimony": req})

@@ -68,6 +68,9 @@ def initial(sid, seed):
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if rules.get("epistemic_dialogue"):
         state["dialogue"] = []
+    if rules.get("social_epistemic"):
+        state["dynamic_propositions"] = {}
+        state["belief_revisions"] = []
     if rules.get("narrative_establishment"):
         state["established_details"] = []
     if rules.get("narrative_properties"):
@@ -411,6 +414,41 @@ def consequential_demeanor(state, rules, request):
     else:
         state["relationship_changes"][-1].update(provenance)
     assert state["relationships"][npc] <= old
+
+def social_demeanor(state, rules, request):
+    """Bounded consequence of an actual exchange, not a trust meter or forced forgiveness."""
+    if not rules.get("social_epistemic") or not isinstance(request, dict) or set(request) != {"npc", "claims", "kind", "basis"}:
+        raise ValueError("invalid social Demeanor request")
+    nid, refs, kind = request["npc"], request["claims"], request["kind"]
+    if not isinstance(nid, str) or nid not in state["npcs"] or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
+        raise ValueError("social Demeanor unavailable")
+    if state["npcs"][nid]["location"] != state["location"] or not npc_available(state, rules, {"npc": nid, "location": state["location"]}):
+        raise ValueError("social Demeanor requires available local NPC")
+    if kind not in ("harm", "reparation"):
+        raise ValueError("unsupported social consequence")
+    if not isinstance(refs, list) or not 1 <= len(refs) <= 4 or any(type(i) is not int for i in refs) or len(set(refs)) != len(refs):
+        raise ValueError("invalid social consequence claims")
+    claims = [c for c in state["dialogue"] if c["id"] in refs and {c["speaker"], c["listener"]} == {"pc", nid}
+              and c["turn"] == state["turn"] and c["location"] == state["location"]]
+    if len(claims) != len(refs) or not any(c["speaker"] == "pc" for c in claims):
+        raise ValueError("consequence requires current actual player conduct")
+    history = state["relationship_changes"]
+    if any(e["npc"] == nid and (set(e.get("claims", [])) & set(refs) or
+           e.get("source") == "social_conduct" and e.get("turn") == state["turn"]) for e in history):
+        raise ValueError("social consequence already adjudicated")
+    if kind == "reparation":
+        if not any(c["speaker"] == nid for c in claims) or not any(e["npc"] == nid and e["delta"] < 0 for e in history):
+            raise ValueError("reparation requires acknowledged conduct and prior relationship harm")
+    basis = establishment.text(request["basis"], 240)
+    count = len(history)
+    delta = 1 if kind == "reparation" else -1
+    change_demeanor(state, nid, delta)
+    provenance = {"source": "social_conduct", "kind": kind, "claims": list(refs),
+                  "basis": basis, "turn": state["turn"], "requested_delta": delta}
+    if len(history) == count:
+        history.append({"npc": nid, "at": state["time"], "delta": 0, **provenance})
+    else:
+        history[-1].update(provenance)
 
 def advance_opposition(state, rules, action, success):
     """A single authored pressure clock; no duplicate exposure roll."""
@@ -806,6 +844,8 @@ def establish_step(state, request):
     _, rules = load(result["scenario"])
     if isinstance(request, dict) and set(request) == {"consequential_demeanor"}:
         consequential_demeanor(result, rules, request["consequential_demeanor"])
+    elif isinstance(request, dict) and set(request) == {"social_demeanor"}:
+        social_demeanor(result, rules, request["social_demeanor"])
     else:
         establishment.record(result, rules, request, npc_available)
     result["history"].append({"establish": copy.deepcopy(request)})
@@ -993,7 +1033,7 @@ def gm_context(state):
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
                 **({"action_observations": action_observations.projection(state, conversational)} if rules.get("action_observations") else {}),
-                **({"consequential_demeanor": {nid: copy.deepcopy([e for e in state["relationship_changes"] if e["npc"] == nid and e.get("source") == "consequential_conduct"][-6:]) for nid in sorted(conversational)}} if rules.get("consequential_demeanor") else {}),
+                **({"consequential_demeanor": {nid: copy.deepcopy([e for e in state["relationship_changes"] if e["npc"] == nid and e.get("source") in ("consequential_conduct", "social_conduct")][-6:]) for nid in sorted(conversational)}} if rules.get("consequential_demeanor") else {}),
                 **({"behavioral_context": behavior.projection(state, conversational)} if rules.get("behavioral_recognition") else {}),
                 **({"routine_source": copy.deepcopy(state["routine_source"])} if rules.get("routine_observations") else {}),
                 **({"npc_expectations": expectations.projection(state, conversational),
