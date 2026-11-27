@@ -65,7 +65,7 @@ def reminder_index(observation):
     decisions = history["decisions"]
     return {
         "outstanding_deadlines": history["outstanding_deadlines"],
-        **({"active_intentions": [{"counterpart": other, "topic": topic, "claim_id": entry["latest"]["claim_id"]}
+        **({"active_intentions": [{"counterpart": other, "topic": topic, **({"claim_id": entry["latest"]["claim_id"]} if "claim_id" in entry["latest"] else {"record_id": entry["latest"]["record_id"]})}
                                    for other, rel in history["diplomatic_history"].items()
                                    for topic, entry in rel["private_intentions"].items()
                                    if entry["latest"]["status"] == "active"]} if "diplomatic_history" in history else {}),
