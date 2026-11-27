@@ -253,3 +253,40 @@ class DraftCompilationTest(unittest.TestCase):
                 return {**transport(item, token), **change}
             with self.assertRaises(ValueError):
                 acquire(self.path, ["synthetic-fixture"], "synthetic-token", invalid)
+
+    def test_actual_drafts_rehearse_without_sources(self):
+        from age_runtime.core.draft_rehearsal import start_rehearsal
+        from age_runtime.core.private_play import briefing, decision_brief, pending_factions, model_decision_brief, model_choice, update
+        from age_runtime.core.private_openings import openings
+        count = 0
+        for group in self.inventory["groups"]:
+            for entry in group["scenarios"]:
+                sid = entry["id"]
+                for actor in entry["player_factions"]:
+                    session = start_rehearsal(ROOT / "inventory.json", sid, actor)
+                    self.assertEqual(briefing(session)["qualification"], "unreviewed-rehearsal")
+                    self.assertEqual(decision_brief(session)["qualification"], "unreviewed-rehearsal")
+                    self.assertEqual(session["header"]["compiled"]["dependencies"], {})
+                    self.assertNotIn("evidence", session["header"]["compiled"])
+                    for faction in pending_factions(session):
+                        exchange = model_decision_brief(session, faction)
+                        session = model_choice(session, faction, {
+                            "packet_id": exchange["packet"]["packet_id"], "action": None})
+                    session = update(session, turns=1)
+                    self.assertEqual(briefing(session)["turn"], 1)
+                    count += 1
+                with self.assertRaisesRegex(ValueError, "catalog-only"):
+                    select(ROOT / "inventory.json", sid, {})
+                with self.assertRaisesRegex(ValueError, "catalog-only"):
+                    openings(ROOT / "inventory.json", {}, [sid])
+        self.assertEqual(count, 25)
+
+    def test_rehearsal_refuses_missing_mechanical_values(self):
+        from age_runtime.core.draft_rehearsal import start_rehearsal
+        entry = next(g["scenarios"][0] for g in self.inventory["groups"] if g["scenarios"])
+        path = self.catalog / entry["spec"]
+        spec = parse_json(path.read_bytes())
+        spec["initial_refs"] = {"missing": {}}
+        path.write_text(json.dumps(spec), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "self-contained"):
+            start_rehearsal(self.path, entry["id"], entry["player_factions"][0])
