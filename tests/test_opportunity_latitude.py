@@ -54,3 +54,45 @@ class OpportunityLatitudeTest(unittest.TestCase):
                              "Session ended; assess achieved outcomes only.")
         self.assertEqual(latitude.select("strict"), "strict")
         self.assertEqual(latitude.select("strict", "permissive"), "permissive")
+
+
+    def test_recovery_assessment_actor_local_and_neutral(self):
+        from age_runtime.core.private_play import pending_factions, model_packet, model_choice, update
+        from age_runtime.core.private_play import record_decision
+        session = start_rehearsal(ROOT, SID, "fiji")
+        initial = digest(session)
+        opening = decision_brief(session)["recovery_assessment"]
+        self.assertTrue(any(x["kind"] == "diplomatic_option" for x in opening["alternatives"]))
+        self.assertFalse(opening["closures"])
+        self.assertEqual(digest(session), initial)
+        session = record_decision(session, digest(session), "reception", "Prioritize reception",
+                                  "fiji_reception_improve_logistics")
+        for _ in range(2):
+            for actor in pending_factions(session):
+                packet = model_packet(session, actor)
+                session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
+            session = update(session, turns=1)
+        brief = decision_brief(session)
+        before = digest(session)
+        assessments = [latitude.recovery_assessment(brief, level) for level in latitude.LEVELS]
+        for assessment in assessments:
+            self.assertTrue(any(c["project"] == "fiji_claims" for c in assessment["closures"]))
+            claim = next(a for a in assessment["alternatives"]
+                         if a.get("project") == "fiji_claims")
+            self.assertEqual(claim["scope"], "mitigation_only")
+            self.assertEqual(claim["status"], "conditional")
+            self.assertTrue(assessment["novel_proposals"]["player_proposals_allowed"])
+            self.assertFalse(assessment["terminal_failure_established"])
+        self.assertEqual(assessments[0]["alternatives"], assessments[2]["alternatives"])
+        self.assertEqual(digest(session), before)
+        ended = latitude.recovery_assessment(brief, "permissive", complete=True)
+        self.assertFalse(ended["alternatives"])
+        self.assertFalse(ended["novel_proposals"]["player_proposals_allowed"])
+        self.assertFalse(ended["terminal_failure_established"])
+
+    def test_no_known_recovery_is_not_terminal_failure(self):
+        brief = {"projects": [], "options": [], "diplomatic_options": [], "remaining_turns": 1}
+        result = latitude.recovery_assessment(brief, "strict")
+        self.assertFalse(result["alternatives"])
+        self.assertFalse(result["terminal_failure_established"])
+        self.assertTrue(result["novel_proposals"]["player_proposals_allowed"])

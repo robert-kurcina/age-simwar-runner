@@ -414,3 +414,7 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 ## ST-H — Opportunity Latitude (WIP)
 
 PR #218 Tests 46061366226 and Chat runtime bundle 46061366194 passed. Implement shared policy and strategic session initialization/override, preserve legacy balanced default, expose actor-local modeled project closures and facilitator guidance in player briefing and decision brief. No changes to mechanics, probabilities, faction choices or terminal conditions. Novel mechanical effects still require existing validated mechanisms or separate reviewed implementation. Test setting integrity and mechanical neutrality; CI pending. Next exercise contrasting recovery routes and classify objective/terminal failure only where supported. Author UAT deferred.
+
+## ST-I — Bounded recovery assessment (WIP)
+
+Expose actor-local modeled alternatives, conditional diplomatic options, scope of project closure, and novel proposal policy through the existing decision brief. Keep mechanical effects subject to existing adjudication; all latitude levels retain identical options. A closed project route may permit mitigation; no known route is not proof of terminal failure. Ended sessions expose no recovery actions. Tests exercise actual Mainlander Ingress missed window, neutrality and read-only state. CI pending. Next qualify contrasting recovery choices; broader objective/terminal proof and genuinely novel mechanical proposals remain outstanding. Author UAT deferred.

@@ -317,12 +317,14 @@ def decision_brief(session):
     from age_runtime.core.decision_support import decision_brief as project
     current = view(session)
     level = current["opportunity_latitude"]
+    derived = project(current["observation"])
     return {"revision": digest(session), "complete": current["complete"],
             "opportunity_policy": latitude.policy(level),
             "opportunity_closures": latitude.assess_projects(current["observation"].get("strategic_support", {}).get("project_assessments", []), level, current["complete"]),
             "title": current["title"],
             **({"qualification": current["qualification"]} if "qualification" in current else {}),
-            **project(current["observation"])}
+            "recovery_assessment": latitude.recovery_assessment(derived, level, current["complete"]),
+            **derived}
 
 
 def briefing(session):
