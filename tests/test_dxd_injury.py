@@ -40,3 +40,33 @@ class InjuryTests(unittest.TestCase):
         rules["danger_beats"][key]["resolved_injury_on_dof"] = 12
         with self.assertRaises(ValueError):
             beats.compile_beat(state, rules, request)
+
+
+    def test_dedicated_thresholds_and_partitioned_deterioration(self):
+        state = dxd_injury.initial(12, 12, 4)
+        for incoming, status in ((12, "severely_injured"), (13, "coma"), (24, "dying")):
+            dxd_injury.apply(state, incoming)
+            self.assertEqual(dxd_injury.projection(state)["status"], status)
+        whole = copy.deepcopy(state)
+        dxd_injury.advance(state, 239)
+        self.assertEqual(state["injury"], 24)
+        dxd_injury.advance(state, 241)
+        dxd_injury.advance(whole, 480)
+        self.assertEqual(state, whole)
+        self.assertEqual(state["injury"], 26)
+        self.assertEqual(dxd_injury.advance(state, 99999), 2400)
+        self.assertEqual(dxd_injury.projection(state)["status"], "dead")
+
+    def test_incapacity_blocks_voluntary_actions_and_advances_clock(self):
+        state = mythos.initial("boothbay", 42)
+        injury = state["dxd"]["injury"]
+        dxd_injury.apply(injury, injury["capacity"] + injury["size"])
+        self.assertEqual([a["id"] for a in mythos.view(state)["choices"]], ["await_assistance"])
+        with self.assertRaises(ValueError):
+            mythos.step(state, "observe")
+        before = copy.deepcopy(state)
+        after = mythos.step(state, "await_assistance")
+        self.assertEqual(state, before)
+        self.assertEqual(after["dxd"]["injury"]["injury"], injury["injury"] + 1)
+        self.assertNotEqual(after["time"], state["time"])
+        self.assertEqual(after["dxd"]["concerns"], state["dxd"]["concerns"])
