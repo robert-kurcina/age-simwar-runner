@@ -291,7 +291,8 @@ def verify_checkpoint(s, state):
             if record["turn"] != turn:
                 break
             if record.get("origin") == "assessment":
-                expected = communications.assess(s, expected, record["actor"], record["assessment"])
+                expected = communications.assess(s, expected, record["actor"],
+                    {k: v for k, v in record["assessment"].items() if k != "report_evidence"})
             elif record.get("origin") == "communication":
                 expected = communications.append(s, expected, record["actor"], record["communication"])
             elif record.get("origin") == "model":

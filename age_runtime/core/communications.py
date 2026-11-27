@@ -16,9 +16,16 @@ def validate(s):
         if not s.get("material_communications") or not isinstance(registry, dict) or not registry or len(registry) > 128:
             raise ValueError("invalid proposition registry")
         for pid, item in registry.items():
-            if text_field(pid, 80) != pid or not isinstance(item, dict) or set(item) != {"text", "initial_access"}:
+            if text_field(pid, 80) != pid or not isinstance(item, dict) or not {"text", "initial_access"} <= set(item) or set(item) - {"text", "initial_access", "report_binding"}:
                 raise ValueError("invalid proposition definition")
             text_field(item["text"], 400)
+            if "report_binding" in item:
+                binding = item["report_binding"]
+                if (not isinstance(binding, dict) or set(binding) != {"key", "comparison", "threshold"}
+                        or not isinstance(binding["key"], str) or binding["key"] not in s["initial"]
+                        or binding["comparison"] not in ("equal", "at_least", "at_most")
+                        or type(binding["threshold"]) is not int):
+                    raise ValueError("invalid proposition report binding")
             access = item["initial_access"]
             if not isinstance(access, list) or any(not isinstance(a, str) or a not in s["actors"] for a in access) or len(set(access)) != len(access):
                 raise ValueError("invalid initial proposition access")
@@ -27,10 +34,11 @@ def validate(s):
 def append(s, state, actor, command):
     if not s.get("material_communications") or actor not in s["actors"] or state["minute"] >= s["end_minute"]:
         raise ValueError("communication unavailable")
-    if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts"} or not {"id", "recipients", "claim"} <= set(command):
+    if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts", "speaker_intent"} or not {"id", "recipients", "claim"} <= set(command):
         raise ValueError("invalid communication fields")
     cid = text_field(command["id"], 80)
-    if cid == "authored_access":
+    if cid == "authored_access" or (cid.startswith("report:") and any(
+            "report_binding" in item for item in s.get("communication_propositions", {}).values())):
         raise ValueError("reserved communication ID")
     claim = text_field(command["claim"], 400)
     recipients = command["recipients"]
@@ -46,6 +54,11 @@ def append(s, state, actor, command):
     payload = {"id": cid, "recipients": sorted(recipients), "claim": claim}
     if correction is not None:
         payload["corrects"] = correction
+    if "speaker_intent" in command:
+        intent = command["speaker_intent"]
+        if intent not in ("unstated", "sincere", "deceive", "fabricate"):
+            raise ValueError("invalid speaker intent")
+        payload["speaker_intent"] = intent
     if "proposition" in command or "asserts" in command:
         pid = command.get("proposition")
         if not isinstance(pid, str) or type(command.get("asserts")) is not bool or not access_sources(s, state, actor, pid):
@@ -64,17 +77,57 @@ def append(s, state, actor, command):
     return result
 
 
+def observed_report(s, state, actor, key):
+    """Single delayed-report projection for observations and evidence."""
+    profile = s["actors"][actor]
+    if key not in profile.get("visible_keys", []):
+        return None
+    delay = profile.get("report_delay_minutes", {}).get(key, 0)
+    cutoff = state["minute"] - delay
+    if cutoff < 0:
+        return {"status": "unknown"}
+    value = s["initial"][key]
+    for entry in state["ledger"]:
+        if entry["key"] == key and entry["minute"] <= cutoff:
+            value = entry["value"]
+    return {"status": "current" if delay == 0 else "stale",
+            "as_of_minute": cutoff, "age_minutes": delay, "value": value}
+
+
+def report_source(s, state, actor, item):
+    """Actor-visible snapshot only; no disclosure of unreported current values."""
+    binding = item.get("report_binding")
+    if binding is None:
+        return None
+    key = binding["key"]
+    report = observed_report(s, state, actor, key)
+    if report is None or "value" not in report:
+        return None
+    cutoff, value = report["as_of_minute"], report["value"]
+    threshold = binding["threshold"]
+    satisfies = {"equal": value == threshold, "at_least": value >= threshold,
+                 "at_most": value <= threshold}[binding["comparison"]]
+    return {"kind": "observed_report", "id": "report:" + str(cutoff), "key": key,
+            "as_of_minute": cutoff, "value": value, "asserts": satisfies}
+
+
 def access_sources(s, state, actor, pid):
     item = s.get("communication_propositions", {}).get(pid)
     if item is None:
         return []
     result = [{"kind": "authored_access"}] if actor in item["initial_access"] else []
+    # Only actors already granted proposition access may see its registry text.
+    # A report binding is not itself permission to discover a private proposition.
     for r in state["requests"]:
         if r.get("origin") != "communication":
             continue
         msg = r["communication"]
         if msg.get("proposition") == pid and actor in msg["recipients"]:
             result.append({"kind": "received_claim", "id": msg["id"], "asserts": msg["asserts"]})
+    if result:
+        report = report_source(s, state, actor, item)
+        if report is not None:
+            result.append(report)
     return result
 
 
@@ -95,9 +148,13 @@ def assess(s, state, actor, command):
     if len(prior) >= 256:
         raise ValueError("assessment limit")
     result = deepcopy(state)
+    evidence = [deepcopy(x) for x in sources if x.get("id", "authored_access") in basis]
+    record = {"proposition": pid, "stance": stance, "basis": sorted(basis)}
+    if any(x["kind"] == "observed_report" for x in evidence):
+        record["report_evidence"] = [x for x in evidence if x["kind"] == "observed_report"]
     result["requests"].append({"actor": actor, "action": None, "status": "assessed",
         "origin": "assessment", "turn": state["turn"], "minute": state["minute"],
-        "sequence": len(state["requests"]) + 1, "assessment": {"proposition": pid, "stance": stance, "basis": sorted(basis)}})
+        "sequence": len(state["requests"]) + 1, "assessment": record})
     return result
 
 
@@ -119,6 +176,7 @@ def view(s, state, actor):
     if not s.get("material_communications"):
         return {}
     return {**({"propositions": propositions_view(s, state, actor)} if "communication_propositions" in s else {}), "communications": [
-        {"speaker": r["actor"], "turn": r["turn"], "minute": r["minute"], **deepcopy(r["communication"])}
+        {"speaker": r["actor"], "turn": r["turn"], "minute": r["minute"], **{k: deepcopy(v) for k, v in r["communication"].items()
+           if k != "speaker_intent" or r["actor"] == actor}}
         for r in state["requests"] if r.get("origin") == "communication"
         and (r["actor"] == actor or actor in r["communication"]["recipients"])]}
