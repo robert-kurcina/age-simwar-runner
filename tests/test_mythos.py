@@ -813,6 +813,49 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_action_observations_and_silent_duress(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.establish_step(s, {"details": [{"id": "inc:cup", "kind": "object",
+            "label": "Cup", "description": "An old ceramic cup.", "basis": "Local object",
+            "custodian": "eleanor"}]})
+        s = mythos.establish_step(s, {"transfers": [{"id": "inc:cup", "from": "eleanor", "to": "pc",
+            "pc_authorization": "I accept.", "npc_consent": "Take it.", "basis": "Voluntary transfer"}]})
+        s = mythos.establish_step(s, {"object_action": {"id": "act:drop", "object": "inc:cup",
+            "before": "intact", "outcome": "destroyed", "authorization": "I drop it.",
+            "basis": "Certain breakage", "remnants": "Ceramic fragments"}})
+        obs = {"id": "obs:cup", "npc": "eleanor", "action": "act:drop",
+               "kind": "witnessed", "basis": "She saw the cup fall from the PC's hand."}
+        self.assertEqual(mythos.gm_context(s)["referee"]["action_observations"]["eleanor"], [])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"action_observation": dict(obs, npc="elias")})
+        seen = mythos.establish_step(s, {"action_observation": obs})
+        episode = {"id": "emo:silent", "npc": "eleanor", "claim_ids": [],
+                   "observation": "obs:cup", "emotion": "Shock and grief",
+                   "intensity": "acute", "expression": "She stares at the fragments.",
+                   "cause": "Witnessed loss of a cherished object", "stress": {"eleanor": "severe"}}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"emotion": episode})
+        after = mythos.establish_step(seen, {"emotion": episode})
+        self.assertEqual(after["npcs"]["eleanor"]["concerns"]["stress"], 6)
+        self.assertEqual(after["dialogue"], [])
+        self.assertEqual(after["action_observations"][0]["actor"], "pc")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"emotion": dict(episode, id="emo:again")})
+        self.assertNotIn("action_observations", mythos.view(after))
+        mythos.verify(after)
+        moved = mythos.step(s, "move:Harbor Docks")
+        returned = mythos.step(moved, "move:Harbor Diner")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(returned, {"action_observation": obs})
+        found = mythos.establish_step(returned, {"action_observation": dict(obs,
+            kind="discovered", basis="She notices the fragments on the floor.")})
+        self.assertIsNone(found["action_observations"][0]["actor"])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(found, {"emotion": dict(episode, stress={"pc": "severe"})})
+        found = mythos.establish_step(found, {"emotion": episode})
+        self.assertEqual(found["npcs"]["eleanor"]["concerns"]["stress"], 6)
+        mythos.verify(found)
+
     def test_certain_object_destruction_retains_identity_and_remnants(self):
         import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")

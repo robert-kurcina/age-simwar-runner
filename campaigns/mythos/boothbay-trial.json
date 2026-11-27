@@ -1,5 +1,6 @@
 {
-  "version": 56,
+  "version": 57,
+  "action_observations": true,
   "consequential_objects": true,
   "npc_temporal": {"initial_awake_seconds": {"eleanor": 0, "elias": 0, "burroughs": 0}},
   "interpersonal_duress": {"stress_awards": {"minor": 1, "significant": 3, "severe": 6}},

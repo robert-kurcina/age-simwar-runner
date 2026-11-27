@@ -5,7 +5,8 @@ from age_runtime.core import dxd_conditions
 
 def record(state, rules, request, npc_available, text):
     cfg = rules.get("interpersonal_duress")
-    if not cfg or not isinstance(request, dict) or set(request) != {"id", "npc", "claim_ids", "emotion", "intensity", "expression", "cause", "stress"}:
+    required = {"id", "npc", "claim_ids", "emotion", "intensity", "expression", "cause", "stress"}
+    if not cfg or not isinstance(request, dict) or not required <= set(request) or set(request) - required - {"observation"}:
         raise ValueError("invalid emotional episode")
     eid, npc = request["id"], request["npc"]
     if not isinstance(eid, str) or not re.fullmatch(r"emo:[a-z][a-z0-9_]{0,63}", eid):
@@ -18,7 +19,13 @@ def record(state, rules, request, npc_available, text):
     if len(ledger) >= 256 or any(e["id"] == eid for e in ledger):
         raise ValueError("duplicate emotional episode or record limit")
     ids = request["claim_ids"]
-    if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or any(type(i) is not int for i in ids) or len(set(ids)) != len(ids):
+    observation = None
+    if "observation" in request:
+        observation = next((o for o in state.get("action_observations", [])
+                            if o["id"] == request["observation"] and o["npc"] == npc), None)
+        if not rules.get("action_observations") or not observation:
+            raise ValueError("episode requires NPC observation provenance")
+    if not isinstance(ids, list) or not (0 if observation else 1) <= len(ids) <= 4 or any(type(i) is not int for i in ids) or len(set(ids)) != len(ids):
         raise ValueError("invalid emotional episode references")
     claims = {c["id"]: c for c in state["dialogue"]}
     for i in ids:
@@ -38,6 +45,13 @@ def record(state, rules, request, npc_available, text):
     for actor, tier in stress.items():
         if not isinstance(tier, str) or tier not in cfg["stress_awards"]:
             raise ValueError("unsupported duress severity")
+        if observation:
+            if actor == "pc" and not ids and observation["kind"] != "witnessed":
+                raise ValueError("PC duress requires current exposure")
+            if observation["turn"] != state["turn"] or observation["location"] != state["location"]:
+                raise ValueError("new duress requires current observation exposure")
+            if any(actor in e["awards"] and e.get("action") == observation["action"] for e in ledger):
+                raise ValueError("action duress already charged")
         # A claim may support a later description, but not a second award.
         if any(actor in e["awards"] and (set(ids) & set(e["claim_ids"])
                     or (e["npc"] == npc and e["turn"] == state["turn"]
@@ -48,12 +62,15 @@ def record(state, rules, request, npc_available, text):
     for actor, amount in awards.items():
         concerns = state["dxd"]["concerns"] if actor == "pc" else state["npcs"][actor]["concerns"]
         dxd_conditions.add(concerns, stress=amount)
+        if actor != "pc" and "activity" in state["npcs"][actor]:
+            dxd_conditions.refresh_sleep_limit(concerns, state["npcs"][actor]["activity"], state["npcs"][actor]["dxd_attributes"])
     if "pc" in awards and "activity" in state["dxd"]:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], state["dxd"]["activity"], state["dxd"]["attributes"])
     ledger.append({"id": eid, "npc": npc, "claim_ids": list(ids), "emotion": emotion,
                    "intensity": intensity, "expression": expression, "cause": cause,
                    "severity": copy.deepcopy(stress), "awards": awards, "turn": state["turn"],
-                   "at": state["time"], "location": state["location"]})
+                   "at": state["time"], "location": state["location"],
+                   **({"observation": observation["id"], "action": observation["action"]} if observation else {})})
 
 def projection(state, participants):
     result = {}
