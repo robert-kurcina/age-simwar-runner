@@ -813,6 +813,41 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_epistemic_dialogue_replay_and_visibility(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        request = {"npc": "eleanor", "speaker": "eleanor", "claim": "I have never seen unusual growth.",
+                   "stance": "disbelieves", "intent": "deceive"}
+        before = mythos.digest(s)
+        after = mythos.dialogue_step(s, request)
+        self.assertEqual(mythos.digest(s), before)
+        for key in ("time", "turn", "flags", "discoveries", "relationships", "dxd", "npcs"):
+            self.assertEqual(after[key], s[key])
+        public = mythos.view(after)["dialogue"][0]
+        self.assertEqual(public["claim"], request["claim"])
+        self.assertNotIn("speaker_intent", public)
+        self.assertNotIn("speaker_stance", public)
+        private = mythos.gm_context(after)["referee"]["dialogue_context"][0]
+        self.assertEqual(private["speaker_intent"], "deceive")
+        self.assertEqual(private["speaker_stance"], "disbelieves")
+        for bad in (request, dict(request, speaker="pc"), dict(request, npc="elias"),
+                    dict(request, grant=["water_warning"])):
+            with self.assertRaises(ValueError):
+                mythos.dialogue_step(after, bad)
+        moved = mythos.step(after, "move:Harbor Docks")
+        self.assertEqual(mythos.gm_context(moved)["referee"]["dialogue_context"], [])
+        self.assertEqual(mythos.view(moved)["dialogue"], [public])
+        returned = mythos.step(moved, "move:Harbor Diner")
+        reply = {"npc": "eleanor", "speaker": "pc", "claim": "I will keep looking.",
+                 "stance": "unstated", "intent": "unstated"}
+        returned = mythos.dialogue_step(returned, reply)
+        mythos.verify(returned)
+        self.assertEqual(len(returned["dialogue"]), 2)
+        import copy
+        tampered = copy.deepcopy(returned)
+        tampered["dialogue"][0]["claim"] = "Changed testimony."
+        with self.assertRaises(ValueError):
+            mythos.verify(tampered)
+
     def test_dialogue_context_survives_spent_topics_and_respects_availability(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         s = mythos.step(s, "talk_eleanor")
