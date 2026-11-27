@@ -1,5 +1,5 @@
 {
-  "version": 71,
+  "version": 72,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2329,6 +2329,20 @@
     }
   },
   "local_proposals": {
+    "inspect_object": {
+      "target": "object",
+      "object_effect": "inspect",
+      "variable_interval_seconds": 60,
+      "resolution": "test",
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigate",
+        "tn": 7,
+        "significance": "minor",
+        "decision": false
+      },
+      "established": "object_examined"
+    },
     "build_rapport": {
       "target": "npc",
       "seconds": 600,
