@@ -8,7 +8,7 @@ from age_runtime.core import opportunity_latitude as latitude
 from age_runtime.core.runner import save
 from age_runtime.mythos import projections, resolution, npc_agenda, settlement_activity, incidental_people
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression, dxd_injury
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -163,6 +163,8 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
+        if rules.get("native_injury"):
+            state["dxd"]["injury"] = dxd_injury.initial(derived["pc"]["physical"]["bodypoints"])
         if rules.get("emotional_commitment"):
             state["dxd"]["commitments"] = []
         if "character_profiles" in state:
