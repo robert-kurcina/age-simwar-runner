@@ -60,7 +60,8 @@ def append(s, state, actor, command):
         raise ValueError("invalid recipients")
     prior = [r for r in state["requests"] if r.get("origin") == "communication"]
     if (len(prior) >= 256 or any(r["communication"]["id"] == cid for r in prior)
-            or any(r.get("origin") == "diplomatic_record" and r["diplomatic_record"]["id"] == cid for r in state["requests"])):
+            or any(r.get("origin") == "diplomatic_record" and r["actor"] == actor
+                   and r["diplomatic_record"]["id"] == cid for r in state["requests"])):
         raise ValueError("duplicate ID or communication limit")
     correction = command.get("corrects")
     if "corrects" in command:
