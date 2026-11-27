@@ -91,3 +91,42 @@ class CommunicationsTest(unittest.TestCase):
         damaged["requests"][1]["assessment"]["basis"] = ["unreceived"]
         with self.assertRaises(ValueError):
             verify_checkpoint(s, damaged)
+
+    def test_report_evidence_and_private_intent(self):
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["material_communications"] = True
+        s["communication_propositions"] = {
+            "completed": {"text": "Eastern recovery is complete.",
+                          "initial_access": ["east"],
+                          "report_binding": {"key": "east_progress", "comparison": "at_least", "threshold": 3}}
+        }
+        s["actors"]["foundation"]["report_delay_minutes"] = {"east_progress": 10080}
+        state = initialize(s)
+        msg = {"id": "claim1", "recipients": ["foundation", "west"],
+               "claim": "Eastern recovery is complete.", "proposition": "completed",
+               "asserts": True, "speaker_intent": "deceive"}
+        state = communicate(s, state, "east", digest(state), msg)
+        self.assertEqual(observe(s, state, "east")["communications"][0]["speaker_intent"], "deceive")
+        self.assertNotIn("speaker_intent", observe(s, state, "foundation")["communications"][0])
+        self.assertNotIn("speaker_intent", observe(s, state, "west")["communications"][0])
+        command = {"proposition": "completed", "stance": "disbelieves", "basis": ["report:0"]}
+        with self.assertRaises(ValueError):
+            assess_proposition(s, state, "foundation", digest(state), command)
+        for actor in s["model_factions"]:
+            packet = faction_packet(s, state, actor)
+            state = accept_faction_choice(s, state, actor, packet,
+                                          {"packet_id": packet["packet_id"], "action": None})
+        state = advance(s, state)
+        report = observe(s, state, "foundation")["reports"]["east_progress"]
+        self.assertEqual(report["as_of_minute"], 0)
+        state = assess_proposition(s, state, "foundation", digest(state), command)
+        evidence = state["requests"][-1]["assessment"]["report_evidence"][0]
+        self.assertEqual(evidence["value"], report["value"])
+        self.assertFalse(evidence["asserts"])
+        self.assertEqual(evidence["as_of_minute"], 0)
+        verify_checkpoint(s, state)
+        damaged = copy.deepcopy(state)
+        damaged["requests"][-1]["assessment"]["report_evidence"][0]["value"] = 99
+        with self.assertRaises(ValueError):
+            verify_checkpoint(s, damaged)
