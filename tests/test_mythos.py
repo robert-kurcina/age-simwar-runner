@@ -813,6 +813,65 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_narrative_agreement_lifecycle_and_claim_provenance(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+
+        def say(state, speaker, claim):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": speaker,
+                                               "claim": claim, "stance": "unstated",
+                                               "intent": "unstated"})
+
+        permission = {"operation": "create", "id": "agr:cup_view", "kind": "permission",
+                      "npc": "eleanor", "issuer": "eleanor", "terms": "Examine the cup",
+                      "condition": "Keep it on the counter", "claim_ids": [1, 2]}
+        s = say(s, "pc", "May I examine the cup without taking it away?")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"agreement": permission})
+        s = say(s, "eleanor", "Yes, provided you keep it on the counter.")
+        before = mythos.digest(s)
+        after = mythos.establish_step(s, {"agreement": permission})
+        self.assertEqual(mythos.digest(s), before)
+        for key in ("time", "turn", "flags", "discoveries", "inventory", "resources",
+                    "relationships", "dxd", "npcs", "dialogue"):
+            self.assertEqual(after[key], s[key])
+        self.assertEqual(mythos.view(after)["narrative_agreements"][0]["status"], "active")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"agreement": dict(permission, id="agr:duplicate")})
+        remote = mythos.step(after, "move:Harbor Docks")
+        self.assertEqual(mythos.gm_context(remote)["player_surface"]["narrative_agreements"][0]["condition"],
+                         permission["condition"])
+        revoke = {"operation": "resolve", "id": permission["id"], "status": "revoked",
+                  "claim_ids": [3]}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(remote, {"agreement": revoke})
+        returned = mythos.step(remote, "move:Harbor Diner")
+        returned = say(returned, "pc", "Are you withdrawing your permission?")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(returned, {"agreement": revoke})
+        returned = say(returned, "eleanor", "Yes. Please leave it alone.")
+        returned = mythos.establish_step(returned, {"agreement": dict(revoke, claim_ids=[4])})
+        self.assertEqual(mythos.view(returned)["narrative_agreements"][0]["status"], "revoked")
+        returned = say(returned, "pc", "I promise to listen to you now.")
+        returned = say(returned, "eleanor", "Thank you. That is all I ask.")
+        promise = {"operation": "create", "id": "agr:listen", "kind": "commitment",
+                   "npc": "eleanor", "issuer": "pc", "terms": "Listen to Eleanor",
+                   "condition": None, "claim_ids": [5, 6]}
+        returned = mythos.establish_step(returned, {"agreement": promise})
+        returned = say(returned, "pc", "I have listened to your account.")
+        fulfill = {"operation": "resolve", "id": promise["id"], "status": "fulfilled",
+                   "claim_ids": [7]}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(returned, {"agreement": fulfill})
+        returned = say(returned, "eleanor", "You have heard me out.")
+        returned = mythos.establish_step(returned, {"agreement": dict(fulfill, claim_ids=[7, 8])})
+        self.assertEqual(mythos.view(returned)["narrative_agreements"][1]["status"], "fulfilled")
+        mythos.verify(returned)
+        import copy
+        tampered = copy.deepcopy(returned)
+        tampered["agreement_history"][0]["terms"] = "Altered permission"
+        with self.assertRaises(ValueError):
+            mythos.verify(tampered)
+
     def test_incidental_custody_travels_and_preserves_provenance(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         cup = {"id": "inc:cup", "kind": "object", "label": "Cup",

@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -74,6 +74,8 @@ def initial(sid, seed):
         state["detail_changes"] = []
     if rules.get("narrative_custody"):
         state["custody_transfers"] = []
+    if rules.get("narrative_agreements"):
+        state["agreement_history"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -773,6 +775,8 @@ def view(state):
         scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
     if "established_details" in state:
         scene_view["established_details"] = establishment.projection(state)
+    if "agreement_history" in state:
+        scene_view["narrative_agreements"] = agreements.public_projection(state)
     if "dialogue" in state:
         scene_view["dialogue"] = epistemic.public_projection(state)
     if "local_records" in state:
@@ -811,7 +815,7 @@ def gm_context(state):
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
-    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments", "established_details") if k in public})
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments", "established_details", "narrative_agreements") if k in public})
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]
