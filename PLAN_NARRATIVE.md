@@ -13,6 +13,10 @@ Follow the [master shared contracts](PLAN.md#shared-consequential-information-an
 
 Narrative P0 literary/emotional qualification and current release corrections retain priority. This coordination section adds no new narrative subsystem, version bump, checkpoint migration or acceptance claim. Existing ordered v49+ work remains in force subject to the shared contracts.
 
+## Contextual recall coordination
+
+Adopt [shared contextual recall](PLAN.md#contextual-recall-and-decision-support) as a standing GM presentation and qualification requirement. Surface previously earned clues, known relationships, significant actual utterances, permissions, commitments, earlier player decisions and unresolved opportunities when relevant; offer a concise resumption briefing and on-demand notebook. Do not reveal hidden truth, infer PC beliefs or require the player to remember every exchange. No time, Tests, pacing or state effects for ordinary recall. Preserve native adjudication and present discrepancies without overriding agency. Strategic first-adopter institutional memory uses existing actor projections; inspect for reusable retrieval utilities, not faction-specific staff terminology. No narrative runtime change or acceptance claim in this increment.
+
 ## Goal and evidence
 
 Create playable character-centered adventures with exploration, danger, uncertainty, meaningful decisions and consequences. ChatGPT acts as the active Game Master (GM): it prepares from the scenario sketch, frames scenes, interprets intent, portrays NPCs, monitors player involvement, and proposes consequential developments. Python validates, adjudicates and commits authoritative state. Preserve native DXD and source authority.
