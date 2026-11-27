@@ -1,5 +1,5 @@
 {
-  "version": 74,
+  "version": 75,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -83,6 +83,12 @@
     ]
   },
   "npc_lifecycle": true,
+  "npc_agendas": {
+    "eleanor": [
+      {"days": [0, 1, 2, 3, 4, 5], "start_minute": 480, "end_minute": 720, "location": "Harbor Diner", "label": "Morning diner shift"},
+      {"days": [0, 1, 2, 3, 4, 5], "start_minute": 780, "end_minute": 960, "location": "Harbor Diner", "label": "Afternoon diner shift"}
+    ]
+  },
   "npc_task_continuity": true,
   "npc_native_test": {"npc": "burroughs", "minutes": 10, "appearance": "Faded initials", "test": {"attribute": "INT", "skill": "Investigate", "tn": 10, "decision": true}, "success": "He can distinguish the faded initials, but cannot establish ownership.", "failure": "He cannot confidently distinguish the faded initials."},
   "routine_observations": {"activities": {"buy_meal": "Bought a meal and rested at the diner"}},
