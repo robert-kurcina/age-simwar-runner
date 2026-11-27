@@ -212,5 +212,61 @@ class ConflagrationDrafts(unittest.TestCase):
                 self.assertEqual(digest(route(recipient)), digest(route(recipient)))
 
 
+
+    def test_scoped_interactions(self):
+        for group, speaker, recipient, pid in (
+            ("disaster-response", "fiji", "vanuatu", "reception_ready"),
+            ("mainlander-ingress", "fiji", "vanuatu", "claims_ready"),
+            ("purge", "fiji", "local-adherents", "safeguards"),
+            ("agreement", "shanter", "arabian-religious-delegation", "regional_commitment"),
+            ("reconstruction", "fiji", "shanter", "port_ready"),
+        ):
+            with self.subTest(group=group):
+                s = load(group)["scenario"]
+                st = initialize(s)
+                original = digest(st)
+                st = communicate(s, st, speaker, digest(st), {
+                    "id": "status", "recipients": [recipient],
+                    "claim": "The reported milestone has not been completed.",
+                    "proposition": pid, "asserts": False})
+                self.assertEqual(st["values"], s["initial"])
+                outsider = next(a for a in s["actors"] if a not in (speaker, recipient))
+                self.assertFalse(observe(s, st, outsider).get("communications"))
+                verify_checkpoint(s, st)
+                self.assertEqual(digest(initialize(s)), original)
+
+    def test_ingress_review_requires_consent(self):
+        s = load("mainlander-ingress")["scenario"]
+        for route in ("accepted", "revoked", "refused"):
+            with self.subTest(route=route):
+                st = initialize(s)
+                st = decide(s, st, "fiji", "offer", command={
+                    "kind": "propose", "id": "review",
+                    "recipient": "vanuatu", "permission": "aggregate_claims_review",
+                    "due_minute": 40320})
+                st = choose(s, st, "vanuatu", {
+                    "kind": "reject" if route == "refused" else "accept", "id": "review"})
+                command = {"template": "aggregate_review", "due_minute": 10080,
+                           "permission_id": "review", "rationale": "Procedural consultation."}
+                if route == "refused":
+                    before = digest(st)
+                    with self.assertRaises(ValueError):
+                        schedule_development(s, st, digest(st), command)
+                    self.assertEqual(digest(st), before)
+                else:
+                    st = schedule_development(s, st, digest(st), command)
+                    if route == "revoked":
+                        st = decide(s, st, "fiji", "revoke", command={
+                            "kind": "revoke", "id": "review"})
+                st = finish(s, st, ("vanuatu",))
+                self.assertEqual(st["values"]["aggregate_review_completed"], int(route == "accepted"))
+                self.assertEqual(observe(s, st, "fiji")["values"]["aggregate_review_completed"], 0)
+                self.assertNotIn("aggregate_review_completed", observe(s, st, "shanter")["values"])
+                st = finish(s, st)
+                self.assertEqual(observe(s, st, "fiji")["values"]["aggregate_review_completed"],
+                                 int(route == "accepted"))
+                verify_checkpoint(s, st)
+
+
 if __name__ == "__main__":
     unittest.main()
