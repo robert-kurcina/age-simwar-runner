@@ -434,3 +434,7 @@ PR #227 merged; Tests 46070113525 reported only the existing narrative compact G
 ## ST-M — Contrasting creative recovery qualification (WIP)
 
 PR #229 merged; Tests 46070510150 and Chat runtime bundle 46070510156 passed. Qualify the actual Mainlander Ingress draft through the advisory planning interface, early assistance negotiation, fresh confirmation of the funded investment, and full terminal replay, contrasted with independent refusal. Exercise identical confirmed decisions under all three Opportunity Latitude levels. These are scripted regression routes, not independently deliberating LLMs or author UAT. CI pending. If these pass, prioritize actual facilitator rehearsals and scenario preparation/content delivery over further generic recovery abstractions. Novel effects outside existing mechanics still require a specific demonstrated need and reviewed adjudication.
+
+## ST-N — Scenario preparation diagnostics (WIP)
+
+PR #230 passed Tests 46070851549 and Chat runtime bundle 46070851585. Consolidate resource discovery, roster inspection, source-independent opening rehearsal, optional compilation and reviewed opening checks into a read-only preparation report. No automatic review or new validation framework. Tests cover seven drafts and 25 perspectives, missing sources and broken specifications. CI pending. Next use the report to prepare actual reviewed content and simplify campaign delivery; independent LLM rehearsal and author UAT remain distinct.
