@@ -275,6 +275,11 @@ def view(session):
             "observation": observe(s, session["state"], h["actor"])}
 
 
+def institutional_memory(session, counterpart=None):
+    from age_runtime.core.institutional_memory import recall
+    return recall(view(session)["observation"], counterpart)
+
+
 def briefing(session):
     """Actor-visible facts only; never expose source excerpts or full checkpoints."""
     current = view(session)
@@ -285,7 +290,9 @@ def briefing(session):
     start_date = checked_date(h["effective_date"])
     elapsed = observation["minute"]
     context = h.get("briefing_context", [])
+    from age_runtime.core.institutional_memory import reminder_index
     return {
+        "reminders": reminder_index(observation),
         "kind": "opening" if observation["turn"] == 0 else "turn",
         "campaign": current["campaign"], "scenario": current["title"],
         "perspective": actor["label"],
@@ -477,6 +484,9 @@ def main(argv=None):
     assessment.add_argument("actor")
     assessment.add_argument("assessment", type=Path)
     assessment.add_argument("--revision", required=True)
+    memory = commands.add_parser("memory", help="Read-only actor-scoped institutional recall")
+    memory.add_argument("session", type=Path)
+    memory.add_argument("--counterpart")
     pending = commands.add_parser("pending-factions")
     pending.add_argument("session", type=Path)
     turn = commands.add_parser("resolve-turn")
@@ -537,6 +547,8 @@ def main(argv=None):
             session = assess_proposition(read(a.session), a.actor, a.revision, read(a.assessment))
             save(a.session, session)
             result = briefing(session)
+        elif a.command == "memory":
+            result = institutional_memory(read(a.session), a.counterpart)
         elif a.command == "pending-factions":
             session = verify(read(a.session))
             result = {"revision": digest(session), "pending": pending_factions(session)}
