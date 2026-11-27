@@ -1,5 +1,5 @@
 {
-  "version": 43,
+  "version": 44,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -2185,6 +2185,7 @@
       }
     }
   },
+  "epistemic_dialogue": true,
   "local_proposals": true,
   "danger_beats": {
     "beat:inlet_withdrawal": {
