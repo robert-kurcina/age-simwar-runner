@@ -14,6 +14,8 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
+    if isinstance(request, dict) and set(request) == {"npc_native_test"}:
+        return timed_details.native_test(state, rules, request["npc_native_test"], npc_available, local_entities, text)
     if isinstance(request, dict) and set(request) == {"routine_observation"}:
         return behavior.record_routine(state, rules, request["routine_observation"], npc_available, text)
     if isinstance(request, dict) and set(request) == {"npc_travel"}:
