@@ -1,5 +1,5 @@
 {
-  "version": 76,
+  "version": 77,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2742,6 +2742,108 @@
       "dm": -3,
       "replaces": "professional_scrutiny",
       "emphasis": true
+    }
+  },
+  "settlement_activity": {
+    "town": {
+      "default": "sparse",
+      "basis": "Provisional scenario ambience inferred from harbor, diner and boarding-house setting; not a historical population estimate.",
+      "windows": [
+        {
+          "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "start_minute": 0,
+          "end_minute": 360,
+          "level": "quiet",
+          "examples": [
+            "Occasional passerby",
+            "An isolated worker or returning resident"
+          ]
+        },
+        {
+          "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "start_minute": 480,
+          "end_minute": 960,
+          "level": "busy",
+          "examples": [
+            "Residents on errands",
+            "Harbor workers",
+            "Customers near businesses"
+          ]
+        },
+        {
+          "days": [
+            6
+          ],
+          "start_minute": 480,
+          "end_minute": 960,
+          "level": "ordinary",
+          "examples": [
+            "Residents out for personal errands",
+            "Small groups visiting acquaintances"
+          ]
+        },
+        {
+          "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "start_minute": 1080,
+          "end_minute": 1320,
+          "level": "ordinary",
+          "examples": [
+            "Residents returning home",
+            "Evening conversation"
+          ]
+        }
+      ]
+    },
+    "inlet": {
+      "default": "quiet",
+      "basis": "Provisional context for a less populated shoreline.",
+      "windows": [
+        {
+          "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "start_minute": 360,
+          "end_minute": 1080,
+          "level": "sparse",
+          "examples": [
+            "An occasional fisherman or walker"
+          ]
+        }
+      ]
+    },
+    "coast": {
+      "default": "quiet",
+      "basis": "Provisional remote coastal context; does not establish access or witnesses.",
+      "windows": []
     }
   }
 }
