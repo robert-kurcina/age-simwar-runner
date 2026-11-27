@@ -48,6 +48,12 @@ Each track must inspect the other track's current implementation and this contra
 
 Priority: existing release blockers and narrative P0 experiential work retain precedence; strategic P1 information/interaction vertical slice runs alongside source compilation and roster work. Shared contract work is PENDING until implemented and qualified; existing pilot evidence remains in track plans. No new upstream canon or AGE Enterprise scope.
 
+## Historical technology and capability fidelity
+
+Author-approved direction (2026-11-27): use recognizable real-Earth technology through the 2003 divergence except where dated SH44SER canon specifies an override. After the Conflagration, use the setting's own chronology, not a presumption of real-world technological diffusion. Distinguish existence, access, maturity, operational readiness, infrastructure, personnel, resources and legal authority. Do not solve a historical problem using a later technology or institution. Apply this check to scenario preparation, generated claims, established facts, permissions and proposed developments in both tracks. A claim about a capability is not proof of access or readiness.
+
+For early Conflagration consim, rely on existing native project capacity axes, stocks, reporting delays and scoped availability. Historical fidelity is P2 generally and P1 when it materially constrains a decision; no comprehensive equipment database or technology simulator. Preserve compatibility with Native GTL, signed domain JTL, provisioned access, maturity and CTL where relevant for later Reconstruction and post-Reconstruction scenarios. Dedicated mechanics are DEFERRED until a concrete scenario needs them. See [strategic technology direction](PLAN_STRATEGIC.md#dated-technology-and-capability-direction). Do not expand SH44SER merely to support the runner.
+
 ## Priority and status discipline
 
 Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLAN_NARRATIVE.md maintain their own ordered deliverables and evidence. Keep one shared engine. Apply the following vocabulary in all three plans:
