@@ -6,7 +6,7 @@ the established modifier order, Favor policy, Inspiration and Test ledger.
 import copy
 from age_runtime.core import (
     dxd, dxd_conditions, dxd_inspiration, dxd_modifiers,
-    dxd_psychology, dxd_commitment, dxd_context,
+    dxd_psychology, dxd_commitment, dxd_context, dxd_injury,
 )
 
 def resolve(state, rules, action, digest):
@@ -29,6 +29,8 @@ def resolve(state, rules, action, digest):
     contextual, context_dm, emotional_triggers = dxd_context.effects(state, action, spec)
     mods = dxd_modifiers.totals(gathered)
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
+    if "injury" in pc:
+        condition += dxd_injury.penalty_dice(pc["injury"])
     hook = (dxd_commitment.effective_demeanor(state, action.get("npc"), action) if rules.get("demeanor") and spec["attribute"] == "PRE"
             else 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0)
     cue = spec.get("inspiration")
