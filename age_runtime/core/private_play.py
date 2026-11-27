@@ -527,6 +527,13 @@ def main(argv=None):
     preview.add_argument("session", type=Path)
     preview.add_argument("target")
     preview.add_argument("--selectors", type=Path)
+    continuation = commands.add_parser("continue-rehearsal", help="Confirm an unreviewed historical transition")
+    continuation.add_argument("inventory")
+    continuation.add_argument("session", type=Path)
+    continuation.add_argument("target")
+    continuation.add_argument("output", type=Path)
+    continuation.add_argument("--selectors", type=Path, required=True)
+    continuation.add_argument("--approve", required=True, help="Digest of selected transition preview")
     discover = commands.add_parser("discover", help="Player-facing available campaign openings")
     discover.add_argument("inventory")
     discover.add_argument("--owners", type=Path)
@@ -651,10 +658,19 @@ def main(argv=None):
             return
         if a.command == "list":
             result = inventory(a.inventory)
+        elif a.command == "continue-rehearsal":
+            from age_runtime.core.transition_preview import continue_rehearsal
+            if a.output.exists():
+                raise ValueError("output session path already exists")
+            session = continue_rehearsal(a.inventory, read(a.session), a.target,
+                                         read(a.selectors), a.approve)
+            save(a.output, session)
+            result = briefing(session)
         elif a.command == "transition-preview":
             from age_runtime.core.transition_preview import transition_preview
             result = transition_preview(a.inventory, read(a.session), a.target,
                                         read(a.selectors) if a.selectors else None)
+            result = {**result, "preview_digest": digest(result)}
         elif a.command == "discover":
             from age_runtime.core.campaign_discovery import discover
             result = discover(a.inventory, read(a.owners) if a.owners else None)
