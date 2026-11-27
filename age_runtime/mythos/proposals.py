@@ -49,7 +49,7 @@ def validate_local(rules):
         if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", kind) or not isinstance(spec, dict):
             raise ValueError("invalid capability identity")
         required = {"target", "resolution"}
-        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect", "object_ids"}
+        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect"}
         if not required <= set(spec) or set(spec) - allowed:
             raise ValueError("invalid capability fields")
         if spec["target"] not in ("location", "npc", "object"):
@@ -57,14 +57,9 @@ def validate_local(rules):
         if spec["target"] == "object":
             if not rules.get("narrative_custody") or not rules.get("consequential_objects"):
                 raise ValueError("object capabilities require custody and lifecycle authority")
-            if spec.get("object_effect") not in ("inspect", "damage", "destroy"):
-                raise ValueError("invalid object capability effect")
-            ids = spec.get("object_ids")
-            if ids is not None and (not isinstance(ids, list) or not ids or any(not isinstance(x, str) or not re.fullmatch(r"inc:[a-z][a-z0-9_]{0,63}", x) for x in ids) or len(set(ids)) != len(ids)):
-                raise ValueError("invalid reviewed object identities")
-            if spec["object_effect"] != "inspect" and not ids:
-                raise ValueError("lifecycle effect requires reviewed object identities")
-        elif "object_effect" in spec or "object_ids" in spec:
+            if spec.get("object_effect") != "inspect":
+                raise ValueError("local object capabilities support inspection only")
+        elif "object_effect" in spec:
             raise ValueError("object effect requires object target")
         duration_range(spec)
         if type(spec.get("requires_evidence", 0)) is not int or spec.get("requires_evidence", 0) < 0:
@@ -123,13 +118,10 @@ def resolve_duration(state, action):
                 task_duration=roll)
 
 
-def object_available(state, target, effect):
-    """Only PC-held usable objects; NPC permission stays on the Lock path."""
-    entity = establishment.local_entities(state).get(target)
-    if not entity or entity["kind"] != "object" or entity.get("custodian") != "pc":
-        return False
-    lifecycle = entity.get("lifecycle", "intact")
-    return lifecycle == "intact" if effect == "damage" else object_actions.usable(entity)
+def object_available(entity):
+    """Inspect only usable PC-held incidental objects. Locks govern NPC property."""
+    return bool(entity and entity["kind"] == "object"
+                and entity.get("custodian") == "pc" and object_actions.usable(entity))
 
 
 def completion_available(state, rules, action, npc_available):
@@ -137,28 +129,13 @@ def completion_available(state, rules, action, npc_available):
     if spec is None:
         return True
     if spec["target"] == "object":
-        return (object_available(state, action["object_target"], spec["object_effect"])
-                and establishment.local_entities(state)[action["object_target"]].get("lifecycle", "intact")
-                == action["object_before"])
+        entity = establishment.local_entities(state).get(action["object_target"])
+        return (object_available(entity)
+                and entity.get("lifecycle", "intact") == action["object_before"])
     if spec["target"] == "npc":
         from age_runtime.mythos.epistemic import conversation_available
         return conversation_available(state, rules, action["npc"], npc_available)
     return True
-
-
-def apply_local_effect(state, rules, action):
-    """Commit reviewed lifecycle effects through the existing authoritative ledger."""
-    effect = action.get("local_spec", {}).get("object_effect")
-    if effect not in ("damage", "destroy"):
-        return
-    object_actions.record(state, rules, {
-        "id": action["object_event_id"], "object": action["object_target"],
-        "before": action["object_before"],
-        "outcome": "damaged" if effect == "damage" else "destroyed",
-        "authorization": action["local_intent"],
-        "basis": "Completed reviewed local object capability",
-        "remnants": "Damaged object" if effect == "damage" else "Destroyed object remnants",
-    }, establishment.local_entities, establishment.text)
 
 
 def local_capabilities(state, rules, npc_available):
@@ -174,11 +151,8 @@ def local_capabilities(state, rules, npc_available):
         if maximum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
             continue
         if spec["target"] == "object":
-            targets = [oid for oid in sorted(establishment.local_entities(state))
-                       if object_available(state, oid, spec["object_effect"])
-                       and ("object_ids" not in spec or oid in spec["object_ids"])]
-            if spec["object_effect"] != "inspect" and len(state["object_actions"]) >= 256:
-                continue
+            entities = establishment.local_entities(state)
+            targets = [oid for oid, entity in sorted(entities.items()) if object_available(entity)]
         elif spec["target"] == "npc":
             targets = [nid for nid, npc in sorted(state["npcs"].items())
                        if npc["encounters"] and conversation_available(state, rules, nid, npc_available)]
@@ -213,14 +187,6 @@ def compile_local(state, rules, request, npc_available):
     elif spec["target"] == "object":
         action["object_target"] = target
         action["object_before"] = establishment.local_entities(state)[target].get("lifecycle", "intact")
-        action["local_intent"] = request["intent"]
-        if spec["object_effect"] != "inspect":
-            event_id = "act:local_" + str(state["turn"] + 1)
-            while any(e["id"] == event_id for e in state["object_actions"]):
-                event_id += "_x"
-                if len(event_id) > 67:
-                    raise ValueError("object action identity unavailable")
-            action["object_event_id"] = event_id
     if spec["resolution"] == "test":
         action["test"] = copy.deepcopy(spec["test"])
         action["concern_failure"] = copy.deepcopy(spec.get("concern_failure", {}))
@@ -233,6 +199,8 @@ def record_local(state, action, success, result):
     record = {"kind": kind, "target": action.get("object_target", action.get("npc", state["location"])),
               "at": state["time"], "turn": state["turn"], "passed": success,
               "effect": result["margin"] if result is not None else None}
+    if "object_target" in action:
+        record["location"] = state["location"]
     if "task_duration" in action:
         record["task_duration"] = copy.deepcopy(action["task_duration"])
     if spec.get("count_evidence"):
