@@ -1,5 +1,5 @@
 {
-  "version": 78,
+  "version": 79,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -85,6 +85,7 @@
   "npc_lifecycle": true,
   "npc_contextual_presence": true,
   "incidental_people": true,
+  "incidental_public_locations": ["Harbor Docks", "Harbor Diner", "Sailor\u0027s Rest Boarding House"],
   "npc_agendas": {
     "eleanor": [
       {

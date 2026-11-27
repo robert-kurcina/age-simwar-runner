@@ -1,6 +1,16 @@
 """Selective incidental people: identity continuity without invented native stats."""
 import copy
 import re
+from datetime import datetime
+from age_runtime.mythos import spatial
+
+
+def validate(rules):
+    allowed = rules.get("incidental_public_locations", [])
+    if not isinstance(allowed, list) or any(not isinstance(x, str) for x in allowed) or len(set(allowed)) != len(allowed):
+        raise ValueError("invalid incidental public locations")
+    if allowed and (not rules.get("incidental_people") or set(allowed) - set(rules.get("spatial", {}).get("nodes", {}))):
+        raise ValueError("incidental movement requires reviewed public nodes")
 
 
 def record(state, rules, request, npc_available, text):
@@ -32,12 +42,25 @@ def record(state, rules, request, npc_available, text):
     if kind == "recognize":
         if set(request) != {"kind", "id", "basis"}:
             raise ValueError("invalid recognition")
-        # Pilot deliberately supports repeat encounters at the established
-        # node only. Elsewhere requires future reviewed movement authority.
-        if person["location"] != state["location"] or person["last_seen"] == state["time"]:
+        if person["last_seen"] == state["time"]:
             raise ValueError("recognition requires distinct local encounter")
+        if person["location"] != state["location"]:
+            # A last sighting is not a current anchor. Only ordinary, reviewed
+            # public routes and elapsed time justify cross-node recognition.
+            # Explicitly opt in; no inference of access to restricted sites.
+            allowed = rules.get("incidental_public_locations", [])
+            if person["location"] not in allowed or state["location"] not in allowed:
+                raise ValueError("recognition outside reviewed public locations")
+            config = dict(rules["spatial"], edges=[e for e in rules["spatial"]["edges"]
+                          if e["from"] in allowed and e["to"] in allowed
+                          and not e.get("requires_flags") and not e.get("opens") and not e.get("closes")])
+            route = spatial.route(config, person["location"], state["location"], person["last_seen"], [])
+            elapsed = (datetime.fromisoformat(state["time"]) - datetime.fromisoformat(person["last_seen"])).total_seconds()
+            if not route or route["seconds"] > elapsed:
+                raise ValueError("insufficient elapsed time for recognition")
         basis = text(request["basis"], 240)
         person["last_seen"] = state["time"]
+        person["location"] = state["location"]
         person["encounters"] += 1
     elif kind == "promote":
         if set(request) != {"kind", "id", "name", "role", "basis"} or person["tier"] != "incidental":
