@@ -186,6 +186,20 @@ def npc_available(state, rules, action):
             and destination in cfg.get("eligible_locations", [npc["location"]])
             and (npc["location"] is None or npc["location"] == destination))
 
+def _available_local_npcs(state, rules):
+    """Anchored NPCs eligible to witness or participate at the PC's location."""
+    return {nid for nid, npc in state["npcs"].items()
+            if npc["location"] == state["location"]
+            and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+
+
+def _local_action_available(state, rules, action):
+    """Revalidate the same prerequisites at arrival and after local activity."""
+    return (not any(f in state["flags"] for f in action.get("excludes_flags", []))
+            and all(f in state["flags"] for f in action.get("requires_flags", []))
+            and npc_available(state, rules, action)
+            and locks.action_available(state, rules, action, npc_available, establishment.local_entities))
+
 def spatial_options(state, rules, candidates):
     config = rules["spatial"]
     now = datetime.fromisoformat(state["time"])
@@ -491,15 +505,10 @@ def _step(state, rules, action, proposal=None, commitment=None):
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
     state["location"] = a.get("location", state["location"])
     if rules.get("routine_observations"):
-        activity_observers = {nid for nid, p in state["npcs"].items()
-                              if p["location"] == state["location"]
-                              and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+        activity_observers = _available_local_npcs(state, rules)
     if clock:
         # Events during travel may invalidate the intended local action.
-        if (any(f in state["flags"] for f in a.get("excludes_flags", []))
-                or not all(f in state["flags"] for f in a.get("requires_flags", []))
-                or not npc_available(state, rules, a)
-                or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
+        if not _local_action_available(state, rules, a):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
         engaged = a.get("npc")
         sleep_episode = state["npcs"][engaged].get("activity", {}).get("sleep_episode") if engaged else None
@@ -528,10 +537,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
             return finish_activity(state, rules, action, a, False, reason, proposal)
         if rules.get("npc_lifecycle") and engaged and state["npcs"][engaged].get("activity", {}).get("sleep_episode") != sleep_episode:
             return finish_activity(state, rules, action, a, False, "npc_sleep_interruption", proposal)
-        if (any(f in state["flags"] for f in a.get("excludes_flags", []))
-                or not all(f in state["flags"] for f in a.get("requires_flags", []))
-                or not npc_available(state, rules, a)
-                or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
+        if not _local_action_available(state, rules, a):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
         if "progression" in state or "pacing" in rules:
@@ -632,9 +638,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
     if rules.get("routine_observations"):
-        available = {nid for nid, p in state["npcs"].items()
-                     if p["location"] == state["location"]
-                     and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+        available = _available_local_npcs(state, rules)
         state["routine_source"] = {"turn": state["turn"], "location": state["location"],
                                    "eligible_observers": sorted(available),
                                    "activity_observers": sorted(available & activity_observers)}
