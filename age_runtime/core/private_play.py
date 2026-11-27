@@ -383,6 +383,16 @@ def communicate(session, actor, revision, command):
     return verify({**session, "state": result})
 
 
+def record_diplomacy(session, actor, revision, command):
+    from age_runtime.core.runner import record_diplomacy as apply_record
+    verify(session)
+    if revision != digest(session):
+        raise ValueError("stale session revision")
+    h, state = session["header"], session["state"]
+    result = apply_record(h["compiled"]["scenario"], state, actor, digest(state), command)
+    return verify({**session, "state": result})
+
+
 def assess_proposition(session, actor, revision, command):
     from age_runtime.core.runner import assess_proposition as apply_assessment
     verify(session)
@@ -485,6 +495,11 @@ def main(argv=None):
     assessment.add_argument("actor")
     assessment.add_argument("assessment", type=Path)
     assessment.add_argument("--revision", required=True)
+    diplomacy = commands.add_parser("record-diplomacy", help="Referee-only: record actual private faction intention or assessment")
+    diplomacy.add_argument("session", type=Path)
+    diplomacy.add_argument("actor")
+    diplomacy.add_argument("record", type=Path)
+    diplomacy.add_argument("--revision", required=True)
     memory = commands.add_parser("memory", help="Read-only actor-scoped institutional recall")
     memory.add_argument("session", type=Path)
     memory.add_argument("--counterpart")
@@ -546,6 +561,10 @@ def main(argv=None):
             result = briefing(session)
         elif a.command == "assess-proposition":
             session = assess_proposition(read(a.session), a.actor, a.revision, read(a.assessment))
+            save(a.session, session)
+            result = briefing(session)
+        elif a.command == "record-diplomacy":
+            session = record_diplomacy(read(a.session), a.actor, a.revision, read(a.record))
             save(a.session, session)
             result = briefing(session)
         elif a.command == "memory":
