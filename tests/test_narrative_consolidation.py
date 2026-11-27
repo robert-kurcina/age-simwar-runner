@@ -253,3 +253,64 @@ class NarrativeConsolidationTests(unittest.TestCase):
             self.assertEqual(after["turn"], state["turn"])
             self.assertEqual(after["flags"], state["flags"])
             self.assertEqual(mythos.view(after)["established_details"][0]["id"], "inc:bench")
+
+
+    def test_abstract_npc_recovery_actual_castine_replay(self):
+        for seed in range(100):
+            state = mythos.step(mythos.initial("castine", seed), "inspect_ledger")
+            if "ledger" in state["flags"]:
+                state = mythos.step(state, "talk_martha")
+                break
+        else:
+            self.fail("No authored Martha encounter")
+        state = mythos.dialogue_step(state, {"npc": "martha", "speaker": "pc",
+            "claim": "I accuse you of concealing the evidence.", "stance": "unstated",
+            "intent": "unstated"})
+        episode = {"id": "emo:accusation", "npc": "martha", "claim_ids": [1],
+            "emotion": "distress", "intensity": "acute", "expression": "She draws away.",
+            "cause": "Actual accusation", "stress": {"martha": "severe"}}
+        state = mythos.establish_step(state, {"emotion": episode})
+        self.assertEqual(state["npcs"]["martha"]["concerns"]["stress"], 6)
+        plan = {"npc": "martha", "mode": "rest", "safe": True,
+                "minutes": 20, "basis": "GM establishes an undisturbed private rest interval"}
+        planned = mythos.establish_step(state, {"npc_activity": plan})
+        self.assertEqual(planned["time"], state["time"])
+        self.assertEqual(planned["npcs"]["martha"]["concerns"], state["npcs"]["martha"]["concerns"])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(planned, {"npc_activity": plan})
+        after = mythos.step(planned, "observe")
+        expected = copy.deepcopy(state["npcs"]["martha"]["concerns"])
+        from age_runtime.core import dxd_conditions
+        from datetime import datetime
+        minutes = min(20, int((datetime.fromisoformat(after["time"]) -
+                              datetime.fromisoformat(planned["time"])).total_seconds()) // 60)
+        dxd_conditions.recover(expected, minutes, safe=True, restful=True)
+        self.assertEqual(after["npcs"]["martha"]["concerns"], expected)
+        self.assertEqual(mythos.step(state, "observe")["npcs"]["martha"]["concerns"],
+                         state["npcs"]["martha"]["concerns"])
+        mythos.verify(after)
+        interrupted = mythos.dialogue_step(planned, {"npc": "martha", "speaker": "pc",
+            "claim": "One more question.", "stance": "unstated", "intent": "unstated"})
+        self.assertIsNone(interrupted["npcs"]["martha"]["activity_plan"])
+        self.assertEqual(mythos.step(interrupted, "observe")["npcs"]["martha"]["concerns"],
+                         state["npcs"]["martha"]["concerns"])
+        mythos.verify(interrupted)
+
+    def test_coarse_recovery_caps_long_interval_and_preserves_unsafe_stress(self):
+        from age_runtime.mythos import npc_time
+        from age_runtime.core import dxd_conditions
+        from datetime import datetime, timedelta
+        state = mythos.initial("ram-island", 42)
+        _, rules = mythos.load("ram-island")
+        npc = state["npcs"]["matteo"]
+        dxd_conditions.add(npc["concerns"], fatigue=20, stress=12, weariness=12)
+        start = datetime.fromisoformat(state["time"])
+        npc["activity_plan"] = {"at": start.isoformat(),
+            "until": (start + timedelta(minutes=10)).isoformat(),
+            "location": npc["location"], "safe": False, "mode": "rest"}
+        expected = copy.deepcopy(npc["concerns"])
+        dxd_conditions.recover(expected, 10, safe=False, restful=True)
+        npc_time.advance_abstract(state, rules, start, start + timedelta(days=5))
+        self.assertEqual(npc["concerns"], expected)
+        self.assertEqual(npc["concerns"]["stress"], 12)
+        self.assertIsNone(npc["activity_plan"])
