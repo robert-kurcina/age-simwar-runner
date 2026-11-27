@@ -813,6 +813,46 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_npc_relational_continuity_is_private_and_replayable(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        request = {"npc": "eleanor", "speaker": "pc", "claim": "I will listen before drawing conclusions.",
+                   "stance": "unstated", "intent": "unstated",
+                   "reaction": {"emotion": "Cautiously relieved", "intention": "Hear the reporter out",
+                                "attachment": "Her brother", "tension": "Answers versus privacy",
+                                "significance": "The reporter offered to listen without rushing to judgment."}}
+        before = mythos.digest(s)
+        after = mythos.dialogue_step(s, request)
+        self.assertEqual(mythos.digest(s), before)
+        for key in ("time", "turn", "flags", "discoveries", "relationships", "dxd", "npcs"):
+            self.assertEqual(after[key], s[key])
+        private = mythos.gm_context(after)["referee"]["relational_context"]["eleanor"]
+        self.assertEqual(private["current"]["emotion"]["text"], "Cautiously relieved")
+        self.assertEqual(private["experiences"][0]["claim_id"], 1)
+        self.assertNotIn("npc_reaction", mythos.view(after)["dialogue"][0])
+        self.assertNotIn("relational_context", mythos.view(after))
+        for bad in ({"pc_emotion": "afraid"}, {"grant": "local_warning"}, {"emotion": ""},
+                    {"intention": "x" * 241}, []):
+            with self.assertRaises(ValueError):
+                mythos.dialogue_step(after, dict(request, reaction=bad))
+        remote = mythos.step(after, "move:Creek Inlet South")
+        self.assertNotIn("eleanor", mythos.gm_context(remote)["referee"]["relational_context"])
+        returned = mythos.step(remote, "move:Harbor Diner")
+        reply = {"npc": "eleanor", "speaker": "eleanor", "claim": "Please do not make promises lightly.",
+                 "stance": "unstated", "intent": "unstated",
+                 "reaction": {"emotion": "Wary again", "significance": "She challenged the reporter's assurance."}}
+        returned = mythos.dialogue_step(returned, reply)
+        private = mythos.gm_context(returned)["referee"]["relational_context"]["eleanor"]
+        self.assertEqual(private["current"]["emotion"]["claim_id"], 2)
+        self.assertEqual(private["current"]["intention"]["claim_id"], 1)
+        self.assertEqual([e["claim_id"] for e in private["experiences"]], [1, 2])
+        self.assertEqual(returned["dialogue"][0]["npc_reaction"]["emotion"], "Cautiously relieved")
+        mythos.verify(returned)
+        import copy
+        tampered = copy.deepcopy(returned)
+        tampered["dialogue"][0]["npc_reaction"]["emotion"] = "Invented"
+        with self.assertRaises(ValueError):
+            mythos.verify(tampered)
+
     def test_proposition_access_and_belief_revision(self):
         s = mythos.initial("boothbay", 42)
         self.assertNotIn("propositions", mythos.view(s))
