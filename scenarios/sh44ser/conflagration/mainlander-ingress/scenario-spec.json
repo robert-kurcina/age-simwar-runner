@@ -323,5 +323,184 @@
       "reviewed_for": "2005-01-01",
       "classification": "canonical"
     }
+  },
+  "faction_profiles": {
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2005-01-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Balance controlled reception and scarce island infrastructure with humanitarian obligations.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Inguria / Shanter Island",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize lawful reception, quarantine and fair processing; preserve technical and civilian service continuity.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Inguria / Shanter Island",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Inguria / Shanter Island",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2005-01-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Manage substantial reception pressure and returnee claims without treating newcomers as a single political actor.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Fiji",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize access to services, fair case processing and reconciliation of contested claims; protect records and privacy.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Fiji",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Fiji",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2005-01-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Coordinate reception across dispersed communities with local land and water constraints.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Vanuatu",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize water and shelter capacity, consultation with local authorities and equitable distribution of assistance.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Vanuatu",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Vanuatu",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    }
   }
 }
