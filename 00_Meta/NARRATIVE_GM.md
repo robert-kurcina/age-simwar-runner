@@ -67,3 +67,7 @@ Introduce only a narratively relevant individual through `{"incidental_person":{
 ### Distinct danger objectives
 
 Use the offered Beat approach's own objective and stakes. A withdrawal may achieve safety at a cost without achieving the original objective. The runtime rechecks prerequisites at completion and applies only reviewed approach-specific outcomes via native Tests. Do not narrate a relay, passage, injury, defeat or recovery that was not established by the result. Withdrawal within a node does not imply movement to another map node. The existing one-shot encounter remains resolved after a completed Beat; do not present it again merely to reroll the outcome.
+
+### Physical Injury
+
+For opt-in scenarios the player's condition includes whole-body Injury and remaining Bodypoints. A reviewed Beat may apply already-resolved Injury on a Degree of Failure; do not derive numeric Injury directly from arbitrary failed Tests or invent new Damage ratings. Severe Injury contributes native -1D to subsequent Tests. Bodypoint loss persists through ordinary rest. Zero Bodypoints means dying, not death; the current pilot rejects effects that could reach that threshold until explicit intervention mechanics exist. Do not claim automatic recovery, unconsciousness, death, disability or a technical damage exchange from this limited facility.
