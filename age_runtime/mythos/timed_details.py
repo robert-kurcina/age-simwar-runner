@@ -122,7 +122,51 @@ def native_test(state, rules, request, npc_available, local_entities, text):
                    "authority": "npc_native_test", "location": location,
                    "scheduled_at": state["time"], "due": due.isoformat(),
                    "status": "scheduled", "basis": basis,
-                   **({"work_seconds": 0} if rules.get("npc_task_continuity") else {})})
+                   **({"work_seconds": 0} if rules.get("npc_task_continuity") else {}),
+                   **({"object_revision": object_revision(state, oid), "task_history": []} if rules.get("npc_lifecycle") else {})})
+
+def object_revision(state, oid):
+    return [sum(1 for e in state.get(key, []) if e.get("id" if key != "object_actions" else "object") == oid)
+            for key in ("detail_changes", "custody_transfers", "object_actions")]
+
+def task_control(state, rules, request, npc_available, local_entities, text):
+    if not rules.get("npc_lifecycle") or not isinstance(request, dict) or set(request) != {"operation", "id", "npc", "basis"}:
+        raise ValueError("invalid NPC task control")
+    op, eid, nid = request["operation"], request["id"], request["npc"]
+    e = next((e for e in state["timed_detail_events"] if e["id"] == eid and e["npc"] == nid and e.get("authority") == "npc_native_test"), None)
+    if not e or e["status"] not in ("scheduled", "interrupted"):
+        raise ValueError("NPC task not controllable")
+    basis = text(request["basis"], 240)
+    history = e.setdefault("task_history", [])
+    if len(history) >= 16:
+        raise ValueError("NPC task control record limit")
+    if op == "cancel":
+        e.update(status="cancelled", cancelled_at=state["time"], cancellation_basis=basis)
+    elif op == "resume":
+        if e["status"] != "interrupted":
+            raise ValueError("only interrupted task can resume")
+        npc = state["npcs"][nid]
+        location = npc["location"]
+        if location is None or location != e["location"] or not npc_available(state, rules, {"npc": nid, "location": location}):
+            raise ValueError("task requires available NPC at original location")
+        if any(other["status"] == "scheduled" and (other["npc"] == nid or other["object"] == e["object"]) for other in state["timed_detail_events"]):
+            raise ValueError("conflicting pending event")
+        cfg = rules["npc_native_test"]
+        obj = local_entities(dict(state, location=location)).get(e["object"])
+        if (not obj or obj.get("custodian") != nid or obj.get("lifecycle", "intact") != "intact"
+                or obj.get("properties", {}).get("appearance") != cfg["appearance"]
+                or e["object_revision"] != object_revision(state, e["object"])):
+            raise ValueError("task object changed; cannot resume prior work")
+        remaining = cfg["minutes"]*60-e["work_seconds"]
+        due = datetime.fromisoformat(state["time"]) + timedelta(seconds=remaining)
+        if remaining <= 0 or due > datetime.fromisoformat(rules["end"]):
+            raise ValueError("invalid remaining work or horizon")
+        from age_runtime.mythos import npc_time
+        npc_time.interrupt(state, nid, reason="task_resume")
+        e.update(status="scheduled", due=due.isoformat(), resumed_at=state["time"])
+    else:
+        raise ValueError("unsupported task control")
+    history.append({"operation": op, "at": state["time"], "basis": basis, "work_seconds": e["work_seconds"]})
 
 def resolve_native_test(state, rules, e, obj, npc_available):
     cfg = rules["npc_native_test"]
@@ -130,6 +174,9 @@ def resolve_native_test(state, rules, e, obj, npc_available):
         e.update(status="interrupted", interrupted_at=state["time"], interruption="insufficient_work")
         return
     npc = state["npcs"][e["npc"]]
+    if rules.get("npc_lifecycle") and e["object_revision"] != object_revision(state, e["object"]):
+        e["status"] = "prerequisite_unmet"
+        return
     if (not obj or obj["kind"] != "object" or obj.get("custodian") != e["npc"]
             or obj.get("lifecycle", "intact") != "intact"
             or obj.get("properties", {}).get("appearance") != cfg["appearance"]
