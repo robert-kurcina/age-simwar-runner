@@ -47,6 +47,11 @@ def compile_beat(state, rules, request):
         raise ValueError("Beat unavailable")
     cfg = rules["danger_beats"][offer["action"]]
     spec = cfg["approaches"][offer["approach"]]
+    injury = outcome(cfg, spec, "resolved_injury_on_dof", 0)
+    if type(injury) is not int or injury < 0:
+        raise ValueError("invalid resolved Beat Injury")
+    if injury and ("injury" not in state["dxd"] or injury >= state["dxd"]["injury"]["capacity"] or state["dxd"]["injury"]["injury"] + 1 >= state["dxd"]["injury"]["capacity"]):
+        raise ValueError("potentially dying Injury requires explicit consequence authority")
     loc = state["location"]
     return {"id": offer["action"], "label": offer["objective"], "location": loc,
             "duration_seconds": cfg["seconds"], "local_seconds": cfg["seconds"],
