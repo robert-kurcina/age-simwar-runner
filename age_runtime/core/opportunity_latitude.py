@@ -108,6 +108,7 @@ def recovery_assessment(brief, level=DEFAULT, complete=False):
     return deepcopy({
         "level": level,
         "closures": closures,
+        "objective_outcomes": brief.get("objective_outcomes", {}),
         "remaining_turns": brief.get("remaining_turns"),
         "alternatives": alternatives,
         "session_ended": complete,
