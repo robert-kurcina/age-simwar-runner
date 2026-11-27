@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from age_runtime.core import opportunity_latitude as latitude
 from age_runtime.core.runner import save
 from age_runtime.mythos import projections, resolution
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
@@ -53,11 +54,14 @@ def npc_profiles(story, rules):
                 raise ValueError("invalid NPC spatial eligibility")
     return profiles
 
-def initial(sid, seed):
-    return _initial(sid, seed, *load(sid))
+def initial(sid, seed, opportunity_latitude=None):
+    story, rules = load(sid)
+    level = latitude.select(rules.get("opportunity_latitude", latitude.DEFAULT), opportunity_latitude)
+    return _initial(sid, seed, story, rules, opportunity_latitude=level)
 
 
-def _initial(sid, seed, story, rules):
+def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
+    latitude.validate(rules.get("opportunity_latitude", latitude.DEFAULT))
     continuity.validate(rules)
     epistemic.validate_propositions(rules)
     proposals.validate_local(rules)
@@ -71,6 +75,9 @@ def _initial(sid, seed, story, rules):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if opportunity_latitude is not None:
+        state["opportunity_latitude"] = latitude.validate(opportunity_latitude)
+        state["settings_digest"] = digest([state["source"], seed, opportunity_latitude])
     if rules.get("epistemic_dialogue"):
         state["dialogue"] = []
     if rules.get("social_epistemic"):
@@ -833,7 +840,11 @@ def verify(state):
     story, rules = load(sid)
     if state.get("source") != digest([story, rules]):
         raise ValueError("session source revision mismatch; use matching scenario sources or start a fresh session")
-    replay = _initial(sid, state["seed"], copy.deepcopy(story), copy.deepcopy(rules))
+    level = state.get("opportunity_latitude")
+    if "opportunity_latitude" in state:
+        latitude.validate(level)
+    replay = _initial(sid, state["seed"], copy.deepcopy(story), copy.deepcopy(rules),
+                      opportunity_latitude=level)
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
@@ -880,10 +891,10 @@ def gm_context(state, *, compact=False):
 def inspect_gm(path, *, compact=False):
     return gm_context(_verified_read(path), compact=compact)
 
-def start(sid, path, seed):
+def start(sid, path, seed, opportunity_latitude=None):
     if path.exists():
         raise ValueError("session already exists")
-    state = initial(sid, seed)
+    state = initial(sid, seed, opportunity_latitude)
     public = view(state)
     save(path, state)
     return public
