@@ -1,3 +1,27 @@
-# Conflagration scenario configurations
+# Conflagration draft scenario configurations
 
-Draft scenario data owned by the runner. Mainlander Ingress is the first migrated v7 exercise. Its four projects, three factions, abstract credits and priorities are hypothetical exercise assumptions, not canonical statistics or legal determinations. Source references identify the dated evidence used to ground the exercise; source bytes and full lore are not included. Claims-administration progress does not imply citizenship or adjudication. The inventory intentionally marks the episode draft-unreviewed and provisional; do not enable reviewed play until source compilation and qualification pass. Remaining v7 scenarios are not yet migrated. Use the existing source compiler and private play gates rather than introducing a parallel loader.
+Runner-owned, minimal hypothetical exercise data grounded in pinned SH44SER references. The source vault remains read-only; no source bytes or complete lore are included. All seven episodes are draft-unreviewed and must not be offered as reviewed playable selections. Hexaday is catalog-only historical context.
+
+## Imported v7 baseline
+
+Original archive SHA-256: `5f5bc2f6214b3686fdb3dfd0aab5e172978baa67744cb2da4d160c465ea7baa6`. Each imported specification matched the original archive's Git blob SHA exactly. The archive's embedded faction profiles are the authoritative draft configuration; do not duplicate them into separate files. The WPC candidate is retained separately and is not a selectable faction.
+
+| Group | Imported specification blob |
+|---|---|
+| Disaster Response | `d2e4180271d4555e6fefa2d4d0174e1bd82168a1` |
+| Fallout | `8b9e1d4434e43a5192b2446f563ee72c5d3fd00f` |
+| Mainlander Ingress | `199f85e82c15f8a10132d2f26c695668c541f01b` |
+| Early Reconstruction | `487e43150cb1839e135b254f5452b74253e1ce54` |
+| Purge | `422091a856d41b64ef9698bad81b573981cea5da` |
+| Agreement | `657a824f042cb05affd143dc763652046c903368` |
+| Reconstruction | `b9e8b68522200bde8cc60ca65446462db245eeb9` |
+
+The catalog relocates the original specification paths into phase directories and adds the historical-only Hexaday group; its existing seven entry statuses and perspective lists remain unchanged.
+
+## Qualification
+
+Run `python -m unittest -v tests.test_conflagration_drafts` from the runner root. The tests exercise raw scenario validation, 25 selectable perspectives, terminal checkpoint replay, draft selection rejection, and the v6/v7 Fallout and RWF divergent decision routes. They do not require access to private canon, and they do not test independent LLM judgment or establish source-backed compilation. Historical rehearsal result files remain historical evidence, not current golden checkpoints.
+
+All eight distinct source files (including the unbound WPC candidate's evidence) were retrieved at revision `c918766d434453644a137cfadfa901f4a8be96b5`, their base64-decoded bytes matched the returned Git blob SHA, and all 15 distinct referenced headings occurred uniquely outside fenced code. This connector preflight is not the Python compiler. Use the existing source compiler with authorized owners and private output paths for actual pinned-source compilation. Do not promote drafts until the compiled configurations and scenarios are reviewed. Hypothetical quantities are not canonical statistics; agreement flags are commitments, not actual legal judgments or historical outcomes.
+
+Future changes should be ordinary runner commits, with ZIPs generated only for distribution. No separate content repository or new loader.
