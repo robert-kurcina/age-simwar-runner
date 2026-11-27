@@ -1,5 +1,5 @@
 {
-  "version": 44,
+  "version": 45,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -2186,6 +2186,44 @@
     }
   },
   "epistemic_dialogue": true,
+  "propositions": {
+    "badge_found": {
+      "text": "A census badge was found near the waterfront.",
+      "kind": "fact",
+      "flag": "badge",
+      "initial_knowers": []
+    },
+    "eleanor_disappearance": {
+      "text": "Eleanor reported that her brother disappeared last month.",
+      "kind": "report",
+      "flag": "eleanor_account",
+      "initial_knowers": [
+        "eleanor"
+      ]
+    },
+    "eleanor_changes": {
+      "text": "Eleanor described disturbing physical changes in her brother before he vanished.",
+      "kind": "report",
+      "flag": "water_warning",
+      "initial_knowers": [
+        "eleanor"
+      ]
+    },
+    "journal_access": {
+      "text": "Elias kept a journal of unusual coastal events.",
+      "kind": "fact",
+      "flag": "journal",
+      "initial_knowers": [
+        "elias"
+      ]
+    },
+    "tide_inference": {
+      "text": "Observed wet channels and the almanac suggest a connection between tide and unusual coastal growth.",
+      "kind": "inference",
+      "flag": "ecological_tide_pattern",
+      "initial_knowers": []
+    }
+  },
   "local_proposals": true,
   "danger_beats": {
     "beat:inlet_withdrawal": {
