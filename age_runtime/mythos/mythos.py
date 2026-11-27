@@ -60,6 +60,7 @@ def initial(sid, seed):
 def _initial(sid, seed, story, rules):
     continuity.validate(rules)
     epistemic.validate_propositions(rules)
+    proposals.validate_local(rules)
     if rules.get("resolution") != "dxd":
         raise ValueError("unsupported narrative resolver")
     state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
@@ -651,8 +652,10 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if a.get("preparation_saved_seconds"):
         state["last_result"]["preparation_saved_seconds"] = a["preparation_saved_seconds"]
     if proposal is not None:
-        result = primary_result
-        state["last_result"]["adjudication"] = {k: result[k] for k in ("passed", "dos", "dof", "margin")}
+        if primary_result is not None:
+            state["last_result"]["adjudication"] = {k: primary_result[k] for k in ("passed", "dos", "dof", "margin")}
+        else:
+            state["last_result"]["adjudication"] = {"passed": success, "resolution": "certain"}
         state["last_result"]["approach"] = proposal["approach"]
     if "spatial" in rules and a["route"]["seconds"]:
         state["last_result"]["transition"] = state["transitions"][-1]
