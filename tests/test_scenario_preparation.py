@@ -50,3 +50,38 @@ class ScenarioPreparationTests(unittest.TestCase):
             self.assertIsNotNone(report["resource_discovery_error"])
             self.assertEqual(report["results"][0]["checks"]["specification"]["status"], "blocked")
             self.assertEqual(report["results"][1]["checks"]["rehearsal"]["status"], "passed")
+
+
+    def test_roster_review_preserves_unresolved_context(self):
+        report = prepare(ROOT)
+        for result in report["results"]:
+            review = result["roster_review"]
+            self.assertFalse(review["unbound_profiles"])
+            self.assertEqual(set(review["eligible_perspectives"]),
+                             {a["id"] for a in review["actors"] if a["selectable"]})
+            for actor in review["actors"]:
+                self.assertEqual(actor["profile_status"], "literal-checked")
+                self.assertTrue(actor["profile_present"])
+                self.assertTrue(actor["objectives"])
+                self.assertTrue(actor["hypothetical_properties"])
+                self.assertTrue(actor["unresolved_properties"])
+
+    def test_roster_distinguishes_candidate_from_bound_actor(self):
+        from copy import deepcopy
+        from age_runtime.core.scenario_preparation import roster_review
+        catalog = json.loads(ROOT.read_bytes())
+        group = next(g for g in catalog["groups"] if g["id"] == "reconstruction")
+        entry = group["scenarios"][0]
+        spec = json.loads((ROOT.parent / entry["spec"]).read_bytes())
+        candidate = json.loads((ROOT.parent / "reconstruction/wpc-profile-draft.json").read_bytes())
+        spec["faction_profiles"]["wpc"] = candidate
+        before = deepcopy(spec)
+        review = roster_review(spec, entry)
+        self.assertEqual(review["unbound_profiles"], ["wpc"])
+        self.assertNotIn("wpc", review["eligible_perspectives"])
+        self.assertEqual(spec, before)
+        actor = next(iter(spec["scenario"]["actors"]))
+        spec["faction_profiles"][actor]["effective_date"] = "1900-01-01"
+        review = roster_review(spec, entry)
+        self.assertEqual(next(a for a in review["actors"] if a["id"] == actor)
+                         ["profile_status"], "blocked")
