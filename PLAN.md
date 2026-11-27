@@ -16,6 +16,38 @@ Keep Python, JSON and existing CLI entry points. Favor playable vertical slices 
 
 Author-approved game-length targets are 6 (Short), 12 (Standard) or 24 (Extended) consequential player decisions: Critical Decisions in strategic play and Spot-lights in narrative play. Narrative scenes and strategic simulation Turns are distinct from these pacing units. Intermediate actions, reading, clarification, mechanical resolution and autonomous developments do not automatically consume a player's decision budget. The 20-decision target is superseded; retain historical evidence and legacy fixture durations until deliberately adapted. Do not equate LLM exchanges or elapsed fictional time with the pacing budget. Each gameplay track owns its terminology and implementation.
 
+## Shared consequential information and world establishment
+
+Author direction (2026-11-27): share applicable implementation concepts across strategic and narrative gameplay. This section is the common design authority; track plans own domain-specific sequencing and evidence. Existing implementations are pilots, not proof that a shared API already exists.
+
+### Common semantic contracts
+
+| Concern | Shared invariant | Domain-specific interpretation |
+|---|---|---|
+| Objective state | Canon, reviewed opening assumptions and committed runtime facts remain distinguishable; reference existing authoritative properties rather than duplicating them. | Character/location/object state versus faction/infrastructure/resource state. |
+| Communication | Stable material claim ID, speaker, explicit recipients, time, scope, proposition reference when available, causal/source references; retain corrections and contradictions without rewriting history. | Dialogue/disclosure versus diplomatic statement, report or intelligence exchange. |
+| Epistemic state | Receipt, access, belief, suspicion, inference, stale information and speaker intent are distinct. No automatic propagation, belief, truth promotion or inferred player inner state. | NPC knowledge/stance versus faction intelligence/assessment. |
+| Establishment | Referee may propose scoped, plausible new session facts under delegated authority; distinguish descriptions from consequential effects. Stable IDs, provenance, visibility, prior-value guards for changes. No canon edits or unearned evidence/resources/authority. | Local objects and details versus administrative bodies, facilities, reports or circumstances. |
+| Commitments and permissions | Separate statement, intent, offer, authorized consent, active obligation/permission, fulfillment, refusal, expiry and revocation where supported. Consent must come from the actual authorized actor, not a model assertion on its behalf. | Custody/access/Keys versus grants, treaties, inspections and institutional obligations. |
+| Consequential developments | Typed prerequisites, authorized effects, eligibility, timing, visibility and one-shot/idempotence rules where applicable. Event creation is not event fulfillment. | DXD Clocks/Locks/Triggers/Events versus strategic conditional developments and deadlines. |
+| Persistence | One authoritative checkpoint/history per session; derive projections, current assertions and relationship history from recorded inputs and existing state. Exact mechanical replay does not require regenerating prose. | Preserve native time, RNG, pacing and mechanics in each track. |
+
+Use a common two-pass interaction process: retrieve actor-scoped facts and relevant history; formulate proposed communication or developments; extract and classify consequential content; validate against current revision, actual authority, provenance, visibility and preconditions; commit atomically; reconcile with committed results before presenting. Do not advance time, consume RNG or change state for rejected batches or purely informational exchanges unless a native rule explicitly requires it. Free-text semantic truth and actual consent cannot be proven by structural validation; the referee must check grounding and the player's actual words. Persist only material information, not every utterance. Do not silently repair missing records by retconning established facts.
+
+### Shared implementation coordination
+
+| Workstream | Initial implementation lead | Reuse and acceptance |
+|---|---|---|
+| Claim/proposition identity, receipts, stance and scoped history | Narrative (existing v44–v46 pilots) | Strategic adapts faction reports and beliefs; extract small common helpers only after both use cases demonstrate compatible semantics. |
+| Scoped establishment, entity properties and prior-state guards | Narrative (v47–v49 pilots) | Strategic adapts non-canonical descriptive facts; domain adapters own eligibility and material effects. |
+| Consent, permissions, commitment lifecycle | Joint; strategic existing agreement/negotiation and narrative custody/permission pilots | Share authority/lifecycle validation where compatible, not domain resource or DXD adjudication. |
+| Conditional developments, Event Generator and scheduling | Joint; strategic owns isolated generator qualification, narrative owns native clock/trigger integration | Compare existing event/predicate paths first; reuse typed guards/provenance, not a universal scheduler or effect DSL. |
+| Revision-bound transactions, scoped projections, replay, persistence | Joint, existing core runtime | Share proven utilities, preserve versioned checkpoint compatibility or explicit migration/restart guidance. |
+
+Each track must inspect the other track's current implementation and this contract before adding overlapping capability. Name the first adopter and intended second adopter in its PR; distinguish shared candidate, implemented in one track, reused by both, and qualified by both. For shared changes, include representative regression coverage for both modes or record the second adopter as pending; no claim of common qualification from one track alone. Coordinate overlapping files and use small coherent PRs; neither track waits for a universal abstraction. Avoid duplicate authoritative stores, speculative framework extraction, mandatory schema migration, general ontology, or new database. Retain portable JSON and existing read/save boundaries; defer SQLite or other storage until the full-stack gate or measured need. Record compatibility and known semantic limits in the relevant plans.
+
+Priority: existing release blockers and narrative P0 experiential work retain precedence; strategic P1 information/interaction vertical slice runs alongside source compilation and roster work. Shared contract work is PENDING until implemented and qualified; existing pilot evidence remains in track plans. No new upstream canon or AGE Enterprise scope.
+
 ## Priority and status discipline
 
 Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLAN_NARRATIVE.md maintain their own ordered deliverables and evidence. Keep one shared engine. Apply the following vocabulary in all three plans:
