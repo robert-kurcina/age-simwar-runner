@@ -1,5 +1,6 @@
 {
-  "version": 65,
+  "version": 66,
+  "npc_task_continuity": true,
   "npc_native_test": {"npc": "burroughs", "minutes": 10, "appearance": "Faded initials", "test": {"attribute": "INT", "skill": "Investigate", "tn": 10, "decision": true}, "success": "He can distinguish the faded initials, but cannot establish ownership.", "failure": "He cannot confidently distinguish the faded initials."},
   "routine_observations": {"activities": {"buy_meal": "Bought a meal and rested at the diner"}},
   "npc_travel": true,

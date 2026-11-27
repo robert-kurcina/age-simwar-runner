@@ -121,10 +121,14 @@ def native_test(state, rules, request, npc_available, local_entities, text):
     ledger.append({"id": eid, "object": oid, "permission": None, "npc": nid,
                    "authority": "npc_native_test", "location": location,
                    "scheduled_at": state["time"], "due": due.isoformat(),
-                   "status": "scheduled", "basis": basis})
+                   "status": "scheduled", "basis": basis,
+                   **({"work_seconds": 0} if rules.get("npc_task_continuity") else {})})
 
 def resolve_native_test(state, rules, e, obj, npc_available):
     cfg = rules["npc_native_test"]
+    if rules.get("npc_task_continuity") and e.get("work_seconds") != cfg["minutes"] * 60:
+        e.update(status="interrupted", interrupted_at=state["time"], interruption="insufficient_work")
+        return
     npc = state["npcs"][e["npc"]]
     if (not obj or obj["kind"] != "object" or obj.get("custodian") != e["npc"]
             or obj.get("lifecycle", "intact") != "intact"

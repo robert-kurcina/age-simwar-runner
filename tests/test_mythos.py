@@ -831,6 +831,7 @@ class MythosTrialTests(unittest.TestCase):
         elapsed = mythos.step(scheduled, "observe")
         event = elapsed["timed_detail_events"][-1]
         self.assertEqual(event["status"], "completed")
+        self.assertEqual(event["work_seconds"], 600)
         self.assertEqual(event["test"]["inputs"]["dm"],
                          dxd.attribute_dm(elapsed["npcs"]["burroughs"]["dxd_attributes"]["INT"]) + 2)
         self.assertEqual(event["test"]["result"], dxd.test("42:npc-test:burroughs:inc:case", **event["test"]["inputs"]))
@@ -841,6 +842,19 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.establish_step(elapsed, {"npc_native_test": dict(req, id="evt:retry")})
         mythos.verify(elapsed)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(scheduled, {"npc_activity": {"npc": "burroughs",
+                "mode": "rest", "safe": True, "minutes": 10, "basis": "He rests."}})
+        interrupted = mythos.dialogue_step(scheduled, {"npc": "burroughs", "speaker": "pc",
+            "claim": "Chief, may I speak with you?", "stance": "unstated", "intent": "unstated"})
+        interrupted = mythos.step(interrupted, "observe")
+        event = interrupted["timed_detail_events"][-1]
+        self.assertEqual(event["status"], "interrupted")
+        self.assertEqual(event["interruption"], "interaction")
+        self.assertEqual(event["work_seconds"], 0)
+        self.assertNotIn("test", event)
+        self.assertNotIn("assessment", event)
+        mythos.verify(interrupted)
 
     def test_independent_npc_travel_reuses_route_and_time(self):
         import copy
