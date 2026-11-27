@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "conflagration-regional-drafts",
+  "title": "Conflagration regional drafts — unreviewed",
+  "groups": [
+    {
+      "id": "mainlander-ingress",
+      "title": "Mainlander Ingress",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "mainlander-ingress-regional-draft",
+          "title": "Mainlander Ingress — competing reception and claims services (draft)",
+          "spec": "mainlander-ingress/scenario-spec.json",
+          "status": "draft-unreviewed",
+          "player_factions": [
+            "shanter",
+            "fiji",
+            "vanuatu"
+          ]
+        }
+      ]
+    }
+  ]
+}
