@@ -86,6 +86,9 @@ def initial(sid, seed):
         state["action_observations"] = []
     if rules.get("behavioral_recognition"):
         state["behavioral_recognition"] = []
+    if rules.get("routine_observations"):
+        state["routine_observations"] = []
+        state["routine_source"] = None
     if rules.get("npc_expectations"):
         state["npc_expectations"] = []
     if rules.get("npc_travel"):
@@ -518,6 +521,8 @@ def step(state, action, proposal=None, commitment=None):
     if elapsed > datetime.fromisoformat(rules["end"]):
         raise ValueError("action exceeds scenario deadline")
     state["turn"] += 1
+    if rules.get("routine_observations"):
+        state["routine_source"] = None
     clock = state["dxd"].get("activity")
     if "spatial" in rules and a["route"]["seconds"]:
         departure = state["time"]
@@ -531,6 +536,10 @@ def step(state, action, proposal=None, commitment=None):
             advance_events(state, rules, arrival)
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
     state["location"] = a.get("location", state["location"])
+    if rules.get("routine_observations"):
+        activity_observers = {nid for nid, p in state["npcs"].items()
+                              if p["location"] == state["location"]
+                              and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
     if clock:
         # Events during travel may invalidate the intended local action.
         if (any(f in state["flags"] for f in a.get("excludes_flags", []))
@@ -664,6 +673,13 @@ def step(state, action, proposal=None, commitment=None):
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
+    if rules.get("routine_observations"):
+        available = {nid for nid, p in state["npcs"].items()
+                     if p["location"] == state["location"]
+                     and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+        state["routine_source"] = {"turn": state["turn"], "location": state["location"],
+                                   "eligible_observers": sorted(available),
+                                   "activity_observers": sorted(available & activity_observers)}
     if a.get("preparation_saved_seconds"):
         state["last_result"]["preparation_saved_seconds"] = a["preparation_saved_seconds"]
     if proposal is not None:
@@ -973,6 +989,7 @@ def gm_context(state):
                 **({"action_observations": action_observations.projection(state, conversational)} if rules.get("action_observations") else {}),
                 **({"consequential_demeanor": {nid: copy.deepcopy([e for e in state["relationship_changes"] if e["npc"] == nid and e.get("source") == "consequential_conduct"][-6:]) for nid in sorted(conversational)}} if rules.get("consequential_demeanor") else {}),
                 **({"behavioral_context": behavior.projection(state, conversational)} if rules.get("behavioral_recognition") else {}),
+                **({"routine_source": copy.deepcopy(state["routine_source"])} if rules.get("routine_observations") else {}),
                 **({"npc_expectations": expectations.projection(state, conversational),
                     "literary_synthesis": "Before composing significant NPC responses, reconcile observed conduct, expectations, attachments, emotional history, current Concerns, Demeanor and competing motivations. Braid relevant influences into speech and physical behavior with concise contextual reminders. Do not erase prior conflict merely because Stress recovered or invent shared history."} if rules.get("npc_expectations") else {}),
                 **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
