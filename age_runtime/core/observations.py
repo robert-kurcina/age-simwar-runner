@@ -1,5 +1,6 @@
 """Read-only actor projections. Full checkpoints are referee-only."""
 from copy import deepcopy
+from age_runtime.core.communications import view as communication_view
 from age_runtime.core.negotiation import view as negotiation_view
 from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
@@ -153,6 +154,7 @@ def observe(s, state, actor_id):
                       for oid in actor["strategy"]["priorities"]]}}
     return {
         **negotiation_view(s, state, actor_id),
+        **communication_view(s, state, actor_id),
         **strategy,
         **pacing,
         **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s or "agreements" in s else {}),
@@ -165,7 +167,7 @@ def observe(s, state, actor_id):
         "values": values,
         "reports": reports,
         "own_requests": [{k: deepcopy(v) for k, v in r.items() if k != "sequence"}
-                         for r in state["requests"] if r["actor"] == actor_id],
+                         for r in state["requests"] if r["actor"] == actor_id and r.get("origin") != "communication"],
         "available_requests": requests,
         "objectives": observed_objectives
     }
