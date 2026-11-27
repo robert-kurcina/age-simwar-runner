@@ -126,16 +126,18 @@ def recovery_assessment(brief, level=DEFAULT, complete=False):
     })
 
 
-def objective_outcomes(definitions, observed, reports, projects, minute, end_minute, turn_minutes):
+def objective_outcomes(definitions, observed, reports, projects, minute, end_minute, turn_minutes, agreements=None):
     """Conservative goal classification from own observations, never hidden values.
 
     Project progress is monotone and increases at most once per resolution.
-    Only directly bound progress thresholds receive an early impossibility proof.
+    Only directly bound progress thresholds and validated one-shot institutional
+    outcomes receive an early impossibility proof.
     Other variables may change by mechanisms not represented in the local brief.
     """
     remaining = (max(0, end_minute - minute) + turn_minutes - 1) // turn_minutes
     ended = minute >= end_minute
     by_progress = {p["progress"]: p for p in projects}
+    fixed = institutional_bounds(agreements or {}, reports, minute)
     result = {}
     for ident, definition in definitions.items():
         key = definition["key"]
@@ -161,8 +163,50 @@ def objective_outcomes(definitions, observed, reports, projects, minute, end_min
                 if impossible:
                     record.update(status="objective_failure",
                                   basis="Threshold outside proven modeled project progress bounds.")
+            if key in fixed:
+                bound = fixed[key]
+                record["modeled_range"] = {"minimum": bound["value"], "maximum": bound["value"]}
+                record["agreement_basis"] = bound["basis"]
+                expected = bound["value"]
+                met = {"at_least": expected >= threshold, "at_most": expected <= threshold,
+                       "equal": expected == threshold}[comparison]
+                if not met:
+                    record.update(status="objective_failure", basis=bound["basis"])
             if record["status"] != "objective_failure":
                 record.update(status="currently_met" if observation["met"] else "open",
                               basis="Current report; final outcome not yet established.")
         result[ident] = record
     return result
+
+
+def institutional_bounds(agreements, reports, minute):
+    """Fixed outcomes of actor-visible, validated one-shot agreements.
+
+    The caller supplies only institutional agreements with the actor as a
+    signatory. Prerequisites precede dependent deadlines and share visibility.
+    A missing report or missing prerequisite never proves failure.
+    """
+    fixed = {}
+    by_id = {}
+    for ident, agreement in sorted(agreements.items(), key=lambda pair: pair[1]["due_minute"]):
+        key = agreement["outcome"]
+        report = reports.get(key, {})
+        if report.get("status") != "current":
+            continue
+        if minute >= agreement["due_minute"]:
+            if report.get("value") not in (0, 1):
+                continue
+            record = {"value": report["value"],
+                      "basis": "One-shot agreement deadline resolved; outcome cannot change.",
+                      "agreement": ident}
+        else:
+            failed = [p for p in agreement["requires"]
+                      if p in by_id and by_id[p]["value"] == 0]
+            if not failed:
+                continue
+            record = {"value": 0,
+                      "basis": "Required one-shot agreement cannot be fulfilled.",
+                      "agreement": ident, "failed_prerequisites": failed}
+        fixed[key] = record
+        by_id[ident] = record
+    return fixed

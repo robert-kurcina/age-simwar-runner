@@ -164,8 +164,13 @@ def observe(s, state, actor_id):
                        "observed_result": deepcopy(observed_objectives.get(oid))}
                       for oid in actor["strategy"]["priorities"]]}}
     from age_runtime.core.opportunity_latitude import objective_outcomes
+    institutional = {aid: {"outcome": a["outcome"], "requires": a["requires"],
+                           "due_minute": a["due_minute"]}
+                     for aid, a in s.get("agreements", {}).items()
+                     if "outcome" in a and actor_id in a["consent"]}
     outcomes = objective_outcomes(actor.get("objectives", {}), observed_objectives, reports,
-                                  projects, state["minute"], s["end_minute"], s["turn_minutes"])
+                                  projects, state["minute"], s["end_minute"], s["turn_minutes"],
+                                  institutional)
     observation = {
         "objective_outcomes": outcomes,
         **negotiation_view(s, state, actor_id),
