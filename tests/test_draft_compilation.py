@@ -107,3 +107,41 @@ class DraftCompilationTest(unittest.TestCase):
                 compile_catalog(self.path, self.owners)
             entry.clear()
             entry.update(before)
+
+    def test_private_offline_openings_review_gate_and_restore(self):
+        from age_runtime.core.private_openings import export, read_package
+        from age_runtime.core.private_play import briefing, pending_factions, resolve_turn
+        from age_runtime.core.runner import faction_packet
+        group = next(g for g in self.inventory["groups"] if g["id"] == "fallout")
+        entry = group["scenarios"][0]
+        sid = entry["id"]
+        revision = "b" * 40
+        out = self.root / "private.zip"
+        with self.assertRaisesRegex(ValueError, "catalog-only"):
+            export(self.path, self.owners, [sid], revision, out)
+        self.assertFalse(out.exists())
+        # Explicitly synthetic reviewed fixture, never promote the real inventory.
+        group["status"] = "supported-pilot"
+        entry["status"] = "reviewed-illustrative"
+        self.path.write_text(json.dumps(self.inventory), encoding="utf-8")
+        manifest = export(self.path, self.owners, [sid], revision, out)
+        self.assertEqual(len(manifest["openings"]), 3)
+        self.assertEqual(out.stat().st_mode & 0o777, 0o600)
+        with self.assertRaisesRegex(ValueError, "already exists"):
+            export(self.path, self.owners, [sid], revision, out)
+        with self.assertRaisesRegex(ValueError, "revision mismatch"):
+            read_package(out, "c" * 40)
+        self.owners.clear()
+        restored, sessions = read_package(out, revision)
+        self.assertEqual(manifest, restored)
+        for (scenario, actor), session in sessions.items():
+            self.assertEqual(scenario, sid)
+            self.assertEqual(session["header"]["actor"], actor)
+            self.assertEqual(briefing(session)["turn"], 0)
+            self.assertNotIn("content_base64", json.dumps(session))
+            verify_checkpoint(session["header"]["compiled"]["scenario"], session["state"])
+        from zipfile import ZipFile
+        with ZipFile(out, "a") as archive:
+            archive.writestr("../unexpected", "not a package member")
+        with self.assertRaisesRegex(ValueError, "unexpected package"):
+            read_package(out, revision)
