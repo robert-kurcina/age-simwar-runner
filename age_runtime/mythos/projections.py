@@ -304,6 +304,7 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
     if rules.get("npc_objective_continuity"):
         ref["npc_agency"] = {nid: context for nid, context in npc_agency.projection(state).items()
                              if nid in conversational}
+    ref["opportunity_policy"] = narrative_opportunity_policy(state)
     if compact:
         compact_history(packet)
     return copy.deepcopy(packet)
