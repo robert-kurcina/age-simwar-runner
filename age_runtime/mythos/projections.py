@@ -63,7 +63,7 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
     """Bounded referee packet; never render directly as player narration."""
     public = player_view(state, rules, legal, npc_available, digest, demeanor_labels)
     if not rules.get("gm_proposals"):
-        return authored_referee_view(state, story, rules, legal, public)
+        return authored_referee_view(state, story, rules, legal, public, npc_available, compact=compact)
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
@@ -205,18 +205,23 @@ def compact_history(packet):
                                "full_context": "game.py gm SESSION"}
 
 
-def authored_referee_view(state, story, rules, legal, public):
+def authored_referee_view(state, story, rules, legal, public, npc_available, *, compact=False):
     """Minimal GM context for authored-only trials; no delegated authority."""
     local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
     relevant = {a["npc"] for a in local if "npc" in a}
+    conversational = {nid for nid in state["npcs"] if rules.get("epistemic_dialogue")
+                      and epistemic.conversation_available(state, rules, nid, npc_available)}
+    relevant |= conversational
     surface = copy.deepcopy(public)
     surface["observations"] = surface["observations"][-8:]
     surface["memories"] = surface["memories"][-4:]
-    return copy.deepcopy({
+    if "dialogue" in surface:
+        surface["dialogue"] = surface["dialogue"][-8:]
+    packet = {
         "audience": "gm_only", "source_revision": state["source"],
         "player_surface": surface,
         "referee": {
-            "mode": "authored_actions_only",
+            "mode": "authored_actions_with_continuity" if rules.get("epistemic_dialogue") else "authored_actions_only",
             "location_basis": next(({"features": x.get("features", []),
                                      "dangers": x.get("dangers", [])}
                                     for x in story["locations"]
@@ -226,14 +231,32 @@ def authored_referee_view(state, story, rules, legal, public):
                  "motivation": state["npcs"][nid]["motivation"],
                  "known_topics": state["npcs"][nid]["known_topics"],
                  "disclosed": state["npcs"][nid]["disclosed"],
+                 "conversation_available": nid in conversational,
                  "local_actions": [a["id"] for a in local if a.get("npc") == nid]}
                 for nid in sorted(relevant)],
             "allowed_actions": [a["id"] for a in legal],
-            "capabilities": {"free_form_proposals": False, "persistent_dialogue": False,
-                             "establishment": False, "spatial_routing": False,
+            "capabilities": {"free_form_proposals": False, "persistent_dialogue": bool(rules.get("epistemic_dialogue")),
+                             "establishment": bool(rules.get("narrative_establishment")),
+                             "agreements": bool(rules.get("narrative_agreements")),
+                             "batch": bool(rules.get("narrative_batch")), "spatial_routing": False,
                              "npc_agency": False},
-            "guidance": "Interpret intent using offered authored actions only. "
-                        "Do not establish new facts, simulate independent NPC actions, "
+            "guidance":  "Resolve mechanical effects through authored actions only. "
+                        "Use enabled continuity operations for actual local exchanges and mundane details. "
+                        "Do not invent clues, simulate independent NPC actions, "
                         "or infer travel duration separately from total action time."
         }
-    })
+    }
+    ref = packet["referee"]
+    if rules.get("epistemic_dialogue"):
+        ref["dialogue_context"] = epistemic.referee_projection(state, relevant)
+        ref["propositions"] = epistemic.proposition_projection(state, rules, relevant)
+        ref["contextual_reminders"] = reminders.projection(state, conversational)
+    if rules.get("relational_continuity"):
+        ref["relational_context"] = epistemic.relational_projection(state, relevant)
+    if rules.get("narrative_establishment"):
+        ref["established_details"] = establishment.referee_projection(state)
+    if rules.get("narrative_batch"):
+        ref["next_dialogue_id"] = len(state.get("dialogue", [])) + 1
+    if compact:
+        compact_history(packet)
+    return copy.deepcopy(packet)
