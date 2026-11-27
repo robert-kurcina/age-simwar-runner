@@ -2,6 +2,8 @@
 import copy
 import re
 from datetime import datetime
+from age_runtime.core import dxd
+from age_runtime.mythos import pacing
 
 
 def validate_request(request):
@@ -46,12 +48,15 @@ def validate_local(rules):
     for kind, spec in cfg.items():
         if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", kind) or not isinstance(spec, dict):
             raise ValueError("invalid capability identity")
-        required = {"target", "seconds", "resolution"}
-        allowed = required | {"test", "concern_failure", "established", "count_evidence"}
+        required = {"target", "resolution"}
+        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence"}
         if not required <= set(spec) or set(spec) - allowed:
             raise ValueError("invalid capability fields")
-        if spec["target"] not in ("location", "npc") or type(spec["seconds"]) is not int or not 10 <= spec["seconds"] <= 3600:
-            raise ValueError("invalid capability scope or duration")
+        if spec["target"] not in ("location", "npc"):
+            raise ValueError("invalid capability scope")
+        duration_range(spec)
+        if type(spec.get("requires_evidence", 0)) is not int or spec.get("requires_evidence", 0) < 0:
+            raise ValueError("invalid capability evidence prerequisite")
         if type(spec.get("count_evidence", False)) is not bool:
             raise ValueError("invalid evidence count policy")
         marker = spec.get("established")
@@ -80,6 +85,32 @@ def validate_local(rules):
             raise ValueError("unsupported capability resolution")
 
 
+def duration_range(spec):
+    """A capability has exactly one reviewed duration model."""
+    if ("seconds" in spec) == ("variable_interval_seconds" in spec):
+        raise ValueError("specify exactly one capability duration model")
+    if "seconds" in spec:
+        seconds = spec["seconds"]
+        if type(seconds) is not int or not 10 <= seconds <= 3600:
+            raise ValueError("invalid fixed capability duration")
+        return seconds, seconds
+    interval = spec["variable_interval_seconds"]
+    if type(interval) is not int or interval not in pacing.INTERVALS:
+        raise ValueError("unsupported variable Time Interval")
+    return 3 * interval, 18 * interval
+
+
+def resolve_duration(state, action):
+    """Resolve only after accepted proposal validation; previews never roll."""
+    spec = action.get("local_spec", {})
+    if "variable_interval_seconds" not in spec:
+        return action
+    interval = spec["variable_interval_seconds"]
+    roll = dxd.task_duration(f"{state['seed']}:task-duration:{state['turn'] + 1}:{action['id']}", interval)
+    return dict(action, duration_seconds=roll["seconds"], local_seconds=roll["seconds"],
+                task_duration=roll)
+
+
 def local_capabilities(state, rules, npc_available):
     """Derive eligible targets, never manufacture an entity or a Test."""
     cfg = rules.get("local_proposals")
@@ -89,7 +120,8 @@ def local_capabilities(state, rules, npc_available):
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()
     result = []
     for kind, spec in cfg.items():
-        if spec["seconds"] > remaining:
+        minimum, maximum = duration_range(spec)
+        if maximum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
             continue
         targets = [state["location"]] if spec["target"] == "location" else [
             nid for nid, npc in sorted(state["npcs"].items())
@@ -98,7 +130,10 @@ def local_capabilities(state, rules, npc_available):
             action = "local:" + kind + ":" + target
             if action not in state["used"]:
                 result.append({"action": action, "approach": kind, "target": target,
-                               "resolution": spec["resolution"], "seconds": spec["seconds"]})
+                               "resolution": spec["resolution"],
+                               **({"duration_range_seconds": [minimum, maximum],
+                                   "time_interval_seconds": spec["variable_interval_seconds"]}
+                                  if "variable_interval_seconds" in spec else {"seconds": minimum})})
     return result
 
 
@@ -110,9 +145,9 @@ def compile_local(state, rules, request, npc_available):
         raise ValueError("local capability unavailable")
     kind, target = cap["approach"], cap["target"]
     spec = rules["local_proposals"][kind]
-    loc, seconds = state["location"], spec["seconds"]
+    loc, seconds = state["location"], duration_range(spec)[1]
     action = {"id": cap["action"], "label": kind, "location": loc,
-              "duration_seconds": seconds, "local_seconds": seconds, "interval_seconds": 600,
+              "duration_seconds": seconds, "local_seconds": seconds, "interval_seconds": spec.get("variable_interval_seconds", 600),
               "activity": "active", "route": {"nodes": [loc], "seconds": 0, "minutes": 0, "terrain": []},
               "local_capability": kind, "local_spec": copy.deepcopy(spec)}
     if spec["target"] == "npc":
@@ -129,6 +164,8 @@ def record_local(state, action, success, result):
     record = {"kind": kind, "target": action.get("npc", state["location"]),
               "at": state["time"], "turn": state["turn"], "passed": success,
               "effect": result["margin"] if result is not None else None}
+    if "task_duration" in action:
+        record["task_duration"] = copy.deepcopy(action["task_duration"])
     if spec.get("count_evidence"):
         record["evidence_count"] = len(state["discoveries"])
     if success and spec.get("established"):
