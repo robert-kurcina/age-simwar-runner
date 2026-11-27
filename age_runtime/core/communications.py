@@ -9,6 +9,16 @@ def text_field(value, limit):
 
 
 def validate(s):
+    if "communication_delay_minutes" in s:
+        routes = s["communication_delay_minutes"]
+        if not s.get("material_communications") or not isinstance(routes, dict):
+            raise ValueError("communication delays require material communications")
+        for sender, destinations in routes.items():
+            if sender not in s["actors"] or not isinstance(destinations, dict):
+                raise ValueError("invalid communication sender")
+            for recipient, delay in destinations.items():
+                if recipient not in s["actors"] or recipient == sender or type(delay) is not int or delay < 0:
+                    raise ValueError("invalid communication route delay")
     if "runtime_propositions" in s and (s["runtime_propositions"] is not True or not s.get("material_communications")):
         raise ValueError("runtime propositions require material communications")
     if "material_communications" in s and (s["material_communications"] is not True or len(s.get("actors", {})) < 2):
@@ -142,6 +152,16 @@ def proposition_registry(s, state):
     return registry
 
 
+def delivery_minute(s, record, recipient):
+    delay = s.get("communication_delay_minutes", {}).get(record["actor"], {}).get(recipient, 0)
+    return record["minute"] + delay
+
+
+def received(s, state, record, actor):
+    return (actor in record["communication"]["recipients"]
+            and delivery_minute(s, record, actor) <= state["minute"])
+
+
 def access_sources(s, state, actor, pid):
     item = proposition_registry(s, state).get(pid)
     if item is None:
@@ -155,7 +175,7 @@ def access_sources(s, state, actor, pid):
         if r.get("origin") != "communication":
             continue
         msg = r["communication"]
-        if msg.get("proposition") == pid and actor in msg["recipients"]:
+        if msg.get("proposition") == pid and received(s, state, r, actor):
             result.append({"kind": "received_claim", "id": msg["id"], "asserts": msg["asserts"]})
     if result:
         report = report_source(s, state, actor, item)
@@ -208,8 +228,24 @@ def propositions_view(s, state, actor):
 def view(s, state, actor):
     if not s.get("material_communications"):
         return {}
-    return {**({"propositions": propositions_view(s, state, actor)} if "communication_propositions" in s or s.get("runtime_propositions") else {}), "communications": [
-        {"speaker": r["actor"], "turn": r["turn"], "minute": r["minute"], **{k: deepcopy(v) for k, v in r["communication"].items()
-           if k != "speaker_intent" or r["actor"] == actor}}
-        for r in state["requests"] if r.get("origin") == "communication"
-        and (r["actor"] == actor or actor in r["communication"]["recipients"])]}
+    messages = []
+    for r in state["requests"]:
+        if r.get("origin") != "communication":
+            continue
+        sender = r["actor"] == actor
+        if not sender and not received(s, state, r, actor):
+            continue
+        message = {"speaker": r["actor"], "turn": r["turn"], "minute": r["minute"],
+                   **{k: deepcopy(v) for k, v in r["communication"].items()
+                      if k != "speaker_intent" or sender}}
+        if "communication_delay_minutes" in s:
+            if sender:
+                message["scheduled_delivery"] = {
+                    a: delivery_minute(s, r, a) for a in r["communication"]["recipients"]}
+                # This is a schedule, not an acknowledgement by the recipient.
+            else:
+                message["delivery_minute"] = delivery_minute(s, r, actor)
+        messages.append(message)
+    return {**({"propositions": propositions_view(s, state, actor)}
+               if "communication_propositions" in s or s.get("runtime_propositions") else {}),
+            "communications": messages}
