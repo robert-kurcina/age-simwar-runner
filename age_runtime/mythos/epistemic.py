@@ -15,7 +15,7 @@ def record(state, rules, request, npc_available):
     if not rules.get("epistemic_dialogue") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("dialogue unavailable")
     required = {"npc", "speaker", "claim", "stance", "intent"}
-    if not isinstance(request, dict) or not required <= set(request) or set(request) - required - {"proposition", "asserts", "listener_stance"}:
+    if not isinstance(request, dict) or not required <= set(request) or set(request) - required - {"proposition", "asserts", "listener_stance", "reaction"}:
         raise ValueError("invalid dialogue fields")
     npc, speaker = request["npc"], request["speaker"]
     if not isinstance(npc, str) or npc not in state["npcs"] or speaker not in ("pc", npc):
@@ -61,6 +61,15 @@ def record(state, rules, request, npc_available):
         if speaker != "pc" and listener_stance != "unstated":
             raise ValueError("do not infer PC belief")
         entry.update(proposition=pid, asserts=asserts, listener_stance=listener_stance)
+    if "reaction" in request:
+        if not rules.get("relational_continuity"):
+            raise ValueError("relational continuity unavailable")
+        reaction = request["reaction"]
+        if not isinstance(reaction, dict) or not reaction or set(reaction) - {"emotion", "intention", "attachment", "tension", "significance"}:
+            raise ValueError("invalid NPC reaction fields")
+        # This is the NPC's subjective response to this actual exchange,
+        # not a new fact, promise, mechanical modifier or PC inner state.
+        entry["npc_reaction"] = {key: _text(value, 240) for key, value in reaction.items()}
     # Exact duplicates within one engine turn add no new continuity.
     if any(all(e[k] == v for k, v in entry.items() if k != "id") for e in ledger):
         raise ValueError("duplicate dialogue claim")
@@ -68,7 +77,7 @@ def record(state, rules, request, npc_available):
 
 def public_projection(state):
     """Only what was actually communicated; no truth or intent annotation."""
-    return [{k: v for k, v in e.items() if k not in ("speaker_stance", "speaker_intent", "proposition", "asserts", "listener_stance")}
+    return [{k: v for k, v in e.items() if k not in ("speaker_stance", "speaker_intent", "proposition", "asserts", "listener_stance", "npc_reaction")}
             for e in state.get("dialogue", [])]
 
 def referee_projection(state, participants):
@@ -125,4 +134,29 @@ def proposition_projection(state, rules, participants):
         if actors:
             result.append({"id": pid, "text": spec["text"], "kind": spec["kind"],
                            "established": spec["flag"] in state["flags"], "actors": actors})
+    return result
+
+def relational_projection(state, participants):
+    """Derive evolving private NPC reactions from committed dialogue.
+
+    Source motivation/traits remain unchanged in the NPC profile. Each
+    field has its own provenance; omitted fields do not erase earlier
+    reactions. An intention is not an accomplished action.
+    """
+    result = {}
+    for npc in sorted(participants):
+        current = {}
+        experiences = []
+        for entry in state.get("dialogue", []):
+            if npc not in (entry["speaker"], entry["listener"]):
+                continue
+            reaction = entry.get("npc_reaction", {})
+            for field, value in reaction.items():
+                if field != "significance":
+                    current[field] = {"text": value, "claim_id": entry["id"],
+                                      "at": entry["at"]}
+            if "significance" in reaction:
+                experiences.append({"claim_id": entry["id"], "at": entry["at"],
+                                    "significance": reaction["significance"]})
+        result[npc] = {"current": current, "experiences": experiences}
     return result
