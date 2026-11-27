@@ -164,3 +164,57 @@ class CommunicationsTest(unittest.TestCase):
         damaged["requests"][0]["communication"]["introduce_proposition"]["id"] = "inc:other"
         with self.assertRaises(ValueError):
             verify_checkpoint(s, damaged)
+
+    def test_directional_delivery_and_recall(self):
+        from age_runtime.core.institutional_memory import recall
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["material_communications"] = True
+        s["runtime_propositions"] = True
+        s["communication_delay_minutes"] = {"east": {"foundation": 10081}}
+        state = initialize(s)
+        packet = faction_packet(s, state, "foundation")
+        claim = {"id": "dispatch", "recipients": ["foundation", "west"],
+                 "claim": "An inspection is necessary.",
+                 "proposition": "inc:inspection", "asserts": True,
+                 "introduce_proposition": {"id": "inc:inspection", "text": "Inspection is necessary."}}
+        state = communicate(s, state, "east", digest(state), claim)
+        self.assertEqual(packet, faction_packet(s, state, "foundation"))
+        self.assertEqual(observe(s, state, "east")["communications"][0]["scheduled_delivery"],
+                         {"foundation": 10081, "west": 0})
+        self.assertEqual(observe(s, state, "west")["communications"][0]["delivery_minute"], 0)
+        self.assertEqual(recall(observe(s, state, "foundation"))["communications"], [])
+        self.assertNotIn("inc:inspection", observe(s, state, "foundation")["propositions"])
+        assessment = {"proposition": "inc:inspection", "stance": "doubts", "basis": ["dispatch"]}
+        with self.assertRaises(ValueError):
+            assess_proposition(s, state, "foundation", digest(state), assessment)
+        with self.assertRaises(ValueError):
+            communicate(s, state, "foundation", digest(state),
+                        {"id": "relay", "recipients": ["central"], "claim": "Inspection needed.",
+                         "proposition": "inc:inspection", "asserts": True})
+        for turn in range(2):
+            for actor in s["model_factions"]:
+                packet = faction_packet(s, state, actor)
+                state = accept_faction_choice(s, state, actor, packet,
+                                              {"packet_id": packet["packet_id"], "action": None})
+            state = advance(s, state)
+            verify_checkpoint(s, state)
+            if turn == 0:
+                self.assertEqual(observe(s, state, "foundation")["communications"], [])
+        received = recall(observe(s, state, "foundation"))
+        self.assertEqual(received["communications"][0]["delivery_minute"], 10081)
+        self.assertEqual(received["propositions"]["inc:inspection"]["latest_stance"], "unstated")
+        state = assess_proposition(s, state, "foundation", digest(state), assessment)
+        verify_checkpoint(s, state)
+        self.assertEqual(observe(s, state, "foundation")["propositions"]["inc:inspection"]["latest_stance"], "doubts")
+
+    def test_invalid_delivery_routes(self):
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["material_communications"] = True
+        for routes in ({"east": {"west": -1}}, {"east": {"west": True}},
+                       {"east": {"east": 0}}, {"missing": {"west": 0}},
+                       {"east": {"missing": 0}}, {"east": []}):
+            s["communication_delay_minutes"] = routes
+            with self.assertRaises(ValueError):
+                initialize(s)
