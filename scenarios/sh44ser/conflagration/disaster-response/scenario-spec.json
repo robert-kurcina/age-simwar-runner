@@ -279,7 +279,40 @@
       "fiji",
       "vanuatu"
     ],
-    "game_length": "Short"
+    "game_length": "Short",
+    "material_communications": true,
+    "diplomatic_history": true,
+    "runtime_propositions": true,
+    "strategic_establishment": true,
+    "communication_propositions": {
+      "reception_ready": {
+        "text": "The emergency reception project has completed both illustrative stages.",
+        "initial_access": [
+          "fiji"
+        ],
+        "report_binding": {
+          "key": "emergency_reception_progress",
+          "comparison": "at_least",
+          "threshold": 2
+        }
+      },
+      "clinic_ready": {
+        "text": "The clinic supply project has completed both illustrative stages.",
+        "initial_access": [
+          "fiji"
+        ],
+        "report_binding": {
+          "key": "clinic_supply_progress",
+          "comparison": "at_least",
+          "threshold": 2
+        }
+      }
+    },
+    "communication_delay_minutes": {
+      "fiji": {
+        "vanuatu": 10080
+      }
+    }
   },
   "initial_refs": {},
   "evidence_refs": {
