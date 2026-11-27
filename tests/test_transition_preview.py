@@ -123,3 +123,39 @@ class TransitionPreviewTests(unittest.TestCase):
         self.assertEqual(later["header"]["continuity"]["version"], 2)
         self.assertEqual(later["header"]["continuity"]["origins"], [SOURCE])
         verify(later)
+
+
+    def test_campaign_progression_is_read_only_and_actor_local(self):
+        from age_runtime.core.campaign_discovery import progression
+        opening = start_rehearsal(ROOT, SOURCE, "fiji")
+        self.assertFalse(progression(ROOT, opening)["choices"])
+        previous = self.complete()
+        before = digest(previous)
+        menu = progression(ROOT, previous)
+        self.assertTrue(menu["complete"])
+        self.assertEqual(menu["actor"], "fiji")
+        self.assertEqual([row["id"] for row in menu["choices"]], [
+            TARGET, "purge-institutional-draft", "agreement-institutional-draft",
+            "reconstruction-regional-draft"])
+        self.assertEqual(menu["choices"][0]["continuation"], "select-history")
+        self.assertGreater(menu["choices"][0]["historical_candidates"], 0)
+        self.assertGreater(menu["choices"][0]["gap_days"], 0)
+        self.assertNotIn("inc:shanter_room", str(menu))
+        self.assertNotIn("inc:fiji_room", str(menu))
+        self.assertEqual(digest(previous), before)
+
+    def test_progression_without_selected_memory(self):
+        from age_runtime.core.campaign_discovery import progression
+        session = start_rehearsal(ROOT, SOURCE, "fiji")
+        for _ in range(4):
+            for actor in pending_factions(session):
+                packet = model_packet(session, actor)
+                session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
+            session = update(session, turns=1)
+        menu = progression(ROOT, session)
+        for row in menu["choices"]:
+            self.assertTrue(row["fresh_perspectives"])
+            # Some fixtures may have authored agreement or diplomatic records;
+            # availability depends on actual eligible historical selectors.
+            self.assertEqual(row["continuation"], "select-history" if row["historical_candidates"]
+                             else "no-selectable-history")

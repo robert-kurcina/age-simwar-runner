@@ -56,3 +56,56 @@ def discover(path, owners=None):
                        "episodes": episodes})
     return {"id": catalog["id"], "title": catalog["title"], "groups": groups,
             "guidance": "Choose an available episode and perspective. Rehearse is explicitly unreviewed; start uses reviewed registration. Openings are fresh and standard; continuity is separate."}
+
+
+def progression(path, previous):
+    """Player-facing next episode choices, never an automatic transition."""
+    from age_runtime.core.private_play import view
+    from age_runtime.core.runner import digest
+    from age_runtime.core.transition_preview import transition_preview
+    from age_runtime.core.source_compiler import checked_date
+    from datetime import timedelta
+
+    current = view(previous)
+    header = previous["header"]
+    catalog = inventory(path)
+    if header["campaign"] != catalog["id"] or header["catalog_digest"] != digest(catalog):
+        raise ValueError("campaign revision mismatch")
+    scenario = header["compiled"]["scenario"]
+    actor = header["actor"]
+    observation = current["observation"]
+    result = {"campaign": catalog["id"], "source": scenario["id"], "actor": actor,
+              "source_session_digest": digest(previous), "complete": current["complete"],
+              "qualification": current.get("qualification", "reviewed"),
+              "prior_objectives": observation.get("objective_outcomes", {}),
+              "retained_history": [{k: row[k] for k in ("kind", "id", "source_scenario", "source_date")}
+                                   for row in observation.get("phase_memory", [])],
+              "choices": []}
+    if not current["complete"]:
+        result["guidance"] = "Finish the current episode before choosing a continuation."
+        return result
+    end = checked_date(header["effective_date"]) + timedelta(days=(scenario["end_minute"] + 1439) // 1440)
+    menu = discover(path)
+    for group in menu["groups"]:
+        for episode in group["episodes"]:
+            if (episode["availability"] != "available" or episode["play_mode"] != "rehearse"
+                    or episode["id"] == scenario["id"]
+                    or checked_date(episode["effective_date"]) < end):
+                continue
+            row = {"id": episode["id"], "title": episode["title"],
+                   "effective_date": episode["effective_date"], "turns": episode["turns"],
+                   "fresh_perspectives": episode["perspectives"],
+                   "continuation": "unavailable", "historical_candidates": 0}
+            try:
+                preview = transition_preview(path, previous, episode["id"])
+            except (ValueError, TypeError, KeyError, OSError):
+                pass
+            else:
+                count = len(preview["candidate_selectors"])
+                row["historical_candidates"] = count
+                row["continuation"] = "select-history" if count else "no-selectable-history"
+                row["gap_days"] = preview["gap_days"]
+            result["choices"].append(row)
+    result["guidance"] = ("Choose a fresh draft opening or explicitly preview and confirm selected historical memory. "
+                          "Fresh openings do not inherit records. No automatic phase advance, live obligation or resource carry.")
+    return result

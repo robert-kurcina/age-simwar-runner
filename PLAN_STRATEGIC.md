@@ -488,3 +488,7 @@ PR #239 merged; CI pending at inspection. Add a campaign-specific launch artifac
 ## Multi-phase institutional memory checkpoint
 
 PR #246 merged; Tests 46084860762 and bundle 46084860783 passed. Explicit prior-origin selectors retain original dated historical records over multiple unreviewed episodes. Referee-only independent model-faction selectors use each actor's own observation; player preview excludes them. Version 2 lineage records multiple origins while preserving version 1 verification and reviewed carry restrictions. Tests exercise three actual episodes, private information isolation and target baseline. CI pending. Next campaign progression presentation; no automatic retention, no UAT gate.
+
+## Campaign progression presentation checkpoint
+
+PR #247 merged; its CI was pending at inspection. Add read-only `private progression INVENTORY SESSION` using verified actor observation, campaign discovery and transition preview. Filter to later available draft episodes after source completion, expose fresh perspective choices and historical selection eligibility, observed objective outcomes and retained origin references without model-faction data. No automatic transition or scoring. Tests use actual Mainlander Ingress completion. CI pending. Next review provenance delivery and campaign-wide mechanical qualification; UAT deferred.
