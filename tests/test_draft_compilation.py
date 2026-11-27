@@ -198,3 +198,31 @@ class DraftCompilationTest(unittest.TestCase):
                 self.assertEqual(pending_factions(session), [])
                 self.assertEqual(digest(opening), original)
                 self.assertEqual(verify(session), session)
+
+    def test_selective_resource_acquisition(self):
+        from age_runtime.core.resource_acquisition import requirements, verify_resources
+        real = requirements(ROOT / "inventory.json")
+        self.assertEqual(len(real["resources"]), 8)
+        self.assertTrue(all(r["owner"] == "robert-kurcina/vault-sh44ser"
+                            for r in real["resources"]))
+        plan = requirements(self.path)
+        self.assertEqual(plan, requirements(self.path))
+        identities = {(r["owner"], r["revision"], r["path"]) for r in plan["resources"]}
+        self.assertEqual(len(identities), len(plan["resources"]))
+        self.assertEqual(len(identities), len(self.headings))
+        self.assertTrue(all(r["uses"] for r in plan["resources"]))
+        verified = verify_resources(self.path, self.owners)
+        self.assertEqual(verified["status"], "bytes-verified-not-compiled")
+        self.assertNotIn("content_base64", json.dumps(verified))
+        self.assertEqual(len(verified["resources"]), len(identities))
+        for invalid in ({}, self.bad_owners()):
+            with self.assertRaises(ValueError):
+                verify_resources(self.path, invalid)
+        # Reject path traversal before attempting resource reads.
+        p = self.spec_paths[0]
+        spec = parse_json(p.read_bytes())
+        ref = next(iter(spec["evidence_refs"].values()))
+        ref["path"] = "../outside.md"
+        p.write_text(json.dumps(spec), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "pinned revision"):
+            requirements(self.path)

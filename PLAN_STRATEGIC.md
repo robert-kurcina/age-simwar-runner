@@ -385,3 +385,10 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 
 - DONE (mechanical): PR #209 Tests 46058764015 and Chat runtime bundle 46058763993 passed.
 - WIP (CI pending): export all seven episodes and 25 perspectives using a temporary explicitly synthetic reviewed catalog; remove source catalog and owners before restoring. Exercise confirmed deliberate inaction, independent packet routing, turn advancement, save/reload, contextual briefs, terminal replay and pacing for every opening. This qualifies transport and session lifecycle, not LLM behavior. Tighten offline manifest validation. Actual canonical compilation, actual reviewed registration, real private campaign export and experiential acceptance remain outstanding. Do not expand generic mechanics merely to defer those gates.
+
+
+## ST-F — runner-owned resource acquisition and actual delivery (P0)
+
+- DONE (mechanical): PR #211 Tests 46058970581 and Chat runtime bundle 46058970628 passed; synthetic offline lifecycle across 25 perspectives qualified.
+- WIP: runner-only selective acquisition manifest enumerates exact pinned files and use sites across catalog specs, faction property references/evidence and reviewed image maps. Verify acquired bytes through the existing source reader. No vault-side workflow, whole-corpus import, new compiler, or public private artifacts. Actual transfer remains a separate blocker; manifest generation does not resolve it by itself.
+- NEXT: obtain exact required bytes through an authorized provider in the runner execution environment, compile all seven actual drafts, reconcile review/roster gates, export authorized private campaign, execute independent LLM qualification and author acceptance as directed. Use additional canon during simulation only as context with pinned provenance; material state changes require existing adjudication. Full-stack deferred. No new generic gameplay mechanics unless demonstrated need.
