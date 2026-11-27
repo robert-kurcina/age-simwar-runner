@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -68,6 +68,8 @@ def initial(sid, seed):
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
     if rules.get("epistemic_dialogue"):
         state["dialogue"] = []
+    if rules.get("narrative_establishment"):
+        state["established_details"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -706,11 +708,31 @@ def dialogue(path, request, revision):
     save(path, state)
     return view(state)
 
+def establish_step(state, request):
+    result = copy.deepcopy(state)
+    _, rules = load(result["scenario"])
+    establishment.record(result, rules, request)
+    result["history"].append({"establish": copy.deepcopy(request)})
+    return result
+
+def establish(path, request, revision):
+    state = read(path)
+    verify(state)
+    if digest(state) != revision:
+        raise ValueError("stale session revision")
+    state = establish_step(state, request)
+    verify(state)
+    save(path, state)
+    return view(state)
+
 def verify(state):
     replay = initial(state["scenario"], state["seed"])
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
+        if isinstance(entry, dict) and "establish" in entry:
+            replay = establish_step(replay, entry["establish"])
+            continue
         if isinstance(entry, dict) and "dialogue" in entry:
             replay = dialogue_step(replay, entry["dialogue"])
             continue
@@ -745,6 +767,8 @@ def view(state):
         scene_view["danger"] = beats.available(state, rules)
     if "commitments" in state["dxd"]:
         scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
+    if "established_details" in state:
+        scene_view["established_details"] = establishment.projection(state)
     if "dialogue" in state:
         scene_view["dialogue"] = epistemic.public_projection(state)
     if "local_records" in state:
@@ -783,7 +807,7 @@ def gm_context(state):
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
-    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments") if k in public})
+    recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments", "established_details") if k in public})
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]
@@ -830,6 +854,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
+                **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),

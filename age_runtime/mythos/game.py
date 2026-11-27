@@ -65,6 +65,10 @@ def main():
     dialogue.add_argument("session", type=Path)
     dialogue.add_argument("request", type=Path)
     dialogue.add_argument("--revision", required=True)
+    establish = sub.add_parser("establish")
+    establish.add_argument("session", type=Path)
+    establish.add_argument("request", type=Path)
+    establish.add_argument("--revision", required=True)
     memory = sub.add_parser("memory")
     memory.add_argument("session", type=Path)
     memory.add_argument("event")
@@ -96,6 +100,8 @@ def main():
             proposal["nomination"] = json.loads(args.nomination.read_text(encoding="utf-8"))
         result = mythos.act(args.session, args.action, args.revision, proposal,
                             {"context": args.context, "level": 1, "vignette": args.vignette})
+    elif args.command == "establish":
+        result = mythos.establish(args.session, json.loads(args.request.read_text(encoding="utf-8")), args.revision)
     elif args.command == "dialogue":
         result = mythos.dialogue(args.session, json.loads(args.request.read_text(encoding="utf-8")), args.revision)
     elif args.command == "memory":

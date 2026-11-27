@@ -813,6 +813,51 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_mundane_establishment_is_atomic_local_and_replayable(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        bell = {"id": "inc:diner_bell", "kind": "fixture", "label": "Brass bell",
+                "description": "A brass bell hangs above the entrance.",
+                "basis": "Ordinary period-appropriate diner fixture"}
+        cup = {"id": "inc:diner_cup", "kind": "object", "label": "Ceramic cup",
+               "description": "A chipped ceramic cup stands on the shelf.",
+               "basis": "Mundane diner furnishing"}
+        before = mythos.digest(s)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"details": [bell, dict(cup, grant=["badge"])]})
+        self.assertEqual(mythos.digest(s), before)
+        after = mythos.establish_step(s, {"details": [bell, cup]})
+        self.assertEqual(mythos.digest(s), before)
+        for key in ("time", "turn", "flags", "discoveries", "inventory", "resources", "relationships", "dxd", "npcs"):
+            self.assertEqual(after[key], s[key])
+        visible = mythos.view(after)["established_details"]
+        self.assertEqual([x["id"] for x in visible], [bell["id"], cup["id"]])
+        self.assertNotIn("basis", visible[0])
+        self.assertEqual(mythos.gm_context(after)["referee"]["established_details"][0]["basis"], bell["basis"])
+        for bad in (bell, dict(bell, id="inc:other", label=" BRASS  BELL "),
+                    dict(cup, id="badge"), dict(cup, id="inc:secret", kind="clue"),
+                    dict(cup, id="inc:other", location="Harbor Docks")):
+            with self.assertRaises(ValueError):
+                mythos.establish_step(after, {"details": [bad]})
+        moved = mythos.step(after, "move:Harbor Docks")
+        self.assertEqual(mythos.view(moved)["established_details"], [])
+        self.assertEqual(mythos.gm_context(moved)["referee"]["established_details"], [])
+        returned = mythos.step(moved, "move:Harbor Diner")
+        self.assertEqual(mythos.view(returned)["established_details"], visible)
+        mythos.verify(returned)
+        import copy
+        tampered = copy.deepcopy(returned)
+        tampered["established_details"][0]["description"] = "An altered detail"
+        with self.assertRaises(ValueError):
+            mythos.verify(tampered)
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "session.json"
+            v = mythos.start("boothbay", p, 42)
+            old = v["revision"]
+            v = mythos.establish(p, {"details": [bell]}, old)
+            self.assertEqual(mythos.inspect(p), v)
+            with self.assertRaisesRegex(ValueError, "stale"):
+                mythos.establish(p, {"details": [cup]}, old)
+
     def test_npc_relational_continuity_is_private_and_replayable(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         request = {"npc": "eleanor", "speaker": "pc", "claim": "I will listen before drawing conclusions.",
