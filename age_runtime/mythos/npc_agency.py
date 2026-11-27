@@ -3,11 +3,9 @@
 Objectives are subjective commitments, never world facts or commands.
 All changes use the existing establishment/replay history.
 """
-from datetime import datetime
 import copy
 import re
 from age_runtime.core import dxd, dxd_conditions, dxd_modifiers
-from age_runtime.mythos import npc_time
 
 def initialize(state, rules):
     cfg = rules.get("npc_agency")
@@ -109,7 +107,7 @@ def social_test(state, rules, request, npc_available, text):
     if not isinstance(sid, str) or not re.fullmatch(r"social:[a-z][a-z0-9_]{0,63}", sid) or type(cid) is not int:
         raise ValueError("invalid social Test identity")
     claim = next((e for e in state["dialogue"] if e["id"] == cid and "testimony_source" in e), None)
-    if not claim or claim["turn"] != state["turn"] or claim["at"] != state["time"]:
+    if not claim or state["dialogue"][-1]["id"] != cid or claim["turn"] != state["turn"] or claim["at"] != state["time"]:
         raise ValueError("social Test requires current NPC testimony")
     nid, target = claim["speaker"], claim["listener"]
     spec = next((s for s in cfg["social_tests"] if s["npc"] == nid and s["target"] == target), None)
