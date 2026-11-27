@@ -900,6 +900,43 @@ class MythosTrialTests(unittest.TestCase):
         self.assertNotIn("npc_travel", mythos.view(elapsed))
         mythos.verify(elapsed)
 
+    def test_npc_agency_competing_objectives_and_independent_examination(self):
+        from age_runtime.mythos import npc_agency
+        from age_runtime.core import dxd
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.dialogue_step(s, {"npc": "eleanor", "speaker": "pc",
+            "claim": "I am looking for your brother.", "stance": "unstated", "intent": "unstated"})
+        goal = {"operation": "create", "id": "goal:brother", "npc": "eleanor",
+                "goal": "Learn what happened to her brother.", "priority": "urgent",
+                "intention": "Ask about the inquiries.", "basis": "Her established motivation",
+                "sources": [{"kind": "claim", "id": 1}]}
+        s = mythos.establish_step(s, {"npc_objective": goal})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_objective": dict(goal, id="goal:unknown", sources=[{"kind": "claim", "id": 99}])})
+        s = mythos.establish_step(s, {"npc_objective": dict(goal, id="goal:work", goal="Keep the diner running.",
+            priority="normal", intention="Attend to her work.", sources=[])})
+        review = {k: v for k, v in goal.items() if k != "goal"}
+        review.update(operation="review", status="deferred", priority="normal",
+                      intention="Wait until her duties permit another conversation.")
+        s = mythos.establish_step(s, {"npc_objective": review})
+        self.assertEqual(npc_agency.project(s)["goal:brother"]["status"], "deferred")
+        self.assertEqual(npc_agency.project(s)["goal:work"]["status"], "active")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_objective": dict(review, status="achieved", sources=[])})
+        s = mythos.establish_step(s, {"details": [{"id": "inc:tin", "kind": "object",
+            "label": "Tin", "description": "An old tin.", "basis": "Her own possession",
+            "custodian": "eleanor", "properties": {"appearance": "Faded initials"}}]})
+        s = mythos.establish_step(s, {"npc_native_test": {"id": "evt:marks", "npc": "eleanor",
+            "object": "inc:tin", "basis": "She examines the faint marking."}})
+        s = mythos.step(s, "observe")
+        event = s["timed_detail_events"][-1]
+        self.assertEqual(event["status"], "completed")
+        self.assertEqual(event["test"]["inputs"]["dm"], dxd.attribute_dm(s["npcs"]["eleanor"]["dxd_attributes"]["INT"]) + 1)
+        self.assertEqual(event["test"]["inputs"]["favor"], 0)
+        self.assertEqual(s["npcs"]["eleanor"]["favor"], 1)
+        self.assertNotIn("npc_agency", mythos.view(s))
+        mythos.verify(s)
+
     def test_npc_testimony_is_private_received_claim_not_direct_observation(self):
         import copy
         from age_runtime.mythos import epistemic
@@ -934,6 +971,22 @@ class MythosTrialTests(unittest.TestCase):
         self.assertEqual(epistemic.public_projection(after), epistemic.public_projection(before))
         self.assertEqual(epistemic.referee_projection(after, {"burroughs"})[-1]["listener_stance"], "doubts")
         mythos.verify(after)
+        from age_runtime.core import dxd
+        social = {"id": "social:account", "claim": after["dialogue"][-1]["id"],
+                  "basis": "She tries to persuade him of the significance of her account."}
+        judged = mythos.establish_step(after, {"npc_social_test": social})
+        result = judged["npc_social_tests"][-1]
+        self.assertEqual(result["result"], dxd.opposed("42:npc-social:eleanor:burroughs:claim:1", **result["inputs"]))
+        self.assertEqual(judged["npcs"]["eleanor"]["favor"], 0)
+        self.assertEqual(judged["npcs"]["burroughs"]["favor"], 0)
+        self.assertEqual(judged["dxd"], after["dxd"])
+        self.assertEqual(judged["dialogue"], after["dialogue"])
+        self.assertEqual(judged["flags"], after["flags"])
+        self.assertEqual(judged["relationships"], after["relationships"])
+        self.assertNotIn("npc_social_tests", mythos.view(judged))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(judged, {"npc_social_test": dict(social, id="social:retry")})
+        mythos.verify(judged)
         self.assertEqual(epistemic.referee_projection(after, {"elias"}), [])
         with self.assertRaises(ValueError):
             mythos.establish_step(after, {"npc_testimony": req})

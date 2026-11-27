@@ -88,15 +88,21 @@ def initiative(state, rules, request, npc_available, local_entities, text):
                    "scheduled_at": state["time"], "due": due.isoformat(),
                    "status": "scheduled", "basis": basis})
 
+def test_config(rules, nid):
+    cfg = rules.get("npc_native_test")
+    if cfg and cfg["npc"] == nid:
+        return cfg
+    return rules.get("npc_agency", {}).get("examinations", {}).get(nid)
+
 def native_test(state, rules, request, npc_available, local_entities, text):
     """Schedule a reviewed NPC-owned examination, not an arbitrary Test or effect."""
-    cfg = rules.get("npc_native_test")
-    if not cfg or not isinstance(request, dict) or set(request) != {"id", "npc", "object", "basis"}:
+    if not isinstance(request, dict) or set(request) != {"id", "npc", "object", "basis"}:
         raise ValueError("invalid NPC native Test")
     eid, nid, oid = request["id"], request["npc"], request["object"]
     if not isinstance(eid, str) or not re.fullmatch(r"evt:[a-z][a-z0-9_]{0,63}", eid):
         raise ValueError("invalid NPC Test identity")
-    if nid != cfg["npc"] or not isinstance(oid, str):
+    cfg = test_config(rules, nid) if isinstance(nid, str) else None
+    if not cfg or not isinstance(oid, str):
         raise ValueError("unsupported NPC Test actor or object")
     npc = state["npcs"][nid]
     location = npc["location"]
@@ -151,7 +157,7 @@ def task_control(state, rules, request, npc_available, local_entities, text):
             raise ValueError("task requires available NPC at original location")
         if any(other["status"] == "scheduled" and (other["npc"] == nid or other["object"] == e["object"]) for other in state["timed_detail_events"]):
             raise ValueError("conflicting pending event")
-        cfg = rules["npc_native_test"]
+        cfg = test_config(rules, nid)
         obj = local_entities(dict(state, location=location)).get(e["object"])
         if (not obj or obj.get("custodian") != nid or obj.get("lifecycle", "intact") != "intact"
                 or obj.get("properties", {}).get("appearance") != cfg["appearance"]
@@ -169,7 +175,7 @@ def task_control(state, rules, request, npc_available, local_entities, text):
     history.append({"operation": op, "at": state["time"], "basis": basis, "work_seconds": e["work_seconds"]})
 
 def resolve_native_test(state, rules, e, obj, npc_available):
-    cfg = rules["npc_native_test"]
+    cfg = test_config(rules, e["npc"])
     if rules.get("npc_task_continuity") and e.get("work_seconds") != cfg["minutes"] * 60:
         e.update(status="interrupted", interrupted_at=state["time"], interruption="insufficient_work")
         return
@@ -191,9 +197,15 @@ def resolve_native_test(state, rules, e, obj, npc_available):
     condition = dxd_conditions.penalty_dice(npc["concerns"], decision=spec.get("decision", False))
     args = {"tn": spec["tn"], "dm": mods["dm"], "bonus": mods["bonus"],
             "penalty": mods["penalty"] + condition}
+    if rules.get("npc_agency") and "significance" in cfg:
+        from age_runtime.mythos import npc_agency
+        inputs, audit = npc_agency.modifiers(state, rules, e["npc"], spec, cfg["significance"])
+        args = dict(inputs, tn=spec["tn"])
+        npc["favor"] -= inputs["favor"]
     result = dxd.test(f"{state['seed']}:npc-test:{e['npc']}:{e['object']}", **args)
     e.update(status="completed", test={"inputs": args, "gathered": gathered,
-             "condition_penalty_dice": condition, "result": result},
+             "condition_penalty_dice": condition, "result": result,
+             **({"resource_audit": audit} if rules.get("npc_agency") and "significance" in cfg else {})},
              assessment=cfg["success"] if result["passed"] else cfg["failure"])
 
 def next_boundary(state, cursor, finish):

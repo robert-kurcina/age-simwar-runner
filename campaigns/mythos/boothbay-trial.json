@@ -1,5 +1,86 @@
 {
-  "version": 67,
+  "version": 68,
+  "npc_agency": {
+    "favor": {
+      "initial": {
+        "eleanor": 1,
+        "elias": 1,
+        "burroughs": 1
+      },
+      "maximum": 1,
+      "desired": {
+        "routine": 0,
+        "minor": 0,
+        "important": 1,
+        "critical": 1
+      },
+      "emicted": true
+    },
+    "examinations": {
+      "eleanor": {
+        "minutes": 10,
+        "appearance": "Faded initials",
+        "test": {
+          "attribute": "INT",
+          "skill": "Suss",
+          "tn": 10,
+          "decision": true
+        },
+        "significance": "minor",
+        "success": "She can distinguish the faded markings without establishing ownership.",
+        "failure": "She cannot confidently distinguish the markings."
+      },
+      "elias": {
+        "minutes": 10,
+        "appearance": "Worn fishing knot",
+        "test": {
+          "attribute": "KNO",
+          "skill": "Fishing",
+          "tn": 10,
+          "decision": false
+        },
+        "significance": "minor",
+        "success": "He recognizes the familiar knot pattern without establishing who tied it.",
+        "failure": "He cannot confidently identify the knot pattern."
+      }
+    },
+    "social_tests": [
+      {
+        "npc": "eleanor",
+        "target": "burroughs",
+        "active": {
+          "attribute": "PRE",
+          "skill": "Gossip",
+          "decision": true
+        },
+        "opposition": {
+          "attribute": "INT",
+          "skill": "Investigate",
+          "decision": true
+        },
+        "significance": "important",
+        "success": "Her account makes a persuasive impression; its truth remains unresolved.",
+        "failure": "Her account fails to persuade him; its truth remains unresolved."
+      },
+      {
+        "npc": "burroughs",
+        "target": "eleanor",
+        "active": {
+          "attribute": "PRE",
+          "skill": "Intimidate",
+          "decision": true
+        },
+        "opposition": {
+          "attribute": "POW",
+          "skill": "Suss",
+          "decision": true
+        },
+        "significance": "important",
+        "success": "His questioning puts pressure on her; disclosure remains her decision.",
+        "failure": "His questioning fails to gain the intended leverage."
+      }
+    ]
+  },
   "npc_lifecycle": true,
   "npc_task_continuity": true,
   "npc_native_test": {"npc": "burroughs", "minutes": 10, "appearance": "Faded initials", "test": {"attribute": "INT", "skill": "Investigate", "tn": 10, "decision": true}, "success": "He can distinguish the faded initials, but cannot establish ownership.", "failure": "He cannot confidently distinguish the faded initials."},
