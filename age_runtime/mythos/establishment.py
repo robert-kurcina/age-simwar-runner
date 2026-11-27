@@ -1,7 +1,7 @@
 """Delegated, mundane narrative establishment, not mechanical adjudication."""
 import copy
 import re
-from age_runtime.mythos import agreements, locks
+from age_runtime.mythos import agreements, locks, timed_details
 
 def text(value, limit):
     if not isinstance(value, str) or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
@@ -14,6 +14,8 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
+    if isinstance(request, dict) and set(request) == {"event"}:
+        return timed_details.record(state, rules, request["event"], npc_available, local_entities, text)
     if isinstance(request, dict) and set(request) == {"lock"}:
         return locks.record(state, rules, request["lock"], npc_available, local_entities, text)
     if isinstance(request, dict) and set(request) == {"agreement"}:
