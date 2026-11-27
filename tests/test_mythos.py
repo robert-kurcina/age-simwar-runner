@@ -813,6 +813,48 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_contextual_reminders_are_shared_bounded_and_read_only(self):
+        import copy
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+
+        def say(state, speaker, claim, **extra):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": speaker,
+                                               "claim": claim, "stance": "unstated",
+                                               "intent": "unstated", **extra})
+
+        s = say(s, "eleanor", "My brother used to sit here.",
+                reaction={"significance": "Private emotional association"})
+        s = say(s, "pc", "I will ask about him at the docks.")
+        s = say(s, "eleanor", "Thank you for offering to ask.")
+        s = mythos.establish_step(s, {"agreement": {
+            "operation": "create", "id": "agr:ask", "kind": "commitment",
+            "npc": "eleanor", "issuer": "pc", "terms": "Ask about her brother at the docks",
+            "condition": None, "claim_ids": [2, 3]}})
+        for n in range(8):
+            s = say(s, "eleanor", "Ordinary exchange " + str(n))
+        before = copy.deepcopy(s)
+        packet = mythos.gm_context(s)["referee"]["contextual_reminders"]["eleanor"]
+        self.assertEqual(s, before)
+        self.assertEqual(len(packet["utterances"]), 5)
+        self.assertEqual(packet["utterances"][0]["claim_id"], 1)
+        self.assertEqual(packet["utterances"][-1]["claim_id"], 11)
+        self.assertNotIn("Private emotional association", str(packet))
+        self.assertEqual(packet["active_agreements"][0]["id"], "agr:ask")
+        self.assertEqual(packet["last_shared_exchange"]["minutes_ago"], 0)
+        self.assertNotIn("contextual_reminders", mythos.view(s))
+        moved = mythos.step(s, "move:Harbor Docks")
+        self.assertNotIn("eleanor", mythos.gm_context(moved)["referee"]["contextual_reminders"])
+        returned = mythos.step(moved, "move:Harbor Diner")
+        packet = mythos.gm_context(returned)["referee"]["contextual_reminders"]["eleanor"]
+        self.assertGreater(packet["last_shared_exchange"]["minutes_ago"], 0)
+        self.assertEqual(packet["active_agreements"][0]["id"], "agr:ask")
+        returned = say(returned, "eleanor", "Never mind, you need not ask.")
+        returned = mythos.establish_step(returned, {"agreement": {
+            "operation": "resolve", "id": "agr:ask", "status": "released", "claim_ids": [12]}})
+        self.assertEqual(mythos.gm_context(returned)["referee"]["contextual_reminders"]
+                         ["eleanor"]["active_agreements"], [])
+        mythos.verify(returned)
+
     def test_emotional_episode_native_stress_and_private_continuity(self):
         import copy
         from age_runtime.core import dxd_conditions
