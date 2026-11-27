@@ -111,7 +111,8 @@ def read_package(path, revision):
             if (digest(session) != item["digest"] or key != (s["id"], h["actor"])
                     or h["catalog_digest"] != manifest["catalog_digest"]
                     or h["title"] != item["title"] or session["state"] != initialize(s)
-                    or "continuity" in h or h.get("shared") or "image_map" in h):
+                    or "continuity" in h or h.get("shared") or "image_map" in h
+                    or h["compiled"].get("qualification") == "unreviewed-rehearsal"):
                 raise ValueError("opening integrity mismatch")
             sessions[key] = session
     return manifest, sessions
