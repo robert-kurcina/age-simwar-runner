@@ -145,3 +145,56 @@ class DraftCompilationTest(unittest.TestCase):
             archive.writestr("../unexpected", "not a package member")
         with self.assertRaisesRegex(ValueError, "unexpected package"):
             read_package(out, revision)
+
+    def test_offline_full_campaign_openings_and_resumption(self):
+        from age_runtime.core.private_openings import export, read_package
+        from age_runtime.core.private_play import (
+            briefing, decision_brief, model_decision_brief, model_choice,
+            pending_factions, record_decision, update, verify,
+        )
+        from age_runtime.core.runner import save
+        # Only the temporary, explicitly synthetic evidence catalog is reviewed.
+        ids = []
+        for group in self.inventory["groups"]:
+            if group["scenarios"]:
+                group["status"] = "supported-pilot"
+                for entry in group["scenarios"]:
+                    entry["status"] = "reviewed-illustrative"
+                    ids.append(entry["id"])
+        self.path.write_text(json.dumps(self.inventory), encoding="utf-8")
+        archive = self.root / "campaign.zip"
+        revision = "b" * 40
+        export(self.path, self.owners, ids, revision, archive)
+        self.owners.clear()
+        import shutil
+        shutil.rmtree(self.catalog)
+        manifest, sessions = read_package(archive, revision)
+        self.assertEqual(len(sessions), 25)
+        for (sid, actor), opening in sessions.items():
+            with self.subTest(scenario=sid, actor=actor):
+                session = opening
+                original = digest(opening)
+                path = self.root / "active.json"
+                # Record one deliberate abstention, then independently route
+                # scripted model abstentions. This tests plumbing, not judgment.
+                session = record_decision(session, digest(session), "opening",
+                                          "Retain resources and observe.")
+                while not briefing(session)["complete"]:
+                    before = digest(session)
+                    brief = decision_brief(session)
+                    self.assertEqual(brief["actor"], actor)
+                    self.assertEqual(digest(session), before)
+                    for faction in pending_factions(session):
+                        exchange = model_decision_brief(session, faction)
+                        self.assertEqual(exchange["decision_brief"]["actor"], faction)
+                        session = model_choice(session, faction, {
+                            "packet_id": exchange["packet"]["packet_id"], "action": None})
+                    session = update(session, turns=1)
+                    save(path, session)
+                    restored = verify(parse_json(path.read_bytes()))
+                    self.assertEqual(digest(restored), digest(session))
+                    session = restored
+                self.assertEqual(briefing(session)["decision_pacing"]["count"], 1)
+                self.assertEqual(pending_factions(session), [])
+                self.assertEqual(digest(opening), original)
+                self.assertEqual(verify(session), session)

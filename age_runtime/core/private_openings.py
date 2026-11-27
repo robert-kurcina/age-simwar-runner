@@ -81,16 +81,26 @@ def read_package(path, revision):
         names = archive.namelist()
         if len(names) != len(set(names)):
             raise ValueError("duplicate archive entry")
+        if "manifest.json" not in names:
+            raise ValueError("missing package manifest")
         manifest = parse_json(archive.read("manifest.json"))
+        if not isinstance(manifest, dict) or set(manifest) != {"engine_revision", "catalog_digest", "openings"}:
+            raise ValueError("invalid package manifest")
+        if not isinstance(manifest["catalog_digest"], str) or not re.fullmatch(r"[a-f0-9]{64}", manifest["catalog_digest"]):
+            raise ValueError("invalid catalog digest")
         if manifest["engine_revision"] != revision:
             raise ValueError("engine revision mismatch")
         entries = manifest["openings"]
-        if not entries or set(names) != {"manifest.json"} | {
+        if not isinstance(entries, list) or not entries or set(names) != {"manifest.json"} | {
                 f"openings/{i}.json" for i in range(len(entries))}:
             raise ValueError("unexpected package entries")
         seen = set()
         sessions = {}
         for i, item in enumerate(entries):
+            if not isinstance(item, dict) or set(item) != {"scenario", "actor", "title", "path", "digest"} or not all(isinstance(v, str) for v in item.values()):
+                raise ValueError("invalid opening record")
+            if not ID.fullmatch(item["scenario"]) or not ID.fullmatch(item["actor"]):
+                raise ValueError("invalid opening identity")
             key = (item["scenario"], item["actor"])
             if key in seen or item["path"] != f"openings/{i}.json":
                 raise ValueError("duplicate or invalid opening identity")
@@ -101,7 +111,7 @@ def read_package(path, revision):
             if (digest(session) != item["digest"] or key != (s["id"], h["actor"])
                     or h["catalog_digest"] != manifest["catalog_digest"]
                     or h["title"] != item["title"] or session["state"] != initialize(s)
-                    or "continuity" in h or h.get("shared")):
+                    or "continuity" in h or h.get("shared") or "image_map" in h):
                 raise ValueError("opening integrity mismatch")
             sessions[key] = session
     return manifest, sessions
