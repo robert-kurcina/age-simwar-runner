@@ -1,5 +1,5 @@
 {
-  "version": 50,
+  "version": 51,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -2191,6 +2191,7 @@
   "narrative_properties": true,
   "narrative_custody": true,
   "narrative_agreements": true,
+  "narrative_locks": true,
   "propositions": {
     "badge_found": {
       "text": "A census badge was found near the waterfront.",
