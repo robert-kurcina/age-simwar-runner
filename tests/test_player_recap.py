@@ -71,3 +71,40 @@ class PlayerRecapTests(unittest.TestCase):
                 player_recap.recall(public, "needle", **kwargs)
         with self.assertRaises(ValueError):
             player_recap.recall(public, " ")
+
+
+    def test_actual_cli_resumption_and_stale_revision(self):
+        import json
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as work:
+            session = Path(work) / "session.json"
+
+            def run(*args):
+                return json.loads(subprocess.check_output(
+                    [sys.executable, str(root / "game.py"), *map(str, args)],
+                    cwd=root, text=True))
+
+            opening = run("start", "boothbay", session, "--seed", 42)
+            action = run("act", session, "inspect_docks",
+                         "--revision", opening["revision"])
+            before = session.read_bytes()
+            recap = run("recap", session)
+            recall = run("recall", session, "dock")
+            self.assertEqual(recap["revision"], action["revision"])
+            self.assertEqual(recall["revision"], action["revision"])
+            self.assertEqual(recap["turn"], action["turn"])
+            self.assertEqual(recap["available_next_actions"], action["choices"])
+            self.assertEqual(session.read_bytes(), before)
+            self.assertEqual(run("inspect", session), action)
+            stale = subprocess.run(
+                [sys.executable, str(root / "game.py"), "act", str(session),
+                 "inspect_docks", "--revision", opening["revision"]],
+                cwd=root, capture_output=True, text=True)
+            self.assertNotEqual(stale.returncode, 0)
+            self.assertIn("stale session revision", stale.stderr)
+            self.assertEqual(session.read_bytes(), before)
