@@ -2363,7 +2363,7 @@
     },
     "compose_notes": {
       "target": "location",
-      "seconds": 600,
+      "variable_interval_seconds": 60,
       "resolution": "test",
       "test": {
         "attribute": "INT",
@@ -2380,7 +2380,8 @@
     },
     "review_notes": {
       "target": "location",
-      "seconds": 60,
+      "requires_evidence": 1,
+      "variable_interval_seconds": 10,
       "resolution": "certain",
       "established": "notes_reviewed"
     }
