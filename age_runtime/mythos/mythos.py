@@ -356,7 +356,7 @@ def change_demeanor(state, key, delta):
     rulings are deliberately not supported by this first implementation.
     """
     now = datetime.fromisoformat(state["time"])
-    history = [e for e in state["relationship_changes"] if e["npc"] == key]
+    history = [e for e in state["relationship_changes"] if e["npc"] == key and e["delta"] != 0]
     def recent(days):
         return [e["delta"] for e in history
                 if now - datetime.fromisoformat(e["at"]) < timedelta(days=days)]
@@ -374,6 +374,36 @@ def change_demeanor(state, key, delta):
         state["relationships"][key] = new
         dxd_commitment.supersede_demeanor(state, key)
         state["relationship_changes"].append({"npc": key, "at": state["time"], "delta": new - old})
+
+def consequential_demeanor(state, rules, request):
+    """Apply the existing persistent Demeanor limits to a witnessed incident."""
+    if not rules.get("consequential_demeanor") or not isinstance(request, dict) or set(request) != {"npc", "observation", "severity", "basis"}:
+        raise ValueError("invalid consequential Demeanor request")
+    npc, oid, severity = request["npc"], request["observation"], request["severity"]
+    if not isinstance(npc, str) or npc not in state["npcs"] or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
+        raise ValueError("Demeanor participant unavailable")
+    if state["npcs"][npc]["location"] != state["location"] or not npc_available(state, rules, {"npc": npc, "location": state["location"]}):
+        raise ValueError("Demeanor requires available local NPC")
+    obs = next((o for o in state["action_observations"] if o["id"] == oid and o["npc"] == npc), None)
+    if not obs or obs["kind"] != "witnessed" or obs["actor"] != "pc" or obs["turn"] != state["turn"] or obs["location"] != state["location"]:
+        raise ValueError("Demeanor requires current directly attributed conduct")
+    if not isinstance(severity, str) or severity not in rules["consequential_demeanor"]:
+        raise ValueError("invalid Demeanor severity")
+    if any(e["npc"] == npc and e.get("action") == obs["action"] for e in state["relationship_changes"]):
+        raise ValueError("incident already adjudicated for Demeanor")
+    basis = establishment.text(request["basis"], 240)
+    old = state["relationships"][npc]
+    count = len(state["relationship_changes"])
+    change_demeanor(state, npc, rules["consequential_demeanor"][severity])
+    provenance = {"source": "consequential_conduct", "action": obs["action"], "observation": oid,
+                  "severity": severity, "basis": basis, "turn": state["turn"],
+                  "requested_delta": rules["consequential_demeanor"][severity]}
+    if len(state["relationship_changes"]) == count:
+        # Record adjudication even when ordinary limits prevent a change.
+        state["relationship_changes"].append({"npc": npc, "at": state["time"], "delta": 0, **provenance})
+    else:
+        state["relationship_changes"][-1].update(provenance)
+    assert state["relationships"][npc] <= old
 
 def advance_opposition(state, rules, action, success):
     """A single authored pressure clock; no duplicate exposure roll."""
@@ -748,7 +778,10 @@ def dialogue(path, request, revision):
 def establish_step(state, request):
     result = copy.deepcopy(state)
     _, rules = load(result["scenario"])
-    establishment.record(result, rules, request, npc_available)
+    if isinstance(request, dict) and set(request) == {"consequential_demeanor"}:
+        consequential_demeanor(result, rules, request["consequential_demeanor"])
+    else:
+        establishment.record(result, rules, request, npc_available)
     result["history"].append({"establish": copy.deepcopy(request)})
     return result
 
@@ -932,6 +965,7 @@ def gm_context(state):
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
                 **({"action_observations": action_observations.projection(state, conversational)} if rules.get("action_observations") else {}),
+                **({"consequential_demeanor": {nid: copy.deepcopy([e for e in state["relationship_changes"] if e["npc"] == nid and e.get("source") == "consequential_conduct"][-6:]) for nid in sorted(conversational)}} if rules.get("consequential_demeanor") else {}),
                 **({"behavioral_context": behavior.projection(state, conversational)} if rules.get("behavioral_recognition") else {}),
                 **({"npc_expectations": expectations.projection(state, conversational),
                     "literary_synthesis": "Before composing significant NPC responses, reconcile observed conduct, expectations, attachments, emotional history, current Concerns, Demeanor and competing motivations. Braid relevant influences into speech and physical behavior with concise contextual reminders. Do not erase prior conflict merely because Stress recovered or invent shared history."} if rules.get("npc_expectations") else {}),
