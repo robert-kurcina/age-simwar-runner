@@ -1,5 +1,5 @@
 {
-  "version": 80,
+  "version": 81,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -1202,7 +1202,8 @@
           "POW": 9,
           "STR": 6,
           "FOR": 7
-        }
+        },
+        "bodypoint_adjustment": 0
       },
       "eleanor": {
         "stature": 45,
@@ -2879,5 +2880,6 @@
       "basis": "Provisional remote coastal context; does not establish access or witnesses.",
       "windows": []
     }
-  }
+  },
+  "native_injury": true
 }
