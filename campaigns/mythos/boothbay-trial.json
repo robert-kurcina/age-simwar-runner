@@ -1,5 +1,5 @@
 {
-  "version": 42,
+  "version": 43,
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -155,7 +155,8 @@
         "badge",
         "paperwork",
         "tide_clue",
-        "water_warning"
+        "water_warning",
+        "ecological_tide_pattern"
       ],
       "interval_seconds": 3600,
       "activity": "active"
