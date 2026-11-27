@@ -12,7 +12,44 @@ def evidence(state, npc):
         if o["npc"] == npc and o["kind"] == "witnessed" and o["actor"] == "pc":
             result[o["id"]] = {"kind": "witnessed_action", "object": o["object"],
                 "outcome": o["outcome"], "turn": o["turn"], "at": o["at"], "location": o["location"]}
+    for o in state.get("routine_observations", []):
+        if o["npc"] == npc:
+            result[o["id"]] = {k: copy.deepcopy(v) for k, v in o.items()
+                               if k not in ("id", "npc", "basis")}
     return result
+
+def record_routine(state, rules, request, npc_available, text):
+    if not rules.get("routine_observations") or not isinstance(request, dict) or set(request) != {"id", "npc", "kind", "basis"}:
+        raise ValueError("invalid routine observation")
+    oid, npc, kind = request["id"], request["npc"], request["kind"]
+    if not isinstance(oid, str) or not re.fullmatch(r"routine:[a-z][a-z0-9_]{0,63}", oid):
+        raise ValueError("invalid routine observation identity")
+    if not isinstance(npc, str) or npc not in state["npcs"] or state["npcs"][npc]["location"] != state["location"] or not npc_available(state, rules, {"npc": npc, "location": state["location"]}):
+        raise ValueError("routine observation requires available local NPC")
+    # Only the latest completed native action is eligible. No retrospective
+    # attribution based on the global movement history.
+    last = state["last_result"] or {}
+    source = state.get("routine_source")
+    if not source or source["turn"] != state["turn"] or source["location"] != state["location"] or npc not in source["eligible_observers"]:
+        raise ValueError("no contemporaneous routine source for NPC")
+    if kind == "arrival":
+        trip = last.get("transition")
+        if not trip or trip["turn"] != state["turn"] or trip["nodes"][-1] != state["location"] or trip["arrival"] != state["time"] or last.get("interrupted"):
+            raise ValueError("arrival observation requires just-completed arrival")
+        detail = {"text": "Arrived at " + state["location"]}
+    elif kind == "activity":
+        label = rules["routine_observations"]["activities"].get(last.get("action"))
+        if not label or not last.get("success") or last.get("interrupted") or npc not in source["activity_observers"]:
+            raise ValueError("activity observation requires reviewed completed activity")
+        detail = {"text": label}
+    else:
+        raise ValueError("invalid routine observation kind")
+    ledger = state["routine_observations"]
+    if len(ledger) >= 256 or any(o["id"] == oid or (o["npc"], o["turn"], o["kind"]) == (npc, state["turn"], kind) for o in ledger):
+        raise ValueError("duplicate routine observation or record limit")
+    ledger.append({"id": oid, "npc": npc, "kind": kind, **detail,
+                   "turn": state["turn"], "at": state["time"], "location": state["location"],
+                   "basis": text(request["basis"], 240)})
 
 def record(state, rules, request, npc_available, text):
     if not rules.get("behavioral_recognition") or not isinstance(request, dict) or set(request) != {"id", "npc", "kind", "evidence", "interpretation"}:
