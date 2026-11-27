@@ -173,6 +173,8 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
     ambience = settlement_activity.projection(state, rules)
     if ambience is not None:
         packet["referee"]["settlement_activity"] = ambience
+    if "medical_supplies" in state:
+        packet["referee"]["medical_supplies"] = copy.deepcopy(state["medical_supplies"])
     packet["referee"]["opportunity_policy"] = narrative_opportunity_policy(state)
     if compact:
         compact_history(packet)
