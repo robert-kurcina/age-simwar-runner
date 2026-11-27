@@ -813,6 +813,53 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_incidental_properties_preserve_history_and_require_current_value(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
+               "description": "A ceramic cup stands on the shelf.",
+               "basis": "Ordinary diner furnishing",
+               "properties": {"condition": "Dusty", "placement": "Shelf"}}
+        s = mythos.establish_step(s, {"details": [cup]})
+        change = {"id": "inc:cup", "property": "condition", "before": "Dusty",
+                  "after": "Clean", "basis": "Eleanor wipes the cup with her cloth"}
+        placement = {"id": "inc:cup", "property": "placement", "before": "Shelf",
+                     "after": "Counter", "basis": "Eleanor sets the cup on the counter"}
+        before = mythos.digest(s)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"changes": [change, dict(placement, before="Floor")]})
+        self.assertEqual(mythos.digest(s), before)
+        after = mythos.establish_step(s, {"changes": [change, placement]})
+        self.assertEqual(mythos.digest(s), before)
+        for key in ("time", "turn", "flags", "discoveries", "inventory", "resources",
+                    "relationships", "dxd", "npcs", "established_details"):
+            self.assertEqual(after[key], s[key])
+        visible = mythos.view(after)["established_details"][0]
+        self.assertEqual(visible["properties"], {"condition": "Clean", "placement": "Counter"})
+        self.assertEqual(visible["description"], cup["description"])
+        self.assertNotIn("property_history", visible)
+        private = mythos.gm_context(after)["referee"]["established_details"][0]
+        self.assertEqual(private["property_history"][0]["before"], "Dusty")
+        self.assertEqual(private["property_history"][0]["basis"], change["basis"])
+        for bad in (change, dict(change, before="Clean", after="Clean"),
+                    dict(change, property="owner"), dict(change, id="badge"),
+                    dict(change, grant=["badge"])):
+            with self.assertRaises(ValueError):
+                mythos.establish_step(after, {"changes": [bad]})
+        moved = mythos.step(after, "move:Harbor Docks")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(moved, {"changes": [dict(change, before="Clean")]})
+        returned = mythos.step(moved, "move:Harbor Diner")
+        returned = mythos.establish_step(returned, {"changes": [dict(change, before="Clean", after="Chipped",
+                                               basis="Eleanor accidentally chips the rim on the counter")]})
+        self.assertEqual(mythos.view(returned)["established_details"][0]["properties"]["condition"], "Chipped")
+        self.assertEqual(len(returned["detail_changes"]), 3)
+        mythos.verify(returned)
+        import copy
+        tampered = copy.deepcopy(returned)
+        tampered["detail_changes"][0]["after"] = "Broken"
+        with self.assertRaises(ValueError):
+            mythos.verify(tampered)
+
     def test_mundane_establishment_is_atomic_local_and_replayable(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         bell = {"id": "inc:diner_bell", "kind": "fixture", "label": "Brass bell",
