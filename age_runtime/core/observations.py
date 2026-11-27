@@ -6,6 +6,7 @@ from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
 from age_runtime.core.economy import bottleneck
 from age_runtime.core.diplomacy import history as diplomatic_history
+from age_runtime.core.establishment import view as established_context
 
 def validate_views(s):
     for actor in s.get("actors", {}).values():
@@ -164,6 +165,8 @@ def observe(s, state, actor_id):
         "available_requests": requests,
         "objectives": observed_objectives
     }
+    if s.get("strategic_establishment"):
+        observation["established_context"] = established_context(s, state, actor_id)
     if s.get("diplomatic_history"):
         observation["diplomatic_history"] = diplomatic_history(observation, state)
     return observation
