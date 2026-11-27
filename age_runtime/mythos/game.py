@@ -45,6 +45,7 @@ def main():
     recall.add_argument("--offset", type=int, default=0)
     gm = sub.add_parser("gm")
     gm.add_argument("session", type=Path)
+    gm.add_argument("--compact", action="store_true")
     propose = sub.add_parser("propose")
     propose.add_argument("session", type=Path)
     propose.add_argument("action")
@@ -92,10 +93,10 @@ def main():
     elif args.command == "recap":
         result = player_recap.recap(mythos.inspect(args.session))
     elif args.command == "recall":
-        result = player_recap.recall(mythos.inspect(args.session), args.query,
+        result = player_recap.recall(mythos.inspect(args.session, full_history=True), args.query,
                                      limit=args.limit, offset=args.offset)
     elif args.command == "gm":
-        result = mythos.inspect_gm(args.session)
+        result = mythos.inspect_gm(args.session, compact=args.compact)
     elif args.command == "propose":
         request = {"action": args.action, "approach": args.approach, "intent": args.intent}
         if args.nomination is not None:
