@@ -813,6 +813,59 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_timed_detail_event_resolves_once_at_native_boundary(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
+               "description": "Eleanor holds a dusty ceramic cup.",
+               "basis": "Mundane diner object", "custodian": "eleanor",
+               "properties": {"condition": "Dusty"}}
+        s = mythos.establish_step(s, {"details": [cup]})
+        event = {"id": "evt:clean_cup", "object": "inc:cup", "permission": "agr:clean",
+                 "delay_minutes": 10, "basis": "Eleanor agreed to clean the cup"}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"event": event})
+
+        def say(state, speaker, claim):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": speaker,
+                                               "claim": claim, "stance": "unstated",
+                                               "intent": "unstated"})
+
+        s = say(s, "eleanor", "I'll clean it in ten minutes.")
+        s = say(s, "pc", "Thank you.")
+        s = mythos.establish_step(s, {"agreement": {
+            "operation": "create", "id": "agr:clean", "kind": "commitment",
+            "npc": "eleanor", "issuer": "eleanor", "terms": "Clean the cup in ten minutes",
+            "condition": None, "claim_ids": [1, 2]}})
+        before = mythos.digest(s)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"event": dict(event, delay_minutes=11)})
+        scheduled = mythos.establish_step(s, {"event": event})
+        self.assertEqual(mythos.digest(s), before)
+        self.assertEqual(scheduled["time"], s["time"])
+        self.assertEqual(scheduled["detail_changes"], [])
+        self.assertNotIn("timed_detail_events", mythos.view(scheduled))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(scheduled, {"event": dict(event, id="evt:duplicate")})
+        # Move away before the event is due, then cross its boundary remotely.
+        moved = mythos.step(scheduled, "move:Harbor Docks")
+        self.assertEqual(moved["timed_detail_events"][0]["status"], "scheduled")
+        elapsed = mythos.step(moved, "observe")
+        self.assertEqual(elapsed["timed_detail_events"][0]["status"], "completed")
+        self.assertEqual(elapsed["detail_changes"][0]["at"], scheduled["timed_detail_events"][0]["due"])
+        self.assertEqual(elapsed["detail_changes"][0]["after"], "Clean")
+        returned = mythos.step(elapsed, "move:Harbor Diner")
+        self.assertEqual(len(returned["detail_changes"]), 1)
+        self.assertEqual(mythos.view(returned)["established_details"][0]["properties"]["condition"], "Clean")
+        self.assertEqual(mythos.view(returned)["narrative_agreements"][0]["status"], "active")
+        mythos.verify(returned)
+        released = say(scheduled, "pc", "You need not clean it after all.")
+        released = mythos.establish_step(released, {"agreement": {
+            "operation": "resolve", "id": "agr:clean", "status": "released", "claim_ids": [3]}})
+        released = mythos.step(released, "observe")
+        self.assertEqual(released["timed_detail_events"][0]["status"], "prerequisite_unmet")
+        self.assertEqual(released["detail_changes"], [])
+        mythos.verify(released)
+
     def test_permission_key_controls_incidental_examination(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
