@@ -54,7 +54,10 @@ def npc_profiles(story, rules):
     return profiles
 
 def initial(sid, seed):
-    story, rules = load(sid)
+    return _initial(sid, seed, *load(sid))
+
+
+def _initial(sid, seed, story, rules):
     continuity.validate(rules)
     epistemic.validate_propositions(rules)
     if rules.get("resolution") != "dxd":
@@ -444,8 +447,11 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     return state
 
 def step(state, action, proposal=None, commitment=None):
-    state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
+    return _step(copy.deepcopy(state), rules, action, proposal, commitment)
+
+
+def _step(state, rules, action, proposal=None, commitment=None):
     request, _ = hooks.split(proposal)
     request, nomination = nominations.split(request)
     a = next((a for a in options(state, rules) if a["id"] == action), None)
@@ -713,11 +719,15 @@ def apply_memory(state, event, memory):
     found[0]["source"] = "model"
     pc["memory_edits"].append({"turn": state["turn"], "event": event, "memory": memory})
 
+def _apply_narrative(state, rules, request):
+    pacing.control(state, rules, request)
+    state["history"].append({"narrative": copy.deepcopy(request)})
+
+
 def narrative_step(state, request):
     result = copy.deepcopy(state)
     _, rules = load(result["scenario"])
-    pacing.control(result, rules, request)
-    result["history"].append({"narrative": copy.deepcopy(request)})
+    _apply_narrative(result, rules, request)
     return result
 
 def narrative(path, request, revision):
@@ -790,29 +800,43 @@ def establish(path, request, revision):
     return _commit(path, revision, transition, request)
 
 def verify(state):
-    replay = initial(state["scenario"], state["seed"])
+    """Replay against a single source snapshot, never the caller's state.
+
+    Preserve the historic ordering of Inspiration edits and all constituent
+    operations. Each transition receives its own rules copy because legacy
+    helpers may attach references from authored action records to state.
+    """
+    sid = state["scenario"]
+    story, rules = load(sid)
+    replay = _initial(sid, state["seed"], copy.deepcopy(story), copy.deepcopy(rules))
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
-        if isinstance(entry, dict) and "establish" in entry:
-            replay = establish_step(replay, entry["establish"])
+        operation = copy.deepcopy(entry)
+        config = copy.deepcopy(rules)
+        if isinstance(operation, dict) and "establish" in operation:
+            _apply_establishment(replay, config, operation["establish"])
             continue
-        if isinstance(entry, dict) and "dialogue" in entry:
-            replay = dialogue_step(replay, entry["dialogue"])
+        if isinstance(operation, dict) and "dialogue" in operation:
+            _apply_dialogue(replay, config, operation["dialogue"])
             continue
-        if isinstance(entry, dict) and "narrative" in entry:
-            replay = narrative_step(replay, entry["narrative"])
+        if isinstance(operation, dict) and "narrative" in operation:
+            _apply_narrative(replay, config, operation["narrative"])
             continue
-        if isinstance(entry, dict) and "commitment" in entry:
-            replay = step(replay, entry["action"], entry.get("proposal"), entry["commitment"])
+        if isinstance(operation, dict) and "commitment" in operation:
+            replay = _step(replay, config, operation["action"], operation.get("proposal"), operation["commitment"])
+        elif isinstance(operation, dict):
+            proposal = operation["proposal"]
+            replay = _step(replay, config, proposal["action"], proposal)
         else:
-            replay = step(replay, entry["proposal"]["action"], entry["proposal"]) if isinstance(entry, dict) else step(replay, entry)
+            replay = _step(replay, config, operation)
         while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
             e = edits[cursor]
             apply_memory(replay, e["event"], e["memory"])
             cursor += 1
     if cursor != len(edits) or replay != state:
         raise ValueError("session replay mismatch")
+
 
 def view(state, *, full_history=False):
     _, rules = load(state["scenario"])
