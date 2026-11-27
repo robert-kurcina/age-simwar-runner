@@ -379,3 +379,9 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 ## ST-E — offline private opening delivery
 
 - WIP (CI pending): export reviewed private openings for selected scenarios and eligible perspectives via the existing private start/verify gates, without source bytes. Companion ZIP pins engine revision, catalog digest and verified session digests; restore fresh standard single-perspective sessions offline using the existing runtime and private-play commands. Reject drafts, external image assets, mismatched revisions, unexpected archive members and overwrite. Trusted operator controls authorization; hashes are integrity checks, not authentication. Synthetic reviewed fixture covers export and offline restore. Real Conflagration remains draft-unreviewed; actual canonical compilation and author acceptance pending. No public workflow publishes private packages. Existing public runtime artifact format unchanged.
+
+
+## ST-E — source-free strategic session lifecycle
+
+- DONE (mechanical): PR #209 Tests 46058764015 and Chat runtime bundle 46058763993 passed.
+- WIP (CI pending): export all seven episodes and 25 perspectives using a temporary explicitly synthetic reviewed catalog; remove source catalog and owners before restoring. Exercise confirmed deliberate inaction, independent packet routing, turn advancement, save/reload, contextual briefs, terminal replay and pacing for every opening. This qualifies transport and session lifecycle, not LLM behavior. Tighten offline manifest validation. Actual canonical compilation, actual reviewed registration, real private campaign export and experiential acceptance remain outstanding. Do not expand generic mechanics merely to defer those gates.
