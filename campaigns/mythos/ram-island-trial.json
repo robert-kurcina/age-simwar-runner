@@ -1,4 +1,6 @@
 {
+  "npc_objective_continuity": true,
+  "social_epistemic": true,
   "epistemic_dialogue": true,
   "dialogue_requires_encounter": true,
   "relational_continuity": true,
