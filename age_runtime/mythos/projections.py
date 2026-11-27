@@ -6,7 +6,7 @@ from age_runtime.mythos import (
     spatial, pacing, events as narrative_events, proposals, beats, continuity,
     nominations, hooks, epistemic, establishment, agreements, locks,
     timed_details, emotions, reminders, npc_time, action_observations,
-    behavior, expectations, npc_travel, npc_agency, npc_agenda, settlement_activity,
+    behavior, expectations, npc_travel, npc_agency, npc_agenda, settlement_activity, incidental_people,
 )
 from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment
 from age_runtime.core import opportunity_latitude as latitude
@@ -27,6 +27,8 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
         scene_view["danger"] = beats.available(state, rules)
     if "commitments" in state["dxd"]:
         scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
+    if "incidental_people" in state:
+        scene_view["incidental_people"] = incidental_people.projection(state)
     if "established_details" in state:
         scene_view["established_details"] = establishment.projection(state)
         if full_history:
@@ -79,6 +81,8 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]
+    if "incidental_people" in public:
+        recent["incidental_people"] = public["incidental_people"]
     recent["inventory"] = public["inventory"]
     recent["memories"] = public["memories"][-4:]
     recent["memory_prompt"] = public["memory_prompt"]
@@ -163,6 +167,8 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
                              if pc["tests"] and pc["tests"][-1]["turn"] == state["turn"] else None}}
     if rules.get("npc_agendas"):
         packet["referee"]["npc_agendas"] = npc_agenda.projection(state, rules)
+    if "incidental_people" in state:
+        packet["referee"]["incidental_people"] = incidental_people.projection(state, referee=True)
     ambience = settlement_activity.projection(state, rules)
     if ambience is not None:
         packet["referee"]["settlement_activity"] = ambience

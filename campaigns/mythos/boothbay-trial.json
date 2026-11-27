@@ -1,5 +1,5 @@
 {
-  "version": 77,
+  "version": 78,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -84,6 +84,7 @@
   },
   "npc_lifecycle": true,
   "npc_contextual_presence": true,
+  "incidental_people": true,
   "npc_agendas": {
     "eleanor": [
       {

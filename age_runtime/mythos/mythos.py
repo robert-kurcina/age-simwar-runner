@@ -85,6 +85,10 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
         state["belief_revisions"] = []
     if rules.get("narrative_establishment"):
         state["established_details"] = []
+    if rules.get("incidental_people"):
+        if not rules.get("narrative_establishment"):
+            raise ValueError("incidental people require narrative establishment")
+        state["incidental_people"] = {}
     if rules.get("narrative_properties"):
         state["detail_changes"] = []
     if rules.get("narrative_custody"):
