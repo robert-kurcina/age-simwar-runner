@@ -164,8 +164,9 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
         if rules.get("native_injury"):
-            state["dxd"]["injury"] = dxd_injury.initial(derived["pc"]["physical"]["bodypoints"], derived["pc"]["attributes"]["SIZ"],
-                                                    state["dxd"]["concerns"]["capacity"]["recovery_rate"])
+            state["dxd"]["injury"] = dxd_injury.initial(derived["pc"]["physical"]["bodypoints"],
+                                                    *([derived["pc"]["attributes"]["SIZ"], state["dxd"]["concerns"]["capacity"]["recovery_rate"]]
+                                                      if rules.get("native_injury_lifecycle") else []))
         if rules.get("emotional_commitment"):
             state["dxd"]["commitments"] = []
         if "character_profiles" in state:
@@ -754,7 +755,7 @@ def ending_projection(state, rules, reason, action):
         "account_entrusted": "account_entrusted"})
     return {"reason": reason, "evidence_count": len(state["discoveries"]),
             **{key: flag in state["flags"] for key, flag in flags.items()},
-            "epilogue": rules["ending_text"].get(reason, "Your character has died. Previously established outcomes remain." if reason == "character_death" else rules["ending_text"]["limit"]), "scores": scores(state, action)}
+            "epilogue": ("Your character has died. Previously established outcomes remain." if reason == "character_death" and reason not in rules["ending_text"] else rules["ending_text"][reason]), "scores": scores(state, action)}
 
 
 def scores(state, action):
