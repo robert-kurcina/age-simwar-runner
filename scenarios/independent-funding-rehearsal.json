@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "id": "independent-funding-rehearsal",
+  "turn_minutes": 10080,
+  "end_minute": 40320,
+  "initial": {
+    "central_capacity": 2,
+    "central_credits": 3,
+    "central_progress": 0,
+    "central_delay": 0,
+    "central_complications": 0,
+    "east_capacity": 2,
+    "east_credits": 0,
+    "east_progress": 0,
+    "east_delay": 0,
+    "east_complications": 0,
+    "west_capacity": 2,
+    "west_credits": 0,
+    "west_progress": 0,
+    "west_delay": 0,
+    "west_complications": 0,
+    "foundation_reserve": 2
+  },
+  "events": [],
+  "constraints": [],
+  "actors": {
+    "central": {
+      "label": "Central Relief Council",
+      "visible_keys": [
+        "central_capacity",
+        "central_credits",
+        "central_progress",
+        "central_delay",
+        "central_complications",
+        "east_progress"
+      ],
+      "objectives": {
+        "restore": {
+          "key": "central_progress",
+          "comparison": "at_least",
+          "threshold": 3,
+          "description": "Complete local relief service project"
+        },
+        "reserve": {
+          "key": "central_credits",
+          "comparison": "at_least",
+          "threshold": 1,
+          "description": "Retain one relief credit"
+        },
+        "regional": {
+          "key": "east_progress",
+          "comparison": "at_least",
+          "threshold": 2,
+          "description": "Support neighboring service recovery"
+        }
+      },
+      "strategy": {
+        "motivation": "Restore local civilian services while retaining reserves and supporting neighboring recovery.",
+        "priorities": [
+          "regional",
+          "restore",
+          "reserve"
+        ]
+      }
+    },
+    "east": {
+      "label": "Eastern Service Council",
+      "visible_keys": [
+        "east_capacity",
+        "east_credits",
+        "east_progress",
+        "east_delay",
+        "east_complications",
+        "central_progress"
+      ],
+      "objectives": {
+        "restore": {
+          "key": "east_progress",
+          "comparison": "at_least",
+          "threshold": 3,
+          "description": "Complete local relief service project"
+        },
+        "reserve": {
+          "key": "east_credits",
+          "comparison": "at_least",
+          "threshold": 1,
+          "description": "Retain one relief credit"
+        },
+        "regional": {
+          "key": "central_progress",
+          "comparison": "at_least",
+          "threshold": 2,
+          "description": "Support neighboring service recovery"
+        }
+      },
+      "strategy": {
+        "motivation": "Restore local civilian services while retaining reserves and supporting neighboring recovery.",
+        "priorities": [
+          "restore",
+          "reserve",
+          "regional"
+        ]
+      }
+    },
+    "west": {
+      "label": "Western Supply Council",
+      "visible_keys": [
+        "west_capacity",
+        "west_credits",
+        "west_progress",
+        "west_delay",
+        "west_complications",
+        "east_progress"
+      ],
+      "objectives": {
+        "restore": {
+          "key": "west_progress",
+          "comparison": "at_least",
+          "threshold": 3,
+          "description": "Complete local relief service project"
+        },
+        "reserve": {
+          "key": "west_credits",
+          "comparison": "at_least",
+          "threshold": 1,
+          "description": "Retain one relief credit"
+        },
+        "regional": {
+          "key": "east_progress",
+          "comparison": "at_least",
+          "threshold": 2,
+          "description": "Support neighboring service recovery"
+        }
+      },
+      "strategy": {
+        "motivation": "Restore local civilian services while retaining reserves and supporting neighboring recovery.",
+        "priorities": [
+          "restore",
+          "reserve",
+          "regional"
+        ]
+      }
+    },
+    "foundation": {
+      "label": "Regional Funding Foundation",
+      "visible_keys": [
+        "foundation_reserve",
+        "east_progress",
+        "west_progress"
+      ],
+      "objectives": {
+        "east": {
+          "key": "east_progress",
+          "comparison": "at_least",
+          "threshold": 3,
+          "description": "Enable eastern recovery"
+        },
+        "west": {
+          "key": "west_progress",
+          "comparison": "at_least",
+          "threshold": 3,
+          "description": "Enable western recovery"
+        },
+        "reserve": {
+          "key": "foundation_reserve",
+          "comparison": "at_least",
+          "threshold": 1,
+          "description": "Retain emergency reserve"
+        }
+      },
+      "strategy": {
+        "motivation": "Allocate scarce grants across independent local projects while retaining emergency funds.",
+        "priorities": [
+          "east",
+          "west",
+          "reserve"
+        ]
+      }
+    }
+  },
+  "action_catalog": {
+    "central_invest": {
+      "description": "Spend one relief credit to improve local project capacity.",
+      "actors": [
+        "central"
+      ]
+    },
+    "east_invest": {
+      "description": "Spend one relief credit to improve local project capacity.",
+      "actors": [
+        "east"
+      ]
+    },
+    "west_invest": {
+      "description": "Spend one relief credit to improve local project capacity.",
+      "actors": [
+        "west"
+      ]
+    },
+    "central_support_east": {
+      "description": "Voluntarily transfer one relief credit to the neighboring council.",
+      "actors": [
+        "central"
+      ]
+    },
+    "west_support_east": {
+      "description": "Voluntarily transfer one relief credit to the neighboring council.",
+      "actors": [
+        "west"
+      ]
+    },
+    "east_support_central": {
+      "description": "Voluntarily transfer one relief credit to the neighboring council.",
+      "actors": [
+        "east"
+      ]
+    },
+    "grant_east": {
+      "description": "Grant one credit to east council.",
+      "actors": [
+        "foundation"
+      ]
+    },
+    "grant_west": {
+      "description": "Grant one credit to west council.",
+      "actors": [
+        "foundation"
+      ]
+    }
+  },
+  "administrative_reviews_per_turn": 4,
+  "economy_projects": [
+    {
+      "id": "central_relief",
+      "participant": "central",
+      "need": 3,
+      "axes": [
+        {
+          "axis": "logistics",
+          "key": "central_capacity"
+        }
+      ],
+      "stages": 3,
+      "progress": "central_progress",
+      "delay": "central_delay",
+      "complications": "central_complications"
+    },
+    {
+      "id": "east_relief",
+      "participant": "east",
+      "need": 3,
+      "axes": [
+        {
+          "axis": "labor",
+          "key": "east_capacity"
+        }
+      ],
+      "stages": 3,
+      "progress": "east_progress",
+      "delay": "east_delay",
+      "complications": "east_complications"
+    },
+    {
+      "id": "west_relief",
+      "participant": "west",
+      "need": 3,
+      "axes": [
+        {
+          "axis": "materials",
+          "key": "west_capacity"
+        }
+      ],
+      "stages": 3,
+      "progress": "west_progress",
+      "delay": "west_delay",
+      "complications": "west_complications"
+    }
+  ],
+  "capacity_actions": {
+    "central_invest": {
+      "project": "central_relief",
+      "capacity": "central_capacity",
+      "resource": "central_credits",
+      "cost": 1
+    },
+    "east_invest": {
+      "project": "east_relief",
+      "capacity": "east_capacity",
+      "resource": "east_credits",
+      "cost": 1
+    },
+    "west_invest": {
+      "project": "west_relief",
+      "capacity": "west_capacity",
+      "resource": "west_credits",
+      "cost": 1
+    }
+  },
+  "resource_transfers": {
+    "central_support_east": {
+      "source": "central_credits",
+      "destination": "east_credits",
+      "amount": 1
+    },
+    "west_support_east": {
+      "source": "west_credits",
+      "destination": "east_credits",
+      "amount": 1
+    },
+    "east_support_central": {
+      "source": "east_credits",
+      "destination": "central_credits",
+      "amount": 1
+    },
+    "grant_east": {
+      "source": "foundation_reserve",
+      "destination": "east_credits",
+      "amount": 1
+    },
+    "grant_west": {
+      "source": "foundation_reserve",
+      "destination": "west_credits",
+      "amount": 1
+    }
+  },
+  "dynamic_negotiation": true,
+  "model_factions": [
+    "east",
+    "west",
+    "foundation"
+  ],
+  "game_length": "Short",
+  "funding_reserves": {
+    "foundation_reserve": "foundation"
+  }
+}
