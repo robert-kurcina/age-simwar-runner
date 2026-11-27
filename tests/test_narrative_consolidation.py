@@ -156,3 +156,43 @@ class NarrativeConsolidationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     mythos.establish_step(state, request)
                 self.assertEqual(state, before)
+
+
+    def test_authored_trial_gm_context_and_choice_timing(self):
+        for sid, action in (("castine", "inspect_wharf"),
+                            ("ram-island", "maintain_light")):
+            with self.subTest(scenario=sid):
+                state = mythos.initial(sid, 42)
+                before = copy.deepcopy(state)
+                public = mythos.view(state)
+                packet = mythos.gm_context(state)
+                self.assertEqual(packet["audience"], "gm_only")
+                self.assertEqual(packet["referee"]["mode"], "authored_actions_only")
+                self.assertFalse(any(packet["referee"]["capabilities"].values()))
+                self.assertEqual(packet["referee"]["allowed_actions"],
+                                 [a["id"] for a in public["choices"]])
+                self.assertEqual(packet["player_surface"]["revision"], public["revision"])
+                choice = next(a for a in public["choices"] if a["id"] == action)
+                self.assertGreater(choice["seconds"], 0)
+                self.assertEqual(choice["minutes"] * 60, choice["seconds"])
+                self.assertNotIn("travel_seconds", choice)
+                self.assertEqual(player_recap.recap(public)["current_situation"]["description"],
+                                 public["opening"])
+                packet["player_surface"]["resources"].clear()
+                self.assertEqual(state, before)
+                after = mythos.step(state, action)
+                mythos.verify(after)
+                self.assertEqual(mythos.gm_context(after)["player_surface"]["revision"],
+                                 mythos.digest(after))
+
+    def test_common_ending_projection_preserves_scenario_flags(self):
+        for sid in ("boothbay", "castine", "ram-island"):
+            with self.subTest(scenario=sid):
+                state = mythos.initial(sid, 42)
+                _, rules = mythos.load(sid)
+                result = mythos.ending_projection(state, rules, "limit", "observe")
+                self.assertEqual(result["reason"], "limit")
+                self.assertEqual(result["epilogue"], rules["ending_text"]["limit"])
+                self.assertEqual(result["scores"], mythos.scores(state, "observe"))
+                for field, flag in rules.get("ending_flags", {}).items():
+                    self.assertEqual(result[field], flag in state["flags"])

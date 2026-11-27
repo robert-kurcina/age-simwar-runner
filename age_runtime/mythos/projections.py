@@ -57,13 +57,13 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
                           fear=dxd_morale.describe(state["dxd"]["morale"])),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
-        "choices": [{"id": a["id"], "label": a["label"], **({"minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), "travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {}), **({"preparation_saved_seconds": a["preparation_saved_seconds"]} if a.get("preparation_saved_seconds") else {})} for a in legal]})
+        "choices": [{"id": a["id"], "label": a["label"], "minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), **({"travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {}), **({"preparation_saved_seconds": a["preparation_saved_seconds"]} if a.get("preparation_saved_seconds") else {})} for a in legal]})
 
 def referee_view(state, story, rules, legal, npc_available, digest, demeanor_labels, *, compact=False):
     """Bounded referee packet; never render directly as player narration."""
-    if not rules.get("gm_proposals"):
-        raise ValueError("GM context not yet supported for scenario")
     public = player_view(state, rules, legal, npc_available, digest, demeanor_labels)
+    if not rules.get("gm_proposals"):
+        return authored_referee_view(state, story, rules, legal, public)
     # Keep complete authoritative history in the checkpoint, not every prompt.
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
@@ -203,3 +203,37 @@ def compact_history(packet):
         context["experiences"] = tail(context["experiences"], 8, "relationship:" + npc)
     packet["history_scope"] = {"mode": "compact", "omitted_counts": omitted,
                                "full_context": "game.py gm SESSION"}
+
+
+def authored_referee_view(state, story, rules, legal, public):
+    """Minimal GM context for authored-only trials; no delegated authority."""
+    local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
+    relevant = {a["npc"] for a in local if "npc" in a}
+    surface = copy.deepcopy(public)
+    surface["observations"] = surface["observations"][-8:]
+    surface["memories"] = surface["memories"][-4:]
+    return copy.deepcopy({
+        "audience": "gm_only", "source_revision": state["source"],
+        "player_surface": surface,
+        "referee": {
+            "mode": "authored_actions_only",
+            "location_basis": next(({"features": x.get("features", []),
+                                     "dangers": x.get("dangers", [])}
+                                    for x in story["locations"]
+                                    if x["name"] == state["location"]), None),
+            "participants": [
+                {"id": nid, "name": state["npcs"][nid]["name"],
+                 "motivation": state["npcs"][nid]["motivation"],
+                 "known_topics": state["npcs"][nid]["known_topics"],
+                 "disclosed": state["npcs"][nid]["disclosed"],
+                 "local_actions": [a["id"] for a in local if a.get("npc") == nid]}
+                for nid in sorted(relevant)],
+            "allowed_actions": [a["id"] for a in legal],
+            "capabilities": {"free_form_proposals": False, "persistent_dialogue": False,
+                             "establishment": False, "spatial_routing": False,
+                             "npc_agency": False},
+            "guidance": "Interpret intent using offered authored actions only. "
+                        "Do not establish new facts, simulate independent NPC actions, "
+                        "or infer travel duration separately from total action time."
+        }
+    })
