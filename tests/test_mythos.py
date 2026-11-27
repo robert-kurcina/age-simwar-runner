@@ -826,7 +826,7 @@ class MythosTrialTests(unittest.TestCase):
                 "basis": "Eleanor voluntarily entrusts the cup to the reporter."}
         before = mythos.digest(s)
         for bad in (dict(give, npc_consent=""), dict(give, pc_authorization=""),
-                    dict(give, id="inc:bell"), dict(give, from="elias"),
+                    dict(give, id="inc:bell"), dict(give, **{"from": "elias"}),
                     dict(give, to="elias"), dict(give, grant=["badge"])):
             with self.assertRaises(ValueError):
                 mythos.establish_step(s, {"transfers": [bad]})
