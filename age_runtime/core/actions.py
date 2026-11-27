@@ -245,7 +245,7 @@ def validate_agreements(s):
 def validate_institutional_agreements(s):
     agreements = s["agreements"]
     if any(k in s for k in ("economy_projects", "capacity_actions", "resource_transfers",
-                            "dynamic_negotiation", "service_restoration", "community_assistance",
+                            "service_restoration", "community_assistance",
                             "civic_agreement", "assistance_capacity", "dependent_events", "funding_reserves")):
         raise ValueError("institutional agreements cannot mix fulfillment mechanisms")
     if s["events"] or s["constraints"]:
