@@ -31,9 +31,9 @@ def recall(observation, counterpart=None):
                          "scope_note": "Counterpart-linked records only; consult full recall for own decisions, authored agreements and other matters."})
     agreements = support.get("agreements", {})
     active = {"proposed", "committed", "awaiting_consent"}
-    due = [{"kind": "negotiation", "id": p["id"], "status": p["status"],
+    due = [{"kind": "permission" if "permission" in p else "negotiation", "id": p["id"], "status": p["status"],
             "due_minute": p["due_minute"]}
-           for p in proposals if p["status"] in active]
+           for p in proposals if p["status"] in active or ("permission" in p and p["status"] == "active")]
     due.extend({"kind": "agreement", "id": aid, "status": a["status"],
                 "due_minute": a["due_minute"]}
                for aid, a in agreements.items() if a["status"] in active)
