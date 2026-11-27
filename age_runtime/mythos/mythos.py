@@ -70,6 +70,8 @@ def initial(sid, seed):
         state["dialogue"] = []
     if rules.get("narrative_establishment"):
         state["established_details"] = []
+    if rules.get("narrative_properties"):
+        state["detail_changes"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
