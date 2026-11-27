@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 import age_runtime.mythos.mythos as mythos
+from age_runtime.mythos import player_recap
 from age_runtime.core.scenario_profile import profile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,7 +32,7 @@ def main():
     start.add_argument("scenario")
     start.add_argument("session", type=Path)
     start.add_argument("--seed", type=int, required=True)
-    for cmd in ("inspect", "act"):
+    for cmd in ("inspect", "recap", "act"):
         q = sub.add_parser(cmd)
         q.add_argument("session", type=Path)
         if cmd == "act":
@@ -83,6 +84,8 @@ def main():
         result = mythos.start(args.scenario, args.session, args.seed)
     elif args.command == "inspect":
         result = mythos.inspect(args.session)
+    elif args.command == "recap":
+        result = player_recap.recap(mythos.inspect(args.session))
     elif args.command == "gm":
         result = mythos.inspect_gm(args.session)
     elif args.command == "propose":
