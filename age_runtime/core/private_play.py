@@ -6,6 +6,7 @@ from datetime import timedelta
 from age_runtime.core.source_compiler import parse_json, compile_scenario, checked_date
 from age_runtime.core.runner import initialize, verify_checkpoint, submit_request, advance, digest, save, faction_packet, accept_faction_choice, commit_decision, GAME_LENGTHS
 from age_runtime.core.observations import observe
+from age_runtime.core import opportunity_latitude as latitude
 
 
 def read(path):
@@ -169,13 +170,18 @@ def available_presets(path, scenario_id, owners):
     return options(entry)
 
 
-def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None, game_length=None):
-    return start_selected(select(path, scenario_id, owners), actor, owners, preset, shared, previous, game_length)
+def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None, game_length=None, opportunity_latitude=None):
+    return start_selected(select(path, scenario_id, owners), actor, owners, preset, shared, previous, game_length, opportunity_latitude)
 
 
-def start_selected(selection, actor, owners, preset="standard", shared=False, previous=None, game_length=None):
+def start_selected(selection, actor, owners, preset="standard", shared=False, previous=None, game_length=None, opportunity_latitude=None):
     """Internal initialization shared by reviewed selection and explicit rehearsals."""
     catalog, group, entry, spec, compiled = selection
+    default_level = entry.get("opportunity_latitude", latitude.DEFAULT)
+    if previous is not None:
+        verify(previous)
+        default_level = previous["header"].get("opportunity_latitude", latitude.DEFAULT)
+    level = latitude.select(default_level, opportunity_latitude)
     if actor not in eligible_perspectives(entry, compiled["scenario"]):
         raise ValueError("ineligible player faction")
     rehearsal = compiled.get("qualification") == "unreviewed-rehearsal"
@@ -229,6 +235,7 @@ def start_selected(selection, actor, owners, preset="standard", shared=False, pr
               "title": entry["title"], "catalog_digest": digest(catalog),
               "effective_date": spec["effective_date"], "actor": actor,
               "compiled": compiled, "preset": configuration,
+              "opportunity_latitude": level,
               "briefing_context": reviewed_context(entry, compiled, actor, spec["effective_date"])}
     from age_runtime.interfaces.game_map import reviewed_map
     map_config = reviewed_map(entry, compiled, spec["effective_date"])
@@ -251,6 +258,7 @@ def verify(session):
     if session.get("version") != 1 or digest(session["header"]) != session["header_digest"]:
         raise ValueError("session header mismatch")
     h = session["header"]
+    latitude.validate(h.get("opportunity_latitude", latitude.DEFAULT))
     checked_date(h["effective_date"])
     s = h["compiled"]["scenario"]
     if digest(s) != h["compiled"]["scenario_digest"]:
@@ -293,6 +301,7 @@ def view(session):
     s = h["compiled"]["scenario"]
     return {"campaign": h["campaign"], "group": h["group"], "title": h["title"],
             "effective_date": h["effective_date"], "turn_minutes": s["turn_minutes"],
+            "opportunity_latitude": h.get("opportunity_latitude", latitude.DEFAULT),
             **({"qualification": h["compiled"]["qualification"]} if "qualification" in h["compiled"] else {}),
             "complete": session["state"]["minute"] == s["end_minute"],
             "observation": observe(s, session["state"], h["actor"])}
@@ -307,7 +316,10 @@ def decision_brief(session):
     """Read-only decision support; full briefing and recall remain available."""
     from age_runtime.core.decision_support import decision_brief as project
     current = view(session)
+    level = current["opportunity_latitude"]
     return {"revision": digest(session), "complete": current["complete"],
+            "opportunity_policy": latitude.policy(level),
+            "opportunity_closures": latitude.assess_projects(current["observation"].get("strategic_support", {}).get("project_assessments", []), level, current["complete"]),
             "title": current["title"],
             **({"qualification": current["qualification"]} if "qualification" in current else {}),
             **project(current["observation"])}
@@ -326,6 +338,8 @@ def briefing(session):
     from age_runtime.core.institutional_memory import reminder_index
     return {
         **({"qualification": current["qualification"]} if "qualification" in current else {}),
+        "opportunity_policy": latitude.policy(current["opportunity_latitude"]),
+        "opportunity_closures": latitude.assess_projects(observation.get("strategic_support", {}).get("project_assessments", []), current["opportunity_latitude"], current["complete"]),
         "reminders": reminder_index(observation),
         "kind": "opening" if observation["turn"] == 0 else "turn",
         "campaign": current["campaign"], "scenario": current["title"],
@@ -510,6 +524,7 @@ def main(argv=None):
     rehearsal.add_argument("scenario")
     rehearsal.add_argument("actor")
     rehearsal.add_argument("session", type=Path)
+    rehearsal.add_argument("--opportunity-latitude", choices=latitude.LEVELS)
     for name in ("perspectives", "presets", "start"):
         sub = commands.add_parser(name)
         sub.add_argument("inventory")
@@ -520,6 +535,7 @@ def main(argv=None):
             sub.add_argument("session", type=Path)
             sub.add_argument("--preset", default="standard")
             sub.add_argument("--game-length", choices=list(GAME_LENGTHS))
+            sub.add_argument("--opportunity-latitude", choices=latitude.LEVELS)
             sub.add_argument("--shared", action="store_true")
             sub.add_argument("--from-session", type=Path)
     for name in ("inspect", "briefing", "submit", "advance"):
@@ -626,14 +642,14 @@ def main(argv=None):
             from age_runtime.core.draft_rehearsal import start_rehearsal
             if a.session.exists():
                 raise ValueError("session path already exists")
-            session = start_rehearsal(a.inventory, a.scenario, a.actor)
+            session = start_rehearsal(a.inventory, a.scenario, a.actor, opportunity_latitude=a.opportunity_latitude)
             save(a.session, session)
             result = briefing(session)
         elif a.command == "start":
             if a.session.exists():
                 raise ValueError("session path already exists")
             session = start(a.inventory, a.scenario, a.actor, read(a.owners), a.preset, a.shared,
-                            read(a.from_session) if a.from_session else None, a.game_length)
+                            read(a.from_session) if a.from_session else None, a.game_length, a.opportunity_latitude)
             save(a.session, session)
             result = view(session)
         elif a.command == "commit-decision":
