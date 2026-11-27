@@ -41,3 +41,7 @@ python -m age_runtime.core.draft_compilation \
 ```
 
 The destination must be new and outside the runner, catalog and local source checkouts. All entries must be drafts; every scenario compiles using the existing pinned-source compiler, checks its identity and supported mechanics, and verifies an opening checkpoint for each eligible perspective. Only after all entries pass are snapshots and a digest report written, with restrictive local permissions. The report is not a play registration or authorization to distribute output. Source bytes are not written to the output. CI uses explicitly synthetic evidence identities and bytes, not private vault content; actual canonical compilation remains separate. No live vault access is required to inspect an already compiled snapshot.
+
+## Strategic interaction refinement
+
+Five additional episodes now use existing scoped communications, propositions, diplomatic history and descriptive establishment. Mainlander Ingress permits a consented review of anonymized aggregate procedures only; the separate completion flag is not an individual legal decision. Purge and Agreement support bounded voluntary consultation permissions independent of collective assent. Reporting delays are illustrative exercise assumptions. Fallout and Early Reconstruction preserve their previously qualified routes. All entries remain drafts. CI and actual source compilation are separate gates.
