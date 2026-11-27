@@ -374,3 +374,8 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 
 - PR #206 Tests 46058428321 passed; bundle 46058428290 was pending at inspection.
 - WIP (CI pending): expose referee-only `faction-brief` using the original faction packet and derived decision support. Integrate player contextual briefing and independent faction deliberation into Chat facilitator instructions for batch and sequential exchanges. Preserve response and checkpoint compatibility; regression covers scope, delayed communication and accepted original packet response. No new decision policy or claim of independent LLM competence. Next portable delivery and actual source-backed qualification; broader roster remains unresolved.
+
+
+## ST-E — offline private opening delivery
+
+- WIP (CI pending): export reviewed private openings for selected scenarios and eligible perspectives via the existing private start/verify gates, without source bytes. Companion ZIP pins engine revision, catalog digest and verified session digests; restore fresh standard single-perspective sessions offline using the existing runtime and private-play commands. Reject drafts, external image assets, mismatched revisions, unexpected archive members and overwrite. Trusted operator controls authorization; hashes are integrity checks, not authentication. Synthetic reviewed fixture covers export and offline restore. Real Conflagration remains draft-unreviewed; actual canonical compilation and author acceptance pending. No public workflow publishes private packages. Existing public runtime artifact format unchanged.
