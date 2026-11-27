@@ -45,3 +45,7 @@ The destination must be new and outside the runner, catalog and local source che
 ## Strategic interaction refinement
 
 Five additional episodes now use existing scoped communications, propositions, diplomatic history and descriptive establishment. Mainlander Ingress permits a consented review of anonymized aggregate procedures only; the separate completion flag is not an individual legal decision. Purge and Agreement support bounded voluntary consultation permissions independent of collective assent. Reporting delays are illustrative exercise assumptions. Fallout and Early Reconstruction preserve their previously qualified routes. All entries remain drafts. CI and actual source compilation are separate gates.
+
+## Contrasting outcome qualification
+
+Run `python -m unittest -v tests.test_conflagration_outcomes` alongside the existing draft regressions. The scripted routes exercise alternative relief investments, grants, multiple capacity bottlenecks and independent institutional consent through terminal checkpoints. These are mechanical outcome tests, not historical predictions or independent LLM gameplay qualification.
