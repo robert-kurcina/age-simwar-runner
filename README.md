@@ -51,16 +51,16 @@ The updated archive includes START_HERE.md; older artifacts without it use the b
 | Civic Recovery — Civic Agreement | Playable demonstration |
 | Fear! — The Boothbay Incident | Bounded DXD trial |
 | Fear! — The Salt-Stained Silence (Castine) | Bounded investigation trial; full source arc not implemented |
-| Fear! — The Keeper at Ram Island | Imported; not executable |
+| Fear! — The Keeper at Ram Island | Executable bounded DXD trial |
 | Conflagration / SH44SER | Private content; offline distribution pending |
 
 The live catalog is authoritative: run `python game.py list` in the extracted repository. Do not offer imported scenarios as playable.
 
-For a first narrative game, choose **The Boothbay Incident**. For a short strategic demonstration, choose **Service Restoration** as coordinator.
+For a first narrative game, choose **The Boothbay Incident**. Narrative trials are mechanically supported but current player-led experiential qualification is pending; see [qualification procedure](docs/narrative-chat-play-qualification.md). For a short strategic demonstration, choose **Service Restoration** as coordinator.
 
 ## 3. Play
 
-Choose an offered action or describe your intended action in ordinary language. ChatGPT maps it to a permitted engine action, asks for confirmation when ambiguous, and presents the actual result. Mythos actions advance the clock; strategic turns advance when requested. Hidden information is revealed only when earned. If the engine cannot execute or verify the session, gameplay stops rather than switching to invented adjudication.
+Choose an offered action or describe your intended action in ordinary language. ChatGPT maps it to a permitted engine action, asks for confirmation when ambiguous, and presents the actual result. Time-bearing Mythos actions advance the clock; read-only recall and inspection do not. Strategic turns advance when requested. Hidden information is revealed only when earned. If the engine cannot execute or verify the session, gameplay stops rather than switching to invented adjudication.
 
 ## 4. Distributions
 

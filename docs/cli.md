@@ -206,3 +206,16 @@ The record contains exactly template, due_minute, permission_id (specific active
 ## Historical institutional continuity (private catalog)
 
 Use the existing private continuation command with a completed source session and a target catalog entry containing remember_from instead of carry_from. The rule contains exactly scenario (source ID), source_spec_digest, target_spec_digest, reason, and actors (mapping of unchanged actor IDs to 1–64 explicit {kind, id} selectors). Supported kinds: communications, propositions, established_context, developments, proposals, agreements, diplomatic_history (counterpart ID). Records must exist in the actor's actual final observation/recall. The source and target actor ID and label must match; the author must review actual institutional identity. Only source-visible records are copied, with source scenario, date and snapshot minute. These are historical records, not current truth, active permissions, current belief or renewed obligations. Target initial values and live ledgers remain independent. Same campaign and catalog revision, pinned specs, nonoverlapping dates and a completed source are mandatory. The source session is needed to independently verify lineage; local digests are integrity checks, not authentication. No cross-actor or implicit multi-hop carry. Use full recall to retrieve historical records; counterpart-filtered recall remains current-phase only. Do not insert phase_memory directly into an authored spec.
+
+## Narrative resumption and recall
+
+Use a fresh path to initialize an executable Fear! trial. `inspect`, `recap`, and `recall` are read-only and verify the session before returning player-visible information. `gm` is privileged and must not be shown directly to the player.
+
+```sh
+python game.py start boothbay boothbay-session.json --seed 42
+python game.py inspect boothbay-session.json
+python game.py recap boothbay-session.json
+python game.py recall boothbay-session.json brother --limit 12 --offset 0
+```
+
+Use the current returned revision for every subsequent mutation; retain the prior verified checkpoint. Recall uses literal matching over projected records, not semantic inference or exhaustive historical retrieval. See [narrative qualification](narrative-chat-play-qualification.md).
