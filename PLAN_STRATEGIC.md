@@ -392,3 +392,9 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 - DONE (mechanical): PR #211 Tests 46058970581 and Chat runtime bundle 46058970628 passed; synthetic offline lifecycle across 25 perspectives qualified.
 - WIP: runner-only selective acquisition manifest enumerates exact pinned files and use sites across catalog specs, faction property references/evidence and reviewed image maps. Verify acquired bytes through the existing source reader. No vault-side workflow, whole-corpus import, new compiler, or public private artifacts. Actual transfer remains a separate blocker; manifest generation does not resolve it by itself.
 - NEXT: obtain exact required bytes through an authorized provider in the runner execution environment, compile all seven actual drafts, reconcile review/roster gates, export authorized private campaign, execute independent LLM qualification and author acceptance as directed. Use additional canon during simulation only as context with pinned provenance; material state changes require existing adjudication. Full-stack deferred. No new generic gameplay mechanics unless demonstrated need.
+
+
+## ST-F — optional authenticated GitHub acquisition
+
+- DONE (mechanical): PR #213 Tests 46059578612 and Chat runtime bundle 46059578654 passed.
+- WIP (CI pending): optional network-enabled GitHub contents API provider in runner, explicit repository allowlist, pinned file request, bounded response, no redirects, existing blob verification and private exclusive owners export. Synthetic transport test checks authorization, mismatches and identical compilation. No vault workflows or new compiler. No live credential or network available in current Chat runtime; actual canonical compile remains blocked here. Existing connector and local Git providers remain valid. Do not treat synthetic transport as live qualification.
