@@ -533,6 +533,11 @@ def main(argv=None):
     continuation.add_argument("target")
     continuation.add_argument("output", type=Path)
     continuation.add_argument("--selectors", type=Path, required=True)
+    continuation.add_argument("--model-selectors", type=Path, help="Referee-only independent faction selections")
+    model_memory = commands.add_parser("model-memory-candidates", help="Referee-only historical selector discovery")
+    model_memory.add_argument("inventory")
+    model_memory.add_argument("session", type=Path)
+    model_memory.add_argument("target")
     continuation.add_argument("--approve", required=True, help="Digest of selected transition preview")
     discover = commands.add_parser("discover", help="Player-facing available campaign openings")
     discover.add_argument("inventory")
@@ -663,9 +668,13 @@ def main(argv=None):
             if a.output.exists():
                 raise ValueError("output session path already exists")
             session = continue_rehearsal(a.inventory, read(a.session), a.target,
-                                         read(a.selectors), a.approve)
+                                         read(a.selectors), a.approve,
+                                         model_selectors=read(a.model_selectors) if a.model_selectors else None)
             save(a.output, session)
             result = briefing(session)
+        elif a.command == "model-memory-candidates":
+            from age_runtime.core.transition_preview import model_memory_candidates
+            result = model_memory_candidates(a.inventory, read(a.session), a.target)
         elif a.command == "transition-preview":
             from age_runtime.core.transition_preview import transition_preview
             result = transition_preview(a.inventory, read(a.session), a.target,
