@@ -216,9 +216,14 @@ def advance_abstract(state, rules, start, end, engaged=None):
             npc["activity_plan"] = None
             continue
         stop = min(end, datetime.fromisoformat(plan["until"]))
-        begin = max(start, datetime.fromisoformat(plan["at"]))
-        minutes = max(0, int((stop - begin).total_seconds()) // 60)
-        dxd_conditions.recover(npc["concerns"], minutes, restful=True, safe=plan["safe"])
+        begin = max(start, datetime.fromisoformat(plan["at"]),
+                    datetime.fromisoformat(plan.get("accounted_until", plan["at"])))
+        if stop > begin:
+            before = plan.get("rested_seconds", 0)
+            after = before + int((stop - begin).total_seconds())
+            dxd_conditions.recover_rest_overlap(npc["concerns"], before, after, safe=plan["safe"])
+            plan["rested_seconds"] = after
+            plan["accounted_until"] = stop.isoformat()
         if end >= datetime.fromisoformat(plan["until"]):
             npc["activity_plan"] = None
 
