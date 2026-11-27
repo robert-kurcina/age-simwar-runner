@@ -298,6 +298,7 @@ def briefing(session):
         "objectives": {oid: {"description": obj["description"],
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
+        **({"communications": observation["communications"]} if "communications" in observation else {}),
         **({"negotiation": observation["negotiation"]} if "negotiation" in observation else {}),
         **({"faction_strategy": observation["faction_strategy"]} if "faction_strategy" in observation else {}),
         **({"project_results": observation["project_results"]} if "project_results" in observation else {}),
