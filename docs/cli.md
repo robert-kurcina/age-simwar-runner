@@ -178,3 +178,13 @@ python play.py private record-diplomacy SESSION ACTOR RECORD.json --revision REV
 ```
 
 An intention record has exactly kind (intention), id, counterpart, topic, text, status (active or withdrawn), and revises (null initially, then the latest own claim ID or private record ID for the same counterpart/topic). Private record IDs are unique within their actor's history; do not reuse them as that actor's communication IDs. A relationship assessment uses kind (assessment), id, counterpart, topic, text, revises and basis instead of status. Basis is a nonempty list of objects with kind (communications, proposals or agreements) and id (the corresponding actor-visible record ID). The engine captures the dated evidence snapshot; do not provide an evidence field. Outgoing dispatch and unanswered own proposals do not establish counterpart conduct. A received statement is not proof of its truth, and expiry or unsigned commitments do not prove intent. Use the actor's actual authorized deliberation, not invented player thoughts. Neither record establishes consent, authority, fulfillment, objective truth or mechanical effects. Use the returned revision. The actor-local diplomatic history and institutional memory expose these records only to their owner; referee checkpoint access remains privileged.
+
+## Scoped strategic establishment (opt-in)
+
+For a scenario with strategic_establishment: true, a trusted referee may use:
+
+```sh
+python play.py private establish-context SESSION RECORD.json --revision REVISION
+```
+
+A record contains exactly one of details or changes, each a list of 1–12 entries. A detail contains id (inc: followed by a lowercase identifier), kind (setting_detail, facility_detail or administrative_detail), label, description, audience (nonempty list of existing actor IDs), and basis (referee rationale). A change contains id, before (exact current description), after and basis. Audience and identity are immutable. The engine preserves original establishment and revision provenance; actor views exclude rationale and other audience identities. Full institutional memory includes only actor-visible context. Descriptions are session-specific presentation facts, not new canon, discovered evidence, capabilities, assets, authority, permissions, consent, or mechanical changes. A facility detail cannot make a facility operational; use existing project and commitment mechanics for material consequences. The referee verifies plausibility, historical fidelity and semantic limits before submission. Rejected batches change nothing. Use the returned revision; no Turn or Critical Decision is consumed.
