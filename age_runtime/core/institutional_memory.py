@@ -42,6 +42,7 @@ def recall(observation, counterpart=None):
         "actor": actor, "turn": observation["turn"], "minute": observation["minute"],
         "objectives": observation["objectives"],
         **({"diplomatic_history": observation["diplomatic_history"]} if "diplomatic_history" in observation else {}),
+        **({"established_context": observation["established_context"]} if "established_context" in observation else {}),
         "reports": observation["reports"],
         "communications": communications,
         "propositions": observation.get("propositions", {}),
@@ -69,6 +70,10 @@ def reminder_index(observation):
                                    for other, rel in history["diplomatic_history"].items()
                                    for topic, entry in rel["private_intentions"].items()
                                    if entry["latest"]["status"] == "active"]} if "diplomatic_history" in history else {}),
+        **({"recent_established_ids": [eid for eid, _ in sorted(
+            history["established_context"].items(),
+            key=lambda pair: (pair[1]["updated_minute"], pair[0]))][-5:]}
+            if "established_context" in history else {}),
         "recent_claim_ids": [c["id"] for c in communications[-5:]],
         "unsettled_proposition_ids": [pid for pid, p in propositions.items()
                                      if p["latest_stance"] in ("unstated", "unknown", "doubts")],
