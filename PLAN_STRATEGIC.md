@@ -442,3 +442,7 @@ PR #230 passed Tests 46070851549 and Chat runtime bundle 46070851585. Consolidat
 ## ST-O — Faction roster review (WIP)
 
 PR #232 merged; CI not yet confirmed. Extend preparation diagnostics with selectable perspectives, default roles, objective IDs, strategy presence, profile compilation status, unresolved and hypothetical properties, source-dependent properties and unbound profiles. Reuse compile_profile; no automatic admission of candidate organizations or authority. Tests cover actual drafts and WPC as an unbound candidate. Next: guided scenario authoring using existing schema examples and actual content review, not new mechanics. CI pending.
+
+## ST-P — Guided scenario authoring (WIP)
+
+PR #234 merged; CI was pending at inspection. Add explicit LLM authoring instructions, existing economic/institutional schema examples, and isolated candidate review via scenario_preparation. Candidate must include explicit assumptions and eligible perspectives; no catalog writes or promotion. Tests cover existing economic/institutional examples and unsupported or incomplete candidates. CI pending. Next use this workflow for actual campaign content review and delivery rather than add more authoring infrastructure. Independent LLM rehearsals and author UAT remain separate.
