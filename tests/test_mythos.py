@@ -813,6 +813,45 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_expectations_are_prospective_and_reassessed_from_new_evidence(self):
+        import copy
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        def say(state, claim):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": "pc",
+                "claim": claim, "stance": "unstated", "intent": "unstated"})
+        s = say(s, "Any news about your brother?")
+        s = mythos.step(mythos.step(s, "move:Harbor Docks"), "move:Harbor Diner")
+        s = say(s, "Has your brother been found?")
+        s = mythos.establish_step(s, {"behavior": {"id": "pat:questions", "npc": "eleanor",
+            "kind": "recurring", "evidence": ["claim:1", "claim:2"],
+            "interpretation": "He keeps asking about my brother."}})
+        create = {"operation": "create", "id": "exp:question", "npc": "eleanor",
+                  "pattern": "pat:questions", "expectation": "His next statement will concern my brother."}
+        before = copy.deepcopy(s)
+        pending = mythos.establish_step(s, {"expectation": create})
+        self.assertEqual(s, before)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(pending, {"expectation": dict(create, id="exp:duplicate")})
+        assess = {"operation": "assess", "id": "exp:question", "npc": "eleanor",
+                  "outcome": "contradicted", "evidence": ["claim:2"],
+                  "interpretation": "His next statement concerns coffee instead."}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(pending, {"expectation": assess})
+        pending = say(pending, "Just coffee, please.")
+        assess["evidence"] = ["claim:3"]
+        resolved = mythos.establish_step(pending, {"expectation": assess})
+        packet = mythos.gm_context(resolved)["referee"]
+        result = packet["npc_expectations"]["eleanor"][0]
+        self.assertEqual(result["status"], "contradicted")
+        self.assertEqual(set(result["observed_basis"]), {"claim:1", "claim:2", "claim:3"})
+        self.assertIn("competing motivations", packet["literary_synthesis"])
+        self.assertNotIn("npc_expectations", mythos.view(resolved))
+        for key in ("time", "turn", "dxd", "relationships", "npcs"):
+            self.assertEqual(resolved[key], pending[key])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(resolved, {"expectation": assess})
+        mythos.verify(resolved)
+
     def test_behavioral_recognition_requires_observed_distinct_turns(self):
         import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
