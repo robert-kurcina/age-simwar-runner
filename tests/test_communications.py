@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 
 from age_runtime.core.runner import (
-    initialize, communicate, digest, verify_checkpoint, faction_packet,
+    initialize, communicate, assess_proposition, digest, verify_checkpoint, faction_packet,
     accept_faction_choice, advance,
 )
 from age_runtime.core.observations import observe
@@ -49,3 +49,45 @@ class CommunicationsTest(unittest.TestCase):
         tampered["requests"][0]["minute"] += 1
         with self.assertRaises(ValueError):
             verify_checkpoint(s, tampered)
+
+    def test_propositions_and_private_assessment(self):
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["material_communications"] = True
+        s["communication_propositions"] = {
+            "estimate": {"text": "Recovery can finish in three weeks.", "initial_access": ["east"]},
+            "restricted": {"text": "Separate local estimate.", "initial_access": ["west"]},
+        }
+        state = initialize(s)
+        msg = {"id": "report1", "recipients": ["foundation"], "claim": "Three weeks.",
+               "proposition": "estimate", "asserts": True}
+        assessment = {"proposition": "estimate", "stance": "believes", "basis": ["report1"]}
+        with self.assertRaises(ValueError):
+            communicate(s, state, "west", digest(state), msg)
+        with self.assertRaises(ValueError):
+            assess_proposition(s, state, "foundation", digest(state), assessment)
+        state = communicate(s, state, "east", digest(state), msg)
+        self.assertEqual(observe(s, state, "foundation")["propositions"]["estimate"]["latest_stance"], "unstated")
+        state = assess_proposition(s, state, "foundation", digest(state), assessment)
+        revised = dict(msg, id="report2", corrects="report1", claim="Five weeks instead.", asserts=False)
+        state = communicate(s, state, "east", digest(state), revised)
+        state = assess_proposition(s, state, "foundation", digest(state),
+                                   dict(assessment, stance="doubts", basis=["report1", "report2"]))
+        projection = observe(s, state, "foundation")["propositions"]
+        self.assertEqual(projection["estimate"]["latest_stance"], "doubts")
+        self.assertEqual(len(projection["estimate"]["assessments"]), 2)
+        self.assertNotIn("restricted", projection)
+        self.assertNotIn("estimate", observe(s, state, "west")["propositions"])
+        self.assertEqual(observe(s, state, "east")["propositions"]["estimate"]["latest_stance"], "unstated")
+        self.assertEqual(state["values"], s["initial"])
+        for actor in s["model_factions"]:
+            packet = faction_packet(s, state, actor)
+            state = accept_faction_choice(s, state, actor, packet,
+                                          {"packet_id": packet["packet_id"], "action": None})
+        state = advance(s, state)
+        verify_checkpoint(s, state)
+        self.assertEqual(observe(s, state, "foundation")["propositions"]["estimate"]["latest_stance"], "doubts")
+        damaged = copy.deepcopy(state)
+        damaged["requests"][1]["assessment"]["basis"] = ["unreceived"]
+        with self.assertRaises(ValueError):
+            verify_checkpoint(s, damaged)
