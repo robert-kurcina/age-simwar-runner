@@ -813,6 +813,65 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_atomic_narrative_batch_commits_or_rejects_whole_exchange(self):
+        import copy
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "session.json"
+            v = mythos.start("boothbay", p, 42)
+            v = mythos.act(p, "move:Harbor Diner", v["revision"])
+            original = p.read_bytes()
+            state = mythos.read(p)
+            next_id = mythos.gm_context(state)["referee"]["next_dialogue_id"]
+            cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
+                   "description": "Eleanor holds a ceramic cup.", "basis": "Mundane diner object",
+                   "custodian": "eleanor"}
+            ask = {"npc": "eleanor", "speaker": "pc", "claim": "May I examine your cup?",
+                   "stance": "unstated", "intent": "unstated"}
+            answer = {"npc": "eleanor", "speaker": "eleanor", "claim": "Certainly.",
+                      "stance": "unstated", "intent": "unstated",
+                      "reaction": {"emotion": "wistful", "significance": "The reporter asked before touching the cup."}}
+            permission = {"operation": "create", "id": "agr:cup", "kind": "permission",
+                          "npc": "eleanor", "issuer": "eleanor", "terms": "Examine the cup",
+                          "condition": None, "claim_ids": [next_id, next_id + 1]}
+            lock = {"id": "lock:cup", "permission": "agr:cup", "object": "inc:cup",
+                    "basis": "Eleanor permits close examination of her cup"}
+            operations = [{"establish": {"details": [cup]}}, {"dialogue": ask},
+                          {"dialogue": answer}, {"establish": {"agreement": permission}},
+                          {"establish": {"lock": lock}}]
+            bad = copy.deepcopy(operations)
+            bad[-1]["establish"]["lock"]["object"] = "inc:missing"
+            with self.assertRaisesRegex(ValueError, "operation 5"):
+                mythos.establish(p, {"operations": bad}, v["revision"])
+            self.assertEqual(p.read_bytes(), original)
+            for invalid in ([], [{"act": "observe"}], [{"establish": {"operations": operations}}]):
+                with self.assertRaises(ValueError):
+                    mythos.establish(p, {"operations": invalid}, v["revision"])
+                self.assertEqual(p.read_bytes(), original)
+            result = mythos.establish(p, {"operations": operations}, v["revision"])
+            committed = mythos.read(p)
+            self.assertIn("examine:lock:cup", {x["id"] for x in result["choices"]})
+            for key in ("turn", "time", "flags", "inventory", "resources", "discoveries", "dxd", "npcs"):
+                self.assertEqual(committed[key], state[key])
+            self.assertEqual(len(committed["history"]), len(state["history"]) + len(operations))
+            self.assertNotIn("npc_reaction", result["dialogue"][-1])
+            self.assertEqual(committed["dialogue"][-1]["npc_reaction"], answer["reaction"])
+            mythos.verify(committed)
+            saved = p.read_bytes()
+            with self.assertRaisesRegex(ValueError, "stale"):
+                mythos.establish(p, {"operations": operations}, v["revision"])
+            self.assertEqual(p.read_bytes(), saved)
+
+    def test_dialogue_duplicate_check_handles_optional_metadata(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        request = {"npc": "eleanor", "speaker": "eleanor", "claim": "I remember.",
+                   "stance": "unstated", "intent": "unstated"}
+        s = mythos.dialogue_step(s, request)
+        enriched = dict(request, reaction={"emotion": "sad"})
+        after = mythos.dialogue_step(s, enriched)
+        with self.assertRaises(ValueError):
+            mythos.dialogue_step(after, enriched)
+        mythos.verify(after)
+
     def test_timed_detail_event_resolves_once_at_native_boundary(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
