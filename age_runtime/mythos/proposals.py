@@ -131,7 +131,8 @@ def completion_available(state, rules, action, npc_available):
     if spec["target"] == "object":
         entity = establishment.local_entities(state).get(action["object_target"])
         return (object_available(entity)
-                and entity.get("lifecycle", "intact") == action["object_before"])
+                and entity.get("lifecycle", "intact") == action["object_before"]
+                and entity.get("function") == action.get("object_function_before"))
     if spec["target"] == "npc":
         from age_runtime.mythos.epistemic import conversation_available
         return conversation_available(state, rules, action["npc"], npc_available)
@@ -186,7 +187,9 @@ def compile_local(state, rules, request, npc_available):
         action["npc"] = target
     elif spec["target"] == "object":
         action["object_target"] = target
-        action["object_before"] = establishment.local_entities(state)[target].get("lifecycle", "intact")
+        entity = establishment.local_entities(state)[target]
+        action["object_before"] = entity.get("lifecycle", "intact")
+        action["object_function_before"] = entity.get("function")
     if spec["resolution"] == "test":
         action["test"] = copy.deepcopy(spec["test"])
         action["concern_failure"] = copy.deepcopy(spec.get("concern_failure", {}))

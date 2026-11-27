@@ -1,5 +1,5 @@
 {
-  "version": 72,
+  "version": 73,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -94,6 +94,7 @@
   "behavioral_recognition": true,
   "action_observations": true,
   "consequential_objects": true,
+  "object_function": true,
   "npc_temporal": {"initial_awake_seconds": {"eleanor": 0, "elias": 0, "burroughs": 0}},
   "interpersonal_duress": {"stress_awards": {"minor": 1, "significant": 3, "severe": 6}},
   "start": "1927-10-13T08:00:00",

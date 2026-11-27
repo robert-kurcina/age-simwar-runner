@@ -78,7 +78,7 @@ def _record_details(state, rules, details, npc_available):
     pending = []
     for item in details:
         required = {"id", "kind", "label", "description", "basis"}
-        if not isinstance(item, dict) or not required <= set(item) or set(item) - required - {"properties", "custodian"}:
+        if not isinstance(item, dict) or not required <= set(item) or set(item) - required - {"properties", "custodian", "function"}:
             raise ValueError("invalid establishment detail fields")
         eid = item["id"]
         if not isinstance(eid, str) or not re.fullmatch(r"inc:[a-z][a-z0-9_]{0,63}", eid):
@@ -101,6 +101,9 @@ def _record_details(state, rules, details, npc_available):
         if not isinstance(properties, dict) or set(properties) - FIELDS:
             raise ValueError("unsupported descriptive property")
         properties = {key: text(value, 160) for key, value in properties.items()}
+        if "function" in item and (not rules.get("object_function") or item["kind"] != "object"
+                                   or item["function"] not in ("operational", "impaired", "nonfunctional")):
+            raise ValueError("invalid initial object function")
         holder = item.get("custodian")
         if "custodian" in item:
             if not rules.get("narrative_custody") or item["kind"] != "object":
@@ -114,6 +117,7 @@ def _record_details(state, rules, details, npc_available):
                         "location": state["location"], "turn": state["turn"],
                         "at": state["time"], "source": "gm_narration",
                         **({"properties": properties} if rules.get("narrative_properties") else {}),
+                        **({"function": item["function"]} if "function" in item else {}),
                         **({"custodian": holder} if rules.get("narrative_custody") and item["kind"] == "object" else {})})
     ledger.extend(pending)
 
