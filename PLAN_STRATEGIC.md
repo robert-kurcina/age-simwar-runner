@@ -2,6 +2,23 @@
 
 Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
 
+## Shared consequential information — strategic adoption (P1)
+
+Follow the [master shared contracts](PLAN.md#shared-consequential-information-and-world-establishment). Initial regional drafts now cover seven postwar groups; prioritize emergent interaction over redundant regional fixtures. This sequence supersedes older strategic NEXT ordering where conflicting, while roster reconciliation, source compilation and reviewed registration continue independently.
+
+| Order | Status | Vertical slice and exit evidence |
+|---|---|---|
+| S1 | NEXT | Material faction communications: inspect narrative v44–v46 claim/receipt pilots; preserve stable claim IDs, actual sender, authorized recipients, time, provenance, corrections and actor-local views. Demonstrate a report and contradictory follow-up without changing objective state. |
+| S2 | PENDING | Proposition links, receipt and explicitly revised faction assessments; derive history from existing checkpoint records, distinguish objective facts, estimates, sincere errors and deceptive claims. Demonstrate different faction assessments without knowledge leakage or inferred player belief. |
+| S3 | PENDING | Qualitative intentions and diplomatic relationship history derived from consequential communications and actual conduct, without universal trust ratings. |
+| S4 | PENDING | Scoped Strategic Establishment adapted from narrative v47–v49: stable descriptive entity/fact IDs and guarded updates; no fabricated resources, evidence, authority or canon changes. |
+| S5 | PENDING | Joint commitment/permission lifecycle: reuse existing bilateral negotiation, institutional consent and independent funding; competing terms, explicit authorized consent, fulfillment, expiry and refusal where supported. Distinguish claims of success from actual success. |
+| S6 | PENDING | Information-driven eligible developments: review preserved Event Generator branch and existing conditional events against narrative clock/trigger contracts before integration; no blind merge or unrestricted effects. |
+| S7 | PENDING | Scoped entity properties and cross-phase information/commitment continuity only where concrete episodes warrant it; explicit identity, dates, source and carry approval. |
+| S8 | PENDING | Qualify emergent strategic choices through a grant/inspection negotiation slice: request, disputed report, verification, competing terms, authorized commitment and actual outcome. Test divergent outcomes, rejection atomicity, hidden information, replay and meaningful independent choices; author-led play remains deferred at request. |
+
+Strategic owns faction authority, report latency, economic accounting, independent choices and diplomatic adjudication. Adopt narrative-tested common helpers only where compatible; do not import DXD character mechanics, scene-local presence assumptions, or character relationship scores. Track second-adopter status in PRs. Shared contracts are design direction, not implemented strategic epistemic features. Preserve existing CI and source compilation gates, portable JSON, private data ownership and read-only SH44SER.
+
 ## Strategic design
 
 The unit of play is the faction, not the individual person. Leaders, figureheads, constituent institutions and internal friction are qualitative context unless independently consequential; do not generate character sheets or simulate their members. The LLM represents faction interests and proposes decisions; the engine validates supported effects, authority, resources, timing and information boundaries. No unrecorded model state changes.
