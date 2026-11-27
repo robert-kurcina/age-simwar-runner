@@ -307,6 +307,7 @@ def briefing(session):
                        for oid, obj in actor.get("objectives", {}).items()},
         **({"propositions": observation["propositions"]} if "propositions" in observation else {}),
         **({"diplomatic_history": observation["diplomatic_history"]} if "diplomatic_history" in observation else {}),
+        **({"established_context": observation["established_context"]} if "established_context" in observation else {}),
         **({"communications": observation["communications"]} if "communications" in observation else {}),
         **({"negotiation": observation["negotiation"]} if "negotiation" in observation else {}),
         **({"faction_strategy": observation["faction_strategy"]} if "faction_strategy" in observation else {}),
@@ -380,6 +381,16 @@ def communicate(session, actor, revision, command):
     h, state = session["header"], session["state"]
     # Explicit actor routing is referee-only, as with model faction exchange.
     result = apply_communication(h["compiled"]["scenario"], state, actor, digest(state), command)
+    return verify({**session, "state": result})
+
+
+def establish_context(session, revision, command):
+    from age_runtime.core.runner import establish_context as apply_establishment
+    verify(session)
+    if revision != digest(session):
+        raise ValueError("stale session revision")
+    h, state = session["header"], session["state"]
+    result = apply_establishment(h["compiled"]["scenario"], state, digest(state), command)
     return verify({**session, "state": result})
 
 
@@ -495,6 +506,10 @@ def main(argv=None):
     assessment.add_argument("actor")
     assessment.add_argument("assessment", type=Path)
     assessment.add_argument("--revision", required=True)
+    establishment = commands.add_parser("establish-context", help="Referee-only: establish descriptive session context")
+    establishment.add_argument("session", type=Path)
+    establishment.add_argument("record", type=Path)
+    establishment.add_argument("--revision", required=True)
     diplomacy = commands.add_parser("record-diplomacy", help="Referee-only: record actual private faction intention or assessment")
     diplomacy.add_argument("session", type=Path)
     diplomacy.add_argument("actor")
@@ -561,6 +576,10 @@ def main(argv=None):
             result = briefing(session)
         elif a.command == "assess-proposition":
             session = assess_proposition(read(a.session), a.actor, a.revision, read(a.assessment))
+            save(a.session, session)
+            result = briefing(session)
+        elif a.command == "establish-context":
+            session = establish_context(read(a.session), a.revision, read(a.record))
             save(a.session, session)
             result = briefing(session)
         elif a.command == "record-diplomacy":
