@@ -3,10 +3,6 @@ from datetime import datetime, timedelta
 import copy
 
 
-OUTCOMES = ("grant", "grant_failure", "concern_failure", "degree_failure_concern",
-            "success_observation", "failure_observation", "degree_observation")
-
-
 def outcome(cfg, spec, key, default=None):
     return copy.deepcopy(spec.get(key, cfg.get(key, default)))
 
@@ -30,10 +26,6 @@ def available(state, rules):
     result = []
     for key, cfg in rules.get("danger_beats", {}).items():
         if state["location"] != cfg["location"] or key in state["used"]:
-            continue
-        if not all(f in state["flags"] for f in cfg.get("requires_flags", [])):
-            continue
-        if any(f in state["flags"] for f in cfg.get("excludes_flags", [])):
             continue
         if datetime.fromisoformat(state["time"]) + timedelta(seconds=cfg["seconds"]) > datetime.fromisoformat(rules["end"]):
             continue
