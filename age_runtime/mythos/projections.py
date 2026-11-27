@@ -180,6 +180,14 @@ def compact_history(packet):
         required = {i for a in packet["player_surface"].get("narrative_agreements", [])
                     for field in ("claim_ids", "resolution_claim_ids")
                     for i in a.get(field, [])}
+        # Retain the evidence behind current relationship fields and
+        # the selected contextual reminders, even when old.
+        required.update(value["claim_id"]
+                        for context in ref.get("relational_context", {}).values()
+                        for value in context["current"].values())
+        required.update(cue["claim_id"]
+                        for context in ref.get("contextual_reminders", {}).values()
+                        for cue in context["utterances"])
         selected_ids = {e["id"] for e in selected} | required
         ref["dialogue_context"] = [e for e in ref["dialogue_context"]
                                    if e["id"] in selected_ids]
