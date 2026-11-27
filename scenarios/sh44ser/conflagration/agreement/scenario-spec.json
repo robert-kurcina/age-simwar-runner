@@ -320,7 +320,49 @@
       "catholic-delegation",
       "arabian-religious-delegation"
     ],
-    "game_length": "Short"
+    "game_length": "Short",
+    "material_communications": true,
+    "diplomatic_history": true,
+    "runtime_propositions": true,
+    "strategic_establishment": true,
+    "communication_propositions": {
+      "regional_commitment": {
+        "text": "All five exercise delegations have assented to regional principles; this is not global ratification.",
+        "initial_access": [
+          "fiji",
+          "shanter",
+          "vanuatu",
+          "catholic-delegation",
+          "arabian-religious-delegation"
+        ],
+        "report_binding": {
+          "key": "regional_principles_agreed",
+          "comparison": "at_least",
+          "threshold": 1
+        }
+      },
+      "religious_witness": {
+        "text": "The two exercise religious delegations have committed to voluntary witnessing.",
+        "initial_access": [
+          "catholic-delegation",
+          "arabian-religious-delegation"
+        ],
+        "report_binding": {
+          "key": "religious_witness_agreed",
+          "comparison": "at_least",
+          "threshold": 1
+        }
+      }
+    },
+    "dynamic_negotiation": true,
+    "permission_terms": {
+      "regional_consultation": {
+        "issuer": "shanter",
+        "grantee": "arabian-religious-delegation",
+        "description": "Voluntary consultation on draft regional service principles; no sovereign delegation or ratification.",
+        "max_due_minute": 50400
+      }
+    }
   },
   "initial_refs": {},
   "evidence_refs": {
