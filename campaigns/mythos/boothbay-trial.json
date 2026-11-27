@@ -1,5 +1,5 @@
 {
-  "version": 70,
+  "version": 71,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2328,7 +2328,63 @@
       "initial_knowers": []
     }
   },
-  "local_proposals": true,
+  "local_proposals": {
+    "build_rapport": {
+      "target": "npc",
+      "seconds": 600,
+      "resolution": "test",
+      "test": {
+        "attribute": "PRE",
+        "skill": "Persuade",
+        "interaction": "ordinary",
+        "tn": 7,
+        "significance": "minor",
+        "decision": true
+      },
+      "concern_failure": {
+        "stress": 1
+      }
+    },
+    "survey": {
+      "target": "location",
+      "seconds": 600,
+      "resolution": "test",
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigate",
+        "tn": 7,
+        "significance": "minor",
+        "decision": false
+      },
+      "concern_failure": {
+        "fatigue": 1
+      },
+      "established": "survey_completed"
+    },
+    "compose_notes": {
+      "target": "location",
+      "seconds": 600,
+      "resolution": "test",
+      "test": {
+        "attribute": "INT",
+        "skill": "Investigate",
+        "tn": 7,
+        "significance": "minor",
+        "decision": false
+      },
+      "concern_failure": {
+        "fatigue": 1
+      },
+      "established": "notes_organized",
+      "count_evidence": true
+    },
+    "review_notes": {
+      "target": "location",
+      "seconds": 60,
+      "resolution": "certain",
+      "established": "notes_reviewed"
+    }
+  },
   "danger_beats": {
     "beat:inlet_withdrawal": {
       "location": "Creek Inlet South",
