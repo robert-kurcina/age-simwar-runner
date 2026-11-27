@@ -5,6 +5,7 @@ from pathlib import Path
 import age_runtime.mythos.mythos as mythos
 from age_runtime.mythos import player_recap
 from age_runtime.core.scenario_profile import profile
+from age_runtime.core import opportunity_latitude as latitude
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -32,6 +33,7 @@ def main():
     start.add_argument("scenario")
     start.add_argument("session", type=Path)
     start.add_argument("--seed", type=int, required=True)
+    start.add_argument("--opportunity-latitude", choices=latitude.LEVELS)
     for cmd in ("inspect", "recap", "act"):
         q = sub.add_parser(cmd)
         q.add_argument("session", type=Path)
@@ -87,7 +89,7 @@ def main():
     elif args.command == "describe":
         result = profile(args.campaign, args.scenario)
     elif args.command == "start":
-        result = mythos.start(args.scenario, args.session, args.seed)
+        result = mythos.start(args.scenario, args.session, args.seed, args.opportunity_latitude)
     elif args.command == "inspect":
         result = mythos.inspect(args.session)
     elif args.command == "recap":
