@@ -290,3 +290,38 @@ class DraftCompilationTest(unittest.TestCase):
         path.write_text(json.dumps(spec), encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "self-contained"):
             start_rehearsal(self.path, entry["id"], entry["player_factions"][0])
+
+
+    def test_explicit_review_packet_and_private_staging(self):
+        from age_runtime.core.reviewed_delivery import review_packet, stage_reviewed
+        from age_runtime.core.private_openings import export, read_package
+        packet = review_packet(self.path, self.owners)
+        self.assertEqual(packet["author_review"], "pending")
+        self.assertEqual(len(packet["scenarios"]), 7)
+        row = next(r for r in packet["scenarios"] if r["id"] == "fallout-coalition-relief-draft")
+        sid = row["id"]
+        approval = {"packet_digest": digest(packet), "scenarios": {
+            sid: {"snapshot_digest": row["snapshot_digest"], "reason": "Synthetic fixture approval."}}}
+        before = self.path.read_bytes()
+        out = self.root / "reviewed"
+        for change in ({}, {**approval, "packet_digest": "stale"},
+                       {**approval, "scenarios": {sid: {"snapshot_digest": "stale", "reason": "Fixture"}}}):
+            with self.assertRaises(ValueError):
+                stage_reviewed(self.path, self.owners, change, out)
+            self.assertFalse(out.exists())
+        result = stage_reviewed(self.path, self.owners, approval, out)
+        self.assertEqual(result["openings"], 3)
+        self.assertEqual(result["scenarios"], [sid])
+        self.assertEqual(self.path.read_bytes(), before)
+        with self.assertRaisesRegex(ValueError, "catalog-only"):
+            select(self.path, sid, self.owners)
+        self.assertEqual(out.stat().st_mode & 0o777, 0o700)
+        self.assertTrue(all(p.stat().st_mode & 0o777 == 0o600 for p in out.iterdir()))
+        staged = parse_json((out / "inventory.json").read_bytes())
+        self.assertEqual([e["id"] for g in staged["groups"] for e in g["scenarios"]], [sid])
+        archive = self.root / "approved.zip"
+        export(out / "inventory.json", self.owners, [sid], "b" * 40, archive)
+        _, sessions = read_package(archive, "b" * 40)
+        self.assertEqual(len(sessions), 3)
+        self.assertNotIn("Synthetic evidence only.", json.dumps(packet))
+        self.assertNotIn("content_base64", json.dumps(packet))
