@@ -73,17 +73,29 @@ class StrategicEstablishmentTests(unittest.TestCase):
         state = initialize(s)
         old = copy.deepcopy(state)
         detail = self.detail()
-        for malformed in (dict(detail, audience=["unknown"]), dict(detail, audience=[]),
-                          dict(detail, resources=10), dict(detail, kind="permission"),
-                          dict(detail, id="central_capacity")):
+        other = dict(detail, id="inc:other_room", label="Other room")
+        for malformed in (dict(other, audience=["unknown"]), dict(other, audience=[]),
+                          dict(other, audience=["east", "east"]), dict(other, resources=10),
+                          dict(other, kind="permission"), dict(other, id="central_capacity"),
+                          dict(other, description=""), dict(other, basis="")):
             with self.assertRaises(ValueError):
                 establish_context(s, state, digest(state), {"details": [detail, malformed]})
             self.assertEqual(state, old)
         with self.assertRaises(ValueError):
             establish_context(s, state, digest(state), {"details": [detail, detail]})
-        state = establish_context(s, state, digest(state), {"details": [detail]})
+        state = establish_context(s, state, digest(state), {"details": [detail, other]})
+        self.assertEqual(set(observe(s, state, "central")["established_context"]),
+                         {detail["id"], other["id"]})
         with self.assertRaises(ValueError):
             establish_context(s, state, digest(state), {"details": [detail]})
+        before_changes = copy.deepcopy(state)
+        with self.assertRaises(ValueError):
+            establish_context(s, state, digest(state), {"changes": [
+                {"id": detail["id"], "before": detail["description"], "after": "Changed.",
+                 "basis": "Test."},
+                {"id": other["id"], "before": "Wrong prior value.", "after": "Changed.",
+                 "basis": "Test."}]})
+        self.assertEqual(state, before_changes)
         with self.assertRaises(ValueError):
             establish_context(s, state, digest(state), {"changes": [
                 {"id": detail["id"], "before": detail["description"], "after": "Changed.",
