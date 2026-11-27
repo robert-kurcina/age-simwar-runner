@@ -31,7 +31,7 @@ def record(state, rules, request, npc_available, text):
     if until > datetime.fromisoformat(rules["end"]):
         raise ValueError("NPC activity exceeds horizon")
     npc = state["npcs"][nid]
-    if npc["activity_plan"] is not None:
+    if npc["activity_plan"] is not None or pending_work(state, nid):
         raise ValueError("NPC activity already planned; interrupt through interaction")
     if len(state["npc_activity_history"]) >= 256:
         raise ValueError("NPC activity record limit")
@@ -41,7 +41,18 @@ def record(state, rules, request, npc_available, text):
     npc["activity_plan"] = copy.deepcopy(event)
     state["npc_activity_history"].append(event)
 
+def pending_work(state, nid):
+    return next((e for e in state.get("timed_detail_events", [])
+                 if e["npc"] == nid and e.get("authority") == "npc_native_test"
+                 and e["status"] == "scheduled" and "work_seconds" in e), None)
+
+def interrupt_work(state, nid, at, reason):
+    task = pending_work(state, nid)
+    if task:
+        task.update(status="interrupted", interrupted_at=at, interruption=reason)
+
 def interrupt(state, nid):
+    interrupt_work(state, nid, state["time"], "interaction")
     if nid in state["npcs"] and "activity" in state["npcs"][nid]:
         npc = state["npcs"][nid]
         npc["activity_plan"] = None
@@ -72,6 +83,7 @@ def advance(state, rules, seconds):
         while remaining:
             before = dxd_conditions.degrees(concerns)["stress"]
             if clock["status"] == "asleep":
+                interrupt_work(state, nid, (end - timedelta(seconds=remaining)).isoformat(), "sleep")
                 span = min(remaining, clock["required_sleep_seconds"] - clock["sleep_seconds"])
                 dxd_conditions.advance_activity(concerns, clock, span, "sleep", seed=seed, attributes=attrs)
                 remaining -= span
@@ -86,12 +98,19 @@ def advance(state, rules, seconds):
             span = min(remaining, int((datetime.fromisoformat(plan["until"])-cursor).total_seconds())) if plan else remaining
             traveling = next((e for e in state.get("npc_travel", []) if e["npc"] == nid and e["status"] == "traveling"), None)
             mode, safe = (plan["mode"], plan["safe"]) if plan else ("travel" if traveling else "active", False)
+            task = pending_work(state, nid)
+            if task and (mode != "active" or npc["location"] != task["location"]):
+                interrupt_work(state, nid, cursor.isoformat(), "activity_changed")
+                task = None
             actual = dxd_conditions.advance_activity(concerns, clock, span, mode, safe=safe, seed=seed, attributes=attrs)
+            if task:
+                task["work_seconds"] += actual
             remaining -= actual
             dxd_morale.calm(npc["morale"], safe=safe, stress_degrees_removed=before-dxd_conditions.degrees(concerns)["stress"])
             if clock["pending_sleep_seconds"] == 0:
                 npc["activity_plan"] = None
                 dxd_conditions.begin_sleep(concerns, clock, attrs)
+                interrupt_work(state, nid, (end - timedelta(seconds=remaining)).isoformat(), "involuntary_sleep")
                 if traveling:
                     traveling["status"] = "interrupted"
                     traveling["resolved_at"] = (end - timedelta(seconds=remaining)).isoformat()
