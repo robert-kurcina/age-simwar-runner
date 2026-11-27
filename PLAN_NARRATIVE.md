@@ -2,6 +2,17 @@
 
 Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
 
+## Shared consequential information — narrative coordination
+
+Follow the [master shared contracts](PLAN.md#shared-consequential-information-and-world-establishment). Narrative v44–v49 are first-adopter pilots for material claims, proposition references, actor-scoped receipt/stance, descriptive establishment and guarded properties/custody. Preserve their existing versioned semantics and qualification history; do not claim these pilots already supply a common API.
+
+- For upcoming permissions/commitments work, inspect strategic agreement, negotiation and funding authority implementations before adding overlapping lifecycle validation. Separate actual consent, stated intention, permission, obligation and fulfillment; preserve native DXD and local scope.
+- For dynamic Keys/Locks/Triggers/Events, compare strategic conditional events and Event Generator contracts; share only demonstrated compatible identity, provenance, revision, precondition, visibility and replay utilities. Narrative retains native clock, eligibility, Tests and RNG semantics.
+- For mixed narration/dialogue/effect batches, follow the master retrieve/classify/validate/commit/reconcile process. Keep existing scene and Spotlight behavior, actual player authorization, hidden truth, actor-specific reactions and consequences. No duplicate ledger, universal ontology or inferred PC inner state.
+- Identify reusable helpers and intended strategic second adopter in PRs; coordinate changes to common files and test both gameplay modes when affected. Do not require strategic adoption or abstraction extraction before fixing narrative blockers or delivering the next useful narrative slice.
+
+Narrative P0 literary/emotional qualification and current release corrections retain priority. This coordination section adds no new narrative subsystem, version bump, checkpoint migration or acceptance claim. Existing ordered v49+ work remains in force subject to the shared contracts.
+
 ## Goal and evidence
 
 Create playable character-centered adventures with exploration, danger, uncertainty, meaningful decisions and consequences. ChatGPT acts as the active Game Master (GM): it prepares from the scenario sketch, frames scenes, interprets intent, portrays NPCs, monitors player involvement, and proposes consequential developments. Python validates, adjudicates and commits authoritative state. Preserve native DXD and source authority.
