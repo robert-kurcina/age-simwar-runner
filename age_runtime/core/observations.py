@@ -1,6 +1,6 @@
 """Read-only actor projections. Full checkpoints are referee-only."""
 from copy import deepcopy
-from age_runtime.core.communications import view as communication_view
+from age_runtime.core.communications import view as communication_view, observed_report
 from age_runtime.core.negotiation import view as negotiation_view
 from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
@@ -112,19 +112,10 @@ def observe(s, state, actor_id):
     reports = {}
     values = {}
     for key in sorted(keys):
-        delay = actor.get("report_delay_minutes", {}).get(key, 0)
-        cutoff = state["minute"] - delay
-        if cutoff < 0:
-            reports[key] = {"status": "unknown"}
-            continue
-        value = s["initial"][key]
-        for entry in state["ledger"]:
-            if entry["key"] == key and entry["minute"] <= cutoff:
-                value = entry["value"]
-        values[key] = value
-        reports[key] = {"status": "current" if delay == 0 else "stale",
-                        "as_of_minute": cutoff, "age_minutes": delay,
-                        "value": value}
+        report = observed_report(s, state, actor_id, key)
+        reports[key] = report
+        if "value" in report:
+            values[key] = report["value"]
     # Evaluate only objectives supported by the actor's observed values.
     observed_actor = {**actor, "objectives": {
         oid: obj for oid, obj in actor.get("objectives", {}).items()
