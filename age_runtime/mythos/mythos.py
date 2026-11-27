@@ -55,6 +55,7 @@ def npc_profiles(story, rules):
 def initial(sid, seed):
     story, rules = load(sid)
     continuity.validate(rules)
+    epistemic.validate_propositions(rules)
     if rules.get("resolution") != "dxd":
         raise ValueError("unsupported narrative resolver")
     state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
@@ -828,6 +829,7 @@ def gm_context(state):
                                   "traits": copy.deepcopy(state["npcs"][key].get("dxd_traits", {}))}
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
+                "propositions": epistemic.proposition_projection(state, rules, relevant),
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
                 "traits": copy.deepcopy(pc["traits"]),
