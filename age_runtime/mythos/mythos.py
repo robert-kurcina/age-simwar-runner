@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -86,6 +86,8 @@ def initial(sid, seed):
         state["action_observations"] = []
     if rules.get("behavioral_recognition"):
         state["behavioral_recognition"] = []
+    if rules.get("npc_expectations"):
+        state["npc_expectations"] = []
     if rules.get("timed_detail_event"):
         state["timed_detail_events"] = []
     if rules.get("local_proposals"):
@@ -931,6 +933,8 @@ def gm_context(state):
                 **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
                 **({"action_observations": action_observations.projection(state, conversational)} if rules.get("action_observations") else {}),
                 **({"behavioral_context": behavior.projection(state, conversational)} if rules.get("behavioral_recognition") else {}),
+                **({"npc_expectations": expectations.projection(state, conversational),
+                    "literary_synthesis": "Before composing significant NPC responses, reconcile observed conduct, expectations, attachments, emotional history, current Concerns, Demeanor and competing motivations. Braid relevant influences into speech and physical behavior with concise contextual reminders. Do not erase prior conflict merely because Stress recovered or invent shared history."} if rules.get("npc_expectations") else {}),
                 **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
