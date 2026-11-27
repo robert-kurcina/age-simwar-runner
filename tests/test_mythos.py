@@ -813,6 +813,44 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_certain_object_destruction_retains_identity_and_remnants(self):
+        import copy
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.establish_step(s, {"details": [{"id": "inc:cup", "kind": "object",
+            "label": "Cup", "description": "An old ceramic cup.", "basis": "Local mundane object",
+            "custodian": "eleanor", "properties": {"condition": "Intact"}}]})
+        req = {"id": "act:drop", "object": "inc:cup", "before": "intact", "outcome": "destroyed",
+               "authorization": "I drop the cup onto the hard floor.",
+               "basis": "Uncontested certain breakage", "remnants": "Broken ceramic fragments"}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"object_action": req})
+        s = mythos.establish_step(s, {"transfers": [{"id": "inc:cup", "from": "eleanor", "to": "pc",
+            "pc_authorization": "I accept the cup.", "npc_consent": "Here, take it.", "basis": "Voluntary transfer"}]})
+        before = copy.deepcopy(s)
+        after = mythos.establish_step(s, {"object_action": req})
+        self.assertEqual(s, before)
+        self.assertEqual(after["time"], s["time"])
+        self.assertEqual(after["turn"], s["turn"])
+        for key in ("flags", "inventory", "discoveries", "resources", "relationships", "dxd"):
+            self.assertEqual(after[key], s[key])
+        obj = next(e for e in mythos.view(after)["established_details"] if e["id"] == "inc:cup")
+        self.assertEqual(obj["lifecycle"], "destroyed")
+        self.assertIsNone(obj["custodian"])
+        self.assertEqual(obj["properties"]["condition"], "Broken ceramic fragments")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"object_action": dict(req, id="act:again")})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"changes": [{"id": "inc:cup", "property": "condition",
+                "before": "Broken ceramic fragments", "after": "Intact", "basis": "Unsupported restoration"}]})
+        self.assertNotIn("object_actions", mythos.view(after))
+        self.assertEqual(mythos.gm_context(after)["referee"]["object_actions"][0]["id"], "act:drop")
+        moved = mythos.step(after, "move:Harbor Docks")
+        self.assertFalse(any(e["id"] == "inc:cup" for e in mythos.view(moved)["established_details"]))
+        returned = mythos.step(moved, "move:Harbor Diner")
+        self.assertEqual(next(e for e in mythos.view(returned)["established_details"]
+                              if e["id"] == "inc:cup")["lifecycle"], "destroyed")
+        mythos.verify(returned)
+
     def test_npc_temporal_recovery_uses_established_activity_and_shared_clock(self):
         import copy
         from age_runtime.core import dxd_conditions
