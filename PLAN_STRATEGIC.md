@@ -450,3 +450,7 @@ PR #234 merged; CI was pending at inspection. Add explicit LLM authoring instruc
 ## ST-Q — Conflagration content review and chronological presentation (WIP)
 
 PR #236 merged; CI pending at inspection. Inspect all seven actual configurations, record their episode-specific decision tensions, partial success and calibration assumptions in the campaign content-review document, and order the inventory chronologically. Keep Hexaday context-only and WPC unbound. Do not alter balances, objective thresholds or faction participation without an evidenced need. Review is configuration-grounded, not renewed canonical source verification or author approval. Next: practical campaign discovery and standalone draft distribution, then reviewed registration after source and author approval. CI pending.
+
+## ST-R — Campaign discovery (WIP)
+
+PR #238 merged; CI pending at inspection. Add `private discover` to expose fresh standard verified openings, eligible perspectives, dates, turn counts, and explicit rehearsal/reviewed modes. Keep context-only groups and blocked entries visible, omit referee data, and preserve source gates. Tests cover actual seven episodes, 25 perspectives and missing sources/specifications. CI pending. Next package the self-contained draft campaign for offline play without relaxing reviewed distribution gates.

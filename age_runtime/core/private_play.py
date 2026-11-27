@@ -522,6 +522,9 @@ def main(argv=None):
     commands = p.add_subparsers(dest="command", required=True)
     ls = commands.add_parser("list")
     ls.add_argument("inventory")
+    discover = commands.add_parser("discover", help="Player-facing available campaign openings")
+    discover.add_argument("inventory")
+    discover.add_argument("--owners", type=Path)
     rehearsal = commands.add_parser("rehearse", help="Explicit unreviewed source-independent draft rehearsal")
     rehearsal.add_argument("inventory")
     rehearsal.add_argument("scenario")
@@ -643,6 +646,9 @@ def main(argv=None):
             return
         if a.command == "list":
             result = inventory(a.inventory)
+        elif a.command == "discover":
+            from age_runtime.core.campaign_discovery import discover
+            result = discover(a.inventory, read(a.owners) if a.owners else None)
         elif a.command == "perspectives":
             result = perspectives(a.inventory, a.scenario, read(a.owners))
         elif a.command == "presets":
