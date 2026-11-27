@@ -240,7 +240,8 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
                              "establishment": bool(rules.get("narrative_establishment")),
                              "agreements": bool(rules.get("narrative_agreements")),
                              "batch": bool(rules.get("narrative_batch")), "spatial_routing": False,
-                             "npc_agency": False, "interpersonal_duress": bool(rules.get("interpersonal_duress")),
+                             "npc_agency": False, "npc_objectives": bool(rules.get("npc_objective_continuity")),
+                             "subjective_beliefs": bool(rules.get("social_epistemic")), "interpersonal_duress": bool(rules.get("interpersonal_duress")),
                              "abstract_npc_recovery": bool(rules.get("npc_abstract_recovery")),
                              "social_demeanor": bool(rules.get("social_demeanor"))},
             "guidance":  "Resolve mechanical effects through authored actions only. "
@@ -268,6 +269,9 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
     if rules.get("social_demeanor"):
         ref["consequential_demeanor"] = {nid: copy.deepcopy([e for e in state["relationship_changes"]
             if e["npc"] == nid][-6:]) for nid in sorted(conversational)}
+    if rules.get("npc_objective_continuity"):
+        ref["npc_agency"] = {nid: context for nid, context in npc_agency.projection(state).items()
+                             if nid in conversational}
     if compact:
         compact_history(packet)
     return copy.deepcopy(packet)

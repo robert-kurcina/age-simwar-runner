@@ -1,4 +1,6 @@
 {
+  "npc_objective_continuity": true,
+  "social_epistemic": true,
   "demeanor": true,
   "social_demeanor": true,
   "npc_abstract_recovery": true,

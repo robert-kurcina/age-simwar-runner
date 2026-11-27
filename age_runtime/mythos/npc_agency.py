@@ -9,9 +9,11 @@ from age_runtime.core import dxd, dxd_conditions, dxd_modifiers
 
 def initialize(state, rules):
     cfg = rules.get("npc_agency")
-    if not cfg:
+    if not cfg and not rules.get("npc_objective_continuity"):
         return
     state["npc_objectives"] = []
+    if not cfg:
+        return
     state["npc_social_tests"] = []
     for nid, npc in state["npcs"].items():
         npc["favor"] = cfg["favor"]["initial"][nid]
@@ -23,12 +25,12 @@ def owned_source(state, npc, source):
     if kind == "claim" and type(sid) is int:
         return any(e["id"] == sid and npc in (e["speaker"], e["listener"]) for e in state["dialogue"])
     if kind == "observation":
-        return any(e["id"] == sid and e["npc"] == npc for e in state["action_observations"])
+        return any(e["id"] == sid and e["npc"] == npc for e in state.get("action_observations", []))
     if kind == "test":
         return any(e["id"] == sid and e["npc"] == npc and e["status"] == "completed"
-                   and "test" in e for e in state["timed_detail_events"])
+                   and "test" in e for e in state.get("timed_detail_events", []))
     if kind == "social_test":
-        return any(e["id"] == sid and npc in (e["npc"], e["target"]) for e in state["npc_social_tests"])
+        return any(e["id"] == sid and npc in (e["npc"], e["target"]) for e in state.get("npc_social_tests", []))
     return False
 
 def project(state):
@@ -43,7 +45,7 @@ def project(state):
     return result
 
 def objective(state, rules, request, npc_available, text):
-    if not rules.get("npc_agency") or not isinstance(request, dict):
+    if not (rules.get("npc_agency") or rules.get("npc_objective_continuity")) or not isinstance(request, dict):
         raise ValueError("NPC objectives unavailable")
     op = request.get("operation")
     base = {"operation", "id", "npc", "priority", "intention", "basis", "sources"}
@@ -57,6 +59,10 @@ def objective(state, rules, request, npc_available, text):
     npc = state["npcs"][nid]
     if npc["location"] is None or not npc_available(state, rules, {"npc": nid, "location": npc["location"]}):
         raise ValueError("objective requires available anchored NPC")
+    if rules.get("dialogue_requires_encounter"):
+        from age_runtime.mythos.epistemic import conversation_available
+        if not conversation_available(state, rules, nid, npc_available):
+            raise ValueError("objective requires current authored encounter")
     priority = request["priority"]
     if priority not in ("low", "normal", "urgent"):
         raise ValueError("invalid objective priority")
@@ -143,6 +149,6 @@ def projection(state):
     current = project(state)
     return {nid: {"objectives": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("active", "deferred")],
                   "recent_closed": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("achieved", "abandoned")][-4:],
-                  "favor": npc["favor"],
-                  "social_tests": [copy.deepcopy(e) for e in state["npc_social_tests"] if nid in (e["npc"], e["target"])][-6:]}
+                  **({"favor": npc["favor"]} if "favor" in npc else {}),
+                  "social_tests": [copy.deepcopy(e) for e in state.get("npc_social_tests", []) if nid in (e["npc"], e["target"])][-6:]}
             for nid, npc in sorted(state["npcs"].items())}
