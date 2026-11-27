@@ -7,7 +7,8 @@ import argparse
 import json
 import re
 from pathlib import Path
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import BadZipFile, ZipFile, ZIP_DEFLATED
+import os
 
 from age_runtime.core.private_play import inventory, perspectives, start, verify
 from age_runtime.core.runner import digest, initialize
@@ -60,9 +61,8 @@ def export(path, owners, scenario_ids, revision, destination):
                               "path": f"openings/{i}.json", "digest": digest(session)}
                              for i, (sid, aid, session) in enumerate(sessions)]}
     # Exclusive creation, restrictive permissions, no owners/source bytes.
-    with destination.open("xb") as stream:
+    with os.fdopen(os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as stream:
         try:
-            destination.chmod(0o600)
             with ZipFile(stream, "w", compression=ZIP_DEFLATED) as archive:
                 archive.writestr("manifest.json", json.dumps(manifest, sort_keys=True))
                 for item, (_, _, session) in zip(manifest["openings"], sessions):
@@ -133,11 +133,11 @@ def main():
             result, sessions = read_package(a.archive, a.engine_revision)
             if a.command == "restore":
                 session = sessions[(a.scenario, a.actor)]
-                with Path(a.session).open("x", encoding="utf-8") as stream:
-                    json.dump(session, stream, indent=2)
                 from age_runtime.core.private_play import briefing
                 result = briefing(session)
-    except (ValueError, KeyError, TypeError, OSError) as exc:
+                with os.fdopen(os.open(a.session, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8") as stream:
+                    json.dump(session, stream, indent=2)
+    except (ValueError, KeyError, TypeError, OSError, BadZipFile) as exc:
         p.error(str(exc))
     print(json.dumps(result, indent=2))
 
