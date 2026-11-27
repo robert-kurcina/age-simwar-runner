@@ -1162,6 +1162,44 @@ class MythosTrialTests(unittest.TestCase):
             mythos.dialogue_step(after, enriched)
         mythos.verify(after)
 
+    def test_independent_npc_initiative_remote_completion_and_cancellation(self):
+        import copy
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.establish_step(s, {"details": [{"id": "inc:tin", "kind": "object",
+            "label": "Tin", "description": "A small tin.", "basis": "Local mundane object",
+            "custodian": "eleanor", "properties": {"condition": "Dusty"}}]})
+        s = mythos.step(s, "move:Harbor Docks")
+        req = {"operation": "schedule", "id": "evt:tidy", "npc": "eleanor",
+               "object": "inc:tin", "delay_minutes": 10,
+               "basis": "She chooses to tidy her own belongings."}
+        before = copy.deepcopy(s)
+        planned = mythos.establish_step(s, {"npc_initiative": req})
+        self.assertEqual(s, before)
+        self.assertEqual(planned["time"], s["time"])
+        self.assertEqual(planned["detail_changes"], [])
+        self.assertEqual(planned["agreement_history"], [])
+        self.assertEqual(planned["timed_detail_events"][0]["status"], "scheduled")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(planned, {"npc_initiative": dict(req, id="evt:again")})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"npc_initiative": dict(req, npc="elias")})
+        self.assertNotIn("timed_detail_events", mythos.view(planned))
+        elapsed = mythos.step(planned, "observe")
+        self.assertEqual(elapsed["timed_detail_events"][0]["status"], "completed")
+        self.assertEqual(elapsed["detail_changes"][0]["at"], planned["timed_detail_events"][0]["due"])
+        returned = mythos.step(elapsed, "move:Harbor Diner")
+        obj = next(e for e in mythos.view(returned)["established_details"] if e["id"] == "inc:tin")
+        self.assertEqual(obj["properties"]["condition"], "Clean")
+        self.assertEqual(len(returned["detail_changes"]), 1)
+        mythos.verify(returned)
+        cancelled = mythos.establish_step(planned, {"npc_initiative": {
+            "operation": "cancel", "id": "evt:tidy", "npc": "eleanor",
+            "basis": "She changes her mind."}})
+        cancelled = mythos.step(cancelled, "observe")
+        self.assertEqual(cancelled["timed_detail_events"][0]["status"], "cancelled")
+        self.assertEqual(cancelled["detail_changes"], [])
+        mythos.verify(cancelled)
+
     def test_timed_detail_event_resolves_once_at_native_boundary(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         cup = {"id": "inc:cup", "kind": "object", "label": "Cup",
