@@ -28,8 +28,10 @@ class NPCAgendaTests(unittest.TestCase):
     def test_multilocation_and_validation(self):
         _, rules = mythos.load("boothbay")
         rules = copy.deepcopy(rules)
-        rules["npcs"]["eleanor"]["eligible_locations"].append("Harbor Docks")
+        if "Harbor Docks" not in rules["npcs"]["eleanor"]["eligible_locations"]:
+            rules["npcs"]["eleanor"]["eligible_locations"].append("Harbor Docks")
         windows = rules["npc_agendas"]["eleanor"]
+        windows[:] = [w for w in windows if w["location"] != "Harbor Docks"]
         windows.append({"days": [3], "start_minute": 730, "end_minute": 765,
                         "location": "Harbor Docks", "label": "Midday errand"})
         npc_agenda.validate(rules)
@@ -58,3 +60,19 @@ class NPCAgendaTests(unittest.TestCase):
         self.assertIn("asleep", context["constraints"])
         self.assertIn("committed_task", context["constraints"])
         self.assertIsNotNone(context["expected"])
+
+
+    def test_prospective_departure_uses_existing_travel(self):
+        state = mythos.initial("boothbay", 42)
+        state = mythos.establish_step(state, {"npc_agenda_depart": {
+            "npc": "eleanor", "destination": "Harbor Docks",
+            "basis": "An unusual waterfront errand."}})
+        event = state["npc_travel"][-1]
+        self.assertEqual(event["status"], "traveling")
+        self.assertEqual(event["origin"], "Harbor Diner")
+        self.assertEqual(state["npcs"]["eleanor"]["location"], "Harbor Diner")
+        self.assertEqual(event["due"], "1927-10-13T08:05:00")
+        mythos.verify(state)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, {"npc_agenda_depart": {
+                "npc": "eleanor", "destination": "Harbor Docks", "basis": "Again."}})
