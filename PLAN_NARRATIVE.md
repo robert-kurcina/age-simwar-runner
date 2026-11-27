@@ -1,12 +1,51 @@
 # Narrative game development plan
 
-Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
+Status: WIP (P1) — 2026-11-27. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
+
+## Current ordered implementation roadmap — 2026-11-27
+
+Author direction: defer UAT for now and continue implementation. This roadmap is the current execution order; older N1–N12 and versioned WIP/NEXT notes below are historical evidence, not competing active queues. Do not erase prior failures or imply complete native-rule coverage. PR #210 merged; Tests 46058848013 and Chat runtime bundle 46058848012 passed. The existing bounded trials exercise the core runtime, native DXD, dialogue, actor-specific knowledge, objectives, relationships, Concern recovery, movement, events, pacing, scoped establishment, revision-bound transactions and replay. Coverage varies by scenario; no experiential acceptance is claimed.
+
+### P1 — remaining main narrative implementation
+
+Group the following identifiers into coherent PRs (approximately seven to twelve implementation packages, a provisional planning estimate rather than a quota). N79–N93 are backlog identifiers, not required runtime versions. Complete the smallest useful generalization, reuse existing native functions and ledgers, and avoid upgrading every reference scenario merely for parity.
+
+| Order | Workstream | Status | Implementation and exit evidence |
+|---|---|---|---|
+| 1 | N79 Configurable local capabilities | NEXT | Replace hard-coded survey, note preparation and rapport definitions with reviewed validated configuration for target scope, duration, native Test and bounded consequences; preserve existing behavior, IDs, eligibility and replay. |
+| 1 | N80 Player-intent adjudication | PENDING | Distinguish certain, uncertain, impossible and conditional actions; support additional grounded approaches using native Tests only for consequential uncertainty. Validate actor, target, time, prerequisite, stakes and effect authority; unsupported requests leave state/time/RNG unchanged. |
+| 2 | N81 Consequential effects | PENDING | Consolidate compatible existing effect application and validation for characters, objects, relationships and circumstances; retain native mechanics, source references, prior-value guards and atomicity. No unrestricted effect DSL. |
+| 2 | N84 Environmental interaction | PENDING | Extend meaningful manipulation, access, use, damage and custody of established objects/locations through existing reviewed operations; retain identity, permissions, physical plausibility, evidence and consequence history. |
+| 3 | N82 NPC decision-making | PENDING | Connect existing competing objectives to eligible actions and bounded independent pursuit/reconsideration, with actor-specific knowledge, priorities, time and resources. GM chooses; Python validates and adjudicates. No autonomous-agent framework or mandatory per-NPC simulation. |
+| 3 | N83 Behavioral adaptation | PENDING | Consolidate expectations, repeated/unusual conduct, changing dispositions and reactions with actual observed provenance; maintain past consequential experiences and avoid forced emotional or belief changes. |
+| 3 | N85 Information continuity | PENDING | Improve selective retrieval of earned evidence, historical details, claims, commitments, contradictions and unresolved matters; maintain actor scope and historical versus current-state distinctions; no duplicate memory store. |
+| 4 | N86 Narrative danger | PENDING | Generalize decisive objective-based Zone/Beat adjudication beyond existing reviewed examples, including avoidance, withdrawal and consequential failures, using native Tests and established physical constraints. No Technical Combat or exhaustive tactical simulation. |
+| 4 | N87 Character consequences | PENDING | Review pinned DXD sources for necessary physical harm, incapacitation, lasting consequences and legitimate character loss; implement only supported narrative-scale effects and continuity/termination as warranted. Review session-level XP/progression and native Disability, Morale, Psychology, Inspiration, Commitment and Favor application where gaps materially affect play. |
+| 5 | N89 Conditional developments | PENDING | Consolidate existing Keys, Locks, Triggers, Event Clocks, Encounter Tension and scheduled consequences; validate provenance, timing, visibility, prerequisites and one-shot execution. Compare strategic implementations before extracting shared helpers; no universal scheduler. |
+| 6 | N90 Temporal abstraction | PENDING | Retain one fictional clock and native interval semantics; reconcile detailed, ordinary and coarse activities where equivalent, including recovery, interruption and event ordering. Do not invent safe rest or continuous exertion in multi-day intervals. |
+| 6 | N88 Narrative pacing | PENDING | Improve scene framing, meaningful options, stalled investigations, escalation/relief and Spotlight lifecycle; 6/12/24 advisory budgets remain separate from fictional time and mechanical turns. No plot railroading or quota-driven consequences. |
+| 7 | N91 Runtime consolidation | PENDING | Remove demonstrated duplication and scenario-specific assumptions, improve reusable eligibility/validation and state processing; preserve replay, source compatibility or explicit version/restart guidance; avoid speculative abstractions. |
+| 7 | N92 GM operational protocol | PENDING | Consolidate current capability-aware guidance for opening, player intent, NPC initiative, native adjudication, consequential establishment, recall, interruptions, pacing and endings; keep historical command notes as references, not competing instructions. |
+| 7 | N93 Mechanical readiness | PENDING | Verify contrasting meaningful routes and outcomes, failures, NPC initiative, precaution follow-through, native fidelity, actor visibility, rollback, completion/resumption and exact replay using existing regression fixtures and portable Chat delivery. Record actual CI/artifact evidence and remaining defects. |
+
+N79 is next: the branch narrative-v79-local-capability-config was created for implementation but no implementation PR was created at the time of this roadmap update. Resolve actual defects before adding optional coverage. Package order may change for concrete dependencies; document changes here. Treat the native mechanics already implemented as foundations, not as a mandate to port every rule or make every optional capability universal.
+
+### Subsequent phases and acceptance
+
+| Order | Phase | Status | Gate |
+|---|---|---|---|
+| 8 | P2 planned/ad hoc scenario facility | DEFERRED | Begin after main P0/P1 implementation and mechanical readiness; see the following section. |
+| 9 | P2 additional native system experiments | DEFERRED | After generalized facility is mechanically demonstrated, use a bounded Sarna Len adventure first, then Mai Appollonia Yo!, Apocalyptic Seizure!, SH44SER or other systems only as justified. Preserve native rules and source authority; no blanket ruleset ports. |
+| 10 | UAT and resulting corrections | DEFERRED (author request; outstanding P0 acceptance) | Actual author-led Chat play and feedback for the narrative foundation and generated scenario modes; record observed pass/issue/not exercised and resolve material defects. Can resume earlier at author direction. Automated tests and scripted play do not substitute for UAT. |
+| 11 | P3 full-stack service | DEFERRED (last) | Existing master-plan joint strategic/narrative experiential acceptance gate remains unchanged. |
+
+UAT deferral removes the scheduling dependency on author-led testing for continued implementation, including the subsequent scenario facility once mechanical readiness is demonstrated; it does not waive the eventual acceptance gate or authorize full-stack work. Do not turn remaining work into arbitrary completion percentages or a fixed PR count.
 
 ## Subsequent phase — planned and ad hoc scenario facility (DEFERRED, P2)
 
 Author-approved direction (2026-11-27): develop a common facility for preparing a complete scenario from a detailed concept and for initiating play from a minimal gist, with consequential world development during play. The existing imported experimental scenarios remain reference implementations and regression fixtures, not a requirement for indefinite scenario-by-scenario feature parity.
 
-**Entry gate:** complete the main narrative engine implementation priorities and readiness corrections first, including the existing P0/P1 native adjudication, character/NPC continuity, temporal consequences, player recall, GM presentation, replay and qualification work. Record evidence against the current narrative readiness criteria; do not use this new facility to bypass them. Do not promote this phase to WIP merely because a legacy scenario PR merges. Continue the current implementation sequence, with actual player-led qualification distinct from mechanical tests. Full-stack service remains the final P3 phase.
+**Entry gate:** complete the main narrative engine P0/P1 implementation priorities and mechanical readiness corrections in the current roadmap first, including native adjudication, character/NPC continuity, temporal consequences, player recall, GM presentation and replay. Record mechanical verification evidence; do not promote this phase merely because a legacy scenario PR merges. Actual player-led UAT is deferred at author request and does not block continued implementation; it remains an outstanding acceptance requirement before full-stack delivery. Full-stack service remains the final P3 phase.
 
 ### Common facility and operating modes
 
@@ -21,7 +60,7 @@ Both modes use the same native rules, engine, state, transaction and replay path
 | 3 | Generalized intent adjudication and consequential establishment | DEFERRED | Resolve supported non-catalog player actions using native Tests and typed, bounded consequences; establish new actors, locations, connections, objects, facts, opportunities and events only under explicit validated authority. Atomic revision checks, eligibility, visibility and prior-state guards remain authoritative. |
 | 4 | Planned scenario preparation | DEFERRED | LLM converts a detailed concept into the common playable contract, preserving fixed facts, motives, clue paths, pressure, plausible alternatives and open resolutions; validation reports actionable errors rather than silently inventing missing authority. |
 | 5 | Ad hoc scenario initiation and ongoing development | DEFERRED | Start from a gist and develop only relevant material during ordinary Chat play, using the same contract and adjudication paths. No compulsory full outline or pre-authored action tree. |
-| 6 | Integrated qualification | DEFERRED | Complete and resume a genuinely new planned scenario and a different gist-led scenario in ordinary Chat with actual player feedback, meaningful non-catalog decisions, actor-scoped knowledge, credible consequences, source fidelity and exact mechanical replay. Run legacy fixture regressions and verify standalone delivery. |
+| 6 | Integrated mechanical verification; eventual UAT | DEFERRED | Mechanically complete and resume a genuinely new planned scenario and a different gist-led scenario, with meaningful non-catalog decisions, actor-scoped knowledge, credible consequences, source fidelity and exact replay. Run legacy regressions and verify standalone delivery. Actual author-led Chat play and feedback remain a separate deferred acceptance requirement. |
 
 ### Authority and scope
 
