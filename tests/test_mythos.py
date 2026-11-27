@@ -813,6 +813,43 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_behavioral_recognition_requires_observed_distinct_turns(self):
+        import copy
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+
+        def say(state, speaker, claim):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": speaker,
+                "claim": claim, "stance": "unstated", "intent": "unstated"})
+
+        s = say(s, "pc", "Have you heard anything about your brother?")
+        s = say(s, "pc", "Any news from the docks?")
+        s = say(s, "eleanor", "No news.")
+        req = {"id": "pat:questions", "npc": "eleanor", "kind": "recurring",
+               "evidence": ["claim:1", "claim:2"],
+               "interpretation": "He often asks about my brother's disappearance."}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"behavior": req})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"behavior": dict(req, kind="salient", evidence=["claim:3"])})
+        s = mythos.step(mythos.step(s, "move:Harbor Docks"), "move:Harbor Diner")
+        s = say(s, "pc", "Have you heard from your brother today?")
+        req["evidence"] = ["claim:1", "claim:4"]
+        before = copy.deepcopy(s)
+        after = mythos.establish_step(s, {"behavior": req})
+        self.assertEqual(s, before)
+        for key in ("time", "turn", "dxd", "relationships", "flags", "npcs"):
+            self.assertEqual(after[key], s[key])
+        packet = mythos.gm_context(after)["referee"]["behavioral_context"]["eleanor"]
+        self.assertEqual(packet["observed_turns"], 2)
+        self.assertEqual(packet["interpretations"][0]["id"], "pat:questions")
+        self.assertNotIn("claim:3", packet["evidence"])
+        self.assertNotIn("behavioral_recognition", mythos.view(after))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"behavior": dict(req, id="pat:duplicate")})
+        moved = mythos.step(after, "move:Harbor Docks")
+        self.assertNotIn("eleanor", mythos.gm_context(moved)["referee"]["behavioral_context"])
+        mythos.verify(moved)
+
     def test_action_observations_and_silent_duress(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         s = mythos.establish_step(s, {"details": [{"id": "inc:cup", "kind": "object",
