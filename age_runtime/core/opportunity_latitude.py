@@ -108,6 +108,7 @@ def recovery_assessment(brief, level=DEFAULT, complete=False):
     return deepcopy({
         "level": level,
         "closures": closures,
+        "objective_outcomes": brief.get("objective_outcomes", {}),
         "remaining_turns": brief.get("remaining_turns"),
         "alternatives": alternatives,
         "session_ended": complete,
@@ -123,3 +124,45 @@ def recovery_assessment(brief, level=DEFAULT, complete=False):
         ),
         "terminal_failure_established": False,
     })
+
+
+def objective_outcomes(definitions, observed, reports, projects, minute, end_minute, turn_minutes):
+    """Conservative goal classification from own observations, never hidden values.
+
+    Project progress is monotone and increases at most once per resolution.
+    Only directly bound progress thresholds receive an early impossibility proof.
+    Other variables may change by mechanisms not represented in the local brief.
+    """
+    remaining = (max(0, end_minute - minute) + turn_minutes - 1) // turn_minutes
+    ended = minute >= end_minute
+    by_progress = {p["progress"]: p for p in projects}
+    result = {}
+    for ident, definition in definitions.items():
+        key = definition["key"]
+        report = reports.get(key, {})
+        observation = observed.get(ident)
+        record = {"description": definition["description"], "status": "unconfirmed",
+                  "terminal": ended}
+        if observation is None or report.get("status") != "current":
+            record["basis"] = "No current actor-visible report; do not infer final outcome."
+        elif ended:
+            record.update(status="achieved" if observation["met"] else "objective_failure",
+                          basis="Current report at configured scenario end.")
+        else:
+            project = by_progress.get(key)
+            actual = observation["actual"]
+            threshold = definition["threshold"]
+            comparison = definition["comparison"]
+            if project is not None:
+                ceiling = min(project["stages"], actual + remaining)
+                record["modeled_range"] = {"minimum": actual, "maximum": ceiling}
+                impossible = ((comparison in ("at_least", "equal") and threshold > ceiling)
+                              or (comparison in ("at_most", "equal") and threshold < actual))
+                if impossible:
+                    record.update(status="objective_failure",
+                                  basis="Threshold outside proven modeled project progress bounds.")
+            if record["status"] != "objective_failure":
+                record.update(status="currently_met" if observation["met"] else "open",
+                              basis="Current report; final outcome not yet established.")
+        result[ident] = record
+    return result

@@ -96,3 +96,42 @@ class OpportunityLatitudeTest(unittest.TestCase):
         self.assertFalse(result["alternatives"])
         self.assertFalse(result["terminal_failure_established"])
         self.assertTrue(result["novel_proposals"]["player_proposals_allowed"])
+
+
+    def test_objective_bounds_and_terminal_report_uncertainty(self):
+        definitions = {
+            "full": {"key": "progress", "threshold": 3, "comparison": "at_least", "description": "Full"},
+            "partial": {"key": "progress", "threshold": 1, "comparison": "at_least", "description": "Partial"},
+            "limit": {"key": "progress", "threshold": 0, "comparison": "at_most", "description": "Limit"},
+            "reserve": {"key": "stock", "threshold": 1, "comparison": "at_least", "description": "Reserve"},
+        }
+        observed = {"full": {"actual": 1, "met": False}, "partial": {"actual": 1, "met": True},
+                    "limit": {"actual": 1, "met": False}, "reserve": {"actual": 0, "met": False}}
+        reports = {"progress": {"status": "current"}, "stock": {"status": "stale"}}
+        projects = [{"progress": "progress", "stages": 3}]
+        outcomes = latitude.objective_outcomes(definitions, observed, reports, projects, 30, 40, 10)
+        self.assertEqual(outcomes["full"]["status"], "objective_failure")
+        self.assertEqual(outcomes["full"]["modeled_range"], {"minimum": 1, "maximum": 2})
+        self.assertEqual(outcomes["partial"]["status"], "currently_met")
+        self.assertEqual(outcomes["limit"]["status"], "objective_failure")
+        self.assertEqual(outcomes["reserve"]["status"], "unconfirmed")
+        terminal = latitude.objective_outcomes(definitions, observed, reports, projects, 40, 40, 10)
+        self.assertEqual(terminal["partial"]["status"], "achieved")
+        self.assertEqual(terminal["full"]["status"], "objective_failure")
+        self.assertEqual(terminal["reserve"]["status"], "unconfirmed")
+
+    def test_actual_goal_failure_does_not_end_session(self):
+        from age_runtime.core.private_play import pending_factions, model_packet, model_choice, update
+        session = start_rehearsal(ROOT, SID, "fiji")
+        for _ in range(2):
+            for actor in pending_factions(session):
+                packet = model_packet(session, actor)
+                session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
+            session = update(session, turns=1)
+        brief = decision_brief(session)
+        self.assertEqual(brief["objective_outcomes"]["claims"]["status"], "objective_failure")
+        self.assertEqual(brief["objective_outcomes"]["reserve"]["status"], "currently_met")
+        self.assertFalse(brief["complete"])
+        self.assertFalse(brief["recovery_assessment"]["terminal_failure_established"])
+        self.assertTrue(brief["recovery_assessment"]["alternatives"])
+        self.assertEqual(briefing(session)["objective_outcomes"], brief["objective_outcomes"])

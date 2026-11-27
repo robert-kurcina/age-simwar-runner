@@ -77,6 +77,7 @@ def decision_brief(observation):
     return deepcopy({
         "actor": observation["actor"], "turn": observation["turn"], "minute": observation["minute"],
         "goals": goals, "remaining_turns": support.get("remaining_turns"),
+        "objective_outcomes": observation.get("objective_outcomes", {}),
         "decision_pacing": observation.get("decision_pacing"),
         "changed_reports": support.get("report_changes", {}),
         "uncertain_reports": {key: report for key, report in observation["reports"].items()
