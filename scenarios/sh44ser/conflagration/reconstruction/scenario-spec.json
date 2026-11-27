@@ -401,7 +401,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "The post-Charter order is developing; technical infrastructure recovery remains important.",
+          "value": "The post-Charter order is developing; technical infrastructure recovery remains important. No operational spaceport capacity or dated 2011 institutional change is assumed at January opening.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -429,7 +429,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Domestic civilian programs and reviewed international cooperation.",
+          "value": "Domestic civilian programs and voluntary international cooperation within exercise terms.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {
@@ -460,7 +460,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "The Suva reconstruction program includes housing, port, power and registry recovery.",
+          "value": "The 2010 reconstruction plan includes housing, port, power and registry recovery; no later completion or technology deployment is assumed.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
@@ -488,7 +488,7 @@
         },
         "commitments.authority": {
           "unit": "text",
-          "value": "Domestic civilian programs and reviewed funding agreements.",
+          "value": "Domestic civilian programs and voluntary funding arrangements within exercise terms.",
           "classification": "hypothetical",
           "reason": "Conservative exercise authority; only reviewed supported actions may be adjudicated.",
           "evidence": {
@@ -519,7 +519,7 @@
       "properties": {
         "conditions.opening": {
           "unit": "text",
-          "value": "Port-Vila reconstruction includes housing, port and geothermal development.",
+          "value": "The 2010 reconstruction plan includes housing, port and energy development; later geothermal construction and operating capacity are not assumed.",
           "classification": "hypothetical",
           "reason": "Illustrative exercise context based on the cited retrospective history; no later outcomes assumed at opening.",
           "evidence": {
