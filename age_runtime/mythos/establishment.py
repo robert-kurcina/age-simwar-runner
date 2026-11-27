@@ -1,7 +1,7 @@
 """Delegated, mundane narrative establishment, not mechanical adjudication."""
 import copy
 import re
-from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time
+from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions
 
 def text(value, limit):
     if not isinstance(value, str) or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
@@ -14,6 +14,8 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
+    if isinstance(request, dict) and set(request) == {"object_action"}:
+        return object_actions.record(state, rules, request["object_action"], local_entities, text)
     if isinstance(request, dict) and set(request) == {"npc_activity"}:
         return npc_time.record(state, rules, request["npc_activity"], npc_available, text)
     if isinstance(request, dict) and set(request) == {"emotion"}:
@@ -97,7 +99,11 @@ def local_entities(state):
     entities = {e["id"]: copy.deepcopy(e) for e in state.get("established_details", [])}
     updates = [(c.get("sequence", 0), "property", c) for c in state.get("detail_changes", [])]
     updates += [(c["sequence"], "transfer", c) for c in state.get("custody_transfers", [])]
+    updates += [(c["sequence"], "action", c) for c in state.get("object_actions", [])]
     for _, kind, change in sorted(updates, key=lambda entry: entry[0]):
+        if kind == "action":
+            object_actions.apply(entities[change["object"]], change)
+            continue
         entity = entities[change["id"]]
         if kind == "transfer":
             entity["custodian"] = change["to"]
@@ -179,6 +185,8 @@ def modify(state, rules, changes, npc_available=None):
         if (eid, field) in seen:
             raise ValueError("duplicate property change in batch")
         seen.add((eid, field))
+        if field == "condition" and entities[eid].get("lifecycle", "intact") != "intact":
+            raise ValueError("damaged object condition requires lifecycle adjudication")
         if field == "placement" and entities[eid].get("custodian") is not None:
             raise ValueError("held object has no local placement")
         holder = entities[eid].get("custodian")
@@ -208,6 +216,9 @@ def referee_projection(state):
         changes = [copy.deepcopy(c) for c in state.get("detail_changes", []) if c["id"] == e["id"]]
         if changes:
             e["property_history"] = changes
+        actions = [copy.deepcopy(c) for c in state.get("object_actions", []) if c["object"] == e["id"]]
+        if actions:
+            e["action_history"] = actions
         transfers = [copy.deepcopy(c) for c in state.get("custody_transfers", []) if c["id"] == e["id"]]
         if transfers:
             e["custody_history"] = transfers
