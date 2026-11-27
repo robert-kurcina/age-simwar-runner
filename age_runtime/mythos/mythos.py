@@ -730,12 +730,42 @@ def establish_step(state, request):
     result["history"].append({"establish": copy.deepcopy(request)})
     return result
 
+def batch_step(state, request):
+    """Apply ordered, nonmechanical operations to an isolated checkpoint.
+
+    Constituent history entries retain existing replay and sequence semantics.
+    No partial checkpoint is returned or saved on failure.
+    """
+    _, rules = load(state["scenario"])
+    if not rules.get("narrative_batch") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
+        raise ValueError("narrative batch unavailable")
+    if not isinstance(request, dict) or set(request) != {"operations"}:
+        raise ValueError("invalid narrative batch")
+    operations = request["operations"]
+    if not isinstance(operations, list) or not 1 <= len(operations) <= 24:
+        raise ValueError("narrative batch requires 1 to 24 operations")
+    # Existing validators and history writers remain authoritative.
+    result = state
+    for index, op in enumerate(operations, 1):
+        if not isinstance(op, dict) or len(op) != 1:
+            raise ValueError(f"invalid narrative operation {index}")
+        try:
+            if "dialogue" in op:
+                result = dialogue_step(result, op["dialogue"])
+            elif "establish" in op:
+                result = establish_step(result, op["establish"])
+            else:
+                raise ValueError("unsupported narrative operation")
+        except ValueError as exc:
+            raise ValueError(f"narrative operation {index}: {exc}") from exc
+    return result
+
 def establish(path, request, revision):
     state = read(path)
     verify(state)
     if digest(state) != revision:
         raise ValueError("stale session revision")
-    state = establish_step(state, request)
+    state = batch_step(state, request) if isinstance(request, dict) and "operations" in request else establish_step(state, request)
     verify(state)
     save(path, state)
     return view(state)
@@ -871,6 +901,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
+                **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
                 **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
                 **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
