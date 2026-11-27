@@ -362,3 +362,9 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 ## ST-D — contrasting campaign outcomes
 
 - WIP (CI pending): add scripted full-horizon divergent routes for Disaster Response, Mainlander Ingress, Reconstruction, Purge and Agreement, complementing existing Fallout and RWF routes. Exercise resource opportunity costs, multi-axis bottlenecks, independent consent, withheld assent and prerequisite failure; verify deterministic replay. No new mechanics or scenario changes. Mechanical tests do not qualify independent LLM judgment, pacing or author acceptance. Actual pinned-source compilation and reviewed registration remain separate pending gates.
+
+
+## ST-D — contextual decision presentation
+
+- DONE (mechanical): PR #204 Tests 46058180782 and Chat runtime bundle 46058180841 passed. Contrasting scripted outcomes cover all seven episodes.
+- WIP (CI pending): derive a read-only decision brief from the existing actor-local observation and institutional recall. Include ordered own goals, current/stale reports, changes, deadlines, pending orders, project bottlenecks, recent claims and decisions, unsettled propositions, negotiation, and supported options. Shared-budget warnings distinguish individually feasible orders from collectively unaffordable alternatives; no reservation or forecast. Expose `decision-brief SESSION` through existing private play CLI. Full briefing and memory remain authoritative projections; no new state, pacing effect, consent, or model policy. Actual literary presentation and independent faction decisions remain unqualified; canonical compilation and reviewed registration outstanding.

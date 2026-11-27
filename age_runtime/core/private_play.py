@@ -292,6 +292,14 @@ def institutional_memory(session, counterpart=None):
     return recall(view(session)["observation"], counterpart)
 
 
+def decision_brief(session):
+    """Read-only decision support; full briefing and recall remain available."""
+    from age_runtime.core.decision_support import decision_brief as project
+    current = view(session)
+    return {"revision": digest(session), "complete": current["complete"],
+            "title": current["title"], **project(current["observation"])}
+
+
 def briefing(session):
     """Actor-visible facts only; never expose source excerpts or full checkpoints."""
     current = view(session)
@@ -546,6 +554,8 @@ def main(argv=None):
     memory = commands.add_parser("memory", help="Read-only actor-scoped institutional recall")
     memory.add_argument("session", type=Path)
     memory.add_argument("--counterpart")
+    decision_support = commands.add_parser("decision-brief", help="Read-only contextual decision support")
+    decision_support.add_argument("session", type=Path)
     pending = commands.add_parser("pending-factions")
     pending.add_argument("session", type=Path)
     turn = commands.add_parser("resolve-turn")
@@ -620,6 +630,8 @@ def main(argv=None):
             result = briefing(session)
         elif a.command == "memory":
             result = institutional_memory(read(a.session), a.counterpart)
+        elif a.command == "decision-brief":
+            result = decision_brief(read(a.session))
         elif a.command == "pending-factions":
             session = verify(read(a.session))
             result = {"revision": digest(session), "pending": pending_factions(session)}
