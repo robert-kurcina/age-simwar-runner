@@ -178,6 +178,8 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
                 profile["concerns"]["capacity"]["resilience"] += profile.get("skills", {}).get("Grit", 0)
     npc_agenda.validate(rules)
     npc_time.initialize(state, rules)
+    npc_agenda.initialize_presence(state, rules)
+    npc_agenda.observe_boundary(state, rules)
     npc_agency.initialize(state, rules)
     return state
 
@@ -421,6 +423,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
     boundaries = sorted(set([finish] + [datetime.fromisoformat(e["at"]) for e in events]))
     reason = None
     while cursor < finish:
+        npc_agenda.observe_boundary(state, rules, engaged=engaged)
         boundary = next(b for b in boundaries if b > cursor)
         boundary = timed_details.next_boundary(state, cursor, boundary)
         boundary = npc_time.next_boundary(state, cursor, boundary)
@@ -441,6 +444,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         advance_events(state, rules, cursor)
         npc_travel.resolve(state, rules, cursor)
         timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
+        npc_agenda.observe_boundary(state, rules, engaged=engaged)
         if mode != "sleep" and clock["pending_sleep_seconds"] == 0:
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
             reason = "involuntary_sleep"
@@ -520,6 +524,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
             advance_events(state, rules, arrival)
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
     state["location"] = a.get("location", state["location"])
+    npc_agenda.observe_boundary(state, rules, engaged=a.get("npc"))
     if rules.get("routine_observations"):
         activity_observers = _available_local_npcs(state, rules)
     if clock:
@@ -786,6 +791,7 @@ def _apply_establishment(state, rules, request):
         social_demeanor(state, rules, request["social_demeanor"])
     else:
         establishment.record(state, rules, request, npc_available)
+    npc_agenda.observe_boundary(state, rules)
     state["history"].append({"establish": copy.deepcopy(request)})
 
 
