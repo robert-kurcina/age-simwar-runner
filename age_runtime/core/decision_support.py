@@ -4,6 +4,39 @@ from copy import deepcopy
 from age_runtime.core.institutional_memory import recall
 
 
+def diplomatic_options(observation, remaining):
+    """Surface existing reviewed terms, not predictions of counterpart consent."""
+    if remaining == 0:
+        return []
+    negotiation = observation.get("negotiation", {})
+    actor = observation["actor"]
+    result = []
+    for counterpart, terms in negotiation.get("counterpart_terms", {}).items():
+        for ident, term in terms.items():
+            result.append({"kind": "transfer_proposal", "counterpart": counterpart,
+                           "term": ident, "terms": term,
+                           "last_due_minute": negotiation["last_due_minute"],
+                           "requires_consent": True})
+    for ident, term in negotiation.get("permission_terms", {}).items():
+        if term["max_due_minute"] <= observation["minute"]:
+            continue
+        if any(p.get("permission") == ident and p["status"] in ("proposed", "active")
+               for p in negotiation.get("proposals", [])):
+            continue
+        counterpart = term["grantee"] if actor == term["issuer"] else term["issuer"]
+        result.append({"kind": "permission_proposal", "counterpart": counterpart,
+                       "term": ident, "terms": term,
+                       "last_due_minute": term["max_due_minute"], "requires_consent": True})
+    for proposal in negotiation.get("proposals", []):
+        if (proposal["recipient"] == actor and proposal["status"] == "proposed"
+                and proposal["due_minute"] > observation["minute"]):
+            result.append({"kind": "proposal_response", "id": proposal["id"],
+                           "counterpart": proposal["proposer"],
+                           "due_minute": proposal["due_minute"],
+                           "choices": ["accept", "reject", "counter"]})
+    return result
+
+
 def decision_brief(observation):
     """Derive a concise decision packet from the existing observation."""
     history = recall(observation)
@@ -56,9 +89,14 @@ def decision_brief(observation):
         "unsettled_propositions": {pid: record for pid, record in history["propositions"].items()
                                    if record["latest_stance"] in ("unstated", "unknown", "doubts")},
         "options": options, "shared_budget_warnings": conflicts,
+        "diplomatic_options": diplomatic_options(observation, support.get("remaining_turns")),
+        "horizon_basis": support.get("horizon_basis"),
         "negotiation": observation.get("negotiation", {}),
         "guidance": "Retrieve older relevant records before presenting a consequential choice. "
                     "Explain the current stakes, feasible alternatives, uncertainties and prior commitments. "
                     "Do not infer consent, treat claims as facts, or guarantee fulfillment. "
-                    "Decision targets are advisory; routine orders and reading do not require a Critical Decision.",
+                    "Explain deadline bounds and distinguish immediate marginal benefit from feasibility. "
+                    "Include relevant diplomatic alternatives without implying consent or funding. "
+                    "Decision targets are advisory; routine orders, reading and ordinary waiting do not require a Critical Decision. "
+                    "Count deliberate inaction only when it is a confirmed consequential commitment.",
     })

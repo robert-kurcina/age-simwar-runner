@@ -23,11 +23,18 @@ def validate_views(s):
 
 def strategic_support(s, state, actor_id, values, reports, projects, requests):
     """Derived actor-local assessments; no predicted adjudication or new state."""
+    remaining = (max(0, s["end_minute"] - state["minute"]) + s["turn_minutes"] - 1) // s["turn_minutes"]
     assessments = []
     for p in projects:
         ratings = [(a["axis"], values[a["key"]]) for a in p["axes"]]
         current = bottleneck(p["need"], ratings)
-        assessments.append({"id": p["id"], "progress": values[p["progress"]],
+        stages_left = p["stages"] - values[p["progress"]]
+        assessments.append({"id": p["id"],
+                            "horizon": {"stages_remaining": stages_left,
+                                        "maximum_future_stages": remaining,
+                                        "slack_turns": remaining - stages_left,
+                                        "possible_at_maximum_rate": stages_left <= remaining,
+                                        "progress_if_capacity_unchanged": min(stages_left, remaining) if current["outcome"] == "clear" else 0}, "progress": values[p["progress"]],
                             "stages": p["stages"], "delay": values[p["delay"]],
                             "complications": values[p["complications"]],
                             "complete": values[p["progress"]] >= p["stages"],
@@ -54,6 +61,13 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
                 "bottleneck": bottleneck(p["need"], [
                     (x["axis"], values[x["key"]] + (x["key"] == a["capacity"]))
                     for x in p["axes"]])}
+        if reason is None:
+            before = bottleneck(p["need"], [(x["axis"], values[x["key"]]) for x in p["axes"]])
+            after = choice["if_fulfilled"]["bottleneck"]
+            choice["project_effect"] = ("already_clear" if before["outcome"] == "clear" else
+                                        "clears_bottleneck" if after["outcome"] == "clear" else
+                                        "reduces_shortfall" if after["shortfall"] < before["shortfall"] else
+                                        "no_immediate_shortfall_reduction")
         choices[action] = choice
     # Compare report cutoffs, not hidden current values. A delayed report may
     # first become available this turn; never infer the unknown prior value.
@@ -105,7 +119,8 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
                                and r["status"] == "validated_request"],
             "latest_project_results": [deepcopy(r) for r in state.get("project_results", [])
                                        if r["participant"] == actor_id and r["minute"] == state["minute"]],
-            "remaining_turns": (max(0, s["end_minute"] - state["minute"]) + s["turn_minutes"] - 1) // s["turn_minutes"],
+            "remaining_turns": remaining,
+            "horizon_basis": "At most one project stage per resolution; constant-capacity illustration excludes pending orders and future changes.",
             "option_basis": "Current reported values; pending orders, competing spending and future events may change fulfillment."}
 
 

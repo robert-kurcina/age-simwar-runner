@@ -88,3 +88,34 @@ class StrategicDecisionBriefTest(unittest.TestCase):
             candidate = accept_faction_choice(s, state, actor, packet, response)
             self.assertEqual(candidate["minute"], state["minute"])
             self.assertEqual(digest(state), before)
+
+    def test_project_horizon_and_diplomatic_alternatives(self):
+        s = load("mainlander-ingress")["scenario"]
+        state = initialize(s)
+        opening = decision_brief(observe(s, state, "fiji"))
+        self.assertTrue(any(o["kind"] == "transfer_proposal" and o["counterpart"] == "shanter"
+                            for o in opening["diplomatic_options"]))
+        self.assertTrue(any(o["kind"] == "permission_proposal" and o["counterpart"] == "vanuatu"
+                            for o in opening["diplomatic_options"]))
+        claims = next(p for p in opening["projects"] if p["id"] == "fiji_claims")
+        self.assertEqual(claims["horizon"]["slack_turns"], 1)
+        self.assertEqual(claims["horizon"]["progress_if_capacity_unchanged"], 0)
+        state = decide(s, state, "fiji", "reception", action="fiji_reception_improve_logistics")
+        state = finish(s, state)
+        state = finish(s, state)
+        brief = decision_brief(observe(s, state, "fiji"))
+        claims = next(p for p in brief["projects"] if p["id"] == "fiji_claims")
+        self.assertFalse(claims["horizon"]["possible_at_maximum_rate"])
+        self.assertEqual(claims["horizon"]["slack_turns"], -1)
+
+    def test_investment_effect_does_not_change_legality(self):
+        s = load("mainlander-ingress")["scenario"]
+        action = "fiji_reception_improve_logistics"
+        a = s["capacity_actions"][action]
+        s["initial"][a["capacity"]] = 3
+        state = initialize(s)
+        brief = decision_brief(observe(s, state, "fiji"))
+        option = next(o for o in brief["options"] if o["id"] == action)
+        self.assertTrue(option["assessment"]["currently_feasible"])
+        self.assertEqual(option["assessment"]["project_effect"], "already_clear")
+        self.assertIn(action, observe(s, state, "fiji")["available_requests"])
