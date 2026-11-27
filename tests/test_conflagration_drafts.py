@@ -88,6 +88,17 @@ class ConflagrationDrafts(unittest.TestCase):
         self.assertEqual(candidate["id"], "wpc")
         self.assertNotIn("wpc", load("reconstruction")["scenario"]["actors"])
 
+    def test_campaign_presentation_is_chronological(self):
+        groups = inventory(CATALOG)["groups"]
+        self.assertEqual([g["id"] for g in groups], [
+            "hexaday", "disaster-response", "fallout", "mainlander-ingress",
+            "early-reconstruction", "purge", "agreement", "reconstruction"])
+        dates = [load(g["id"])["effective_date"] for g in groups if g["scenarios"]]
+        self.assertEqual(dates, sorted(dates))
+        self.assertFalse(groups[0]["scenarios"])
+        self.assertTrue(all(e["status"] == "draft-unreviewed"
+                            for g in groups for e in g["scenarios"]))
+
     def test_fallout_four_routes(self):
         s = load("fallout")["scenario"]
         state = initialize(s)
