@@ -138,3 +138,29 @@ class StrategicPermissionTests(unittest.TestCase):
         del disabled["dynamic_negotiation"]
         old = initialize(disabled)
         self.assertNotIn("negotiation", observe(disabled, old, "council"))
+
+    def test_permission_and_economic_settlement_remain_separate(self):
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["permission_terms"] = {
+            "visit": {"issuer": "central", "grantee": "foundation",
+                      "description": "Visit the local service office.",
+                      "max_due_minute": 20160}}
+        state = initialize(s)
+        state = negotiate(s, state, "central", digest(state),
+                          {"kind": "propose", "id": "transfer", "recipient": "east",
+                           "transfers": ["central_support_east"], "due_minute": 10080})
+        state = negotiate(s, state, "central", digest(state),
+                          {"kind": "propose", "id": "permission", "recipient": "foundation",
+                           "permission": "visit", "due_minute": 20160})
+        state = self.model(s, state, "east", {"kind": "accept", "id": "transfer"})
+        state = self.model(s, state, "foundation", {"kind": "accept", "id": "permission"})
+        state = self.model(s, state, "west")
+        self.assertEqual(state["values"], s["initial"])
+        state = advance(s, state)
+        self.assertEqual(state["negotiations"]["transfer"]["status"], "fulfilled")
+        self.assertTrue(active_permission(s, state, "visit", "central", "foundation"))
+        self.assertEqual(state["values"]["central_credits"], s["initial"]["central_credits"] - 1)
+        self.assertEqual(state["values"]["east_credits"], s["initial"]["east_credits"] + 1)
+        verify_checkpoint(s, state)
+
