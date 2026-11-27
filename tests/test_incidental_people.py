@@ -54,7 +54,7 @@ class IncidentalPeopleTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 mythos.establish_step(state, {"incidental_person": request})
-        state = mythos.step(state, "move:Harbor Diner")
+        state = mythos.step(state, "move:Creek Inlet South")
         with self.assertRaises(ValueError):
             mythos.establish_step(state, {"incidental_person": {
                 "kind": "recognize", "id": "person:harbor_worker", "basis": "A coincidence."}})
@@ -66,3 +66,21 @@ class IncidentalPeopleTests(unittest.TestCase):
         after = mythos.step(state, "observe")
         self.assertEqual(after["incidental_people"], {})
         self.assertEqual(mythos.gm_context(after, compact=True)["referee"]["incidental_people"], [])
+
+
+    def test_cross_node_recognition_requires_elapsed_public_route(self):
+        state = self.introduce(mythos.initial("boothbay", 42))
+        request = {"incidental_person": {"kind": "recognize",
+                    "id": "person:harbor_worker", "basis": "The same worker."}}
+        impossible = copy.deepcopy(state)
+        impossible["location"] = "Harbor Diner"
+        impossible["time"] = "1927-10-13T08:04:59"
+        with self.assertRaises(ValueError):
+            mythos.establish_step(impossible, request)
+        state = mythos.step(state, "move:Harbor Diner")
+        state = mythos.establish_step(state, request)
+        person = mythos.view(state)["incidental_people"][0]
+        self.assertEqual(person["id"], "person:harbor_worker")
+        self.assertEqual(person["location"], "Harbor Diner")
+        self.assertEqual(person["encounters"], 2)
+        mythos.verify(state)
