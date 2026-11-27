@@ -548,3 +548,7 @@ Derive active objective evidence from the original and latest review source refe
 ## Shared Opportunity Latitude — planned integration
 
 Author approved shared three-level facilitator policy (permissive/balanced/strict). Reuse `age_runtime.core.opportunity_latitude` in narrative initialization, persistent session settings and contextual adjudication guidance. Distinguish failed methods, closed opportunities, unreachable objectives and terminal failure; never invent physical effects, NPC consent, resources or recovered time. Preserve legacy balanced default and session integrity. Strategic thread implements shared module and strategic wiring; narrative thread owns narrative-specific integration and qualification. No narrative runtime changes in this strategic PR.
+
+### Narrative Opportunity Latitude integration (WIP)
+
+PR #223 merged. Shared core policy now selected at narrative initialization (scenario default balanced; optional explicit CLI override), persisted with a deterministic settings digest, replay-validated and projected in player recap and private GM context for both detailed and authored-only trials. Legacy checkpoints without settings retain balanced behavior. No changes to legal actions, elapsed time, Tests, NPC eligibility or effects. Ended sessions receive outcome-only guidance. Tests authored across Boothbay, Castine and Ram Island; CI pending. This supplies the facilitation policy needed by the next selective agenda/presence pilot; no agenda materialization or population mechanics yet. UAT deferred.
