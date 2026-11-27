@@ -7,6 +7,7 @@ from age_runtime.core.actors import evaluate
 from age_runtime.core.economy import bottleneck
 from age_runtime.core.diplomacy import history as diplomatic_history
 from age_runtime.core.establishment import view as established_context
+from age_runtime.core.event_generator import view as development_view
 
 def validate_views(s):
     for actor in s.get("actors", {}).values():
@@ -149,6 +150,7 @@ def observe(s, state, actor_id):
     observation = {
         **negotiation_view(s, state, actor_id),
         **communication_view(s, state, actor_id),
+        **development_view(s, state, actor_id),
         **strategy,
         **pacing,
         **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s or "agreements" in s else {}),
