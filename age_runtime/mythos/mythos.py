@@ -428,7 +428,7 @@ def advance_opposition(state, rules, action, success):
         state["flags"].append(cfg["grant"])
         state["observations"].append(cfg["observation"])
 
-def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=False):
+def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=False, engaged=None):
     """Apply recovery and events in chronological order, stopping at explicit interruptions."""
     pc = state["dxd"]
     clock = pc["activity"]
@@ -455,7 +455,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         dxd_morale.calm(pc["morale"], safe=safe, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
         cursor += timedelta(seconds=actual)
         state["time"] = cursor.isoformat()
-        npc_time.advance(state, rules, actual)
+        npc_time.advance(state, rules, actual, engaged=engaged)
         narrative_events.advance_time(state, rules, actual)
         advance_events(state, rules, cursor)
         npc_travel.resolve(state, rules, cursor)
@@ -547,8 +547,10 @@ def step(state, action, proposal=None, commitment=None):
                 or not npc_available(state, rules, a)
                 or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
-        if a.get("npc"):
-            npc_time.interrupt(state, a["npc"])
+        engaged = a.get("npc")
+        sleep_episode = state["npcs"][engaged].get("activity", {}).get("sleep_episode") if engaged else None
+        if engaged:
+            npc_time.interrupt(state, engaged)
         mode = a.get("activity", "active")
         if action == "sleep_room":
             for key, amount in a.get("cost", {}).items():
@@ -558,7 +560,7 @@ def step(state, action, proposal=None, commitment=None):
             for key, amount in a["cost"].items():
                 state["resources"][key] -= amount
         reason = activity_segment(state, rules, a.get("local_seconds", a["duration_seconds"]), mode,
-                                  safe=a.get("safe", False), interruptible=mode in ("rest", "low_energy", "sleep", "restorative", "quiet"))
+                                  safe=a.get("safe", False), interruptible=mode in ("rest", "low_energy", "sleep", "restorative", "quiet"), engaged=engaged)
         if mode == "sleep":
             pc = state["dxd"]
             before = dxd_conditions.degrees(pc["concerns"])["stress"]
@@ -570,6 +572,8 @@ def step(state, action, proposal=None, commitment=None):
             return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
         if reason:
             return finish_activity(state, rules, action, a, False, reason, proposal)
+        if rules.get("npc_lifecycle") and engaged and state["npcs"][engaged].get("activity", {}).get("sleep_episode") != sleep_episode:
+            return finish_activity(state, rules, action, a, False, "npc_sleep_interruption", proposal)
         if (any(f in state["flags"] for f in a.get("excludes_flags", []))
                 or not all(f in state["flags"] for f in a.get("requires_flags", []))
                 or not npc_available(state, rules, a)
@@ -977,7 +981,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
-                **({"npc_temporal": npc_time.projection(state, conversational)} if rules.get("npc_temporal") else {}),
+                **({"npc_temporal": npc_time.projection(state, state['npcs'] if rules.get('npc_lifecycle') else conversational)} if rules.get("npc_temporal") else {}),
                 **({"contextual_reminders": reminders.projection(state, conversational)} if rules.get("epistemic_dialogue") else {}),
                 **({"emotional_context": emotions.projection(state, conversational)} if rules.get("interpersonal_duress") else {}),
                 **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
