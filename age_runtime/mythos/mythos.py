@@ -774,6 +774,15 @@ def gm_context(state):
     legal = options(state, rules)
     local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
     relevant = {a["npc"] for a in local if "npc" in a}
+    # Dialogue does not end when the last mechanical topic is spent.
+    # Only anchored, currently available participants can converse without
+    # an action. An unanchored contact still needs an authorized encounter.
+    conversational = {key for key, npc in state["npcs"].items()
+                      if npc["location"] == state["location"]
+                      and npc_available(state, rules, {"npc": key, "location": state["location"]})}
+    if state["ending"] or pc.get("activity", {}).get("status") == "asleep":
+        conversational = set()
+    relevant |= conversational
     return {"audience": "gm_only", "source_revision": state["source"],
             "player_surface": recent,
             "referee": {
@@ -785,6 +794,12 @@ def gm_context(state):
                                   "disclosed": state["npcs"][key]["disclosed"],
                                   "secret": state["npcs"][key]["secret"],
                                   "location": state["npcs"][key]["location"],
+                                  "conversation_available": key in conversational,
+                                  "encounters": state["npcs"][key]["encounters"],
+                                  "last_contact": state["npcs"][key]["last_contact"],
+                                  "demeanor": state["relationships"].get(key),
+                                  "source_traits": copy.deepcopy(state["npcs"][key]["traits"]),
+                                  "local_actions": [a["id"] for a in local if a.get("npc") == key],
                                   "skills": copy.deepcopy(state["npcs"][key].get("skills", {})),
                                   "traits": copy.deepcopy(state["npcs"][key].get("dxd_traits", {}))}
                                  for key in sorted(relevant)],
