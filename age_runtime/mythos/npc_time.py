@@ -154,6 +154,8 @@ def interrupt_work(state, nid, at, reason):
     task = pending_work(state, nid)
     if task:
         task.update(status="interrupted", interrupted_at=at, interruption=reason)
+        if "task_history" in task:
+            task["task_history"].append({"operation": "interrupt", "at": at, "reason": reason, "work_seconds": task["work_seconds"]})
 
 def interrupt(state, nid, reason="interaction"):
     interrupt_work(state, nid, state["time"], reason)
@@ -179,6 +181,10 @@ def next_boundary(state, cursor, finish):
             wake = cursor + timedelta(seconds=clock["required_sleep_seconds"]-clock["sleep_seconds"])
             if cursor < wake < finish:
                 finish = wake
+        elif clock["pending_sleep_seconds"]:
+            onset = cursor + timedelta(seconds=clock["pending_sleep_seconds"])
+            if cursor < onset < finish:
+                finish = onset
         midnight = cursor.replace(hour=0, minute=0, second=0, microsecond=0)
         for day in (midnight, midnight + timedelta(days=1)):
             for w in npc["daily_schedule"]:
@@ -223,6 +229,8 @@ def advance(state, rules, seconds, engaged=None):
             exposure = plan.get("stress_interval_seconds") if plan else None
             if exposure:
                 span = min(span, exposure - plan["exposure_seconds"] % exposure)
+            if traveling and rules.get("npc_lifecycle"):
+                span = min(span, 600 - traveling.get("walk_seconds", 0) % 600)
             if task and (mode != "active" or npc["location"] != task["location"]):
                 interrupt_work(state, nid, cursor.isoformat(), "activity_changed")
                 task = None
@@ -262,5 +270,6 @@ def projection(state, participants):
                   "morale": copy.deepcopy(state["npcs"][nid]["morale"]),
                   **({"schedule": copy.deepcopy(state["npcs"][nid]["daily_schedule"]),
                       "morning_until": state["npcs"][nid]["morning_until"],
+                      "current_occupation": copy.deepcopy(occupational_window(state["npcs"][nid], datetime.fromisoformat(state["time"]))) if state["npcs"][nid]["activity"]["status"] == "awake" and not state["npcs"][nid]["activity_plan"] and not pending_work(state, nid) and not any(e["npc"] == nid and e["status"] == "traveling" for e in state.get("npc_travel", [])) else None,
                       "location": state["npcs"][nid]["location"]} if "daily_schedule" in state["npcs"][nid] else {})}
             for nid in sorted(participants) if "activity" in state["npcs"][nid]}
