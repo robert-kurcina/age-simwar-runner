@@ -484,3 +484,7 @@ PR #238 merged; CI pending at inspection. Add `private discover` to expose fresh
 ## ST-S — Offline Conflagration draft delivery (WIP)
 
 PR #239 merged; CI pending at inspection. Add a campaign-specific launch artifact to the existing pinned runtime workflow. Reuse the exact tracked source ZIP and checksum; supply a dedicated offline launch guide and exercise all seven episodes and 25 perspectives through terminal abstention and verified checkpoints in an extracted runtime without owner mappings. No private vault bytes, no automatic reviewed status and no new archive format. This is a full runtime with a Conflagration-specific entry point, not a physically minimal campaign-only binary. CI pending. Next obtain the actual successful artifact and perform facilitator qualification; reviewed distribution and author UAT remain separate.
+
+## Multi-phase institutional memory checkpoint
+
+PR #246 merged; Tests 46084860762 and bundle 46084860783 passed. Explicit prior-origin selectors retain original dated historical records over multiple unreviewed episodes. Referee-only independent model-faction selectors use each actor's own observation; player preview excludes them. Version 2 lineage records multiple origins while preserving version 1 verification and reviewed carry restrictions. Tests exercise three actual episodes, private information isolation and target baseline. CI pending. Next campaign progression presentation; no automatic retention, no UAT gate.

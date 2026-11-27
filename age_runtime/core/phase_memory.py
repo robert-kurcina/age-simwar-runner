@@ -73,6 +73,15 @@ def derive(catalog, entry, spec, compiled, previous):
         history = recall(observe(source, state, actor))
         records = []
         for selector in selectors:
+            if (compiled.get("qualification") == "unreviewed-rehearsal"
+                    and h["compiled"].get("qualification") == "unreviewed-rehearsal"
+                    and isinstance(selector, dict) and set(selector) == {"kind", "id", "source_scenario"}):
+                record = next((item for item in history.get("phase_memory", [])
+                               if all(item[k] == selector[k] for k in ("kind", "id", "source_scenario"))), None)
+                if record is None:
+                    raise ValueError("historical record not accessible to actor")
+                records.append(deepcopy(record))
+                continue
             if (not isinstance(selector, dict) or set(selector) != {"kind", "id"}
                     or selector["kind"] not in KINDS
                     or not isinstance(selector["id"], str)):
@@ -98,17 +107,25 @@ def derive(catalog, entry, spec, compiled, previous):
             "target_template_digest": compiled["scenario_digest"],
             "target_scenario_digest": snapshot["scenario_digest"],
             "memory_digest": digest(result)}
+    if any(item["source_scenario"] != source["id"] for rows in result.values() for item in rows):
+        link["version"] = 2
+        link["origins"] = sorted({item["source_scenario"] for rows in result.values() for item in rows})
     return snapshot, link
 
 
 def verify_record(compiled, link):
     from age_runtime.core.runner import digest
-    if (not isinstance(link, dict) or link.get("version") != 1
+    if (not isinstance(link, dict) or link.get("version") not in (1, 2)
             or link.get("classification") != "historical_session_memory"
             or link.get("target_scenario_digest") != compiled["scenario_digest"]
             or "phase_memory" not in compiled["scenario"]
             or link.get("memory_digest") != digest(compiled["scenario"]["phase_memory"])):
         raise ValueError("historical continuity record mismatch")
-    if any(entry["source_scenario"] != link.get("source_id")
-           for entries in compiled["scenario"]["phase_memory"].values() for entry in entries):
-        raise ValueError("historical source identity mismatch")
+    origins = sorted({entry["source_scenario"] for entries in compiled["scenario"]["phase_memory"].values()
+                      for entry in entries})
+    if link["version"] == 1:
+        if origins != [link.get("source_id")]:
+            raise ValueError("historical source identity mismatch")
+    elif (compiled.get("qualification") != "unreviewed-rehearsal"
+          or origins != link.get("origins") or origins == [link.get("source_id")]):
+        raise ValueError("historical origin mismatch")

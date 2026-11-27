@@ -47,6 +47,8 @@ def transition_preview(path, previous, target_id, selectors=None):
         group = history.get(kind, {})
         ids = [record["id"] for record in group] if isinstance(group, list) else list(group)
         candidates.extend({"kind": kind, "id": ident} for ident in sorted(ids))
+    candidates.extend({k: item[k] for k in ("kind", "id", "source_scenario")}
+                      for item in history.get("phase_memory", []))
     records = []
     rule = None
     if selectors is not None:
@@ -66,7 +68,7 @@ def transition_preview(path, previous, target_id, selectors=None):
             "approved": False, "registered": False}
 
 
-def continue_rehearsal(path, previous, target_id, selectors, expected_preview_digest):
+def continue_rehearsal(path, previous, target_id, selectors, expected_preview_digest, *, model_selectors=None):
     """Start a fresh draft episode with explicitly confirmed historical memory.
 
     Never route a rehearsal through reviewed start or modify the inventory.
@@ -90,9 +92,37 @@ def continue_rehearsal(path, previous, target_id, selectors, expected_preview_di
     if (header["catalog_digest"] != digest(catalog)
             or header["compiled"]["spec_digest"] != compiled["spec_digest"]):
         raise ValueError("target changed during initialization")
-    snapshot, link = derive(catalog, {**entry, "remember_from": preview["proposed_mapping"]},
+    rule = deepcopy(preview["proposed_mapping"])
+    if model_selectors is not None:
+        if not isinstance(model_selectors, dict) or set(model_selectors) - set(header["compiled"]["scenario"]["model_factions"]):
+            raise ValueError("referee selection must name target model factions only")
+        rule["actors"].update(deepcopy(model_selectors))
+    snapshot, link = derive(catalog, {**entry, "remember_from": rule},
                             spec, header["compiled"], previous)
     header = {**header, "compiled": snapshot, "continuity": link,
               "preset": {"id": "standard", "label": "Unreviewed continuation — historical memory"}}
     return verify({**opening, "header": header, "header_digest": digest(header),
                    "state": initialize(snapshot["scenario"])})
+
+
+def model_memory_candidates(path, previous, target_id):
+    """Referee-only, actor-separated selectors; never include in player preview."""
+    from age_runtime.core.observations import observe
+    preview = transition_preview(path, previous, target_id)
+    target = select_rehearsal(path, target_id)[4]["scenario"]
+    source = previous["header"]["compiled"]["scenario"]
+    result = {}
+    for actor in source["model_factions"]:
+        if actor == preview["actor"] or actor not in target["actors"] or source["actors"][actor]["label"] != target["actors"][actor]["label"]:
+            continue
+        history = recall(observe(source, previous["state"], actor))
+        rows = []
+        for kind in KINDS:
+            group = history.get(kind, {})
+            ids = [record["id"] for record in group] if isinstance(group, list) else list(group)
+            rows.extend({"kind": kind, "id": ident} for ident in sorted(ids))
+        rows.extend({k: item[k] for k in ("kind", "id", "source_scenario")}
+                    for item in history.get("phase_memory", []))
+        result[actor] = rows
+    return {"scope": "referee-only", "source_session_digest": preview["source_session_digest"],
+            "target": target_id, "selectors_by_actor": result}
