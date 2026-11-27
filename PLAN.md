@@ -54,6 +54,12 @@ Author-approved direction (2026-11-27): use recognizable real-Earth technology t
 
 For early Conflagration consim, rely on existing native project capacity axes, stocks, reporting delays and scoped availability. Historical fidelity is P2 generally and P1 when it materially constrains a decision; no comprehensive equipment database or technology simulator. Preserve compatibility with Native GTL, signed domain JTL, provisioned access, maturity and CTL where relevant for later Reconstruction and post-Reconstruction scenarios. Dedicated mechanics are DEFERRED until a concrete scenario needs them. See [strategic technology direction](PLAN_STRATEGIC.md#dated-technology-and-capability-direction). Do not expand SH44SER merely to support the runner.
 
+## Contextual recall and decision support
+
+Author-approved (2026-11-27): do not require players to remember the conversation transcript. Proactively surface materially relevant previously accessible information when it becomes relevant again; before consequential decisions, recall earlier commitments, contradictory reports, unresolved matters, constraints, opportunities and actual decisions. Offer read-only on-demand recall and resumption briefings. Preserve actor-specific access, provenance and dates; never disclose hidden truth, private counterpart intentions or unreceived information. Do not invent past interactions, infer player beliefs or force consistency with past decisions. Deliberate reversal remains possible subject to native adjudication. Do not mechanically advance time, consume decisions or mutate state merely for recall.
+
+P0 standing presentation/qualification requirement across both tracks; P1 incremental retrieval implementation. Derive from existing authoritative records; no duplicated memory store or comprehensive transcript persistence. Prefer concise relevance over repeated exhaustive history. Use actual resumed-game and contextual decision samples for acceptance; mechanical projection tests alone do not qualify reminder quality. Narrative owns character-scale cues and notebook/relationship recall; strategic owns institutional staff-style briefings. Shared helpers only where compatible. Indexed retrieval remains deferred until measured need.
+
 ## Priority and status discipline
 
 Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLAN_NARRATIVE.md maintain their own ordered deliverables and evidence. Keep one shared engine. Apply the following vocabulary in all three plans:
