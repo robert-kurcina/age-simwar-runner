@@ -328,3 +328,42 @@ class CommunicationsTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             verify_checkpoint(s, damaged)
 
+    def test_relationship_assessment_tracks_actual_negotiation_status(self):
+        from age_runtime.core.runner import record_diplomacy, negotiate
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s.update(material_communications=True, diplomatic_history=True)
+        state = initialize(s)
+        proposal = {"kind": "propose", "id": "offer", "recipient": "east",
+                    "transfers": ["central_support_east"], "due_minute": 10080}
+        state = negotiate(s, state, "central", digest(state), proposal)
+        assessment = {"kind": "assessment", "id": "review1", "counterpart": "east",
+                      "topic": "cooperation", "text": "Terms have been accepted; fulfillment is pending.",
+                      "revises": None, "basis": [{"kind": "proposals", "id": "offer"}]}
+        with self.assertRaises(ValueError):
+            record_diplomacy(s, state, "central", digest(state), assessment)
+        packet = faction_packet(s, state, "east")
+        state = accept_faction_choice(s, state, "east", packet,
+                                      {"packet_id": packet["packet_id"],
+                                       "action": {"kind": "accept", "id": "offer"}})
+        state = record_diplomacy(s, state, "central", digest(state), assessment)
+        with self.assertRaises(ValueError):
+            record_diplomacy(s, state, "central", digest(state),
+                             dict(assessment, id="bad", counterpart="west", revises=None))
+        for actor in ("west", "foundation"):
+            packet = faction_packet(s, state, actor)
+            state = accept_faction_choice(s, state, actor, packet,
+                                          {"packet_id": packet["packet_id"], "action": None})
+        state = advance(s, state)
+        actual = observe(s, state, "central")["negotiation"]["proposals"][0]["status"]
+        state = record_diplomacy(s, state, "central", digest(state),
+                                 dict(assessment, id="review2", revises="review1",
+                                      text="The settlement outcome is now recorded."))
+        records = observe(s, state, "central")["diplomatic_history"]["east"]["relationship_assessments"]["cooperation"]["history"]
+        self.assertEqual(records[0]["evidence"][0]["status"], "committed")
+        self.assertEqual(records[1]["evidence"][0]["status"], actual)
+        self.assertNotEqual(actual, "committed")
+        self.assertEqual(records[1]["minute"], 10080)
+        self.assertNotIn("relationship_assessments", observe(s, state, "east")["diplomatic_history"]["central"])
+        verify_checkpoint(s, state)
+
