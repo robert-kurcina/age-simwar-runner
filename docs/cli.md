@@ -219,3 +219,9 @@ python game.py recall boothbay-session.json brother --limit 12 --offset 0
 ```
 
 Use the current returned revision for every subsequent mutation; retain the prior verified checkpoint. Recall uses literal matching over projected records, not semantic inference or exhaustive historical retrieval. See [narrative qualification](narrative-chat-play-qualification.md).
+
+### Narrative compact GM context and historical recall
+
+The existing privileged `python game.py gm SESSION` retains its established output. Use `python game.py gm SESSION --compact` for routine interpretation when historical dialogue becomes large. The compact packet retains up to twelve recent exchanges per actor pair, additional available claims supporting agreements/current reactions/contextual reminders, and the eight latest relationship experiences per NPC. Omission counts describe what was left out; fetch the ordinary GM context if older actor-scoped evidence is required. This is a selective projection, not a hard token cap or permission to forget earlier events. Never show either GM packet to the player. Both views are read-only.
+
+`recall` searches all committed player-origin local records; ordinary `inspect` and `recap` still show the recent eight. No new history store or checkpoint migration is required. Pagination is stable for a fixed session revision, not across mutations. Use the returned revision and original records when interpreting results.
