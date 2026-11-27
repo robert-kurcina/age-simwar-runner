@@ -1,6 +1,24 @@
 # Strategic game development plan
 
-Status: WIP (P1) — 2026-11-26. Shared constraints, priority levels, status vocabulary and final full-stack gate: [master plan](PLAN.md). Keep this track's ordered deliverables current using DONE, WIP, NEXT, PENDING, BLOCKED, DEFERRED and REJECTED; attach exit evidence to completed work. Full-stack service work is DEFERRED (P3) and belongs at the end of the master plan, not in this track.
+Status: WIP (P1) — 2026-11-27. This current roadmap supersedes all historical NEXT/WIP ordering below. Shared constraints and full-stack gate remain in [PLAN.md](PLAN.md). Author UAT and independent experiential qualification are deferred, not blockers for independent implementation or mechanical verification. Do not mark experiential acceptance complete.
+
+## Current ordered roadmap — 2026-11-27
+
+| Order | Priority / status | Deliverable and exit criterion |
+|---|---|---|
+| 1 | P1 DONE (mechanical) | Strategic adjudication, scoped information, consent, economic projects, objective bounds, Opportunity Latitude, advisory creative planning. PR #230 both CI workflows passed (46070851549, 46070851585); contrasting recovery routes mechanically qualified. |
+| 2 | P1 DONE (implementation and integrated CI) | Scenario preparation, roster diagnostics, guided candidate authoring, seven Conflagration drafts, chronological discovery and 25 perspectives. Main after #239 passed Tests 46084119212 and bundle 46084119293. |
+| 3 | P0 BLOCKED (release only) | Standalone draft packaging implemented (#241); main Tests 46084271612 and bundle 46084271407 failed after narrative #240 (invalid initial Scene). Narrative owns fix. Recheck artifact build after repair; no bypass. Does not block independent strategic implementation. |
+| 4 | P1 NEXT | **Cross-phase campaign continuity preparation.** Use existing phase_memory and private_continuity, not a new campaign engine. Identify appropriate consecutive episode links, stable actor identity, dated gaps, explicit record selectors and provenance. Provide author-facing validation and an actor-local transition preview without copying stocks or granting authority. Qualify with synthetic or explicitly unreviewed test fixtures; do not register unapproved links. |
+| 5 | P1 PENDING | **Campaign progression presentation.** Distinguish fresh episodes from eligible linked continuations, summarize prior observed outcomes and meaningful persistent consequences; preserve private actor knowledge. No forced canonical outcome, automatic phase advance, or new universal score. |
+| 6 | P1 PENDING | **Scenario authoring and provenance delivery completion.** Resolve authorized pinned source dependencies where available; expose concise actionable review gaps and package reviewed openings only after approval. No requirement for user play or live vault access during draft gameplay. |
+| 7 | P2 PENDING | **Additional system coverage.** Select one bounded strategic episode from an authorized additional vault or later SH44SER period using existing mechanics first. Add native capability handling only when a concrete scenario demonstrates necessity. No mandatory new schema or ruleset port. |
+| 8 | DEFERRED | Author UAT, independent LLM experiential qualification and author approval of historical assumptions/rosters; retain distinct exit evidence. Author will test later. |
+| 9 | P3 DEFERRED | Full-stack service: unchanged master entry gate; no AGE Enterprise scope. |
+
+Stop adding generic diagnostics, synthetic recovery frameworks and speculative mechanics absent a demonstrated requirement. Continue meaningful implementation batches even when a parallel track fails CI; distinguish implementation completion, successful integrated CI and experiential acceptance. Keep source verification and publication authorization as separate gates for reviewed delivery.
+
+## Historical development record (superseded ordering)
 
 ## Shared consequential information — strategic adoption (P1)
 
