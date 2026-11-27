@@ -325,6 +325,15 @@ Inspected narrative `age_runtime/mythos/epistemic.py` directly. Strategic second
 
 ## S8 integrated grant/inspection qualification
 
+- DONE (mechanical): PR #183 merged; Tests 46051003666 and Chat runtime bundle 46051003661 passed. The earlier WIP note below is historical.
+
 - DONE (mechanical): PR #181 Tests 46050657252 and Chat runtime bundle 46050657273 passed. S7 qualified in its historical-memory scope.
 - WIP (CI pending): public synthetic grant-inspection-rehearsal extends the existing independent funding fixture with two reviewed inspection scopes, explicit inspection outcome/report binding, delayed council reporting, material communication, private diplomacy and descriptive establishment. Four turns; same frozen opening branches into cooperation, revocation with redirected funding, and refusal with retained funds. Scripted independent faction exchanges exercise disputed claim/correction, evidence-based assessment, private intent, counterproposal, actual consent, scheduled outcome, delayed observation, independent grant settlement, subsequent capacity investment, rejection atomicity, replay and hidden information. No new generic mechanics. Inspection completion is not a finding or automatic grant authorization; alternative grant decisions are deliberate script choices, not hard-coded rules.
 - Qualification is mechanical only; no independent LLM competence or author-led gameplay claimed. S7 historical memory has separate qualification; no cross-phase extension required for this episode. CI pending. After qualification, consolidate plan status and prioritize author-approved content, private delivery/compilation and actual player-led rehearsal when authorized. Full-stack remains deferred. No narrative or SH44SER changes.
+
+
+## ST-A — Conflagration draft migration (2026-11-27)
+
+- WIP (CI pending): all seven v7 scenario specifications now reside under `scenarios/sh44ser/conflagration/`; each imported Git blob matches the original archive exactly. 25 bound dated faction profiles plus one unbound WPC candidate retained. Inventory indexes eight campaign groups with Hexaday catalog-only; all seven playable-episode drafts remain draft-unreviewed and selection remains blocked. No new schema or loader. See the campaign README for exact baseline identities.
+- Connector preflight verified eight pinned source file Git blob hashes against retrieved bytes and 15 unique Markdown evidence headings, without copying source prose into public Git. Actual Python compilation of the pinned inputs remains pending; no claim of compiled or reviewed registration.
+- Raw regression coverage added for all 25 selectable perspectives, draft gate, terminal replay and the archived Fallout/RWF divergent routes. CI pending. Next ST-B: reconcile remaining dated roster questions, source-backed compilation and review scenario-specific objectives; ST-C interaction refinement; ST-D collective mechanical and independent LLM qualification; ST-E portable delivery. Author-led strategic play remains deferred; full-stack remains deferred. Do not block independent implementation on those gates.
