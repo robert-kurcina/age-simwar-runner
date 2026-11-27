@@ -6,7 +6,7 @@ from age_runtime.mythos import (
     spatial, pacing, events as narrative_events, proposals, beats, continuity,
     nominations, hooks, epistemic, establishment, agreements, locks,
     timed_details, emotions, reminders, npc_time, action_observations,
-    behavior, expectations, npc_travel, npc_agency, npc_agenda,
+    behavior, expectations, npc_travel, npc_agency, npc_agenda, settlement_activity,
 )
 from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment
 from age_runtime.core import opportunity_latitude as latitude
@@ -163,6 +163,9 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
                              if pc["tests"] and pc["tests"][-1]["turn"] == state["turn"] else None}}
     if rules.get("npc_agendas"):
         packet["referee"]["npc_agendas"] = npc_agenda.projection(state, rules)
+    ambience = settlement_activity.projection(state, rules)
+    if ambience is not None:
+        packet["referee"]["settlement_activity"] = ambience
     packet["referee"]["opportunity_policy"] = narrative_opportunity_policy(state)
     if compact:
         compact_history(packet)
