@@ -78,3 +78,48 @@ class TransitionPreviewTests(unittest.TestCase):
             session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
         session = verify(update(session, turns=1))
         self.assertEqual(briefing(session)["phase_memory"], preview["selected_history"])
+
+
+    def test_multi_phase_memory_and_independent_model_visibility(self):
+        from age_runtime.core.private_play import briefing, verify
+        from age_runtime.core.transition_preview import model_memory_candidates
+        previous = self.complete()
+        own = {"kind": "established_context", "id": "inc:fiji_room"}
+        other = {"kind": "established_context", "id": "inc:shanter_room"}
+        preview = transition_preview(ROOT, previous, TARGET, [own])
+        candidates = model_memory_candidates(ROOT, previous, TARGET)
+        self.assertIn(other, candidates["selectors_by_actor"]["shanter"])
+        self.assertNotIn(own, candidates["selectors_by_actor"]["shanter"])
+        with self.assertRaises(ValueError):
+            continue_rehearsal(ROOT, previous, TARGET, [own], digest(preview),
+                               model_selectors={"shanter": [own]})
+        with self.assertRaises(ValueError):
+            continue_rehearsal(ROOT, previous, TARGET, [own], digest(preview),
+                               model_selectors={"fiji": [own]})
+        session = continue_rehearsal(ROOT, previous, TARGET, [own], digest(preview),
+                                    model_selectors={"shanter": [other]})
+        original = briefing(session)["phase_memory"]
+        private = model_packet(session, "shanter")["observation"]["phase_memory"]
+        self.assertEqual([r["id"] for r in private], [other["id"]])
+        self.assertEqual([r["id"] for r in original], [own["id"]])
+        scenario = session["header"]["compiled"]["scenario"]
+        while session["state"]["minute"] < scenario["end_minute"]:
+            for actor in pending_factions(session):
+                packet = model_packet(session, actor)
+                session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": None})
+            session = verify(update(session, turns=1))
+        catalog = __import__("json").loads(ROOT.read_text())
+        target = next(e["id"] for g in catalog["groups"] if g["id"] == "purge"
+                      for e in g["scenarios"])
+        old = {**own, "source_scenario": SOURCE}
+        old_other = {**other, "source_scenario": SOURCE}
+        preview2 = transition_preview(ROOT, session, target, [old])
+        self.assertIn(old, preview2["candidate_selectors"])
+        self.assertNotIn(old_other, preview2["candidate_selectors"])
+        later = continue_rehearsal(ROOT, session, target, [old], digest(preview2),
+                                   model_selectors={"shanter": [old_other]})
+        self.assertEqual(briefing(later)["phase_memory"], original)
+        self.assertEqual(model_packet(later, "shanter")["observation"]["phase_memory"], private)
+        self.assertEqual(later["header"]["continuity"]["version"], 2)
+        self.assertEqual(later["header"]["continuity"]["origins"], [SOURCE])
+        verify(later)
