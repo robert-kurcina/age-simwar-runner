@@ -813,6 +813,36 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_dialogue_context_survives_spent_topics_and_respects_availability(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.step(s, "talk_eleanor")
+        packet = mythos.gm_context(s)
+        eleanor = next(x for x in packet["referee"]["participants"] if x["id"] == "eleanor")
+        self.assertTrue(eleanor["conversation_available"])
+        self.assertEqual(eleanor["encounters"], 1)
+        self.assertEqual(eleanor["last_contact"], s["time"])
+        self.assertEqual(eleanor["demeanor"], s["relationships"]["eleanor"])
+        self.assertNotIn("talk_eleanor", eleanor["local_actions"])
+        self.assertNotIn("source_traits", str(mythos.view(s)["contacts"]))
+        # Isolate exhaustion of every authored Eleanor action in projection.
+        # This synthetic copy is not a played or replayable checkpoint.
+        import copy
+        exhausted = copy.deepcopy(s)
+        _, rules = mythos.load("boothbay")
+        exhausted["used"].extend(a["id"] for a in rules["actions"] if a.get("npc") == "eleanor")
+        eleanor = next(x for x in mythos.gm_context(exhausted)["referee"]["participants"] if x["id"] == "eleanor")
+        self.assertTrue(eleanor["conversation_available"])
+        self.assertEqual(eleanor["local_actions"], [])
+        remote = mythos.step(s, "move:Harbor Docks")
+        self.assertNotIn("eleanor", [x["id"] for x in mythos.gm_context(remote)["referee"]["participants"]])
+        inlet = mythos.step(remote, "move:Creek Inlet South")
+        isolated = copy.deepcopy(inlet)
+        isolated["flags"].append("elias_isolated")
+        self.assertNotIn("elias", [x["id"] for x in mythos.gm_context(isolated)["referee"]["participants"]])
+        ended = mythos.step(s, "depart")
+        self.assertEqual(mythos.gm_context(ended)["referee"]["participants"], [])
+        mythos.verify(ended)
+
     def test_proposal_reuses_authority_and_replays(self):
         s = mythos.initial("boothbay", 42)
         request = {"action": "inspect_docks", "approach": "watch_patterns",
