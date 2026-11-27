@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import projections
+from age_runtime.mythos import projections, resolution
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
@@ -54,7 +54,10 @@ def npc_profiles(story, rules):
     return profiles
 
 def initial(sid, seed):
-    story, rules = load(sid)
+    return _initial(sid, seed, *load(sid))
+
+
+def _initial(sid, seed, story, rules):
     continuity.validate(rules)
     epistemic.validate_propositions(rules)
     if rules.get("resolution") != "dxd":
@@ -183,6 +186,20 @@ def npc_available(state, rules, action):
             and destination in cfg.get("eligible_locations", [npc["location"]])
             and (npc["location"] is None or npc["location"] == destination))
 
+def _available_local_npcs(state, rules):
+    """Anchored NPCs eligible to witness or participate at the PC's location."""
+    return {nid for nid, npc in state["npcs"].items()
+            if npc["location"] == state["location"]
+            and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+
+
+def _local_action_available(state, rules, action):
+    """Revalidate the same prerequisites at arrival and after local activity."""
+    return (not any(f in state["flags"] for f in action.get("excludes_flags", []))
+            and all(f in state["flags"] for f in action.get("requires_flags", []))
+            and npc_available(state, rules, action)
+            and locks.action_available(state, rules, action, npc_available, establishment.local_entities))
+
 def spatial_options(state, rules, candidates):
     config = rules["spatial"]
     now = datetime.fromisoformat(state["time"])
@@ -261,101 +278,9 @@ def options(state, rules):
             and all(state["resources"][k] >= v for k, v in a.get("cost", {}).items())]
 
 def resolve_dxd(state, rules, action):
-    """Gather only authored applicable modifiers and allocate Favor before rolling."""
-    spec = copy.deepcopy(action["test"])
-    interaction = spec.get("interaction")
-    if interaction:
-        if spec["attribute"] != "PRE" or interaction not in ("ordinary", "pivotal") or action.get("npc") not in state["npcs"]:
-            raise ValueError("invalid Interaction Test")
-        if dxd.attribute_dm(state["dxd"]["attributes"]["INT"]) >= 2:
-            spec["additional_attributes"] = ["INT"]
-    cfg = rules["dxd"]
-    pc = state["dxd"]
-    if "character_profiles" in state and spec.get("morale_event") and "Grit" in pc["skills"]:
-        spec["skill"] = "Grit"
-    gathered = dxd_modifiers.gather(pc["attributes"], pc["skills"], pc["traits"], spec)
-    attr = sum(x["dm"] for x in gathered["attribute"])
-    skill = sum(x["dm"] for x in gathered["skill"])
-    other = [x["dm"] for key in ("trait", "explicit", "interdisciplinary") for x in gathered[key]]
-    contextual, context_dm, emotional_triggers = dxd_context.effects(state, action, spec)
-    mods = dxd_modifiers.totals(gathered)
-    condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
-    hook = (dxd_commitment.effective_demeanor(state, action.get("npc"), action) if rules.get("demeanor") and spec["attribute"] == "PRE"
-            else 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0)
-    cue = spec.get("inspiration")
-    inspiration_dm = dxd_inspiration.applicable_dm(pc["inspirations"], [cue["tag"]] if cue else [])
-    policy = cfg["favor"]
-    emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
-                                 enabled=policy.get("emicted", False))
-    psychology = dxd_psychology.effects(pc["morale"], spec.get("psychology_context"))
-    progression_dm = -(state["progression"]["stage"] - 1) if "progression" in state and spec["attribute"] == "POW" else 0
-    emotional_dm = dxd_commitment.modifier(pc, action)
-    leverage_dm = dxd_commitment.leverage(state, action)
-    character_hook_dm = action.get("character_hook", {}).get("dm", 0)
-    components = [character_hook_dm, context_dm, emotional_dm, -leverage_dm if interaction != "pivotal" else 0, attr, skill, hook, inspiration_dm, emicted, spec.get("fixed_dm", 0), psychology["dm"], progression_dm] + other
-    favor = dxd.automatic_favor(available=pc["favor"], maximum=policy["maximum"],
-                                significance=spec["significance"], desired=policy["desired"])
-    net = mods["bonus"] - mods["penalty"] - condition - psychology["penalty"] - sum(x["penalty"] for x in contextual)
-    bonus = min(policy["maximum"], max(0, net))
-    penalty = max(0, -net)
-    args = {"favor": favor, "bonus": bonus}
-    npc_gathered = None
-    if interaction == "pivotal":
-        npc = state["npcs"][action["npc"]]
-        npc_attrs = npc["dxd_attributes"]
-        target_spec = {"attribute": "INT", **spec.get("opposition", {})}
-        npc_gathered = dxd_modifiers.gather(npc_attrs, npc.get("skills", {}), npc.get("dxd_traits", {}), target_spec, player=False)
-        target_mods = dxd_modifiers.totals(npc_gathered)
-        if "concerns" in npc:
-            target_mods["penalty"] += dxd_conditions.penalty_dice(npc["concerns"], decision=spec.get("decision", False))
-        # NPCs do not receive the PC-only additional Attribute bonus.
-        args = {"active_raw": pc["attributes"]["PRE"], "target_raw": npc_attrs["INT"],
-                "active_dm": sum(components) - dxd.attribute_dm(pc["attributes"]["PRE"]),
-                "active_bonus": bonus, "active_penalty": penalty, "active_favor": favor,
-                "target_dm": target_mods["dm"] - dxd.attribute_dm(npc_attrs["INT"]) + leverage_dm,
-                "target_bonus": target_mods["bonus"], "target_penalty": target_mods["penalty"]}
-    elif spec.get("narrative"):
-        args.update(narrative=True, tn=spec["tn"], dm=sum(max(0, x) for x in components),
-                    adversity=sum(max(0, -x) for x in components), adversity_dice=penalty)
-    elif "npc_attribute" in spec:
-        npc = state["npcs"][action["npc"]]
-        args.update(narrative=True, dm=sum(max(0, x) for x in components),
-                    adversity=sum(max(0, -x) for x in components), adversity_dice=penalty,
-                    npc_dm=dxd.attribute_dm(npc["dxd_attributes"][spec["npc_attribute"]])
-                           + spec.get("npc_adversity", 0))
-    else:
-        args.update(tn=spec["tn"], dm=sum(components), penalty=penalty)
-    pc["favor"] -= favor
-    chance = dxd_inspiration.opposed_probability(**args) if interaction == "pivotal" else dxd_inspiration.probability(**args)
-    seed_parts = [state["seed"], state["turn"]]
-    if spec.get("morale_event"):
-        seed_parts.append(spec["morale_event"])
-    first = (dxd.opposed if interaction == "pivotal" else dxd.test)(digest(seed_parts), **args)
-    result = first
-    inspired = None
-    if (interaction != "pivotal" and not first["passed"] and cue and cfg.get("inspiration", {}).get("enabled")
-            and dxd_inspiration.eligible(chance, turn=state["turn"],
-                last_turn=pc["inspirations"][-1]["turn"] if pc["inspirations"] else None,
-                consequence=cue["consequence"], maximum=policy["maximum"],
-                extra_base=favor)):
-        inspired = {"turn": state["turn"], "action": action["id"],
-                    "tag": cue["tag"], "memory": cue["memory"],
-                    "basis": cue["memory"], "source": "authored"}
-        pc["inspirations"].append(inspired)
-        retry = dict(args, base=3)
-        result = dxd.test(digest(seed_parts + ["inspiration"]), **retry)
-        dxd_conditions.add(pc["concerns"], weariness=1)
-    dxd_context.record(state, emotional_triggers, result)
-    pc["tests"].append({"turn": state["turn"], "action": action["id"],
-                        "inputs": args, "components": {"attribute": attr, "skill": skill,
-                        "condition_penalty_dice": condition, "relationship": hook,
-                        **({"emotional_commitment": emotional_dm, "commitment_leverage": leverage_dm} if "commitments" in pc else {}),
-                        "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
-                        "gathered": gathered, **({"character_hook": copy.deepcopy(action["character_hook"])} if "character_hook" in action else {}), **({"contextual": contextual, "npc_gathered": npc_gathered} if "character_profiles" in state else {}), "net_bonus": bonus, "net_penalty": penalty,
-                        "probability": [chance.numerator, chance.denominator],
-                        "initial_result": first, "inspired": inspired is not None,
-                        "result": result})
-    return result["passed"]
+    """Compatibility entry point for native player Test resolution."""
+    return resolution.resolve(state, rules, action, digest)
+
 
 DEMEANORS = ("Violent", "Hatred", "Disrespect", "Untrusting", "Dislike", "Guarded",
              "Neutral", "Like", "Respect", "Loyal", "Trust", "Charmed", "Reverence")
@@ -536,8 +461,11 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     return state
 
 def step(state, action, proposal=None, commitment=None):
-    state = copy.deepcopy(state)
     _, rules = load(state["scenario"])
+    return _step(copy.deepcopy(state), rules, action, proposal, commitment)
+
+
+def _step(state, rules, action, proposal=None, commitment=None):
     request, _ = hooks.split(proposal)
     request, nomination = nominations.split(request)
     a = next((a for a in options(state, rules) if a["id"] == action), None)
@@ -577,15 +505,10 @@ def step(state, action, proposal=None, commitment=None):
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
     state["location"] = a.get("location", state["location"])
     if rules.get("routine_observations"):
-        activity_observers = {nid for nid, p in state["npcs"].items()
-                              if p["location"] == state["location"]
-                              and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+        activity_observers = _available_local_npcs(state, rules)
     if clock:
         # Events during travel may invalidate the intended local action.
-        if (any(f in state["flags"] for f in a.get("excludes_flags", []))
-                or not all(f in state["flags"] for f in a.get("requires_flags", []))
-                or not npc_available(state, rules, a)
-                or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
+        if not _local_action_available(state, rules, a):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
         engaged = a.get("npc")
         sleep_episode = state["npcs"][engaged].get("activity", {}).get("sleep_episode") if engaged else None
@@ -614,10 +537,7 @@ def step(state, action, proposal=None, commitment=None):
             return finish_activity(state, rules, action, a, False, reason, proposal)
         if rules.get("npc_lifecycle") and engaged and state["npcs"][engaged].get("activity", {}).get("sleep_episode") != sleep_episode:
             return finish_activity(state, rules, action, a, False, "npc_sleep_interruption", proposal)
-        if (any(f in state["flags"] for f in a.get("excludes_flags", []))
-                or not all(f in state["flags"] for f in a.get("requires_flags", []))
-                or not npc_available(state, rules, a)
-                or not locks.action_available(state, rules, a, npc_available, establishment.local_entities)):
+        if not _local_action_available(state, rules, a):
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
     else:
         if "progression" in state or "pacing" in rules:
@@ -718,9 +638,7 @@ def step(state, action, proposal=None, commitment=None):
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
     if rules.get("routine_observations"):
-        available = {nid for nid, p in state["npcs"].items()
-                     if p["location"] == state["location"]
-                     and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
+        available = _available_local_npcs(state, rules)
         state["routine_source"] = {"turn": state["turn"], "location": state["location"],
                                    "eligible_observers": sorted(available),
                                    "activity_observers": sorted(available & activity_observers)}
@@ -805,11 +723,15 @@ def apply_memory(state, event, memory):
     found[0]["source"] = "model"
     pc["memory_edits"].append({"turn": state["turn"], "event": event, "memory": memory})
 
+def _apply_narrative(state, rules, request):
+    pacing.control(state, rules, request)
+    state["history"].append({"narrative": copy.deepcopy(request)})
+
+
 def narrative_step(state, request):
     result = copy.deepcopy(state)
     _, rules = load(result["scenario"])
-    pacing.control(result, rules, request)
-    result["history"].append({"narrative": copy.deepcopy(request)})
+    _apply_narrative(result, rules, request)
     return result
 
 def narrative(path, request, revision):
@@ -882,29 +804,43 @@ def establish(path, request, revision):
     return _commit(path, revision, transition, request)
 
 def verify(state):
-    replay = initial(state["scenario"], state["seed"])
+    """Replay against a single source snapshot, never the caller's state.
+
+    Preserve the historic ordering of Inspiration edits and all constituent
+    operations. Each transition receives its own rules copy because legacy
+    helpers may attach references from authored action records to state.
+    """
+    sid = state["scenario"]
+    story, rules = load(sid)
+    replay = _initial(sid, state["seed"], copy.deepcopy(story), copy.deepcopy(rules))
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
-        if isinstance(entry, dict) and "establish" in entry:
-            replay = establish_step(replay, entry["establish"])
+        operation = copy.deepcopy(entry)
+        config = copy.deepcopy(rules)
+        if isinstance(operation, dict) and "establish" in operation:
+            _apply_establishment(replay, config, operation["establish"])
             continue
-        if isinstance(entry, dict) and "dialogue" in entry:
-            replay = dialogue_step(replay, entry["dialogue"])
+        if isinstance(operation, dict) and "dialogue" in operation:
+            _apply_dialogue(replay, config, operation["dialogue"])
             continue
-        if isinstance(entry, dict) and "narrative" in entry:
-            replay = narrative_step(replay, entry["narrative"])
+        if isinstance(operation, dict) and "narrative" in operation:
+            _apply_narrative(replay, config, operation["narrative"])
             continue
-        if isinstance(entry, dict) and "commitment" in entry:
-            replay = step(replay, entry["action"], entry.get("proposal"), entry["commitment"])
+        if isinstance(operation, dict) and "commitment" in operation:
+            replay = _step(replay, config, operation["action"], operation.get("proposal"), operation["commitment"])
+        elif isinstance(operation, dict):
+            proposal = operation["proposal"]
+            replay = _step(replay, config, proposal["action"], proposal)
         else:
-            replay = step(replay, entry["proposal"]["action"], entry["proposal"]) if isinstance(entry, dict) else step(replay, entry)
+            replay = _step(replay, config, operation)
         while cursor < len(edits) and edits[cursor]["turn"] == replay["turn"]:
             e = edits[cursor]
             apply_memory(replay, e["event"], e["memory"])
             cursor += 1
     if cursor != len(edits) or replay != state:
         raise ValueError("session replay mismatch")
+
 
 def view(state, *, full_history=False):
     _, rules = load(state["scenario"])

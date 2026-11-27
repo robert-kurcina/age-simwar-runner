@@ -112,3 +112,47 @@ class NarrativeConsolidationTests(unittest.TestCase):
             after = mythos.act(path, "inspect_docks", opening["revision"])
             self.assertNotEqual(after["revision"], opening["revision"])
             self.assertEqual(mythos.inspect(path), after)
+
+
+    def test_replay_loads_one_source_snapshot_and_preserves_input(self):
+        state = mythos.initial("boothbay", 42)
+        state = mythos.narrative_step(state, {"kind": "open", "id": "inquiry",
+                                               "label": "Investigate the harbor"})
+        state = mythos.step(state, "move:Harbor Diner")
+        state = mythos.dialogue_step(state, {
+            "npc": "eleanor", "speaker": "pc", "claim": "I have a question.",
+            "stance": "unstated", "intent": "unstated"})
+        state = mythos.establish_step(state, {"details": [{
+            "id": "inc:napkin", "kind": "object", "label": "Napkin",
+            "description": "A folded napkin.", "basis": "Ordinary diner object"}]})
+        state = mythos.narrative_step(state, {"kind": "complete", "id": "inquiry"})
+        before = copy.deepcopy(state)
+        with patch.object(mythos, "load", wraps=mythos.load) as load:
+            mythos.verify(state)
+            self.assertEqual(load.call_count, 1)
+        self.assertEqual(state, before)
+        invalid = copy.deepcopy(state)
+        invalid["resources"]["cash_cents"] += 1
+        with self.assertRaisesRegex(ValueError, "replay mismatch"):
+            mythos.verify(invalid)
+
+    def test_resolution_compatibility_wrapper_preserves_test_ledger(self):
+        from age_runtime.mythos import resolution
+        state = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        action = next(a for a in rules["actions"] if a["id"] == "inspect_docks")
+        direct = copy.deepcopy(state)
+        delegated = copy.deepcopy(state)
+        self.assertEqual(resolution.resolve(direct, rules, action, mythos.digest),
+                         mythos.resolve_dxd(delegated, rules, action))
+        self.assertEqual(direct, delegated)
+
+    def test_establishment_dispatch_rejects_unknown_and_mixed_operations(self):
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        before = copy.deepcopy(state)
+        for request in ({}, {"unknown": {}}, {"details": [], "agreement": {}},
+                        ["details"], {"record": {}}):
+            with self.subTest(request=request):
+                with self.assertRaises(ValueError):
+                    mythos.establish_step(state, request)
+                self.assertEqual(state, before)

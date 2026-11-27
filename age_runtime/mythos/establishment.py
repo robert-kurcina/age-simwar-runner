@@ -14,59 +14,58 @@ def normalize(value):
 def record(state, rules, request, npc_available=None):
     if not rules.get("narrative_establishment") or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("establishment unavailable")
-    if isinstance(request, dict) and set(request) == {"hypothesis"}:
-        from age_runtime.mythos import epistemic
-        return epistemic.establish_hypothesis(state, rules, request["hypothesis"], npc_available)
-    if isinstance(request, dict) and set(request) == {"belief_revision"}:
-        from age_runtime.mythos import epistemic
-        return epistemic.revise_belief(state, rules, request["belief_revision"], npc_available)
-    if isinstance(request, dict) and set(request) == {"npc_objective"}:
-        return npc_agency.objective(state, rules, request["npc_objective"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"npc_social_test"}:
-        return npc_agency.social_test(state, rules, request["npc_social_test"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"npc_lifecycle"}:
-        return npc_time.lifecycle(state, rules, request["npc_lifecycle"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"npc_task"}:
-        return timed_details.task_control(state, rules, request["npc_task"], npc_available, local_entities, text)
-    if isinstance(request, dict) and set(request) == {"npc_native_test"}:
-        return timed_details.native_test(state, rules, request["npc_native_test"], npc_available, local_entities, text)
-    if isinstance(request, dict) and set(request) == {"routine_observation"}:
-        return behavior.record_routine(state, rules, request["routine_observation"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"npc_travel"}:
-        return npc_travel.record(state, rules, request["npc_travel"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"npc_testimony"}:
-        from age_runtime.mythos import epistemic
-        epistemic.record_testimony(state, rules, request["npc_testimony"], npc_available)
-        for actor in ("speaker", "listener"):
-            npc_time.interrupt(state, request["npc_testimony"][actor])
-        return
-    if isinstance(request, dict) and set(request) == {"npc_initiative"}:
-        return timed_details.initiative(state, rules, request["npc_initiative"], npc_available, local_entities, text)
-    if isinstance(request, dict) and set(request) == {"expectation"}:
-        return expectations.record(state, rules, request["expectation"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"behavior"}:
-        return behavior.record(state, rules, request["behavior"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"action_observation"}:
-        return action_observations.record(state, rules, request["action_observation"], npc_available, local_entities, text)
-    if isinstance(request, dict) and set(request) == {"object_action"}:
-        return object_actions.record(state, rules, request["object_action"], local_entities, text)
-    if isinstance(request, dict) and set(request) == {"npc_activity"}:
-        return npc_time.record(state, rules, request["npc_activity"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"emotion"}:
-        return emotions.record(state, rules, request["emotion"], npc_available, text)
-    if isinstance(request, dict) and set(request) == {"event"}:
-        return timed_details.record(state, rules, request["event"], npc_available, local_entities, text)
-    if isinstance(request, dict) and set(request) == {"lock"}:
-        return locks.record(state, rules, request["lock"], npc_available, local_entities, text)
-    if isinstance(request, dict) and set(request) == {"agreement"}:
-        return agreements.record(state, rules, request["agreement"], npc_available)
-    if isinstance(request, dict) and set(request) == {"transfers"}:
-        return transfer(state, rules, request["transfers"], npc_available)
-    if isinstance(request, dict) and set(request) == {"changes"}:
-        return modify(state, rules, request["changes"], npc_available)
-    if not isinstance(request, dict) or set(request) != {"details"}:
+    if not isinstance(request, dict) or len(request) != 1:
         raise ValueError("invalid establishment request")
-    details = request["details"]
+    operation, payload = next(iter(request.items()))
+    if operation == "details":
+        return _record_details(state, rules, payload, npc_available)
+    if operation == "npc_testimony":
+        from age_runtime.mythos import epistemic
+        epistemic.record_testimony(state, rules, payload, npc_available)
+        for actor in ("speaker", "listener"):
+            npc_time.interrupt(state, payload[actor])
+        return
+    from age_runtime.mythos import epistemic
+    # Explicit allowlist. Each native handler retains its own validation.
+    # Argument groups reflect existing signatures, not a new effect DSL.
+    actor_handlers = {
+        "hypothesis": epistemic.establish_hypothesis,
+        "belief_revision": epistemic.revise_belief,
+        "agreement": agreements.record,
+        "transfers": transfer,
+        "changes": modify,
+    }
+    text_handlers = {
+        "npc_objective": npc_agency.objective,
+        "npc_social_test": npc_agency.social_test,
+        "npc_lifecycle": npc_time.lifecycle,
+        "routine_observation": behavior.record_routine,
+        "npc_travel": npc_travel.record,
+        "expectation": expectations.record,
+        "behavior": behavior.record,
+        "npc_activity": npc_time.record,
+        "emotion": emotions.record,
+    }
+    entity_handlers = {
+        "npc_task": timed_details.task_control,
+        "npc_native_test": timed_details.native_test,
+        "npc_initiative": timed_details.initiative,
+        "action_observation": action_observations.record,
+        "event": timed_details.record,
+        "lock": locks.record,
+    }
+    if operation in actor_handlers:
+        return actor_handlers[operation](state, rules, payload, npc_available)
+    if operation in text_handlers:
+        return text_handlers[operation](state, rules, payload, npc_available, text)
+    if operation in entity_handlers:
+        return entity_handlers[operation](state, rules, payload, npc_available, local_entities, text)
+    if operation == "object_action":
+        return object_actions.record(state, rules, payload, local_entities, text)
+    raise ValueError("invalid establishment request")
+
+
+def _record_details(state, rules, details, npc_available):
     if not isinstance(details, list) or not 1 <= len(details) <= 12:
         raise ValueError("establish 1 to 12 details per batch")
     ledger = state["established_details"]
