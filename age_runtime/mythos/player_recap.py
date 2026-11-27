@@ -37,6 +37,7 @@ def recap(public):
         },
         "social_continuity": {
             "contacts": copy.deepcopy(public.get("contacts", [])),
+            "incidental_people": copy.deepcopy(public.get("incidental_people", [])),
             "agreements": copy.deepcopy(public.get("narrative_agreements", [])),
         },
         "practical_context": {
@@ -76,6 +77,7 @@ def recall(public, query, *, limit=12, offset=0):
         ("local_records", "local_record"),
         ("narrative_agreements", "agreement"),
         ("contacts", "contact"),
+        ("incidental_people", "incidental_person"),
         ("memories", "memory"),
         ("remembered_details", "historical_detail"),
         ("established_details", "current_local_detail"),
