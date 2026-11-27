@@ -15,6 +15,10 @@ def record(state, rules, request, npc_available, text):
             or state["npcs"][npc]["location"] != state["location"]
             or not npc_available(state, rules, {"npc": npc, "location": state["location"]})):
         raise ValueError("emotional participant unavailable")
+    if rules.get("dialogue_requires_encounter"):
+        from age_runtime.mythos.epistemic import conversation_available
+        if not conversation_available(state, rules, npc, npc_available):
+            raise ValueError("emotional episode requires current authored encounter")
     ledger = state["emotional_episodes"]
     if len(ledger) >= 256 or any(e["id"] == eid for e in ledger):
         raise ValueError("duplicate emotional episode or record limit")
@@ -62,6 +66,8 @@ def record(state, rules, request, npc_available, text):
     for actor, amount in awards.items():
         concerns = state["dxd"]["concerns"] if actor == "pc" else state["npcs"][actor]["concerns"]
         dxd_conditions.add(concerns, stress=amount)
+        if actor != "pc" and rules.get("npc_abstract_recovery"):
+            state["npcs"][actor]["activity_plan"] = None
         if actor != "pc" and "activity" in state["npcs"][actor]:
             dxd_conditions.refresh_sleep_limit(concerns, state["npcs"][actor]["activity"], state["npcs"][actor]["dxd_attributes"])
     if "pc" in awards and "activity" in state["dxd"]:
