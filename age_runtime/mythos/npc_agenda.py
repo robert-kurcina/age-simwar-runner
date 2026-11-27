@@ -2,7 +2,7 @@
 from datetime import datetime
 import copy
 
-from age_runtime.mythos import npc_travel, npc_time
+from age_runtime.mythos import npc_travel
 
 
 def validate(rules):
@@ -65,3 +65,22 @@ def projection(state, rules):
                        "constraints": constraints, "authority": "advisory_only",
                        "weekly_windows": copy.deepcopy(windows)}
     return result
+
+
+def depart(state, rules, request, npc_available, text):
+    """GM selects a prospective agenda trip; use ordinary travel authority.
+
+    No retroactive arrival, automatic departures or interruption of a
+    committed activity merely because a routine window has begun.
+    """
+    if not isinstance(request, dict) or set(request) != {"npc", "destination", "basis"}:
+        raise ValueError("invalid agenda departure")
+    nid = request["npc"]
+    if not isinstance(nid, str) or nid not in rules.get("npc_agendas", {}):
+        raise ValueError("NPC has no reviewed agenda")
+    if state["npcs"][nid].get("activity_plan"):
+        raise ValueError("agenda departure conflicts with committed activity")
+    # Existing travel validates route, elapsed time, eligibility, sleep,
+    # pending tasks, horizon and conflicting travel. A motivated deviation
+    # may select any reviewed eligible destination, not just today's routine.
+    npc_travel.record(state, rules, request, npc_available, text)
