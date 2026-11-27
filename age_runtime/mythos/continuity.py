@@ -43,3 +43,25 @@ def projection(state, rules, legal):
         result.append({"id": key, "purpose": cfg["purpose"], "established": established,
                        "carriers": carriers, "no_immediate_route": not established and not any(c["status"] == "ready" for c in carriers)})
     return result
+
+
+def reconsideration_allowed(state, action):
+    """A different request in the same group needs newly established evidence."""
+    cfg = action.get("reconsideration")
+    if not cfg:
+        return True
+    prior = next((t["refusal_context"] for t in reversed(state["dxd"]["tests"])
+                  if t.get("refusal_context", {}).get("group") == cfg["group"]), None)
+    if prior is None:
+        return True
+    return bool((set(cfg["evidence"]) & set(state["flags"])) - set(prior["evidence"]))
+
+
+def record_refusal(state, action, test):
+    """Snapshot all relevant evidence at refusal in the existing Test ledger."""
+    cfg = action.get("reconsideration")
+    if cfg:
+        test["refusal_context"] = {
+            "group": cfg["group"],
+            "evidence": sorted(set(cfg["evidence"]) & set(state["flags"])),
+        }
