@@ -31,7 +31,7 @@ def record(state, rules, request, npc_available, local_entities, text):
     if (not a or a["kind"] != "commitment" or a["issuer"] != a["npc"]
             or a["status"] != "active" or a["condition"] is not None
             or a["location"] != state["location"] or a["turn"] != state["turn"]
-            or not obj or obj["kind"] != "object" or obj.get("custodian") != a["npc"]
+            or not obj or obj["kind"] != "object" or obj.get("lifecycle", "intact") != "intact" or obj.get("custodian") != a["npc"]
             or not npc_available(state, rules, {"npc": a["npc"], "location": state["location"]})
             or obj.get("properties", {}).get("condition") != cfg["before"]):
         raise ValueError("event requires current NPC commitment and matching object condition")
@@ -58,7 +58,7 @@ def resolve(state, rules, elapsed, npc_available, local_entities):
         scope = dict(state, location=e["location"])
         obj = local_entities(scope).get(e["object"])
         a = agreements.project(state).get(e["permission"])
-        eligible = (a and a["status"] == "active" and obj
+        eligible = (a and a["status"] == "active" and obj and obj.get("lifecycle", "intact") == "intact"
                     and obj.get("custodian") == e["npc"]
                     and state["npcs"][e["npc"]]["location"] == e["location"]
                     and npc_available(state, rules, {"npc": e["npc"], "location": e["location"]})
