@@ -239,7 +239,8 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
                              "establishment": bool(rules.get("narrative_establishment")),
                              "agreements": bool(rules.get("narrative_agreements")),
                              "batch": bool(rules.get("narrative_batch")), "spatial_routing": False,
-                             "npc_agency": False},
+                             "npc_agency": False, "npc_objectives": bool(rules.get("npc_objective_continuity")),
+                             "subjective_beliefs": bool(rules.get("social_epistemic"))},
             "guidance":  "Resolve mechanical effects through authored actions only. "
                         "Use enabled continuity operations for actual local exchanges and mundane details. "
                         "Do not invent clues, simulate independent NPC actions, "
@@ -257,6 +258,9 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
         ref["established_details"] = establishment.referee_projection(state)
     if rules.get("narrative_batch"):
         ref["next_dialogue_id"] = len(state.get("dialogue", [])) + 1
+    if rules.get("npc_objective_continuity"):
+        ref["npc_agency"] = {nid: context for nid, context in npc_agency.projection(state).items()
+                             if nid in conversational}
     if compact:
         compact_history(packet)
     return copy.deepcopy(packet)
