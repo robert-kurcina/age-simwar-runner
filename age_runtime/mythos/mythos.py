@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -65,6 +65,8 @@ def initial(sid, seed):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if rules.get("epistemic_dialogue"):
+        state["dialogue"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -686,11 +688,31 @@ def narrative(path, request, revision):
     save(path, state)
     return view(state)
 
+def dialogue_step(state, request):
+    result = copy.deepcopy(state)
+    _, rules = load(result["scenario"])
+    epistemic.record(result, rules, request, npc_available)
+    result["history"].append({"dialogue": copy.deepcopy(request)})
+    return result
+
+def dialogue(path, request, revision):
+    state = read(path)
+    verify(state)
+    if digest(state) != revision:
+        raise ValueError("stale session revision")
+    state = dialogue_step(state, request)
+    verify(state)
+    save(path, state)
+    return view(state)
+
 def verify(state):
     replay = initial(state["scenario"], state["seed"])
     edits = state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
+        if isinstance(entry, dict) and "dialogue" in entry:
+            replay = dialogue_step(replay, entry["dialogue"])
+            continue
         if isinstance(entry, dict) and "narrative" in entry:
             replay = narrative_step(replay, entry["narrative"])
             continue
@@ -722,6 +744,8 @@ def view(state):
         scene_view["danger"] = beats.available(state, rules)
     if "commitments" in state["dxd"]:
         scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
+    if "dialogue" in state:
+        scene_view["dialogue"] = epistemic.public_projection(state)
     if "local_records" in state:
         scene_view["local_records"] = copy.deepcopy(state["local_records"][-8:])
     if "narrative_events" in state:
@@ -774,6 +798,15 @@ def gm_context(state):
     legal = options(state, rules)
     local = [a for a in legal if a.get("location", state["location"]) == state["location"]]
     relevant = {a["npc"] for a in local if "npc" in a}
+    # Dialogue does not end when the last mechanical topic is spent.
+    # Only anchored, currently available participants can converse without
+    # an action. An unanchored contact still needs an authorized encounter.
+    conversational = {key for key, npc in state["npcs"].items()
+                      if npc["location"] == state["location"]
+                      and npc_available(state, rules, {"npc": key, "location": state["location"]})}
+    if state["ending"] or pc.get("activity", {}).get("status") == "asleep":
+        conversational = set()
+    relevant |= conversational
     return {"audience": "gm_only", "source_revision": state["source"],
             "player_surface": recent,
             "referee": {
@@ -785,9 +818,16 @@ def gm_context(state):
                                   "disclosed": state["npcs"][key]["disclosed"],
                                   "secret": state["npcs"][key]["secret"],
                                   "location": state["npcs"][key]["location"],
+                                  "conversation_available": key in conversational,
+                                  "encounters": state["npcs"][key]["encounters"],
+                                  "last_contact": state["npcs"][key]["last_contact"],
+                                  "demeanor": state["relationships"].get(key),
+                                  "source_traits": copy.deepcopy(state["npcs"][key]["traits"]),
+                                  "local_actions": [a["id"] for a in local if a.get("npc") == key],
                                   "skills": copy.deepcopy(state["npcs"][key].get("skills", {})),
                                   "traits": copy.deepcopy(state["npcs"][key].get("dxd_traits", {}))}
                                  for key in sorted(relevant)],
+                **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "concerns": copy.deepcopy(pc["concerns"]),
                 "attributes": dict(pc["attributes"]), "skills": copy.deepcopy(pc["skills"]),
                 "traits": copy.deepcopy(pc["traits"]),
