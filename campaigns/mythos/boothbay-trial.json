@@ -1,5 +1,6 @@
 {
-  "version": 53,
+  "version": 54,
+  "interpersonal_duress": {"stress_awards": {"minor": 1, "significant": 3, "severe": 6}},
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",

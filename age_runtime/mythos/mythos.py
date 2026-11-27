@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -78,6 +78,8 @@ def initial(sid, seed):
         state["agreement_history"] = []
     if rules.get("narrative_locks"):
         state["narrative_locks"] = []
+    if rules.get("interpersonal_duress"):
+        state["emotional_episodes"] = []
     if rules.get("timed_detail_event"):
         state["timed_detail_events"] = []
     if rules.get("local_proposals"):
@@ -143,6 +145,9 @@ def initial(sid, seed):
             if "character_profiles" in state:
                 profile["skills"] = copy.deepcopy(state["character_profiles"][nid]["proficiencies"]["skills"])
                 profile["dxd_traits"] = copy.deepcopy(state["character_profiles"][nid]["proficiencies"]["traits"])
+            if rules.get("interpersonal_duress"):
+                profile["concerns"] = dxd_conditions.initial(profile["dxd_attributes"])
+                profile["concerns"]["capacity"]["resilience"] += profile.get("skills", {}).get("Grit", 0)
     return state
 
 def npc_available(state, rules, action):
@@ -280,6 +285,8 @@ def resolve_dxd(state, rules, action):
         target_spec = {"attribute": "INT", **spec.get("opposition", {})}
         npc_gathered = dxd_modifiers.gather(npc_attrs, npc.get("skills", {}), npc.get("dxd_traits", {}), target_spec, player=False)
         target_mods = dxd_modifiers.totals(npc_gathered)
+        if "concerns" in npc:
+            target_mods["penalty"] += dxd_conditions.penalty_dice(npc["concerns"], decision=spec.get("decision", False))
         # NPCs do not receive the PC-only additional Attribute bonus.
         args = {"active_raw": pc["attributes"]["PRE"], "target_raw": npc_attrs["INT"],
                 "active_dm": sum(components) - dxd.attribute_dm(pc["attributes"]["PRE"]),
@@ -901,6 +908,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
+                **({"emotional_context": emotions.projection(state, conversational)} if rules.get("interpersonal_duress") else {}),
                 **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
                 **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
                 **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
