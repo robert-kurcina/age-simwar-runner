@@ -47,6 +47,11 @@ def compile_beat(state, rules, request):
         raise ValueError("Beat unavailable")
     cfg = rules["danger_beats"][offer["action"]]
     spec = cfg["approaches"][offer["approach"]]
+    injury = outcome(cfg, spec, "resolved_injury_on_dof", 0)
+    if type(injury) is not int or injury < 0:
+        raise ValueError("invalid resolved Beat Injury")
+    if injury and ("injury" not in state["dxd"] or injury >= state["dxd"]["injury"]["capacity"] or state["dxd"]["injury"]["injury"] + 1 >= state["dxd"]["injury"]["capacity"]):
+        raise ValueError("potentially dying Injury requires explicit consequence authority")
     loc = state["location"]
     return {"id": offer["action"], "label": offer["objective"], "location": loc,
             "duration_seconds": cfg["seconds"], "local_seconds": cfg["seconds"],
@@ -60,6 +65,10 @@ def compile_beat(state, rules, request):
 def record(state, rules, action, result):
     cfg = rules["danger_beats"][action["id"]]
     spec = cfg["approaches"][action["beat_approach"]]
+    injury = outcome(cfg, spec, "resolved_injury_on_dof", 0)
+    if not result["passed"] and result["dof"] and injury:
+        from age_runtime.core import dxd_injury
+        dxd_injury.apply(state["dxd"]["injury"], injury)
     if result["passed"]:
         state["observations"].append(outcome(cfg, spec, "success_observation"))
         degree = outcome(cfg, spec, "degree_observation")

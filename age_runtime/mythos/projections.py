@@ -8,7 +8,7 @@ from age_runtime.mythos import (
     timed_details, emotions, reminders, npc_time, action_observations,
     behavior, expectations, npc_travel, npc_agency, npc_agenda, settlement_activity, incidental_people,
 )
-from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment
+from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment, dxd_injury
 from age_runtime.core import opportunity_latitude as latitude
 
 def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, full_history=False):
@@ -65,6 +65,7 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for nid, p in state["npcs"].items() if p["encounters"]],
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
+                          **({"physical_injury": dxd_injury.projection(state["dxd"]["injury"])} if "injury" in state["dxd"] else {}),
                           fear=dxd_morale.describe(state["dxd"]["morale"])),
         "revision": digest(state), "opening": rules["opening"] if not state["turn"] else None,
         "choices": [{"id": a["id"], "label": a["label"], "minutes": a["duration_seconds"] / 60, "seconds": a["duration_seconds"], "destination": a.get("location", state["location"]), **({"travel_minutes": a["route"]["minutes"], "travel_seconds": a["route"]["seconds"]} if "spatial" in rules else {}), **({"preparation_saved_seconds": a["preparation_saved_seconds"]} if a.get("preparation_saved_seconds") else {})} for a in legal]})
