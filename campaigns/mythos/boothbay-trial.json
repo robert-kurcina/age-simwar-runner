@@ -1,5 +1,6 @@
 {
-  "version": 58,
+  "version": 59,
+  "npc_expectations": true,
   "behavioral_recognition": true,
   "action_observations": true,
   "consequential_objects": true,
