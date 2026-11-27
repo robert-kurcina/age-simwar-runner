@@ -181,8 +181,15 @@ def validate_agreements(s):
     if "agreements" not in s:
         return
     agreements = s["agreements"]
-    if not isinstance(agreements, dict) or not agreements or not s.get("resource_transfers"):
-        raise ValueError("agreements require reviewed resource transfers")
+    if not isinstance(agreements, dict) or not agreements:
+        raise ValueError("invalid agreements")
+    # Political commitments are a separate bounded slice of the existing
+    # agreement resolver, not arbitrary effects or resource transfers.
+    if not s.get("economy_projects"):
+        validate_institutional_agreements(s)
+        return
+    if not s.get("resource_transfers"):
+        raise ValueError("economic agreements require reviewed resource transfers")
     used = set(s.get("capacity_actions", {})) | set(s["resource_transfers"])
     for aid, a in agreements.items():
         if (not isinstance(aid, str) or not aid.strip() or not isinstance(a, dict)
@@ -213,6 +220,48 @@ def validate_agreements(s):
                 raise ValueError("agreement transfer must involve its two parties")
 
 
+def validate_institutional_agreements(s):
+    agreements = s["agreements"]
+    if any(k in s for k in ("economy_projects", "capacity_actions", "resource_transfers",
+                            "dynamic_negotiation", "service_restoration", "community_assistance",
+                            "civic_agreement", "assistance_capacity", "dependent_events")):
+        raise ValueError("institutional agreements cannot mix fulfillment mechanisms")
+    if s["events"] or s["constraints"]:
+        raise ValueError("institutional agreements require explicit consent outcomes")
+    used, outputs = set(), {}
+    for aid, a in agreements.items():
+        if (not isinstance(aid, str) or not aid.strip() or not isinstance(a, dict)
+                or set(a) != {"description", "consent", "due_minute", "outcome", "requires"}):
+            raise ValueError("invalid institutional agreement fields")
+        consent, due, key = a["consent"], a["due_minute"], a["outcome"]
+        if (not isinstance(a["description"], str) or not a["description"].strip()
+                or not isinstance(consent, dict) or len(consent) < 2
+                or type(due) is not int or not 0 < due <= s["end_minute"]
+                or due % s["turn_minutes"] or not isinstance(key, str)
+                or s["initial"].get(key) != 0 or key in outputs
+                or not isinstance(a["requires"], list)
+                or any(not isinstance(x, str) for x in a["requires"])
+                or len(set(a["requires"])) != len(a["requires"])):
+            raise ValueError("invalid institutional agreement terms")
+        outputs[key] = aid
+        for actor, action in consent.items():
+            if (actor not in s["actors"] or not isinstance(action, str) or action in used
+                    or s["action_catalog"].get(action, {}).get("actors") != [actor]):
+                raise ValueError("institutional consent must be independently authorized")
+            used.add(action)
+            profile = s["actors"][actor]
+            if key not in profile.get("visible_keys", []) or profile.get("report_delay_minutes", {}).get(key, 0):
+                raise ValueError("signatories require current outcome visibility")
+    if used != set(s.get("action_catalog", {})) or set(outputs) != set(s["initial"]):
+        raise ValueError("institutional slice accepts only declared consent and outcome flags")
+    for aid, a in agreements.items():
+        for prerequisite in a["requires"]:
+            if (prerequisite not in agreements
+                    or agreements[prerequisite]["due_minute"] >= a["due_minute"]
+                    or not set(a["consent"]) <= set(agreements[prerequisite]["consent"])):
+                raise ValueError("prerequisite must be earlier and visible to all dependent signatories")
+
+
 def resolve_agreements(s, state, minute):
     """One-shot, all-or-nothing settlement of reviewed mutual consent.
 
@@ -228,7 +277,17 @@ def resolve_agreements(s, state, minute):
                                for r in state["requests"]))
         outcome = {"id": aid, "minute": minute, "consenting": signed, "status": "not_agreed"}
         if len(signed) == len(a["consent"]):
-            settle_terms(s, state, minute, aid, a["transfers"], outcome)
+            if "outcome" in a:
+                if all(state["values"][s["agreements"][p]["outcome"]] == 1 for p in a["requires"]):
+                    key = a["outcome"]
+                    state["values"][key] = 1
+                    state["ledger"].append({"id": "agreement:" + aid + ":" + key,
+                        "minute": minute, "key": key, "delta": 1, "value": 1})
+                    outcome["status"] = "fulfilled"
+                else:
+                    outcome["status"] = "prerequisite_unmet"
+            else:
+                settle_terms(s, state, minute, aid, a["transfers"], outcome)
         state["agreement_results"].append(outcome)
 
 
@@ -273,12 +332,16 @@ def resolve_reviews(s, state, end):
                 record["fulfillment"] = "consent_recorded"
             capacity -= 1
 
-def available_requests(s, actor_id):
+def available_requests(s, actor_id, state=None):
     if actor_id not in s.get("actors", {}):
         raise ValueError("unknown actor")
     return {name: {"description": spec["description"]}
             for name, spec in s.get("action_catalog", {}).items()
-            if actor_id in spec["actors"]}
+            if actor_id in spec["actors"] and (state is None or not any(
+                "outcome" in a and a["consent"].get(actor_id) == name and
+                (state["minute"] >= a["due_minute"] or any(
+                    r["actor"] == actor_id and r["action"] == name for r in state["requests"]))
+                for a in s.get("agreements", {}).values()))}
 
 def validate_request(s, actor_id, proposal):
     """Trusted caller supplies actor identity; proposal cannot override it."""
@@ -294,4 +357,6 @@ def register_request(s, state, actor_id, proposal):
     if state["minute"] >= s["end_minute"]:
         raise ValueError("session ended")
     record = validate_request(s, actor_id, proposal)
+    if record["action"] not in available_requests(s, actor_id, state):
+        raise ValueError("consent already submitted or deadline passed")
     return {**record, "turn": state["turn"], "minute": state["minute"]}

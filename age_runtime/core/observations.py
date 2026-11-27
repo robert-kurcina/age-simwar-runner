@@ -87,7 +87,8 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
         result = next((r["status"] for r in state.get("agreement_results", []) if r["id"] == aid), None)
         agreements[aid] = {"description": a["description"], "due_minute": a["due_minute"],
                            "consent_action": a["consent"][actor_id], "consenting": signed,
-                           "terms": [deepcopy(s["resource_transfers"][t]) for t in a["transfers"]],
+                           **({"outcome": a["outcome"], "requires": a["requires"]} if "outcome" in a else
+                              {"terms": [deepcopy(s["resource_transfers"][t]) for t in a["transfers"]]}),
                            "status": result or ("committed" if len(signed) == len(a["consent"]) else "awaiting_consent")}
     return {**({"agreements": agreements} if "agreements" in s else {}),
             **({"transfer_options": transfers} if "resource_transfers" in s else {}),
@@ -132,7 +133,7 @@ def observe(s, state, actor_id):
                  "axes": deepcopy(p["axes"]), "progress": p["progress"],
                  "delay": p["delay"], "complications": p["complications"]}
                 for p in s.get("economy_projects", []) if p["participant"] == actor_id]
-    requests = available_requests(s, actor_id) if state["minute"] < s["end_minute"] else {}
+    requests = available_requests(s, actor_id, state) if state["minute"] < s["end_minute"] else {}
     pacing = {}
     if "game_length" in s and actor_id not in s.get("model_factions", []):
         from age_runtime.core.runner import GAME_LENGTHS
@@ -154,7 +155,7 @@ def observe(s, state, actor_id):
         **negotiation_view(s, state, actor_id),
         **strategy,
         **pacing,
-        **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s else {}),
+        **({"strategic_support": strategic_support(s, state, actor_id, values, reports, projects, requests)} if "economy_projects" in s or "agreements" in s else {}),
         **({"projects": projects} if "economy_projects" in s else {}),
         **({"faction_context": deepcopy(actor["faction_context"]["profile"])} if "faction_context" in actor else {}),
         **({"project_results": [deepcopy(r) for r in state["project_results"] if r["participant"] == actor_id]} if "project_results" in state else {}),

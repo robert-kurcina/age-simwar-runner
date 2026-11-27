@@ -44,6 +44,14 @@ def supported(s):
                 or s["turn_minutes"] < 10080 or s["end_minute"] % s["turn_minutes"]):
             raise ValueError("unsupported private economy scenario")
         return
+    if "agreements" in s:
+        from age_runtime.core.runner import validate
+        validate(s)
+        if (not s.get("model_factions") or len(set(s["actors"]) - set(s["model_factions"])) != 1
+                or s.get("administrative_reviews_per_turn", 0) < len(s["actors"])
+                or s["end_minute"] % s["turn_minutes"]):
+            raise ValueError("unsupported private institutional scenario")
+        return
     if s["events"] or s["constraints"] or "dependent_events" in s or "model_factions" in s:
         raise ValueError("unsupported private scenario mechanics")
     keys = set(s["initial"])
@@ -78,7 +86,7 @@ def eligible_perspectives(entry, scenario):
     if "player_factions" not in entry:
         return default
     allowed = entry["player_factions"]
-    if (not scenario.get("economy_projects") or scenario.get("civic_agreement")
+    if (not (scenario.get("economy_projects") or scenario.get("agreements")) or scenario.get("civic_agreement")
             or len(default) != 1 or not isinstance(allowed, list) or not allowed
             or any(not isinstance(a, str) or a not in actors for a in allowed)
             or len(set(allowed)) != len(allowed) or default[0] not in allowed):
