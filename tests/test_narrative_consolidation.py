@@ -314,3 +314,44 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertEqual(npc["concerns"], expected)
         self.assertEqual(npc["concerns"]["stress"], 12)
         self.assertIsNone(npc["activity_plan"])
+
+    def test_authored_social_demeanor_replay_and_duplicate_guard(self):
+        for seed in range(100):
+            state = mythos.step(mythos.initial("castine", seed), "inspect_ledger")
+            if "ledger" in state["flags"]:
+                state = mythos.step(state, "talk_martha")
+                break
+        else:
+            self.fail("No authored encounter")
+        state = mythos.dialogue_step(state, {"npc": "martha", "speaker": "pc",
+            "claim": "I consider you a dishonest witness.", "stance": "unstated",
+            "intent": "unstated"})
+        harm = {"npc": "martha", "claims": [1], "kind": "harm",
+                "basis": "Actual personal insult"}
+        before = copy.deepcopy(state)
+        after = mythos.establish_step(state, {"social_demeanor": harm})
+        self.assertLess(after["relationships"]["martha"], before["relationships"]["martha"])
+        for key in ("time", "turn", "flags", "discoveries", "dxd", "resources"):
+            self.assertEqual(after[key], before[key])
+        self.assertEqual(after["relationship_changes"][-1]["claims"], [1])
+        self.assertEqual(mythos.gm_context(after)["referee"]["consequential_demeanor"]["martha"][-1]["kind"], "harm")
+        self.assertIn("demeanor", mythos.view(after)["contacts"][0])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"social_demeanor": harm})
+        mythos.verify(after)
+
+    def test_native_demeanor_rolling_limits_across_coarse_time(self):
+        from datetime import datetime, timedelta
+        state = mythos.initial("ram-island", 42)
+        for _ in range(4):
+            mythos.change_demeanor(state, "matteo", -1)
+        self.assertEqual(state["relationships"]["matteo"], -3)
+        for _ in range(4):
+            mythos.change_demeanor(state, "matteo", 1)
+        self.assertEqual(state["relationships"]["matteo"], -2)
+        state["time"] = (datetime.fromisoformat(state["time"]) + timedelta(days=8)).isoformat()
+        mythos.change_demeanor(state, "matteo", 1)
+        self.assertEqual(state["relationships"]["matteo"], -1)
+        state["time"] = (datetime.fromisoformat(state["time"]) + timedelta(days=31)).isoformat()
+        mythos.change_demeanor(state, "matteo", 3)
+        self.assertEqual(state["relationships"]["matteo"], 2)
