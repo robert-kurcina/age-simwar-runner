@@ -899,6 +899,31 @@ class MythosTrialTests(unittest.TestCase):
                     break
             self.assertEqual(seen, {True, False}, action_id)
 
+    def test_warning_reconsideration_requires_new_evidence(self):
+        from age_runtime.mythos import continuity
+        _, rules = mythos.load("boothbay")
+        first = next(a for a in rules["actions"] if a["id"] == "warn_eleanor")
+        alternate = next(a for a in rules["actions"] if a["id"] == "warn_from_ecology")
+        for seed in range(200):
+            s = mythos.initial("boothbay", seed)
+            s["flags"].extend(["water_warning", "tide_clue"])
+            after = mythos.step(s, first["id"])
+            if not after["last_result"]["success"]:
+                break
+        else:
+            self.fail("No warning refusal")
+        self.assertFalse(continuity.reconsideration_allowed(after, alternate))
+        self.assertNotIn(alternate["id"], [a["id"] for a in mythos.options(after, rules)])
+        after["flags"].append("unrelated_evidence")
+        self.assertFalse(continuity.reconsideration_allowed(after, alternate))
+        after["flags"].append("water_risk_known")
+        self.assertTrue(continuity.reconsideration_allowed(after, alternate))
+        self.assertIn(alternate["id"], [a["id"] for a in mythos.options(after, rules)])
+        self.assertNotIn(first["id"], [a["id"] for a in mythos.options(after, rules)])
+        snapshot = next(x["refusal_context"] for x in after["dxd"]["tests"] if "refusal_context" in x)
+        snapshot["evidence"].append("water_risk_known")
+        self.assertFalse(continuity.reconsideration_allowed(after, alternate))
+
     def test_warning_confirmation_has_bounded_followthrough(self):
         # Provisional scenario payoff: confirmation follows an independently
         # resolved distribution clock, not the player's initial promise.
