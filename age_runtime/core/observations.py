@@ -5,6 +5,7 @@ from age_runtime.core.negotiation import view as negotiation_view
 from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
 from age_runtime.core.economy import bottleneck
+from age_runtime.core.diplomacy import history as diplomatic_history
 
 def validate_views(s):
     for actor in s.get("actors", {}).values():
@@ -88,6 +89,7 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
         result = next((r["status"] for r in state.get("agreement_results", []) if r["id"] == aid), None)
         agreements[aid] = {"description": a["description"], "due_minute": a["due_minute"],
                            "consent_action": a["consent"][actor_id], "consenting": signed,
+                           **({"participants": sorted(a["consent"])} if s.get("diplomatic_history") else {}),
                            **({"outcome": a["outcome"], "requires": a["requires"]} if "outcome" in a else
                               {"terms": [deepcopy(s["resource_transfers"][t]) for t in a["transfers"]]}),
                            "status": result or ("committed" if len(signed) == len(a["consent"]) else "awaiting_consent")}
@@ -143,7 +145,7 @@ def observe(s, state, actor_id):
             "goals": [{"id": oid, **deepcopy(actor["objectives"][oid]),
                        "observed_result": deepcopy(observed_objectives.get(oid))}
                       for oid in actor["strategy"]["priorities"]]}}
-    return {
+    observation = {
         **negotiation_view(s, state, actor_id),
         **communication_view(s, state, actor_id),
         **strategy,
@@ -162,3 +164,6 @@ def observe(s, state, actor_id):
         "available_requests": requests,
         "objectives": observed_objectives
     }
+    if s.get("diplomatic_history"):
+        observation["diplomatic_history"] = diplomatic_history(observation)
+    return observation
