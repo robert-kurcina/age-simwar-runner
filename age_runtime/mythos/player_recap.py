@@ -17,6 +17,7 @@ def recap(public):
         "audience": "player",
         "revision": public["revision"],
         "scenario": public["scenario"],
+        "opportunity_latitude": public.get("opportunity_latitude", "balanced"),
         "time": public["time"],
         "location": public["location"],
         "turn": public["turn"],
