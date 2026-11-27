@@ -813,6 +813,35 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_independent_npc_native_test_uses_own_profile_and_replays(self):
+        from age_runtime.core import dxd
+        s = mythos.initial("boothbay", 42)
+        for action in ("talk_eleanor", "visit_elias", "inspect_room", "speak_burroughs"):
+            s = mythos.step(s, action)
+        s = mythos.establish_step(s, {"details": [{"id": "inc:case", "kind": "object",
+            "label": "Case", "description": "A mundane old case.", "basis": "His own possession",
+            "custodian": "burroughs", "properties": {"appearance": "Faded initials"}}]})
+        req = {"id": "evt:examine", "npc": "burroughs", "object": "inc:case",
+               "basis": "He tries to decipher its faded markings."}
+        scheduled = mythos.establish_step(s, {"npc_native_test": req})
+        self.assertEqual(scheduled["time"], s["time"])
+        self.assertNotIn("test", scheduled["timed_detail_events"][-1])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(scheduled, {"npc_native_test": dict(req, id="evt:again")})
+        elapsed = mythos.step(scheduled, "observe")
+        event = elapsed["timed_detail_events"][-1]
+        self.assertEqual(event["status"], "completed")
+        self.assertEqual(event["test"]["inputs"]["dm"],
+                         dxd.attribute_dm(elapsed["npcs"]["burroughs"]["dxd_attributes"]["INT"]) + 2)
+        self.assertEqual(event["test"]["result"], dxd.test("42:npc-test:burroughs:inc:case", **event["test"]["inputs"]))
+        self.assertEqual(elapsed["dxd"]["tests"], s["dxd"]["tests"])
+        self.assertEqual(elapsed["dxd"]["favor"], s["dxd"]["favor"])
+        self.assertEqual(elapsed["detail_changes"], s["detail_changes"])
+        self.assertNotIn("timed_detail_events", mythos.view(elapsed))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(elapsed, {"npc_native_test": dict(req, id="evt:retry")})
+        mythos.verify(elapsed)
+
     def test_independent_npc_travel_reuses_route_and_time(self):
         import copy
         s = mythos.initial("boothbay", 42)
