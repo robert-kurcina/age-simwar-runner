@@ -194,6 +194,15 @@ def compact_history(packet):
         required.update(cue["claim_id"]
                         for context in ref.get("contextual_reminders", {}).values()
                         for cue in context["utterances"])
+        required.update(item["source"]["id"]
+                        for context in ref.get("npc_agency", {}).values()
+                        for goal in context["objectives"]
+                        for item in goal.get("decision_evidence", [])
+                        if item["source"]["kind"] == "claim")
+        required.update(cid
+                        for context in ref.get("emotional_context", {}).values()
+                        for episode in context.get("salient_history", []) + context.get("recent_episodes", [])
+                        for cid in episode["claim_ids"])
         selected_ids = {e["id"] for e in selected} | required
         ref["dialogue_context"] = [e for e in ref["dialogue_context"]
                                    if e["id"] in selected_ids]

@@ -698,3 +698,65 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.establish_step(abandoned, {"npc_task": resume})
         mythos.verify(abandoned)
+
+    def test_decision_context_retains_old_shared_consequences(self):
+        from age_runtime.mythos import reminders, emotions, npc_agency
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        state = mythos.dialogue_step(state, {"npc": "eleanor", "speaker": "pc",
+            "claim": "I am investigating your brother's disappearance.",
+            "stance": "unstated", "intent": "unstated"})
+        state = mythos.establish_step(state, {"npc_objective": {
+            "operation": "create", "id": "goal:brother", "npc": "eleanor",
+            "goal": "Learn what happened to my brother.", "priority": "urgent",
+            "intention": "Ask about the inquiries.", "basis": "Her own motivation",
+            "sources": [{"kind": "claim", "id": 1}]}})
+        state = mythos.establish_step(state, {"details": [{"id": "inc:cup", "kind": "object",
+            "label": "Cup", "description": "A ceramic cup.", "basis": "Mundane furnishing",
+            "custodian": "eleanor"}]})
+        state = mythos.establish_step(state, {"transfers": [{"id": "inc:cup",
+            "from": "eleanor", "to": "pc", "pc_authorization": "I accept the cup.",
+            "npc_consent": "Here you are.", "basis": "Voluntary transfer"}]})
+        state = mythos.establish_step(state, {"object_action": {"id": "act:break",
+            "object": "inc:cup", "before": "intact", "outcome": "destroyed",
+            "authorization": "I drop the cup.", "basis": "Certain incidental breakage",
+            "remnants": "Ceramic fragments"}})
+        state = mythos.establish_step(state, {"action_observation": {
+            "id": "obs:break", "npc": "eleanor", "action": "act:break",
+            "kind": "witnessed", "basis": "She sees the cup break."}})
+        state = mythos.establish_step(state, {"emotion": {"id": "emo:cup",
+            "npc": "eleanor", "claim_ids": [], "observation": "obs:break",
+            "emotion": "Anger", "intensity": "acute", "expression": "She frowns.",
+            "cause": "Her cup was broken.", "stress": {}}})
+        for i in range(14):
+            state = mythos.dialogue_step(state, {"npc": "eleanor", "speaker": "pc",
+                "claim": "Ordinary conversation topic " + str(i),
+                "stance": "unstated", "intent": "unstated"})
+            if i < 7:
+                state = mythos.establish_step(state, {"emotion": {
+                    "id": "emo:ordinary_" + str(i), "npc": "eleanor",
+                    "claim_ids": [len(state["dialogue"])], "emotion": "Calm",
+                    "intensity": "restrained", "expression": "She listens.",
+                    "cause": "Ordinary conversation.", "stress": {}}})
+        before = copy.deepcopy(state)
+        packet = mythos.gm_context(state, compact=True)
+        ref = packet["referee"]
+        self.assertEqual(ref["contextual_reminders"]["eleanor"]["shared_actions"][0]["id"], "obs:break")
+        self.assertIn("emo:cup", {e["id"] for e in ref["emotional_context"]["eleanor"]["salient_history"]})
+        goal = ref["npc_agency"]["eleanor"]["objectives"][0]
+        self.assertEqual(goal["decision_evidence"][0]["record"]["claim"],
+                         "I am investigating your brother's disappearance.")
+        self.assertIn(1, {e["id"] for e in ref["dialogue_context"]})
+        self.assertFalse(npc_agency.owned_source(state, "elias", {"kind": "claim", "id": 1}))
+        self.assertNotIn("npc_agency", mythos.view(state))
+        self.assertEqual(state, before)
+        mythos.verify(state)
+
+    def test_discovered_object_consequence_is_not_shared_action_memory(self):
+        from age_runtime.mythos import reminders
+        state = mythos.initial("boothbay", 42)
+        # Synthetic projection-only fixture: discovery does not identify an actor.
+        state["action_observations"] = [{"id": "obs:found", "npc": "eleanor",
+            "object": "inc:cup", "outcome": "destroyed", "condition": "Fragments",
+            "kind": "discovered", "actor": None, "at": state["time"],
+            "turn": state["turn"], "location": state["location"]}]
+        self.assertNotIn("eleanor", reminders.projection(state, {"eleanor"}))

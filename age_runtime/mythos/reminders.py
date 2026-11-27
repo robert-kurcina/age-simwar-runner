@@ -14,7 +14,9 @@ def projection(state, participants):
     result = {}
     for npc in sorted(participants):
         shared = [e for e in public if {e["speaker"], e["listener"]} == {"pc", npc}]
-        if not shared:
+        witnessed = [o for o in state.get("action_observations", [])
+                     if o["npc"] == npc and o["kind"] == "witnessed" and o["actor"] == "pc"]
+        if not shared and not witnessed:
             continue
         by_id = {e["id"]: e for e in shared}
         # Recent exchanges plus older significant material, never private
@@ -36,6 +38,13 @@ def projection(state, participants):
                         "terms": a["terms"], "condition": a["condition"],
                         "claim_ids": list(a["claim_ids"]), **age(state, a)}
                        for a in active[:4]]
-        result[npc] = {"last_shared_exchange": age(state, shared[-1]),
+        significant = {e.get("observation") for e in state.get("emotional_episodes", []) if e["npc"] == npc}
+        selected = witnessed[-4:]
+        older_actions = [o for o in witnessed[:-4] if o["id"] in significant][-3:]
+        actions = [{k: o[k] for k in ("id", "object", "outcome", "condition", "at", "location")}
+                   | ({"function": o["function"]} if "function" in o else {}) | age(state, o)
+                   for o in older_actions + selected]
+        result[npc] = {"last_shared_exchange": age(state, shared[-1]) if shared else None,
+                       "shared_actions": actions,
                        "utterances": cues, "active_agreements": obligations}
     return result

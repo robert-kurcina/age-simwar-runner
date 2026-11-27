@@ -18,29 +18,72 @@ def initialize(state, rules):
     for nid, npc in state["npcs"].items():
         npc["favor"] = cfg["favor"]["initial"][nid]
 
-def owned_source(state, npc, source):
+def source_record(state, npc, source):
+    """Resolve a cited source to actor-owned evidence, not world truth."""
     if not isinstance(source, dict) or set(source) != {"kind", "id"}:
-        return False
+        return None
     kind, sid = source["kind"], source["id"]
     if kind == "claim" and type(sid) is int:
-        return any(e["id"] == sid and npc in (e["speaker"], e["listener"]) for e in state.get("dialogue", []))
-    if kind == "observation":
-        return any(e["id"] == sid and e["npc"] == npc for e in state.get("action_observations", []))
-    if kind == "test":
-        return any(e["id"] == sid and e["npc"] == npc and e["status"] == "completed"
-                   and "test" in e for e in state.get("timed_detail_events", []))
-    if kind == "pattern":
-        return any(e["id"] == sid and e["npc"] == npc for e in state.get("behavioral_recognition", []))
-    if kind == "expectation":
-        return any(e["id"] == sid and e["npc"] == npc and e["operation"] == "assess"
-                   for e in state.get("npc_expectations", []))
-    if kind == "activity":
-        return any(e["id"] == sid and e["npc"] == npc and e["status"] in
-                   ("completed", "interrupted", "cancelled", "prerequisite_unmet", "record_limit")
-                   for e in state.get("timed_detail_events", []))
-    if kind == "social_test":
-        return any(e["id"] == sid and npc in (e["npc"], e["target"]) for e in state.get("npc_social_tests", []))
-    return False
+        return next((e for e in state.get("dialogue", []) if e["id"] == sid
+                     and npc in (e["speaker"], e["listener"])), None)
+    if kind in ("observation", "pattern", "expectation", "test", "activity", "social_test"):
+        ledger = {"observation": "action_observations", "pattern": "behavioral_recognition",
+                  "expectation": "npc_expectations", "test": "timed_detail_events",
+                  "activity": "timed_detail_events", "social_test": "npc_social_tests"}[kind]
+        for e in state.get(ledger, []):
+            if e["id"] != sid:
+                continue
+            if kind == "social_test":
+                if npc in (e["npc"], e["target"]):
+                    return e
+                continue
+            if e["npc"] != npc:
+                continue
+            if kind == "expectation" and e["operation"] != "assess":
+                continue
+            if kind == "test" and (e["status"] != "completed" or "test" not in e):
+                continue
+            if kind == "activity" and e["status"] not in (
+                    "completed", "interrupted", "cancelled", "prerequisite_unmet", "record_limit"):
+                continue
+            return e
+    return None
+
+
+def owned_source(state, npc, source):
+    return source_record(state, npc, source) is not None
+
+
+def objective_context(state, goal):
+    """Retain initial and latest decision evidence alongside the objective.
+
+    Activity status is live, not a snapshot of the historical decision.
+    Never expose another actor's private reaction or testimony provenance.
+    """
+    npc = goal["npc"]
+    refs = goal["sources"] + goal.get("latest_review", {}).get("sources", [])
+    selected = []
+    for ref in refs:
+        if any(item["source"] == ref for item in selected):
+            continue
+        record = source_record(state, npc, ref)
+        if record is None:
+            # A previously interrupted activity may have resumed.
+            selected.append({"source": copy.deepcopy(ref), "historical_reference": True})
+            continue
+        fields = {
+            "claim": ("speaker", "listener", "claim", "at", "turn", "location"),
+            "observation": ("kind", "object", "outcome", "condition", "function", "actor", "at", "turn"),
+            "pattern": ("kind", "interpretation", "evidence", "at", "turn"),
+            "expectation": ("outcome", "interpretation", "evidence", "at", "turn"),
+            "test": ("status", "assessment", "object", "due"),
+            "activity": ("status", "assessment", "object", "due", "interruption"),
+            "social_test": ("npc", "target", "assessment", "at", "turn"),
+        }[ref["kind"]]
+        selected.append({"source": copy.deepcopy(ref), "record": {
+            k: copy.deepcopy(record[k]) for k in fields if k in record}})
+    return {**copy.deepcopy(goal), "decision_evidence": selected}
+
 
 def project(state):
     result = {}
@@ -188,7 +231,7 @@ def social_test(state, rules, request, npc_available, text):
 
 def projection(state):
     current = project(state)
-    return {nid: {"objectives": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("active", "deferred")],
+    return {nid: {"objectives": [objective_context(state, e) for e in current.values() if e["npc"] == nid and e["status"] in ("active", "deferred")],
                   "pursuit": [{"id": e["id"], "objective": e["objective"], "status": e["status"],
                                "authority": e["authority"], "object": e["object"], "due": e["due"]}
                               for e in state.get("timed_detail_events", []) if e["npc"] == nid and "objective" in e],
