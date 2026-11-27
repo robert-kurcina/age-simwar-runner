@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -78,6 +78,8 @@ def initial(sid, seed):
         state["agreement_history"] = []
     if rules.get("narrative_locks"):
         state["narrative_locks"] = []
+    if rules.get("timed_detail_event"):
+        state["timed_detail_events"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -386,6 +388,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
     reason = None
     while cursor < finish:
         boundary = next(b for b in boundaries if b > cursor)
+        boundary = timed_details.next_boundary(state, cursor, boundary)
         if "narrative_events" in state:
             interval = narrative_events.next_boundary(state, rules)
             if interval is not None:
@@ -399,6 +402,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         state["time"] = cursor.isoformat()
         narrative_events.advance_time(state, rules, actual)
         advance_events(state, rules, cursor)
+        timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
         if mode != "sleep" and clock["pending_sleep_seconds"] == 0:
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
             reason = "involuntary_sleep"
@@ -867,6 +871,7 @@ def gm_context(state):
                                  for key in sorted(relevant)],
                 **({"dialogue_context": epistemic.referee_projection(state, relevant)} if "dialogue" in state else {}),
                 "propositions": epistemic.proposition_projection(state, rules, relevant),
+                **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
                 **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"relational_context": epistemic.relational_projection(state, relevant)} if rules.get("relational_continuity") else {}),
