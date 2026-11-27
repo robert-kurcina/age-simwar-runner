@@ -23,12 +23,21 @@ def owned_source(state, npc, source):
         return False
     kind, sid = source["kind"], source["id"]
     if kind == "claim" and type(sid) is int:
-        return any(e["id"] == sid and npc in (e["speaker"], e["listener"]) for e in state["dialogue"])
+        return any(e["id"] == sid and npc in (e["speaker"], e["listener"]) for e in state.get("dialogue", []))
     if kind == "observation":
         return any(e["id"] == sid and e["npc"] == npc for e in state.get("action_observations", []))
     if kind == "test":
         return any(e["id"] == sid and e["npc"] == npc and e["status"] == "completed"
                    and "test" in e for e in state.get("timed_detail_events", []))
+    if kind == "pattern":
+        return any(e["id"] == sid and e["npc"] == npc for e in state.get("behavioral_recognition", []))
+    if kind == "expectation":
+        return any(e["id"] == sid and e["npc"] == npc and e["operation"] == "assess"
+                   for e in state.get("npc_expectations", []))
+    if kind == "activity":
+        return any(e["id"] == sid and e["npc"] == npc and e["status"] in
+                   ("completed", "interrupted", "cancelled", "prerequisite_unmet", "record_limit")
+                   for e in state.get("timed_detail_events", []))
     if kind == "social_test":
         return any(e["id"] == sid and npc in (e["npc"], e["target"]) for e in state.get("npc_social_tests", []))
     return False
@@ -88,8 +97,40 @@ def objective(state, rules, request, npc_available, text):
         # Achievement is explicitly the NPC's assessment, not objective truth.
         if status == "achieved" and not sources:
             raise ValueError("achievement requires actor-scoped evidence")
+        if (status, priority, entry["intention"]) == (old["status"], old["priority"], old["intention"]):
+            raise ValueError("objective review does not change its decision")
         entry["status"] = status
     ledger.append(entry)
+    if op == "review":
+        review_activities(state, entry)
+
+def active_objective(state, nid, oid):
+    goal = project(state).get(oid) if isinstance(oid, str) else None
+    return bool(goal and goal["npc"] == nid and goal["status"] == "active")
+
+
+def linked_activities(state, oid):
+    return [e for e in state.get("timed_detail_events", []) if e.get("objective") == oid]
+
+
+def review_activities(state, entry):
+    """A suspended/closed objective cannot silently continue its linked work."""
+    if entry.get("status") not in ("deferred", "achieved", "abandoned"):
+        return
+    for event in linked_activities(state, entry["id"]):
+        if event["status"] not in ("scheduled", "interrupted"):
+            continue
+        if entry["status"] == "deferred" and event.get("authority") == "npc_native_test":
+            if event["status"] == "scheduled":
+                event.update(status="interrupted", interrupted_at=state["time"],
+                             interruption="objective_deferred")
+                if "task_history" in event:
+                    event["task_history"].append({"operation": "interrupt", "at": state["time"],
+                        "reason": "objective_deferred", "work_seconds": event.get("work_seconds", 0)})
+        else:
+            event.update(status="cancelled", cancelled_at=state["time"],
+                         cancellation_basis="Objective " + entry["status"])
+
 
 def modifiers(state, rules, nid, spec, significance):
     npc = state["npcs"][nid]
@@ -148,6 +189,9 @@ def social_test(state, rules, request, npc_available, text):
 def projection(state):
     current = project(state)
     return {nid: {"objectives": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("active", "deferred")],
+                  "pursuit": [{"id": e["id"], "objective": e["objective"], "status": e["status"],
+                               "authority": e["authority"], "object": e["object"], "due": e["due"]}
+                              for e in state.get("timed_detail_events", []) if e["npc"] == nid and "objective" in e],
                   "recent_closed": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("achieved", "abandoned")][-4:],
                   **({"favor": npc["favor"]} if "favor" in npc else {}),
                   "social_tests": [copy.deepcopy(e) for e in state.get("npc_social_tests", []) if nid in (e["npc"], e["target"])][-6:]}
