@@ -20,7 +20,7 @@ def validate(s):
         issuer, grantee = term["issuer"], term["grantee"]
         due, description = term["max_due_minute"], term["description"]
         if (not isinstance(issuer, str) or not isinstance(grantee, str)
-                or issuer == grantee or issuer not in s["actors"] or grantee not in s["actors"]
+                or issuer == grantee or issuer not in s.get("actors", {}) or grantee not in s.get("actors", {})
                 or not isinstance(description, str) or not description.strip() or len(description) > 400
                 or type(due) is not int or not 0 < due <= s["end_minute"]
                 or due % s["turn_minutes"]):
