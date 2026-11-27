@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core import opportunity_latitude as latitude
 from age_runtime.core.runner import save
-from age_runtime.mythos import projections, resolution, npc_agenda
+from age_runtime.mythos import projections, resolution, npc_agenda, settlement_activity
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
@@ -177,6 +177,7 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
                 profile["concerns"] = dxd_conditions.initial(profile["dxd_attributes"])
                 profile["concerns"]["capacity"]["resilience"] += profile.get("skills", {}).get("Grit", 0)
     npc_agenda.validate(rules)
+    settlement_activity.validate(rules)
     npc_time.initialize(state, rules)
     npc_agenda.initialize_presence(state, rules)
     npc_agenda.observe_boundary(state, rules)
