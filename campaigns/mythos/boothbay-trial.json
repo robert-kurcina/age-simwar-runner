@@ -1,5 +1,5 @@
 {
-  "version": 74,
+  "version": 75,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -83,20 +83,102 @@
     ]
   },
   "npc_lifecycle": true,
+  "npc_agendas": {
+    "eleanor": [
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "start_minute": 480,
+        "end_minute": 720,
+        "location": "Harbor Diner",
+        "label": "Morning diner shift"
+      },
+      {
+        "days": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "start_minute": 780,
+        "end_minute": 960,
+        "location": "Harbor Diner",
+        "label": "Afternoon diner shift"
+      },
+      {
+        "days": [
+          3,
+          4
+        ],
+        "start_minute": 730,
+        "end_minute": 765,
+        "location": "Harbor Docks",
+        "label": "Possible midday waterfront errand"
+      }
+    ]
+  },
   "npc_task_continuity": true,
-  "npc_native_test": {"npc": "burroughs", "minutes": 10, "appearance": "Faded initials", "test": {"attribute": "INT", "skill": "Investigate", "tn": 10, "decision": true}, "success": "He can distinguish the faded initials, but cannot establish ownership.", "failure": "He cannot confidently distinguish the faded initials."},
-  "routine_observations": {"activities": {"buy_meal": "Bought a meal and rested at the diner"}},
+  "npc_native_test": {
+    "npc": "burroughs",
+    "minutes": 10,
+    "appearance": "Faded initials",
+    "test": {
+      "attribute": "INT",
+      "skill": "Investigate",
+      "tn": 10,
+      "decision": true
+    },
+    "success": "He can distinguish the faded initials, but cannot establish ownership.",
+    "failure": "He cannot confidently distinguish the faded initials."
+  },
+  "routine_observations": {
+    "activities": {
+      "buy_meal": "Bought a meal and rested at the diner"
+    }
+  },
   "npc_travel": true,
   "npc_testimony": true,
-  "consequential_demeanor": {"minor": -1, "significant": -2, "severe": -3},
-  "npc_initiative": {"delays_minutes": [10, 30, 60], "before": "Dusty", "after": "Clean"},
+  "consequential_demeanor": {
+    "minor": -1,
+    "significant": -2,
+    "severe": -3
+  },
+  "npc_initiative": {
+    "delays_minutes": [
+      10,
+      30,
+      60
+    ],
+    "before": "Dusty",
+    "after": "Clean"
+  },
   "npc_expectations": true,
   "behavioral_recognition": true,
   "action_observations": true,
   "consequential_objects": true,
   "object_function": true,
-  "npc_temporal": {"initial_awake_seconds": {"eleanor": 0, "elias": 0, "burroughs": 0}},
-  "interpersonal_duress": {"stress_awards": {"minor": 1, "significant": 3, "severe": 6}},
+  "npc_temporal": {
+    "initial_awake_seconds": {
+      "eleanor": 0,
+      "elias": 0,
+      "burroughs": 0
+    }
+  },
+  "interpersonal_duress": {
+    "stress_awards": {
+      "minor": 1,
+      "significant": 3,
+      "severe": 6
+    }
+  },
   "start": "1927-10-13T08:00:00",
   "end": "1927-10-14T23:59:00",
   "opening": "You arrive in Boothbay Harbor on assignment. A missing census taker and unusual reports from the waterfront warrant investigation.",
@@ -966,7 +1048,8 @@
       ],
       "reference_rating": 3,
       "eligible_locations": [
-        "Harbor Diner"
+        "Harbor Diner",
+        "Harbor Docks"
       ]
     },
     "elias": {
@@ -2290,7 +2373,15 @@
   "narrative_agreements": true,
   "narrative_locks": true,
   "narrative_batch": true,
-  "timed_detail_event": {"delays_minutes": [10, 30, 60], "before": "Dusty", "after": "Clean"},
+  "timed_detail_event": {
+    "delays_minutes": [
+      10,
+      30,
+      60
+    ],
+    "before": "Dusty",
+    "after": "Clean"
+  },
   "propositions": {
     "badge_found": {
       "text": "A census badge was found near the waterfront.",
