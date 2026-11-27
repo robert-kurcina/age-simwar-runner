@@ -1,7 +1,7 @@
 """Delegated, mundane narrative establishment, not mechanical adjudication."""
 import copy
 import re
-from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions, action_observations, behavior, expectations, npc_travel, npc_agency, npc_agenda
+from age_runtime.mythos import agreements, locks, timed_details, emotions, npc_time, object_actions, action_observations, behavior, expectations, npc_travel, npc_agency, npc_agenda, incidental_people
 
 def text(value, limit):
     if not isinstance(value, str) or not value.strip() or len(value) > limit or any(ord(c) < 32 for c in value):
@@ -43,6 +43,7 @@ def record(state, rules, request, npc_available=None):
         "npc_travel": npc_travel.record,
         "npc_agenda_depart": npc_agenda.depart,
         "npc_presence": npc_agenda.materialize,
+        "incidental_person": incidental_people.record,
         "expectation": expectations.record,
         "behavior": behavior.record,
         "npc_activity": npc_time.record,
