@@ -4,7 +4,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from age_runtime.core.runner import digest, initialize, advance, establish_context, faction_packet, accept_faction_choice
+from age_runtime.core.runner import digest, initialize, advance, establish_context, faction_packet, accept_faction_choice, communicate
 from age_runtime.core.private_play import start, verify, briefing, model_packet, institutional_memory
 from age_runtime.core.source_compiler import compile_scenario
 
@@ -14,6 +14,8 @@ class PhaseMemoryTests(unittest.TestCase):
         source = json.loads((Path(__file__).resolve().parents[1] /
                              "scenarios/independent-funding-rehearsal.json").read_text())
         source["strategic_establishment"] = True
+        source["material_communications"] = True
+        source["communication_delay_minutes"] = {"east": {"foundation": 10081}}
         source["end_minute"] = source["turn_minutes"]
         target = copy.deepcopy(source)
         target["id"] = "later-recovery"
@@ -40,6 +42,8 @@ class PhaseMemoryTests(unittest.TestCase):
              "description": "An old reception room.", "audience": ["central"], "basis": "Fixture."},
             {"id": "inc:east_room", "kind": "facility_detail", "label": "East room",
              "description": "A small reception room.", "audience": ["east"], "basis": "Fixture."}]})
+        state = communicate(source, state, "east", digest(state),
+                            {"id": "dispatch", "recipients": ["foundation"], "claim": "A visit is requested."})
         for actor in source["model_factions"]:
             packet = faction_packet(source, state, actor)
             state = accept_faction_choice(source, state, actor, packet,
@@ -80,12 +84,14 @@ class PhaseMemoryTests(unittest.TestCase):
             verify(tampered)
 
     def test_reject_inaccessible_and_unapproved_carry(self):
-        for mutation in ("hidden", "duplicate", "identity", "date", "revision", "incomplete"):
+        for mutation in ("hidden", "unreceived", "duplicate", "identity", "date", "revision", "incomplete"):
             f = self.fixture()
             catalog, group, entry, spec, compiled, previous = f
             rule = entry["remember_from"]
             if mutation == "hidden":
                 rule["actors"]["central"][0]["id"] = "inc:east_room"
+            elif mutation == "unreceived":
+                rule["actors"]["foundation"] = [{"kind": "communications", "id": "dispatch"}]
             elif mutation == "duplicate":
                 rule["actors"]["central"] *= 2
             elif mutation == "identity":
