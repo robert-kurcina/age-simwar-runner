@@ -55,3 +55,7 @@ When referee.npc_agendas is present, consult expected weekly window, established
 ### Contextual presence
 
 When enabled, referee.npc_agendas includes offscreen_since, a conservative lower bound on uncommitted off-screen time. Use `{"npc_presence":{"npc":"eleanor","destination":"Harbor Docks","basis":"A routine waterfront errand."}}` to establish a current plausible arrival, not a prior observation or an automatic agenda event. The runtime requires reviewed reachable destinations, sufficient unused time and no conflicting observations or commitments. Do not use this to infer sleep, rest, recovered Concerns, access, consent, clues or extra mechanical effects. Ordinary abstract movement preserves previously resolved native Conditions; consequential travel must use prospective native travel. Treat an unavailable option as a constraint, not a reason to force a coincidence.
+
+### Settlement activity
+
+The optional referee.settlement_activity packet describes qualitative local ambience for current fictional weekday/time and nearest reviewed zone. Possible activities are examples, never established witnesses, NPCs, events, open services or guaranteed opportunities. Quiet does not mean empty; busy does not imply a particular person is present. Use context to narrate plausible background and propose relevant encounters, while preserving all established facts and availability rules. No background roster is required. Boothbay profiles are provisional scenario assumptions, not historical census or operating-hour claims.
