@@ -1,5 +1,5 @@
 {
-  "version": 79,
+  "version": 80,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -85,7 +85,11 @@
   "npc_lifecycle": true,
   "npc_contextual_presence": true,
   "incidental_people": true,
-  "incidental_public_locations": ["Harbor Docks", "Harbor Diner", "Sailor\u0027s Rest Boarding House"],
+  "incidental_public_locations": [
+    "Harbor Docks",
+    "Harbor Diner",
+    "Sailor's Rest Boarding House"
+  ],
   "npc_agendas": {
     "eleanor": [
       {
@@ -2586,6 +2590,34 @@
             "decision": true,
             "narrative": true
           }
+        },
+        "withdraw": {
+          "description": "Break off the approach and seek cover on the landward side",
+          "objective": "Withdraw from the exposed approach without attempting the relay",
+          "stakes": "Failure increases distress; no passage to the radio is granted.",
+          "test": {
+            "attribute": "REF",
+            "tn": 7,
+            "significance": "minor",
+            "decision": false,
+            "narrative": true
+          },
+          "grant": [
+            "patrol_withdrawn"
+          ],
+          "grant_failure": [
+            "patrol_withdrawn"
+          ],
+          "concern_failure": {
+            "stress": 1,
+            "fatigue": 1
+          },
+          "degree_failure_concern": {
+            "fatigue": 1
+          },
+          "success_observation": "You leave the exposed approach and reach cover on the landward side.",
+          "failure_observation": "You reach cover after a hurried retreat, shaken and winded.",
+          "degree_observation": "You identify a sheltered position away from the exposed approach."
         }
       },
       "grant": [
