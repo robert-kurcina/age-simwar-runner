@@ -201,6 +201,8 @@ def establish_hypothesis(state, rules, request, npc_available):
     location = state["npcs"][nid]["location"]
     if location is None or not npc_available(state, rules, {"npc": nid, "location": location}):
         raise ValueError("hypothesis requires available anchored actor")
+    if rules.get("dialogue_requires_encounter") and not conversation_available(state, rules, nid, npc_available):
+        raise ValueError("subjective revision requires current authored encounter")
     claim = next((c for c in state["dialogue"] if type(cid) is int and c["id"] == cid and nid in (c["speaker"], c["listener"])), None)
     if not claim or len(state["dynamic_propositions"]) >= 64:
         raise ValueError("hypothesis requires actor-scoped claim or record limit")
@@ -219,6 +221,8 @@ def revise_belief(state, rules, request, npc_available):
     location = state["npcs"][nid]["location"]
     if location is None or not npc_available(state, rules, {"npc": nid, "location": location}):
         raise ValueError("belief revision requires available anchored NPC")
+    if rules.get("dialogue_requires_encounter") and not conversation_available(state, rules, nid, npc_available):
+        raise ValueError("subjective revision requires current authored encounter")
     if not sources(state, rules, nid, pid):
         raise ValueError("actor lacks proposition access")
     if request["stance"] not in ("believes", "doubts", "disbelieves", "unknown") or type(request["asserts"]) is not bool:
