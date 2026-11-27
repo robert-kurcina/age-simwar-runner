@@ -42,7 +42,7 @@ def record(state, rules, request, npc_available, text):
     state["npc_activity_history"].append(event)
 
 def interrupt(state, nid):
-    if nid in state["npcs"]:
+    if nid in state["npcs"] and "activity" in state["npcs"][nid]:
         npc = state["npcs"][nid]
         npc["activity_plan"] = None
         clock = npc.get("activity")
