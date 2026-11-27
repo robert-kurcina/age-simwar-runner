@@ -1,5 +1,6 @@
 {
-  "version": 59,
+  "version": 60,
+  "npc_initiative": {"delays_minutes": [10, 30, 60], "before": "Dusty", "after": "Clean"},
   "npc_expectations": true,
   "behavioral_recognition": true,
   "action_observations": true,
