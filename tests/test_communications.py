@@ -130,3 +130,37 @@ class CommunicationsTest(unittest.TestCase):
         damaged["requests"][-1]["assessment"]["report_evidence"][0]["value"] = 99
         with self.assertRaises(ValueError):
             verify_checkpoint(s, damaged)
+
+    def test_runtime_propositions_are_scoped_and_replayable(self):
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["material_communications"] = True
+        s["runtime_propositions"] = True
+        state = initialize(s)
+        claim = {"id": "survey1", "recipients": ["foundation"],
+                 "claim": "A survey estimates that reopening is feasible.",
+                 "proposition": "inc:survey", "asserts": True,
+                 "introduce_proposition": {"id": "inc:survey", "text": "Reopening is feasible."}}
+        state = communicate(s, state, "east", digest(state), claim)
+        self.assertEqual(state["values"], s["initial"])
+        self.assertEqual(observe(s, state, "east")["propositions"]["inc:survey"]["sources"],
+                         [{"kind": "originated_claim", "id": "survey1"}])
+        self.assertEqual(observe(s, state, "foundation")["propositions"]["inc:survey"]["latest_stance"], "unstated")
+        self.assertNotIn("inc:survey", observe(s, state, "west")["propositions"])
+        with self.assertRaises(ValueError):
+            communicate(s, state, "west", digest(state),
+                        {"id": "unknown", "recipients": ["east"], "claim": "Not feasible.",
+                         "proposition": "inc:survey", "asserts": False})
+        with self.assertRaises(ValueError):
+            communicate(s, state, "east", digest(state), dict(claim, id="survey2"))
+        state = assess_proposition(s, state, "foundation", digest(state),
+                                   {"proposition": "inc:survey", "stance": "doubts", "basis": ["survey1"]})
+        state = communicate(s, state, "foundation", digest(state),
+                            {"id": "relay", "recipients": ["west"], "claim": "Feasibility is disputed.",
+                             "proposition": "inc:survey", "asserts": False})
+        self.assertEqual(observe(s, state, "west")["propositions"]["inc:survey"]["latest_stance"], "unstated")
+        verify_checkpoint(s, state)
+        damaged = copy.deepcopy(state)
+        damaged["requests"][0]["communication"]["introduce_proposition"]["id"] = "inc:other"
+        with self.assertRaises(ValueError):
+            verify_checkpoint(s, damaged)
