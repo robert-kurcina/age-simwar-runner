@@ -130,29 +130,54 @@ def fulfill_civic_request(s, state, record, end):
         record["fulfillment"] = "joined"
 
 
+def stock_owners(s):
+    """Single authority for economic stocks, including non-project funders."""
+    projects = {p["id"]: p["participant"] for p in s.get("economy_projects", [])}
+    owners = {}
+    for action in s.get("capacity_actions", {}).values():
+        owners.setdefault(action["resource"], set()).add(projects[action["project"]])
+    reserves = s.get("funding_reserves", {})
+    if "funding_reserves" in s:
+        if not isinstance(reserves, dict) or not reserves or not s.get("economy_projects") or not s.get("resource_transfers"):
+            raise ValueError("funding reserves require projects and reviewed transfers")
+        protected = {p[k] for p in s["economy_projects"] for k in ("progress", "delay", "complications")}
+        protected.update(a["key"] for p in s["economy_projects"] for a in p["axes"])
+        protected.update(e["key"] for e in s["events"])
+        protected.update(k for e in s.get("dependent_events", []) for k in e["updates"])
+        for key, actor in reserves.items():
+            if (not isinstance(key, str) or key not in s["initial"] or s["initial"][key] < 0
+                    or key in owners or key in protected
+                    or not isinstance(actor, str) or actor not in s["actors"]):
+                raise ValueError("invalid independent funding reserve")
+            profile = s["actors"][actor]
+            if key not in profile.get("visible_keys", []) or profile.get("report_delay_minutes", {}).get(key, 0):
+                raise ValueError("funding reserve must be currently observable by its owner")
+            owners[key] = {actor}
+    if any(len(ids) != 1 for ids in owners.values()):
+        raise ValueError("ambiguous economic stock ownership")
+    return {key: next(iter(ids)) for key, ids in owners.items()}
+
+
 def validate_transfers(s):
     """Reviewed voluntary transfers between distinct civilian investment stocks."""
+    owners = stock_owners(s)
     if "resource_transfers" not in s:
         return
     transfers = s["resource_transfers"]
     if not isinstance(transfers, dict) or not transfers or not s.get("economy_projects"):
         raise ValueError("resource transfers require economy projects")
-    projects = {p["id"]: p for p in s["economy_projects"]}
-    owners = {}
-    for a in s.get("capacity_actions", {}).values():
-        owners.setdefault(a["resource"], set()).add(projects[a["project"]]["participant"])
     for name, t in transfers.items():
         if (not isinstance(t, dict) or set(t) != {"source", "destination", "amount"}
                 or name not in s.get("action_catalog", {}) or name in s.get("capacity_actions", {})):
             raise ValueError("invalid transfer definition")
         source, destination, amount = t["source"], t["destination"], t["amount"]
         if (not isinstance(source, str) or not isinstance(destination, str)
-                or source == destination or len(owners.get(source, set())) != 1
-                or len(owners.get(destination, set())) != 1
+                or source == destination or source not in owners
+                or destination not in owners
                 or owners[source] == owners[destination]
                 or type(amount) is not int or amount <= 0):
             raise ValueError("transfer requires distinct owned stocks and positive amount")
-        donor = next(iter(owners[source]))
+        donor = owners[source]
         if s["action_catalog"][name]["actors"] != [donor]:
             raise ValueError("only donor may authorize transfer")
 
@@ -210,10 +235,7 @@ def validate_agreements(s):
                     or s["action_catalog"].get(action, {}).get("actors") != [actor]):
                 raise ValueError("agreement consent must be independently authorized")
             used.add(action)
-        owners = {}
-        projects = {p["id"]: p for p in s["economy_projects"]}
-        for cap in s["capacity_actions"].values():
-            owners[cap["resource"]] = projects[cap["project"]]["participant"]
+        owners = stock_owners(s)
         for name in transfers:
             t = s["resource_transfers"][name]
             if {owners[t["source"]], owners[t["destination"]]} != set(consent):
@@ -224,7 +246,7 @@ def validate_institutional_agreements(s):
     agreements = s["agreements"]
     if any(k in s for k in ("economy_projects", "capacity_actions", "resource_transfers",
                             "dynamic_negotiation", "service_restoration", "community_assistance",
-                            "civic_agreement", "assistance_capacity", "dependent_events")):
+                            "civic_agreement", "assistance_capacity", "dependent_events", "funding_reserves")):
         raise ValueError("institutional agreements cannot mix fulfillment mechanisms")
     if s["events"] or s["constraints"]:
         raise ValueError("institutional agreements require explicit consent outcomes")
