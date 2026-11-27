@@ -12,7 +12,7 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
-from age_runtime.core import negotiation, communications, diplomacy
+from age_runtime.core import negotiation, communications, diplomacy, establishment
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -27,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -76,6 +76,7 @@ def validate(s):
     validate_agreements(s)
     negotiation.validate(s)
     communications.validate(s)
+    establishment.validate(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
@@ -283,6 +284,16 @@ def record_diplomacy(s, state, actor, revision, command):
     return result
 
 
+def establish_context(s, state, revision, command):
+    """Trusted referee only: establish bounded descriptive session context."""
+    verify_checkpoint(s, state)
+    if revision != digest(state):
+        raise ValueError("stale establishment revision")
+    result = establishment.append(s, state, command)
+    verify_checkpoint(s, result)
+    return result
+
+
 def verify_checkpoint(s, state):
     expected = initialize(s)
     check_identity(s, state)
@@ -305,6 +316,8 @@ def verify_checkpoint(s, state):
             elif record.get("origin") == "diplomatic_record":
                 expected = diplomacy.append(s, expected, record["actor"],
                     {k: v for k, v in record["diplomatic_record"].items() if k != "evidence"})
+            elif record.get("origin") == "strategic_establishment":
+                expected = establishment.append(s, expected, record["establishment"])
             elif record.get("origin") == "communication":
                 expected = communications.append(s, expected, record["actor"], record["communication"])
             elif record.get("origin") == "model":
