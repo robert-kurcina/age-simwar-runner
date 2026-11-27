@@ -71,6 +71,21 @@ def supported(s):
         raise ValueError("unsupported private scenario mechanics")
 
 
+def eligible_perspectives(entry, scenario):
+    """Explicit opt-in; legacy scenarios retain their original human actors."""
+    actors = scenario.get("actors", {})
+    default = [a for a in actors if a not in scenario.get("model_factions", [])]
+    if "player_factions" not in entry:
+        return default
+    allowed = entry["player_factions"]
+    if (not scenario.get("economy_projects") or scenario.get("civic_agreement")
+            or len(default) != 1 or not isinstance(allowed, list) or not allowed
+            or any(not isinstance(a, str) or a not in actors for a in allowed)
+            or len(set(allowed)) != len(allowed) or default[0] not in allowed):
+        raise ValueError("invalid selectable player factions")
+    return allowed
+
+
 def select(path, scenario_id, owners):
     catalog = inventory(path)
     matches = [(g, e) for g in catalog["groups"] for e in g["scenarios"]
@@ -88,15 +103,17 @@ def select(path, scenario_id, owners):
     compiled = compile_scenario(spec, owners)
     s = compiled["scenario"]
     supported(s)
+    eligible_perspectives(entry, s)
     if s["id"] != scenario_id:
         raise ValueError("scenario identity mismatch")
     return catalog, group, entry, spec, compiled
 
 
 def perspectives(path, scenario_id, owners):
-    _, _, _, _, compiled = select(path, scenario_id, owners)
-    return [{"id": k, "label": v["label"]} for k, v in
-            compiled["scenario"].get("actors", {}).items() if k not in compiled["scenario"].get("model_factions", [])]
+    _, _, entry, _, compiled = select(path, scenario_id, owners)
+    s = compiled["scenario"]
+    return [{"id": k, "label": s["actors"][k]["label"]}
+            for k in eligible_perspectives(entry, s)]
 
 
 def reviewed_context(entry, compiled, actor, effective_date):
@@ -146,8 +163,21 @@ def available_presets(path, scenario_id, owners):
 
 def start(path, scenario_id, actor, owners, preset="standard", shared=False, previous=None, game_length=None):
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
+    if actor not in eligible_perspectives(entry, compiled["scenario"]):
+        raise ValueError("ineligible player faction")
+    if previous is not None and "player_factions" in entry and actor != previous["header"]["actor"]:
+        raise ValueError("continuation cannot change player faction")
     from age_runtime.core.presets import apply
     compiled, configuration = apply(entry, spec, compiled, preset)
+    if "player_factions" in entry:
+        s = compiled["scenario"]
+        original = digest(s)
+        # Preserve authored model ordering; append the former human if needed.
+        order = list(s["model_factions"]) + [a for a in s["actors"] if a not in s["model_factions"]]
+        s = {**s, "model_factions": [a for a in order if a != actor]}
+        compiled = {**compiled, "scenario": s, "scenario_digest": digest(s),
+                    "perspective_base_digest": original}
+        supported(s)
     link = None
     if previous is not None:
         if preset != "standard" or shared:

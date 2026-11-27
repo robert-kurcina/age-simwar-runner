@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from age_runtime.core.private_play import start, update, model_packet, model_choice, verify
+from age_runtime.core.private_play import start, update, model_packet, model_choice, verify, perspectives, pending_factions, switch_perspective, view
 from age_runtime.core.runner import digest, save
 
 
@@ -46,6 +46,38 @@ class StrategicContinuityTest(unittest.TestCase):
             save(root / "Second.json", second)
             save(root / "inventory.json", catalog)
             path, owners = root / "inventory.json", {"test": tmp}
+            # Opt-in only. The same authored specification supports each reviewed
+            # perspective without changing its initial accounting or objectives.
+            self.assertEqual([x["id"] for x in perspectives(path, a["id"], owners)], ["central"])
+            a["player_factions"] = ["central", "east", "west"]
+            b["player_factions"] = ["central", "east", "west"]
+            save(path, catalog)
+            self.assertEqual([x["id"] for x in perspectives(path, a["id"], owners)],
+                             ["central", "east", "west"])
+            for human in a["player_factions"]:
+                selected = start(path, a["id"], human, owners)
+                self.assertEqual(selected["state"]["values"], scenario["initial"])
+                self.assertEqual(set(pending_factions(selected)), set(scenario["actors"]) - {human})
+                self.assertEqual(view(selected)["observation"]["actor"], human)
+                self.assertEqual(set(view(selected)["observation"]["values"]),
+                                 set(scenario["actors"][human]["visible_keys"]))
+                with self.assertRaises(ValueError):
+                    model_packet(selected, human)
+                with self.assertRaises(ValueError):
+                    switch_perspective(selected, next(x for x in scenario["actors"] if x != human))
+                for model in pending_factions(selected):
+                    packet = model_packet(selected, model)
+                    selected = model_choice(selected, model, {"packet_id": packet["packet_id"], "action": None})
+                selected = update(selected, turns=1)
+                verify(selected)
+            with self.assertRaises(ValueError):
+                start(path, a["id"], "unknown", owners)
+            a["player_factions"] = ["central", "central"]
+            save(path, catalog)
+            with self.assertRaises(ValueError):
+                perspectives(path, a["id"], owners)
+            a["player_factions"] = ["central", "east", "west"]
+            save(path, catalog)
             session = start(path, a["id"], "central", owners)
             with self.assertRaises(ValueError):
                 start(path, b["id"], "central", owners, previous=session)
@@ -58,6 +90,8 @@ class StrategicContinuityTest(unittest.TestCase):
                     session = model_choice(session, actor, {"packet_id": packet["packet_id"], "action": action})
                 session = update(session, turns=1)
             old = digest(session)
+            with self.assertRaises(ValueError):
+                start(path, b["id"], "east", owners, previous=session)
             follow = start(path, b["id"], "central", owners, previous=session)
             self.assertEqual(follow["state"]["values"], session["state"]["values"])
             self.assertEqual(follow["state"]["values"]["east_progress"], 3)
