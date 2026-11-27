@@ -84,9 +84,14 @@ def projection(state, participants):
         if "concerns" not in state["npcs"][npc]:
             continue
         episodes = [e for e in state.get("emotional_episodes", []) if e["npc"] == npc]
+        # Historical salience is not current Stress or a fresh award.
+        older = [e for e in episodes[:-6] if e["intensity"] == "acute"
+                 or e.get("observation") or any(v in ("significant", "severe")
+                                               for v in e.get("severity", {}).values())][-4:]
         concerns = state["npcs"][npc]["concerns"]
         result[npc] = {"last_episode": copy.deepcopy(episodes[-1]) if episodes else None,
                        "recent_episodes": copy.deepcopy(episodes[-6:]),
+                       "salient_history": copy.deepcopy(older),
                        "concerns": copy.deepcopy(concerns),
                        "degrees": dxd_conditions.degrees(concerns),
                        "condition": dxd_conditions.describe(concerns)}
