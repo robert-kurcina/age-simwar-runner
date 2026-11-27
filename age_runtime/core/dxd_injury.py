@@ -20,6 +20,8 @@ def apply(state, injury):
     if projection(state)["status"] == "dead":
         raise ValueError("character already dead")
     state["injury"] = max(injury, state["injury"] + 1)
+    if "size" in state and state["capacity"] - state["injury"] <= -state["size"]:
+        state["dying_latched"] = True
 
 
 def projection(state):
@@ -29,7 +31,7 @@ def projection(state):
     if size is None:
         status = "dying" if remaining <= 0 else "severely_injured" if 2 * injury >= capacity else "injured" if injury else "uninjured"
     else:
-        status = ("dead" if remaining <= -2 * size else "dying" if remaining <= -size
+        status = ("dead" if remaining <= -2 * size else "dying" if remaining <= -size or (remaining < 0 and state.get("dying_latched"))
                   else "coma" if remaining < 0 else "severely_injured" if 2 * injury >= capacity
                   else "injured" if injury else "uninjured")
     return {"capacity": capacity, "injury": injury, "bodypoints": remaining, "status": status}

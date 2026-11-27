@@ -1,5 +1,5 @@
 {
-  "version": 82,
+  "version": 83,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2882,5 +2882,13 @@
     }
   },
   "native_injury": true,
-  "native_injury_lifecycle": true
+  "native_injury_lifecycle": true,
+  "medical_bandaging": {
+    "caregivers": {
+      "eleanor": 2,
+      "elias": 2,
+      "burroughs": 2
+    },
+    "provenance": "Provisional scenario allocations of ordinary bandaging supplies; no professional medical qualification implied."
+  }
 }

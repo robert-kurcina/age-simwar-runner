@@ -7,7 +7,7 @@ from pathlib import Path
 from age_runtime.core import opportunity_latitude as latitude
 from age_runtime.core.runner import save
 from age_runtime.mythos import projections, resolution, npc_agenda, settlement_activity, incidental_people
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency, medical
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression, dxd_injury
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -114,6 +114,13 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
         state["npc_travel"] = []
     if rules.get("timed_detail_event"):
         state["timed_detail_events"] = []
+    if rules.get("medical_bandaging"):
+        if not (rules.get("native_injury_lifecycle") and rules.get("timed_detail_event") and rules.get("npc_temporal")):
+            raise ValueError("medical bandaging requires injury lifecycle and timed NPC events")
+        supplies = rules["medical_bandaging"]["caregivers"]
+        if not isinstance(supplies, dict) or set(supplies) - set(state["npcs"]) or any(type(n) is not int or not 0 <= n <= 16 for n in supplies.values()):
+            raise ValueError("invalid reviewed medical supplies")
+        state["medical_supplies"] = dict(supplies)
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -445,6 +452,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
     boundaries = sorted(set([finish] + [datetime.fromisoformat(e["at"]) for e in events]))
     reason = None
     while cursor < finish:
+        medical.interrupt_unavailable(state, rules, npc_available, engaged=engaged, moving=mode == "travel")
         npc_agenda.observe_boundary(state, rules, engaged=engaged)
         boundary = next(b for b in boundaries if b > cursor)
         boundary = timed_details.next_boundary(state, cursor, boundary)
@@ -471,6 +479,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         narrative_events.advance_time(state, rules, actual)
         advance_events(state, rules, cursor)
         npc_travel.resolve(state, rules, cursor)
+        medical.interrupt_unavailable(state, rules, npc_available, engaged=engaged, moving=mode == "travel")
         timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
         npc_agenda.observe_boundary(state, rules, engaged=engaged)
         if injury and dxd_injury.projection(injury)["status"] == "dead":
@@ -825,6 +834,10 @@ def dialogue(path, request, revision):
     return _commit(path, revision, dialogue_step, request)
 
 def _apply_establishment(state, rules, request):
+    if isinstance(request, dict) and set(request) == {"medical_bandage"}:
+        medical.schedule(state, rules, request["medical_bandage"], npc_available, establishment.text)
+        state["history"].append({"establish": copy.deepcopy(request)})
+        return
     if dxd_injury.incapacitated(state["dxd"].get("injury")):
         raise ValueError("physical incapacity prevents ordinary establishment")
     if isinstance(request, dict) and set(request) == {"consequential_demeanor"}:

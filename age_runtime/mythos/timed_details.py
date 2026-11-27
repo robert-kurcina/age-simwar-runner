@@ -241,6 +241,10 @@ def resolve(state, rules, elapsed, npc_available, local_entities):
             if not npc_agency.active_objective(state, e["npc"], e["objective"]):
                 e.update(status="cancelled", cancelled_at=state["time"], cancellation_basis="Objective no longer active")
                 continue
+        if e.get("authority") == "medical_bandage":
+            from age_runtime.mythos import medical
+            medical.resolve(state, rules, e, npc_available)
+            continue
         # Evaluate NPC and object at event location, not at the PC's
         # possibly in-transit anchor. Never mutate the real PC location.
         scope = dict(state, location=e["location"])
