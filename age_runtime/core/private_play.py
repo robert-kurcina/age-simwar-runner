@@ -362,6 +362,17 @@ def negotiate(session, revision, command):
     return verify({**session, "state": result})
 
 
+def communicate(session, actor, revision, command):
+    from age_runtime.core.runner import communicate as apply_communication
+    verify(session)
+    if revision != digest(session):
+        raise ValueError("stale session revision")
+    h, state = session["header"], session["state"]
+    # Explicit actor routing is referee-only, as with model faction exchange.
+    result = apply_communication(h["compiled"]["scenario"], state, actor, digest(state), command)
+    return verify({**session, "state": result})
+
+
 def pending_factions(session):
     """Referee-only exchange routing; do not expose this as a player report."""
     verify(session)
@@ -444,6 +455,11 @@ def main(argv=None):
     negotiation.add_argument("session", type=Path)
     negotiation.add_argument("proposal", type=Path)
     negotiation.add_argument("--revision", required=True)
+    communication = commands.add_parser("communicate", help="Referee-only: record actual authorized faction statement")
+    communication.add_argument("session", type=Path)
+    communication.add_argument("actor")
+    communication.add_argument("statement", type=Path)
+    communication.add_argument("--revision", required=True)
     pending = commands.add_parser("pending-factions")
     pending.add_argument("session", type=Path)
     turn = commands.add_parser("resolve-turn")
@@ -494,6 +510,10 @@ def main(argv=None):
             result = briefing(session)
         elif a.command == "negotiate":
             session = negotiate(read(a.session), a.revision, read(a.proposal))
+            save(a.session, session)
+            result = briefing(session)
+        elif a.command == "communicate":
+            session = communicate(read(a.session), a.actor, a.revision, read(a.statement))
             save(a.session, session)
             result = briefing(session)
         elif a.command == "pending-factions":
