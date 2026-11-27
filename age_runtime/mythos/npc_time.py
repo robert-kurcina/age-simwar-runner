@@ -5,6 +5,13 @@ from age_runtime.core import dxd_conditions, dxd_morale
 
 def initialize(state, rules):
     cfg = rules.get("npc_temporal")
+    if rules.get("npc_abstract_recovery"):
+        if cfg or not rules.get("interpersonal_duress") or rules.get("activity"):
+            raise ValueError("abstract recovery requires non-detailed Concern model")
+        state["npc_activity_history"] = []
+        for npc in state["npcs"].values():
+            npc["activity_plan"] = None
+        return
     if not cfg:
         return
     if not rules.get("activity") or set(cfg["initial_awake_seconds"]) != set(state["npcs"]):
@@ -20,6 +27,8 @@ def initialize(state, rules):
     state["npc_activity_history"] = []
 
 def record(state, rules, request, npc_available, text):
+    if rules.get("npc_abstract_recovery"):
+        return record_abstract_rest(state, rules, request, npc_available, text)
     if not rules.get("npc_temporal") or not isinstance(request, dict) or set(request) != {"npc", "mode", "safe", "minutes", "basis"}:
         raise ValueError("invalid NPC activity")
     nid, mode, safe, minutes = (request[k] for k in ("npc", "mode", "safe", "minutes"))
@@ -159,13 +168,60 @@ def interrupt_work(state, nid, at, reason):
 
 def interrupt(state, nid, reason="interaction"):
     interrupt_work(state, nid, state["time"], reason)
-    if nid in state["npcs"] and "activity" in state["npcs"][nid]:
+    if nid in state["npcs"] and "activity_plan" in state["npcs"][nid]:
         npc = state["npcs"][nid]
         npc["activity_plan"] = None
         clock = npc.get("activity")
         if clock and clock["status"] == "awake":
             clock["remainder"].clear()
             clock["activity"] = "active"
+
+def record_abstract_rest(state, rules, request, npc_available, text):
+    """Prospective, grounded rest; never recover merely because days passed."""
+    from age_runtime.mythos.epistemic import conversation_available
+    if not isinstance(request, dict) or set(request) != {"npc", "mode", "safe", "minutes", "basis"}:
+        raise ValueError("invalid abstract NPC rest")
+    nid, mode, safe, minutes = (request[k] for k in ("npc", "mode", "safe", "minutes"))
+    if not isinstance(nid, str) or not conversation_available(state, rules, nid, npc_available):
+        raise ValueError("abstract rest requires current authored encounter")
+    if mode not in ("quiet", "rest") or type(safe) is not bool:
+        raise ValueError("abstract recovery requires grounded quiet or rest")
+    if type(minutes) is not int or not 1 <= minutes <= 480:
+        raise ValueError("invalid abstract rest interval")
+    until = datetime.fromisoformat(state["time"]) + timedelta(minutes=minutes)
+    if until > datetime.fromisoformat(rules["end"]):
+        raise ValueError("NPC rest exceeds horizon")
+    npc = state["npcs"][nid]
+    if npc["activity_plan"] is not None:
+        raise ValueError("NPC activity already planned")
+    if len(state["npc_activity_history"]) >= 256:
+        raise ValueError("NPC activity record limit")
+    event = {"npc": nid, "mode": mode, "safe": safe, "at": state["time"],
+             "until": until.isoformat(), "location": npc["location"],
+             "basis": text(request["basis"], 240), "turn": state["turn"]}
+    npc["activity_plan"] = copy.deepcopy(event)
+    state["npc_activity_history"].append(event)
+
+
+def advance_abstract(state, rules, start, end, engaged=None):
+    """Apply only elapsed overlap of explicit rest plans on coarse actions."""
+    if not rules.get("npc_abstract_recovery"):
+        return
+    for nid, npc in sorted(state["npcs"].items()):
+        plan = npc["activity_plan"]
+        if plan is None:
+            continue
+        if (nid == engaged or npc["location"] != plan["location"]
+                or start >= datetime.fromisoformat(plan["until"])):
+            npc["activity_plan"] = None
+            continue
+        stop = min(end, datetime.fromisoformat(plan["until"]))
+        begin = max(start, datetime.fromisoformat(plan["at"]))
+        minutes = max(0, int((stop - begin).total_seconds()) // 60)
+        dxd_conditions.recover(npc["concerns"], minutes, restful=True, safe=plan["safe"])
+        if end >= datetime.fromisoformat(plan["until"]):
+            npc["activity_plan"] = None
+
 
 def next_boundary(state, cursor, finish):
     for npc in state["npcs"].values():
