@@ -343,12 +343,12 @@ def consequential_demeanor(state, rules, request):
 
 def social_demeanor(state, rules, request):
     """Bounded consequence of an actual exchange, not a trust meter or forced forgiveness."""
-    if not rules.get("social_epistemic") or not isinstance(request, dict) or set(request) != {"npc", "claims", "kind", "basis"}:
+    if not rules.get("demeanor") or not (rules.get("social_epistemic") or rules.get("social_demeanor")) or not isinstance(request, dict) or set(request) != {"npc", "claims", "kind", "basis"}:
         raise ValueError("invalid social Demeanor request")
     nid, refs, kind = request["npc"], request["claims"], request["kind"]
     if not isinstance(nid, str) or nid not in state["npcs"] or state["ending"] or state["dxd"].get("activity", {}).get("status") == "asleep":
         raise ValueError("social Demeanor unavailable")
-    if state["npcs"][nid]["location"] != state["location"] or not npc_available(state, rules, {"npc": nid, "location": state["location"]}):
+    if not epistemic.conversation_available(state, rules, nid, npc_available):
         raise ValueError("social Demeanor requires available local NPC")
     if kind not in ("harm", "reparation"):
         raise ValueError("unsupported social consequence")
