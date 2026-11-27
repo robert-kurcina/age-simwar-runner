@@ -10,16 +10,13 @@ from age_runtime.core.source_compiler import checked_date
 def economy_signature(s):
     """Conservative continuation: same projects, owners, units and accounting."""
     projects = {p["id"]: p for p in s["economy_projects"]}
-    stocks = {}
-    for action in s["capacity_actions"].values():
-        stocks.setdefault(action["resource"], set()).add(projects[action["project"]]["participant"])
-    if any(len(owners) != 1 for owners in stocks.values()):
-        raise ValueError("ambiguous continuity stock ownership")
+    from age_runtime.core.actions import stock_owners
+    stocks = stock_owners(s)
     keys = set(stocks)
     for p in projects.values():
         keys.update(p[k] for k in ("progress", "delay", "complications"))
         keys.update(a["key"] for a in p["axes"])
-    return keys, projects, stocks
+    return keys, projects, stocks, s["capacity_actions"], s.get("resource_transfers", {}), s.get("funding_reserves", {})
 
 
 def continuity_keys(source, target):
