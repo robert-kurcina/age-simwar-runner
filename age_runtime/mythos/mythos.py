@@ -72,6 +72,8 @@ def initial(sid, seed):
         state["established_details"] = []
     if rules.get("narrative_properties"):
         state["detail_changes"] = []
+    if rules.get("narrative_custody"):
+        state["custody_transfers"] = []
     if rules.get("local_proposals"):
         state["local_records"] = []
     if "character_profiles" in rules["dxd"]:
@@ -713,7 +715,7 @@ def dialogue(path, request, revision):
 def establish_step(state, request):
     result = copy.deepcopy(state)
     _, rules = load(result["scenario"])
-    establishment.record(result, rules, request)
+    establishment.record(result, rules, request, npc_available)
     result["history"].append({"establish": copy.deepcopy(request)})
     return result
 
