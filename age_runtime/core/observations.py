@@ -160,10 +160,10 @@ def observe(s, state, actor_id):
         "values": values,
         "reports": reports,
         "own_requests": [{k: deepcopy(v) for k, v in r.items() if k != "sequence"}
-                         for r in state["requests"] if r["actor"] == actor_id and r.get("origin") not in ("communication", "assessment")],
+                         for r in state["requests"] if r["actor"] == actor_id and r.get("origin") not in ("communication", "assessment", "diplomatic_record")],
         "available_requests": requests,
         "objectives": observed_objectives
     }
     if s.get("diplomatic_history"):
-        observation["diplomatic_history"] = diplomatic_history(observation)
+        observation["diplomatic_history"] = diplomatic_history(observation, state)
     return observation
