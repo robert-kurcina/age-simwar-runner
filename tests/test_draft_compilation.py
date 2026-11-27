@@ -226,3 +226,30 @@ class DraftCompilationTest(unittest.TestCase):
         p.write_text(json.dumps(spec), encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "pinned revision"):
             requirements(self.path)
+
+    def test_authenticated_resource_transport_contract(self):
+        from age_runtime.core.github_resources import acquire
+        calls = []
+        def transport(item, token):
+            self.assertEqual(token, "synthetic-token")
+            calls.append((item["owner"], item["revision"], item["path"]))
+            record = next(r for r in self.owners[item["owner"]]["files"]
+                          if r["path"] == item["path"] and r["revision"] == item["revision"])
+            return {"type": "file", "path": item["path"], "encoding": "base64",
+                    "sha": record["blob_sha"], "content": record["content_base64"] + "\n"}
+        result = acquire(self.path, ["synthetic-fixture"], "synthetic-token", transport)
+        self.assertEqual(result, self.owners)
+        self.assertEqual(len(calls), len(set(calls)))
+        self.assertEqual(len(calls), len(self.headings))
+        self.assertEqual(compile_catalog(self.path, result),
+                         compile_catalog(self.path, self.owners))
+        calls.clear()
+        with self.assertRaisesRegex(ValueError, "approved"):
+            acquire(self.path, [], "synthetic-token", transport)
+        self.assertFalse(calls)
+        for change in ({"sha": "0" * 40}, {"path": "different.md"},
+                       {"encoding": "none"}, {"type": "symlink"}):
+            def invalid(item, token):
+                return {**transport(item, token), **change}
+            with self.assertRaises(ValueError):
+                acquire(self.path, ["synthetic-fixture"], "synthetic-token", invalid)
