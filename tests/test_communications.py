@@ -218,3 +218,55 @@ class CommunicationsTest(unittest.TestCase):
             s["communication_delay_minutes"] = routes
             with self.assertRaises(ValueError):
                 initialize(s)
+
+    def test_diplomatic_intention_history_and_private_revisions(self):
+        from age_runtime.core.institutional_memory import recall, reminder_index
+        s = json.loads((Path(__file__).resolve().parents[1] /
+                        "scenarios/independent-funding-rehearsal.json").read_text())
+        s["material_communications"] = True
+        s["diplomatic_history"] = True
+        s["communication_delay_minutes"] = {"east": {"foundation": 10080}}
+        state = initialize(s)
+        msg = {"id": "approach", "recipients": ["foundation"],
+               "claim": "We will consider revised funding terms.",
+               "private_intention": {"counterpart": "foundation", "topic": "funding",
+                                     "status": "active", "text": "Seek a grant without additional conditions.",
+                                     "revises": None}}
+        state = communicate(s, state, "east", digest(state), msg)
+        own = observe(s, state, "east")
+        self.assertEqual(own["diplomatic_history"]["foundation"]["private_intentions"]["funding"]["latest"]["claim_id"], "approach")
+        self.assertEqual(reminder_index(own)["active_intentions"][0]["claim_id"], "approach")
+        self.assertNotIn("east", observe(s, state, "foundation")["diplomatic_history"])
+        with self.assertRaises(ValueError):
+            communicate(s, state, "east", digest(state), dict(msg, id="bad"))
+        with self.assertRaises(ValueError):
+            communicate(s, state, "east", digest(state),
+                        dict(msg, id="wrong", private_intention=dict(msg["private_intention"], counterpart="west")))
+        for actor in s["model_factions"]:
+            packet = faction_packet(s, state, actor)
+            state = accept_faction_choice(s, state, actor, packet,
+                                          {"packet_id": packet["packet_id"], "action": None})
+        state = advance(s, state)
+        other = observe(s, state, "foundation")
+        self.assertNotIn("private_intention", other["communications"][0])
+        self.assertEqual(other["diplomatic_history"]["east"]["private_intentions"], {})
+        self.assertEqual(other["diplomatic_history"]["east"]["communications"][0]["direction"], "incoming")
+        revised = dict(msg, id="revised", claim="We are prepared to consider inspection.",
+                       private_intention=dict(msg["private_intention"], text="Accept independent inspection.",
+                                              revises="approach"))
+        state = communicate(s, state, "east", digest(state), revised)
+        withdrawn = dict(revised, id="withdrawn", claim="We will defer further discussions.",
+                         private_intention=dict(revised["private_intention"], status="withdrawn",
+                                                text="Suspend pursuit of a grant.", revises="revised"))
+        state = communicate(s, state, "east", digest(state), withdrawn)
+        own = observe(s, state, "east")
+        thread = recall(own, "foundation")["diplomatic_history"]["private_intentions"]["funding"]
+        self.assertEqual([x["claim_id"] for x in thread["history"]], ["approach", "revised", "withdrawn"])
+        self.assertEqual(thread["latest"]["status"], "withdrawn")
+        self.assertEqual(reminder_index(own)["active_intentions"], [])
+        self.assertEqual(observe(s, state, "west")["diplomatic_history"], {})
+        verify_checkpoint(s, state)
+        damaged = copy.deepcopy(state)
+        damaged["requests"][-1]["communication"]["private_intention"]["revises"] = "approach"
+        with self.assertRaises(ValueError):
+            verify_checkpoint(s, damaged)
