@@ -813,6 +813,46 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_consequential_demeanor_is_attributed_bounded_and_persistent(self):
+        import copy
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        s = mythos.establish_step(s, {"details": [{"id": "inc:cup", "kind": "object",
+            "label": "Cup", "description": "Her brother's cup.", "basis": "Established possession",
+            "custodian": "eleanor"}]})
+        s = mythos.establish_step(s, {"transfers": [{"id": "inc:cup", "from": "eleanor", "to": "pc",
+            "pc_authorization": "I accept.", "npc_consent": "Here.", "basis": "Voluntary transfer"}]})
+        s = mythos.establish_step(s, {"object_action": {"id": "act:drop", "object": "inc:cup",
+            "before": "intact", "outcome": "destroyed", "authorization": "I drop it deliberately.",
+            "basis": "Certain breakage", "remnants": "Ceramic fragments"}})
+        obs = {"id": "obs:cup", "npc": "eleanor", "action": "act:drop",
+               "kind": "witnessed", "basis": "She observes the deliberate act."}
+        req = {"npc": "eleanor", "observation": "obs:cup", "severity": "significant",
+               "basis": "She regards the destruction of her cherished cup as a betrayal."}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"consequential_demeanor": req})
+        discovered = mythos.establish_step(s, {"action_observation": dict(obs, kind="discovered",
+            basis="She notices the fragments.")})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(discovered, {"consequential_demeanor": req})
+        seen = mythos.establish_step(s, {"action_observation": obs})
+        before = copy.deepcopy(seen)
+        after = mythos.establish_step(seen, {"consequential_demeanor": req})
+        self.assertEqual(seen, before)
+        self.assertEqual(after["relationships"]["eleanor"], -2)
+        self.assertEqual(after["relationship_changes"][-1]["requested_delta"], -2)
+        self.assertEqual(after["relationship_changes"][-1]["action"], "act:drop")
+        self.assertEqual(after["npcs"], seen["npcs"])
+        self.assertEqual(after["dxd"], seen["dxd"])
+        self.assertEqual(after["time"], seen["time"])
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"consequential_demeanor": req})
+        returned = mythos.step(mythos.step(after, "move:Harbor Docks"), "move:Harbor Diner")
+        self.assertEqual(returned["relationships"]["eleanor"], -2)
+        self.assertEqual(mythos.gm_context(returned)["referee"]["consequential_demeanor"]
+                         ["eleanor"][0]["observation"], "obs:cup")
+        self.assertNotIn("consequential_demeanor", mythos.view(returned))
+        mythos.verify(returned)
+
     def test_integrated_eleanor_continuity_across_conflict_and_recovery(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
 
