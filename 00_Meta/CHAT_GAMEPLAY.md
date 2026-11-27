@@ -15,6 +15,8 @@ For an uploaded ZIP, follow [STANDALONE_PLAY.md](STANDALONE_PLAY.md) instead of 
 
 ## Fear! (legacy Mythos catalog ID)
 
+**Current operating procedure:** read [NARRATIVE_GM.md](NARRATIVE_GM.md) first. The versioned sections below are historical implementation notes and detailed command references; superseded restrictions are not current requirements. Use the current verified scenario capabilities, not an old version's feature list.
+
 Presentation: whenever using icons alongside possessions, resources, conditions, contacts, or action labels, place each icon and its corresponding text in the same horizontal row, vertically centered, with a small gap. Never render an icon on a separate line above its label. Keep the existing compact condition grid. If inline icon layout is unavailable, omit the icon and use a plain text row rather than stacking. Use only actual engine-visible inventory and resource values; presentation does not affect mechanics.
 
 Read the bundled Mythos framework and character system as scenario-specific narrative guidance, not as permission to override executable rules. Use the engine's available action IDs and revision. Present up to three neutral choices at a time without concealing the availability of other legal actions; show more on request. Never invent discoveries, NPC knowledge, or state changes. On termination, narrate only the engine-supported outcome and distinguish uncertainty from established facts.
