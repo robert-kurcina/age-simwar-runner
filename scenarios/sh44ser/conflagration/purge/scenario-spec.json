@@ -275,7 +275,48 @@
       "vanuatu",
       "local-adherents"
     ],
-    "game_length": "Short"
+    "game_length": "Short",
+    "material_communications": true,
+    "diplomatic_history": true,
+    "runtime_propositions": true,
+    "strategic_establishment": true,
+    "communication_propositions": {
+      "safeguards": {
+        "text": "All required parties have committed to the exercise's civilian safeguards.",
+        "initial_access": [
+          "fiji",
+          "shanter",
+          "vanuatu",
+          "local-adherents"
+        ],
+        "report_binding": {
+          "key": "safeguards_agreed",
+          "comparison": "at_least",
+          "threshold": 1
+        }
+      },
+      "claims_commitment": {
+        "text": "The exercise's voluntary claims-review commitment is in force; this is not an adjudication.",
+        "initial_access": [
+          "fiji",
+          "local-adherents"
+        ],
+        "report_binding": {
+          "key": "claims_agreed",
+          "comparison": "at_least",
+          "threshold": 1
+        }
+      }
+    },
+    "dynamic_negotiation": true,
+    "permission_terms": {
+      "witness_consultation": {
+        "issuer": "fiji",
+        "grantee": "local-adherents",
+        "description": "Voluntary consultation on anonymized record-custody procedures; no access to personal files or legal determination.",
+        "max_due_minute": 40320
+      }
+    }
   },
   "initial_refs": {},
   "evidence_refs": {

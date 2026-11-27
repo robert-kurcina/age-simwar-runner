@@ -360,7 +360,43 @@
       "shanter",
       "vanuatu"
     ],
-    "game_length": "Short"
+    "game_length": "Short",
+    "material_communications": true,
+    "diplomatic_history": true,
+    "runtime_propositions": true,
+    "strategic_establishment": true,
+    "communication_propositions": {
+      "port_ready": {
+        "text": "The Fiji port-service project has completed all four illustrative stages.",
+        "initial_access": [
+          "shanter",
+          "fiji",
+          "vanuatu"
+        ],
+        "report_binding": {
+          "key": "fiji_port_progress",
+          "comparison": "at_least",
+          "threshold": 4
+        }
+      },
+      "power_ready": {
+        "text": "The Vanuatu civilian power-service project has completed all four illustrative stages.",
+        "initial_access": [
+          "vanuatu"
+        ],
+        "report_binding": {
+          "key": "vanuatu_power_progress",
+          "comparison": "at_least",
+          "threshold": 4
+        }
+      }
+    },
+    "communication_delay_minutes": {
+      "fiji": {
+        "shanter": 10080,
+        "vanuatu": 10080
+      }
+    }
   },
   "initial_refs": {},
   "evidence_refs": {

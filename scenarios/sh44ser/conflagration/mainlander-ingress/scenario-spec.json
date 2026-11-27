@@ -25,7 +25,8 @@
       "vanuatu_water_progress": 0,
       "vanuatu_water_delay": 0,
       "vanuatu_water_complications": 0,
-      "vanuatu_water_logistics": 2
+      "vanuatu_water_logistics": 2,
+      "aggregate_review_completed": 0
     },
     "events": [],
     "constraints": [],
@@ -80,7 +81,8 @@
           "fiji_claims_progress",
           "fiji_claims_delay",
           "fiji_claims_complications",
-          "fiji_claims_legal_permission"
+          "fiji_claims_legal_permission",
+          "aggregate_review_completed"
         ],
         "objectives": {
           "reserve": {
@@ -109,6 +111,9 @@
             "claims",
             "reserve"
           ]
+        },
+        "report_delay_minutes": {
+          "aggregate_review_completed": 10080
         }
       },
       "vanuatu": {
@@ -119,7 +124,8 @@
           "vanuatu_water_delay",
           "vanuatu_water_complications",
           "vanuatu_water_logistics",
-          "fiji_claims_progress"
+          "fiji_claims_progress",
+          "aggregate_review_completed"
         ],
         "objectives": {
           "reserve": {
@@ -295,7 +301,77 @@
       "shanter",
       "vanuatu"
     ],
-    "game_length": "Short"
+    "game_length": "Short",
+    "material_communications": true,
+    "diplomatic_history": true,
+    "runtime_propositions": true,
+    "strategic_establishment": true,
+    "communication_propositions": {
+      "claims_ready": {
+        "text": "The confidential claims administration project has completed all three illustrative stages; this does not establish any individual legal entitlement.",
+        "initial_access": [
+          "fiji",
+          "vanuatu"
+        ],
+        "report_binding": {
+          "key": "fiji_claims_progress",
+          "comparison": "at_least",
+          "threshold": 3
+        }
+      },
+      "reception_ready": {
+        "text": "The Fiji reception project has completed all three illustrative stages.",
+        "initial_access": [
+          "fiji",
+          "shanter"
+        ],
+        "report_binding": {
+          "key": "fiji_reception_progress",
+          "comparison": "at_least",
+          "threshold": 3
+        }
+      },
+      "aggregate_review": {
+        "text": "The consented aggregate procedural review has completed; no individual claims were adjudicated.",
+        "initial_access": [
+          "fiji",
+          "vanuatu"
+        ],
+        "report_binding": {
+          "key": "aggregate_review_completed",
+          "comparison": "equal",
+          "threshold": 1
+        }
+      }
+    },
+    "communication_delay_minutes": {
+      "fiji": {
+        "vanuatu": 10080
+      }
+    },
+    "permission_terms": {
+      "aggregate_claims_review": {
+        "issuer": "fiji",
+        "grantee": "vanuatu",
+        "description": "Review anonymized aggregate claims-administration procedures only; no access to personal records, adjudication or legal-status determination.",
+        "max_due_minute": 40320
+      }
+    },
+    "event_templates": {
+      "aggregate_review": {
+        "description": "The consented aggregate procedural review is complete. No personal records or legal determinations are conveyed.",
+        "participant": "vanuatu",
+        "audience": [
+          "fiji",
+          "vanuatu"
+        ],
+        "requires": {
+          "vanuatu_credits": 1
+        },
+        "permission": "aggregate_claims_review",
+        "outcome": "aggregate_review_completed"
+      }
+    }
   },
   "initial_refs": {},
   "evidence_refs": {
