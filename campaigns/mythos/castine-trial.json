@@ -1,4 +1,37 @@
 {
+  "epistemic_dialogue": true,
+  "dialogue_requires_encounter": true,
+  "relational_continuity": true,
+  "narrative_establishment": true,
+  "narrative_properties": true,
+  "narrative_agreements": true,
+  "narrative_batch": true,
+  "propositions": {
+    "family_connection": {
+      "text": "Martha acknowledges that she is Imogen's aunt.",
+      "kind": "report",
+      "flag": "family_connection",
+      "initial_knowers": [
+        "martha"
+      ]
+    },
+    "father_account": {
+      "text": "Zebediah says he is Imogen's father and arranged her placement in Arkham.",
+      "kind": "report",
+      "flag": "father_account",
+      "initial_knowers": [
+        "zebediah"
+      ]
+    },
+    "escape_account": {
+      "text": "Ree says he helped Imogen escape the institution rather than killing her.",
+      "kind": "report",
+      "flag": "escape_account",
+      "initial_knowers": [
+        "ree"
+      ]
+    }
+  },
   "version": 8,
   "start": "1927-11-02T08:00:00",
   "end": "1927-11-03T23:59:00",
