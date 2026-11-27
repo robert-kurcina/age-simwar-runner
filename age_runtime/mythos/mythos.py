@@ -449,6 +449,8 @@ def history_entry(action, proposal, commitment):
 
 def finish_activity(state, rules, action, a, success, reason=None, proposal=None):
     state["last_result"] = {"action": action, "success": success}
+    if "task_duration" in a:
+        state["last_result"]["task_duration"] = copy.deepcopy(a["task_duration"])
     if reason:
         state["last_result"]["interrupted"] = reason
     if state.get("transitions") and state["transitions"][-1]["turn"] == state["turn"]:
@@ -488,6 +490,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if commitment is not None:
         dxd_commitment.validate(state, rules, a, commitment)
         a = dict(a, commitment=copy.deepcopy(commitment))
+    a = proposals.resolve_duration(state, a)
     started = datetime.fromisoformat(state["time"])
     elapsed = started + timedelta(seconds=a["duration_seconds"])
     if elapsed > datetime.fromisoformat(rules["end"]):
@@ -644,6 +647,8 @@ def _step(state, rules, action, proposal=None, commitment=None):
     if clock:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], clock, state["dxd"]["attributes"])
     state["last_result"] = {"action": action, "success": success}
+    if "task_duration" in a:
+        state["last_result"]["task_duration"] = copy.deepcopy(a["task_duration"])
     if rules.get("routine_observations"):
         available = _available_local_npcs(state, rules)
         state["routine_source"] = {"turn": state["turn"], "location": state["location"],
