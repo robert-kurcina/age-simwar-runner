@@ -454,3 +454,7 @@ PR #236 merged; CI pending at inspection. Inspect all seven actual configuration
 ## ST-R — Campaign discovery (WIP)
 
 PR #238 merged; CI pending at inspection. Add `private discover` to expose fresh standard verified openings, eligible perspectives, dates, turn counts, and explicit rehearsal/reviewed modes. Keep context-only groups and blocked entries visible, omit referee data, and preserve source gates. Tests cover actual seven episodes, 25 perspectives and missing sources/specifications. CI pending. Next package the self-contained draft campaign for offline play without relaxing reviewed distribution gates.
+
+## ST-S — Offline Conflagration draft delivery (WIP)
+
+PR #239 merged; CI pending at inspection. Add a campaign-specific launch artifact to the existing pinned runtime workflow. Reuse the exact tracked source ZIP and checksum; supply a dedicated offline launch guide and exercise all seven episodes and 25 perspectives through terminal abstention and verified checkpoints in an extracted runtime without owner mappings. No private vault bytes, no automatic reviewed status and no new archive format. This is a full runtime with a Conflagration-specific entry point, not a physically minimal campaign-only binary. CI pending. Next obtain the actual successful artifact and perform facilitator qualification; reviewed distribution and author UAT remain separate.
