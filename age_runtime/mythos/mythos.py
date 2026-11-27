@@ -192,6 +192,7 @@ def options(state, rules):
                   and not any(f in state["flags"] for f in a.get("excludes_flags", []))
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
                   and npc_available(state, rules, a)
+                  and continuity.reconsideration_allowed(state, a)
                   and ("spatial" in rules or not a.get("available_from") or state["time"] >= a["available_from"])
                   and (not a.get("available_until") or state["time"] < a["available_until"])
                   and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
@@ -510,6 +511,8 @@ def step(state, action, proposal=None, commitment=None):
         a = hooks.apply(state, rules, a)
         success = resolve_dxd(state, rules, a)
     primary_result = state["dxd"]["tests"][-1]["result"] if "test" in a else None
+    if primary_result is not None and not success:
+        continuity.record_refusal(state, a, state["dxd"]["tests"][-1])
     if primary_result is not None and rules.get("automatic_emphasis"):
         hooks.record(state, a, state["dxd"]["tests"][-1])
     if commitment is not None:
