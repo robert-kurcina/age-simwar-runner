@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -88,6 +88,8 @@ def initial(sid, seed):
         state["behavioral_recognition"] = []
     if rules.get("npc_expectations"):
         state["npc_expectations"] = []
+    if rules.get("npc_travel"):
+        state["npc_travel"] = []
     if rules.get("timed_detail_event"):
         state["timed_detail_events"] = []
     if rules.get("local_proposals"):
@@ -166,7 +168,8 @@ def npc_available(state, rules, action):
     npc = state["npcs"][nid]
     cfg = rules["npcs"][nid]
     destination = action.get("location")
-    return (npc.get("activity", {}).get("status") != "asleep"
+    return (not npc_travel.pending(state, nid)
+            and npc.get("activity", {}).get("status") != "asleep"
             and not continuity.blocked(state, cfg)
             and all(f in state["flags"] for f in cfg.get("requires_flags", []))
             and destination in cfg.get("eligible_locations", [npc["location"]])
@@ -437,6 +440,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         boundary = next(b for b in boundaries if b > cursor)
         boundary = timed_details.next_boundary(state, cursor, boundary)
         boundary = npc_time.next_boundary(state, cursor, boundary)
+        boundary = npc_travel.next_boundary(state, cursor, boundary)
         if "narrative_events" in state:
             interval = narrative_events.next_boundary(state, rules)
             if interval is not None:
@@ -451,6 +455,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         npc_time.advance(state, rules, actual)
         narrative_events.advance_time(state, rules, actual)
         advance_events(state, rules, cursor)
+        npc_travel.resolve(state, rules, cursor)
         timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
         if mode != "sleep" and clock["pending_sleep_seconds"] == 0:
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
@@ -961,6 +966,7 @@ def gm_context(state):
                 **({"emotional_context": emotions.projection(state, conversational)} if rules.get("interpersonal_duress") else {}),
                 **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
                 **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
+                **({"npc_travel": npc_travel.projection(state)} if rules.get("npc_travel") else {}),
                 **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
