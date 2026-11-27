@@ -1,4 +1,6 @@
 {
+  "demeanor": true,
+  "social_demeanor": true,
   "npc_abstract_recovery": true,
   "interpersonal_duress": {"stress_awards": {"minor": 1, "significant": 3, "severe": 6}},
   "epistemic_dialogue": true,
