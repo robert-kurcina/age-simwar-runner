@@ -171,6 +171,8 @@ def compile_scenario(spec, owners):
         raise ValueError("unsupported compiler specification")
     effective = checked_date(spec["effective_date"])
     scenario = copy.deepcopy(spec["scenario"])
+    if "phase_memory" in scenario:
+        raise ValueError("historical memory must derive from approved prior session")
     refs = spec["initial_refs"]
     if not isinstance(scenario, dict) or not isinstance(scenario.get("initial"), dict):
         raise ValueError("missing scenario initial state")
