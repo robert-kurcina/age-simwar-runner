@@ -49,6 +49,25 @@ def recover(state, minutes, *, safe=False, restful=False):
         state["stress"] = max(state.get("min_stress", 0), state["stress"] - minutes // 10 * rr)
     state["weariness"] = max(0, state["weariness"] - minutes // 60 * rr)
 
+def recover_rest_overlap(state, before_seconds, after_seconds, *, safe=False):
+    """Credit newly completed intervals of one continuous quiet/rest episode.
+
+    Uses the same minute Fatigue alternative and ten-minute Stress/hourly
+    Weariness Recovery Rate as detailed quiet/rest activity, without an
+    awake clock. Caller owns monotonic elapsed episode accounting.
+    """
+    if (type(before_seconds) is not int or type(after_seconds) is not int
+            or not 0 <= before_seconds <= after_seconds or type(safe) is not bool):
+        raise ValueError("invalid continuous rest interval")
+    rr = state["capacity"]["recovery_rate"]
+    def completed(unit):
+        return after_seconds // unit - before_seconds // unit
+    state["fatigue"] = max(0, state["fatigue"] - completed(60))
+    if safe:
+        state["stress"] = max(state.get("min_stress", 0), state["stress"] - completed(600) * rr)
+    state["weariness"] = max(0, state["weariness"] - completed(3600) * rr)
+
+
 def describe(state):
     d = degrees(state)
     return {"fatigue": ("Rested" if not state["fatigue"] else "Physically strained" if not d["fatigue"] else "Exhausted"),
