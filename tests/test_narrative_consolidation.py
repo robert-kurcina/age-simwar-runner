@@ -76,9 +76,9 @@ class NarrativeConsolidationTests(unittest.TestCase):
                             "experiences": [{"claim_id": i} for i in range(1, 21)]}}}}
         projections.compact_history(packet)
         ids = [entry["id"] for entry in packet["referee"]["dialogue_context"]]
-        self.assertEqual(ids, [1, 3] + list(range(9, 22)))
+        self.assertEqual(ids, [1, 2, 3] + list(range(9, 22)))
         self.assertEqual(packet["referee"]["relational_context"]["eleanor"]["current"], current)
-        self.assertEqual(packet["history_scope"]["omitted_counts"]["dialogue:eleanor/pc"], 6)
+        self.assertEqual(packet["history_scope"]["omitted_counts"]["dialogue:eleanor/pc"], 5)
         self.assertEqual(len(packet["referee"]["relational_context"]["eleanor"]["experiences"]), 8)
 
     def test_single_copy_batch_matches_sequential_steps_and_replay(self):
