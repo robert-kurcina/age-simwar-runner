@@ -150,5 +150,5 @@ def projection(state):
     return {nid: {"objectives": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("active", "deferred")],
                   "recent_closed": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("achieved", "abandoned")][-4:],
                   **({"favor": npc["favor"]} if "favor" in npc else {}),
-                  "social_tests": [copy.deepcopy(e) for e in state["npc_social_tests"] if nid in (e["npc"], e["target"])][-6:]}
+                  "social_tests": [copy.deepcopy(e) for e in state.get("npc_social_tests", []) if nid in (e["npc"], e["target"])][-6:]}
             for nid, npc in sorted(state["npcs"].items())}
