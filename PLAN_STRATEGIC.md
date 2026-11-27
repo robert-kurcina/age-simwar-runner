@@ -438,3 +438,7 @@ PR #229 merged; Tests 46070510150 and Chat runtime bundle 46070510156 passed. Qu
 ## ST-N — Scenario preparation diagnostics (WIP)
 
 PR #230 passed Tests 46070851549 and Chat runtime bundle 46070851585. Consolidate resource discovery, roster inspection, source-independent opening rehearsal, optional compilation and reviewed opening checks into a read-only preparation report. No automatic review or new validation framework. Tests cover seven drafts and 25 perspectives, missing sources and broken specifications. CI pending. Next use the report to prepare actual reviewed content and simplify campaign delivery; independent LLM rehearsal and author UAT remain distinct.
+
+## ST-O — Faction roster review (WIP)
+
+PR #232 merged; CI not yet confirmed. Extend preparation diagnostics with selectable perspectives, default roles, objective IDs, strategy presence, profile compilation status, unresolved and hypothetical properties, source-dependent properties and unbound profiles. Reuse compile_profile; no automatic admission of candidate organizations or authority. Tests cover actual drafts and WPC as an unbound candidate. Next: guided scenario authoring using existing schema examples and actual content review, not new mechanics. CI pending.

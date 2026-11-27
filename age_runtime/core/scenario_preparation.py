@@ -8,6 +8,8 @@ from age_runtime.core.draft_rehearsal import select_rehearsal
 from age_runtime.core.resource_acquisition import requirements
 from age_runtime.core.source_compiler import compile_scenario, read_pinned_source
 from age_runtime.core.runner import digest
+from age_runtime.core.participants import compile_profile
+from copy import deepcopy
 
 ERRORS = (ValueError, TypeError, KeyError, OSError)
 
@@ -27,6 +29,55 @@ def check_openings(selection, owners):
         else:
             results.append({"actor": actor, "status": "verified-opening"})
     return results
+
+
+def roster_review(spec, entry, owners=None):
+    """Author-facing diagnostics only; profiles remain opening context."""
+    scenario = spec["scenario"]
+    profiles = spec.get("faction_profiles", {})
+    actors = scenario["actors"]
+    eligible = eligible_perspectives(entry, scenario)
+    rows = []
+    for ident, actor in actors.items():
+        profile = profiles.get(ident)
+        row = {"id": ident, "label": actor["label"],
+               "profile_present": ident in profiles,
+               "selectable": ident in eligible,
+               "default_role": "model" if ident in scenario.get("model_factions", []) else "human",
+               "objectives": list(actor.get("objectives", {})),
+               "strategy_present": "strategy" in actor,
+               "profile_status": "absent", "unresolved_properties": [],
+               "referenced_properties": [], "hypothetical_properties": []}
+        if ident in profiles:
+            try:
+                if (not isinstance(profile, dict) or profile.get("id") != ident
+                        or profile.get("label") != actor["label"]
+                        or profile.get("effective_date") != spec["effective_date"]
+                        or profile.get("kind") != "organization"):
+                    raise ValueError("faction identity, label, kind or date mismatch")
+                candidate = deepcopy(profile)
+                for key, record in candidate["properties"].items():
+                    if "reference" in record:
+                        row["referenced_properties"].append(key)
+                    elif record.get("classification") == "unresolved":
+                        row["unresolved_properties"].append(key)
+                    elif record.get("classification") == "hypothetical":
+                        row["hypothetical_properties"].append(key)
+                    if owners is None:
+                        record.pop("evidence", None)
+                if owners is None and row["referenced_properties"]:
+                    row["profile_status"] = "requires-source-check"
+                else:
+                    compile_profile(candidate, owners if owners is not None else {})
+                    row["profile_status"] = "compiled" if owners is not None else "literal-checked"
+            except ERRORS:
+                row["profile_status"] = "blocked"
+        rows.append(row)
+    return {"actors": rows, "unbound_profiles": sorted(set(profiles) - set(actors)),
+            "eligible_perspectives": eligible,
+            "review_notes": ["Missing optional profiles are not mechanical failures.",
+                             "Unresolved context is not a numeric resource or permission.",
+                             "Check motives, authority and dated assumptions before author approval."]}
 
 
 def prepare(path, owners=None):
@@ -75,6 +126,10 @@ def prepare(path, owners=None):
                 checks["specification"] = {"status": "blocked", "reason": str(exc)}
                 results.append(result)
                 continue
+            try:
+                result["roster_review"] = roster_review(spec, entry, owners)
+            except ERRORS:
+                result["roster_review"] = {"status": "blocked", "reason": "Invalid roster or perspective configuration."}
             if entry["status"] == "draft-unreviewed":
                 try:
                     selection = select_rehearsal(path, sid)
