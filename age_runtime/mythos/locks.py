@@ -1,7 +1,7 @@
 """Local, permission-backed opportunities; never bypass authored actions."""
 import copy
 import re
-from age_runtime.mythos import agreements
+from age_runtime.mythos import agreements, object_actions
 
 def record(state, rules, request, npc_available, local_entities, text):
     if not rules.get("narrative_locks"):
@@ -21,7 +21,7 @@ def record(state, rules, request, npc_available, local_entities, text):
     if (not a or a["kind"] != "permission" or a["status"] != "active"
             or a["issuer"] != a["npc"] or a["condition"] is not None
             or a["location"] != state["location"] or a["turn"] != state["turn"]
-            or not entity or entity["kind"] != "object" or entity.get("custodian") != a["npc"]
+            or not entity or entity["kind"] != "object" or not object_actions.usable(entity) or entity.get("custodian") != a["npc"]
             or not npc_available(state, rules, {"npc": a["npc"], "location": state["location"]})):
         raise ValueError("lock requires current unconditional permission from local custodian")
     locks.append({"id": lid, "permission": aid, "object": oid, "npc": a["npc"],
@@ -31,7 +31,7 @@ def record(state, rules, request, npc_available, local_entities, text):
 def available(state, rules, lock, npc_available, local_entities):
     a = agreements.project(state).get(lock["permission"])
     e = local_entities(state).get(lock["object"])
-    return bool(a and a["status"] == "active" and e
+    return bool(a and a["status"] == "active" and e and object_actions.usable(e)
                 and e.get("custodian") == lock["npc"]
                 and state["location"] == lock["location"]
                 and state["npcs"][lock["npc"]]["location"] == state["location"]

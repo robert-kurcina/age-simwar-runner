@@ -1,5 +1,6 @@
 {
-  "version": 55,
+  "version": 56,
+  "consequential_objects": true,
   "npc_temporal": {"initial_awake_seconds": {"eleanor": 0, "elias": 0, "burroughs": 0}},
   "interpersonal_duress": {"stress_awards": {"minor": 1, "significant": 3, "severe": 6}},
   "start": "1927-10-13T08:00:00",
