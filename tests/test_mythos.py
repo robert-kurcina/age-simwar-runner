@@ -813,6 +813,54 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_emotional_episode_native_stress_and_private_continuity(self):
+        import copy
+        from age_runtime.core import dxd_conditions
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        claim = {"npc": "eleanor", "speaker": "eleanor",
+                 "claim": "What have you done?!", "stance": "unstated", "intent": "unstated"}
+        episode = {"id": "emo:confrontation", "npc": "eleanor", "claim_ids": [1],
+                   "emotion": "Anger and grief", "intensity": "acute",
+                   "expression": "She shouts, then struggles to speak.",
+                   "cause": "An emotionally significant interpersonal confrontation",
+                   "stress": {"eleanor": "severe", "pc": "significant"}}
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"emotion": episode})
+        s = mythos.dialogue_step(s, claim)
+        before = copy.deepcopy(s)
+        after = mythos.establish_step(s, {"emotion": episode})
+        expected_npc = copy.deepcopy(before["npcs"]["eleanor"]["concerns"])
+        expected_pc = copy.deepcopy(before["dxd"]["concerns"])
+        dxd_conditions.add(expected_npc, stress=6)
+        dxd_conditions.add(expected_pc, stress=3)
+        self.assertEqual(after["npcs"]["eleanor"]["concerns"], expected_npc)
+        self.assertEqual(after["dxd"]["concerns"], expected_pc)
+        self.assertEqual(s, before)
+        for key in ("time", "turn", "flags", "inventory", "discoveries", "resources", "relationships"):
+            self.assertEqual(after[key], before[key])
+        self.assertNotIn("emotional_episodes", mythos.view(after))
+        context = mythos.gm_context(after)["referee"]["emotional_context"]["eleanor"]
+        self.assertEqual(context["last_episode"]["intensity"], "acute")
+        self.assertEqual(context["degrees"], dxd_conditions.degrees(expected_npc))
+        with self.assertRaises(ValueError):
+            mythos.establish_step(after, {"emotion": dict(episode, id="emo:duplicate")})
+        for bad in (dict(episode, id="emo:bad", stress={"elias": "severe"}),
+                    dict(episode, id="emo:bad", stress={"pc": 100}),
+                    dict(episode, id="emo:bad", pc_emotion="fear")):
+            with self.assertRaises(ValueError):
+                mythos.establish_step(after, {"emotion": bad})
+        quieter = dict(episode, id="emo:quiet", emotion="Relief", intensity="subsiding",
+                       expression="She lowers her voice.", stress={})
+        after = mythos.establish_step(after, {"emotion": quieter})
+        self.assertEqual(after["npcs"]["eleanor"]["concerns"], expected_npc)
+        moved = mythos.step(after, "move:Harbor Docks")
+        self.assertNotIn("eleanor", mythos.gm_context(moved)["referee"]["emotional_context"])
+        returned = mythos.step(moved, "move:Harbor Diner")
+        self.assertEqual(returned["npcs"]["eleanor"]["concerns"], expected_npc)
+        self.assertEqual(mythos.gm_context(returned)["referee"]["emotional_context"]["eleanor"]
+                         ["last_episode"]["emotion"], "Relief")
+        mythos.verify(returned)
+
     def test_atomic_narrative_batch_commits_or_rejects_whole_exchange(self):
         import copy
         with tempfile.TemporaryDirectory() as d:
