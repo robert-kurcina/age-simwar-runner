@@ -27,6 +27,7 @@ def recall(observation, counterpart=None):
         return deepcopy({"actor": actor, "counterpart": counterpart, "turn": observation["turn"],
                          "minute": observation["minute"], "communications": communications,
                          "proposals": proposals, "propositions": propositions,
+                         **({"diplomatic_history": observation["diplomatic_history"].get(counterpart, {})} if "diplomatic_history" in observation else {}),
                          "scope_note": "Counterpart-linked records only; consult full recall for own decisions, authored agreements and other matters."})
     agreements = support.get("agreements", {})
     active = {"proposed", "committed", "awaiting_consent"}
@@ -40,6 +41,7 @@ def recall(observation, counterpart=None):
     return deepcopy({
         "actor": actor, "turn": observation["turn"], "minute": observation["minute"],
         "objectives": observation["objectives"],
+        **({"diplomatic_history": observation["diplomatic_history"]} if "diplomatic_history" in observation else {}),
         "reports": observation["reports"],
         "communications": communications,
         "propositions": observation.get("propositions", {}),
@@ -63,6 +65,10 @@ def reminder_index(observation):
     decisions = history["decisions"]
     return {
         "outstanding_deadlines": history["outstanding_deadlines"],
+        **({"active_intentions": [{"counterpart": other, "topic": topic, "claim_id": entry["latest"]["claim_id"]}
+                                   for other, rel in history["diplomatic_history"].items()
+                                   for topic, entry in rel["private_intentions"].items()
+                                   if entry["latest"]["status"] == "active"]} if "diplomatic_history" in history else {}),
         "recent_claim_ids": [c["id"] for c in communications[-5:]],
         "unsettled_proposition_ids": [pid for pid, p in propositions.items()
                                      if p["latest_stance"] in ("unstated", "unknown", "doubts")],

@@ -9,6 +9,8 @@ def text_field(value, limit):
 
 
 def validate(s):
+    if "diplomatic_history" in s and (s["diplomatic_history"] is not True or not s.get("material_communications")):
+        raise ValueError("diplomatic history requires material communications")
     if "communication_delay_minutes" in s:
         routes = s["communication_delay_minutes"]
         if not s.get("material_communications") or not isinstance(routes, dict):
@@ -46,7 +48,7 @@ def validate(s):
 def append(s, state, actor, command):
     if not s.get("material_communications") or actor not in s["actors"] or state["minute"] >= s["end_minute"]:
         raise ValueError("communication unavailable")
-    if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts", "speaker_intent", "introduce_proposition"} or not {"id", "recipients", "claim"} <= set(command):
+    if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts", "speaker_intent", "introduce_proposition", "private_intention"} or not {"id", "recipients", "claim"} <= set(command):
         raise ValueError("invalid communication fields")
     cid = text_field(command["id"], 80)
     if cid == "authored_access" or (cid.startswith("report:") and any(
@@ -71,6 +73,29 @@ def append(s, state, actor, command):
         if intent not in ("unstated", "sincere", "deceive", "fabricate"):
             raise ValueError("invalid speaker intent")
         payload["speaker_intent"] = intent
+    if "private_intention" in command:
+        intention = command["private_intention"]
+        if not s.get("diplomatic_history") or not isinstance(intention, dict) or set(intention) != {"counterpart", "topic", "status", "text", "revises"}:
+            raise ValueError("invalid private intention")
+        counterpart = intention["counterpart"]
+        if not isinstance(counterpart, str) or counterpart not in recipients:
+            raise ValueError("intention counterpart must be an actual recipient")
+        topic = text_field(intention["topic"], 80)
+        statement = text_field(intention["text"], 400)
+        status = intention["status"]
+        if status not in ("active", "withdrawn"):
+            raise ValueError("invalid intention status")
+        history = [r["communication"] for r in prior if r["actor"] == actor
+                   and r["communication"].get("private_intention", {}).get("counterpart") == counterpart
+                   and r["communication"].get("private_intention", {}).get("topic") == topic]
+        previous = history[-1]["id"] if history else None
+        if intention["revises"] != previous or (status == "withdrawn" and
+                (not history or history[-1]["private_intention"]["status"] != "active")):
+            raise ValueError("intention revision must reference latest own intention")
+        if history and history[-1]["private_intention"]["status"] == status and history[-1]["private_intention"]["text"] == statement:
+            raise ValueError("duplicate private intention")
+        payload["private_intention"] = {"counterpart": counterpart, "topic": topic,
+                                       "status": status, "text": statement, "revises": previous}
     # Introduction is inseparable from the actual originating utterance.
     # It establishes a subject of discourse, never a new world fact.
     if "introduce_proposition" in command:
@@ -237,7 +262,7 @@ def view(s, state, actor):
             continue
         message = {"speaker": r["actor"], "turn": r["turn"], "minute": r["minute"],
                    **{k: deepcopy(v) for k, v in r["communication"].items()
-                      if k != "speaker_intent" or sender}}
+                      if k not in ("speaker_intent", "private_intention") or sender}}
         if "communication_delay_minutes" in s:
             if sender:
                 message["scheduled_delivery"] = {

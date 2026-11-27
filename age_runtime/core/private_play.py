@@ -306,6 +306,7 @@ def briefing(session):
                             "observed_result": observation["objectives"].get(oid)}
                        for oid, obj in actor.get("objectives", {}).items()},
         **({"propositions": observation["propositions"]} if "propositions" in observation else {}),
+        **({"diplomatic_history": observation["diplomatic_history"]} if "diplomatic_history" in observation else {}),
         **({"communications": observation["communications"]} if "communications" in observation else {}),
         **({"negotiation": observation["negotiation"]} if "negotiation" in observation else {}),
         **({"faction_strategy": observation["faction_strategy"]} if "faction_strategy" in observation else {}),
