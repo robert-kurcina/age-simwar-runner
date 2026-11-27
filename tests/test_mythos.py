@@ -813,6 +813,87 @@ class MythosTrialTests(unittest.TestCase):
         self.assertIn("eleanor", [x["id"] for x in packet["referee"]["participants"]])
         self.assertNotIn("secret", str(mythos.view(s)["contacts"]))
 
+    def test_integrated_eleanor_continuity_across_conflict_and_recovery(self):
+        s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+
+        def say(state, speaker, claim, **extra):
+            return mythos.dialogue_step(state, {"npc": "eleanor", "speaker": speaker,
+                "claim": claim, "stance": "unstated", "intent": "unstated", **extra})
+
+        s = say(s, "eleanor", "That was my brother's cup.",
+                reaction={"attachment": "Her brother's cup is cherished.",
+                          "significance": "The cup reminds her of her missing brother."})
+        s = say(s, "pc", "Have you heard from your brother?")
+        s = mythos.establish_step(s, {"details": [
+            {"id": "inc:cup", "kind": "object", "label": "Cup", "description": "Her brother's ceramic cup.",
+             "basis": "Established personal possession", "custodian": "eleanor"},
+            {"id": "inc:tin", "kind": "object", "label": "Tin", "description": "A small tin.",
+             "basis": "Established mundane possession", "custodian": "eleanor",
+             "properties": {"condition": "Dusty"}}]})
+        s = mythos.step(mythos.step(s, "move:Harbor Docks"), "move:Harbor Diner")
+        s = say(s, "pc", "Any news about your brother today?")
+        s = mythos.establish_step(s, {"behavior": {"id": "pat:questions", "npc": "eleanor",
+            "kind": "recurring", "evidence": ["claim:2", "claim:3"],
+            "interpretation": "He repeatedly asks about my brother."}})
+        s = mythos.establish_step(s, {"expectation": {"operation": "create", "id": "exp:question",
+            "npc": "eleanor", "pattern": "pat:questions",
+            "expectation": "His next statement will concern my brother."}})
+        s = mythos.establish_step(s, {"transfers": [{"id": "inc:cup", "from": "eleanor", "to": "pc",
+            "pc_authorization": "I accept the cup.", "npc_consent": "Here, take it.",
+            "basis": "Voluntary transfer"}]})
+        s = mythos.establish_step(s, {"object_action": {"id": "act:drop", "object": "inc:cup",
+            "before": "intact", "outcome": "destroyed", "authorization": "I drop the cup.",
+            "basis": "Certain breakage on hard floor", "remnants": "Broken ceramic fragments"}})
+        incident = s
+        obs = {"id": "obs:cup", "npc": "eleanor", "action": "act:drop",
+               "kind": "witnessed", "basis": "She sees the cup fall from his hand."}
+        s = mythos.establish_step(s, {"action_observation": obs})
+        episode = {"id": "emo:cup", "npc": "eleanor", "claim_ids": [],
+            "observation": "obs:cup", "emotion": "Grief and anger", "intensity": "acute",
+            "expression": "She stares at the fragments, speechless.",
+            "cause": "Loss of her cherished cup", "stress": {"eleanor": "severe"}}
+        s = mythos.establish_step(s, {"emotion": episode})
+        s = say(s, "eleanor", "That was his cup!", reaction={"tension": "Resentment over its destruction."})
+        s = say(s, "pc", "Just coffee, please.")
+        s = mythos.establish_step(s, {"expectation": {"operation": "assess", "id": "exp:question",
+            "npc": "eleanor", "outcome": "contradicted", "evidence": ["claim:5"],
+            "interpretation": "He asks for coffee instead."}})
+        s = mythos.establish_step(s, {"npc_activity": {"npc": "eleanor", "mode": "rest",
+            "safe": True, "minutes": 30, "basis": "She takes a quiet break in safety."}})
+        s = mythos.step(s, "move:Harbor Docks")
+        s = mythos.establish_step(s, {"npc_initiative": {"operation": "schedule", "id": "evt:tidy",
+            "npc": "eleanor", "object": "inc:tin", "delay_minutes": 30,
+            "basis": "She chooses to tidy her belongings after her break."}})
+        for _ in range(3):
+            s = mythos.step(s, "observe")
+        s = mythos.step(s, "move:Harbor Diner")
+        packet = mythos.gm_context(s)["referee"]
+        self.assertEqual(s["npcs"]["eleanor"]["concerns"]["stress"], 0)
+        self.assertEqual(packet["emotional_context"]["eleanor"]["last_episode"]["id"], "emo:cup")
+        self.assertEqual(packet["relational_context"]["eleanor"]["current"]["attachment"]["claim_id"], 1)
+        self.assertEqual(packet["relational_context"]["eleanor"]["current"]["tension"]["claim_id"], 4)
+        self.assertEqual(packet["behavioral_context"]["eleanor"]["interpretations"][0]["id"], "pat:questions")
+        self.assertEqual(packet["npc_expectations"]["eleanor"][0]["status"], "contradicted")
+        self.assertEqual(packet["action_observations"]["eleanor"][0]["actor"], "pc")
+        self.assertIn("competing motivations", packet["literary_synthesis"])
+        entities = {e["id"]: e for e in mythos.view(s)["established_details"]}
+        self.assertEqual(entities["inc:cup"]["lifecycle"], "destroyed")
+        self.assertEqual(entities["inc:tin"]["properties"]["condition"], "Clean")
+        self.assertEqual(s["timed_detail_events"][0]["status"], "completed")
+        with self.assertRaises(ValueError):
+            mythos.establish_step(s, {"emotion": dict(episode, id="emo:repeat")})
+        mythos.verify(s)
+
+        # Same physical outcome, different NPC epistemic history.
+        unseen = mythos.step(mythos.step(incident, "move:Harbor Docks"), "move:Harbor Diner")
+        unseen = mythos.establish_step(unseen, {"action_observation": dict(obs,
+            kind="discovered", basis="She notices the fragments later.")})
+        packet = mythos.gm_context(unseen)["referee"]
+        self.assertIsNone(packet["action_observations"]["eleanor"][0]["actor"])
+        self.assertNotIn("obs:cup", packet["behavioral_context"]["eleanor"]["evidence"])
+        self.assertEqual(packet["behavioral_context"]["eleanor"]["interpretations"][0]["id"], "pat:questions")
+        mythos.verify(unseen)
+
     def test_expectations_are_prospective_and_reassessed_from_new_evidence(self):
         import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
