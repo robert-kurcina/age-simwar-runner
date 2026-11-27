@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "effective_date": "2005-01-01",
+  "scenario": {
+    "version": 1,
+    "id": "mainlander-ingress-regional-draft",
+    "turn_minutes": 10080,
+    "end_minute": 40320,
+    "initial": {
+      "shanter_credits": 3,
+      "fiji_credits": 1,
+      "vanuatu_credits": 2,
+      "shanter_reception_progress": 0,
+      "shanter_reception_delay": 0,
+      "shanter_reception_complications": 0,
+      "shanter_reception_logistics": 2,
+      "fiji_reception_progress": 0,
+      "fiji_reception_delay": 0,
+      "fiji_reception_complications": 0,
+      "fiji_reception_logistics": 2,
+      "fiji_claims_progress": 0,
+      "fiji_claims_delay": 0,
+      "fiji_claims_complications": 0,
+      "fiji_claims_legal_permission": 2,
+      "vanuatu_water_progress": 0,
+      "vanuatu_water_delay": 0,
+      "vanuatu_water_complications": 0,
+      "vanuatu_water_logistics": 2
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "shanter": {
+        "label": "Shanter",
+        "visible_keys": [
+          "shanter_credits",
+          "shanter_reception_progress",
+          "shanter_reception_delay",
+          "shanter_reception_complications",
+          "shanter_reception_logistics",
+          "fiji_reception_progress"
+        ],
+        "objectives": {
+          "reserve": {
+            "key": "shanter_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted abstract program credit"
+          },
+          "reception": {
+            "key": "shanter_reception_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete at least 3 of 3 abstract stages of controlled reception and public health services"
+          },
+          "regional": {
+            "key": "fiji_reception_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Support safe regional reception"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize lawful reception, quarantine and fair processing; preserve technical and civilian service continuity.",
+          "priorities": [
+            "reception",
+            "regional",
+            "reserve"
+          ]
+        }
+      },
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "fiji_credits",
+          "fiji_reception_progress",
+          "fiji_reception_delay",
+          "fiji_reception_complications",
+          "fiji_reception_logistics",
+          "fiji_claims_progress",
+          "fiji_claims_delay",
+          "fiji_claims_complications",
+          "fiji_claims_legal_permission"
+        ],
+        "objectives": {
+          "reserve": {
+            "key": "fiji_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted abstract program credit"
+          },
+          "reception": {
+            "key": "fiji_reception_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete at least 3 of 3 abstract stages of safe reception and essential services"
+          },
+          "claims": {
+            "key": "fiji_claims_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete at least 3 of 3 abstract stages of confidential civilian claims administration"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize access to services, fair case processing and reconciliation of contested claims; protect records and privacy.",
+          "priorities": [
+            "reception",
+            "claims",
+            "reserve"
+          ]
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "vanuatu_credits",
+          "vanuatu_water_progress",
+          "vanuatu_water_delay",
+          "vanuatu_water_complications",
+          "vanuatu_water_logistics",
+          "fiji_claims_progress"
+        ],
+        "objectives": {
+          "reserve": {
+            "key": "vanuatu_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted abstract program credit"
+          },
+          "water": {
+            "key": "vanuatu_water_progress",
+            "comparison": "at_least",
+            "threshold": 3,
+            "description": "Complete at least 3 of 3 abstract stages of distributed water and reception services"
+          },
+          "regional": {
+            "key": "fiji_claims_progress",
+            "comparison": "at_least",
+            "threshold": 2,
+            "description": "Support lawful resolution of regional claims"
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize water and shelter capacity, consultation with local authorities and equitable distribution of assistance.",
+          "priorities": [
+            "water",
+            "reserve",
+            "regional"
+          ]
+        }
+      }
+    },
+    "action_catalog": {
+      "shanter_reception_improve_logistics": {
+        "description": "Allocate 1 abstract program credit(s) to improve logistics capacity for controlled reception and public health services.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "fiji_reception_improve_logistics": {
+        "description": "Allocate 1 abstract program credit(s) to improve logistics capacity for safe reception and essential services.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "fiji_claims_improve_legal_permission": {
+        "description": "Allocate 1 abstract program credit(s) to improve legal permission capacity for confidential civilian claims administration.",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "vanuatu_water_improve_logistics": {
+        "description": "Allocate 1 abstract program credit(s) to improve logistics capacity for distributed water and reception services.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "shanter_support_fiji": {
+        "description": "Voluntarily transfer 1 abstract program credit(s) to fiji.",
+        "actors": [
+          "shanter"
+        ]
+      },
+      "vanuatu_support_fiji": {
+        "description": "Voluntarily transfer 1 abstract program credit(s) to fiji.",
+        "actors": [
+          "vanuatu"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 3,
+    "economy_projects": [
+      {
+        "id": "shanter_reception",
+        "participant": "shanter",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "logistics",
+            "key": "shanter_reception_logistics"
+          }
+        ],
+        "stages": 3,
+        "progress": "shanter_reception_progress",
+        "delay": "shanter_reception_delay",
+        "complications": "shanter_reception_complications"
+      },
+      {
+        "id": "fiji_reception",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "logistics",
+            "key": "fiji_reception_logistics"
+          }
+        ],
+        "stages": 3,
+        "progress": "fiji_reception_progress",
+        "delay": "fiji_reception_delay",
+        "complications": "fiji_reception_complications"
+      },
+      {
+        "id": "fiji_claims",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "legal_permission",
+            "key": "fiji_claims_legal_permission"
+          }
+        ],
+        "stages": 3,
+        "progress": "fiji_claims_progress",
+        "delay": "fiji_claims_delay",
+        "complications": "fiji_claims_complications"
+      },
+      {
+        "id": "vanuatu_water",
+        "participant": "vanuatu",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "logistics",
+            "key": "vanuatu_water_logistics"
+          }
+        ],
+        "stages": 3,
+        "progress": "vanuatu_water_progress",
+        "delay": "vanuatu_water_delay",
+        "complications": "vanuatu_water_complications"
+      }
+    ],
+    "capacity_actions": {
+      "shanter_reception_improve_logistics": {
+        "project": "shanter_reception",
+        "capacity": "shanter_reception_logistics",
+        "resource": "shanter_credits",
+        "cost": 1
+      },
+      "fiji_reception_improve_logistics": {
+        "project": "fiji_reception",
+        "capacity": "fiji_reception_logistics",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "fiji_claims_improve_legal_permission": {
+        "project": "fiji_claims",
+        "capacity": "fiji_claims_legal_permission",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "vanuatu_water_improve_logistics": {
+        "project": "vanuatu_water",
+        "capacity": "vanuatu_water_logistics",
+        "resource": "vanuatu_credits",
+        "cost": 1
+      }
+    },
+    "resource_transfers": {
+      "shanter_support_fiji": {
+        "source": "shanter_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      },
+      "vanuatu_support_fiji": {
+        "source": "vanuatu_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      }
+    },
+    "dynamic_negotiation": true,
+    "model_factions": [
+      "shanter",
+      "vanuatu"
+    ],
+    "game_length": "Short"
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "shanter": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+      "heading": "Inguria / Shanter Island",
+      "reviewed_for": "2005-01-01",
+      "classification": "canonical"
+    },
+    "fiji": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+      "heading": "Fiji",
+      "reviewed_for": "2005-01-01",
+      "classification": "canonical"
+    },
+    "vanuatu": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+      "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+      "heading": "Vanuatu",
+      "reviewed_for": "2005-01-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "shanter": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "shanter",
+      "kind": "organization",
+      "effective_date": "2005-01-01",
+      "label": "Shanter",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Balance controlled reception and scarce island infrastructure with humanitarian obligations.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Inguria / Shanter Island",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize lawful reception, quarantine and fair processing; preserve technical and civilian service continuity.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Inguria / Shanter Island",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Inguria / Shanter Island",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2005-01-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Manage substantial reception pressure and returnee claims without treating newcomers as a single political actor.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Fiji",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize access to services, fair case processing and reconciliation of contested claims; protect records and privacy.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Fiji",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Fiji",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2005-01-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Coordinate reception across dispersed communities with local land and water constraints.",
+          "classification": "hypothetical",
+          "reason": "Illustrative opening context inferred from a retrospective historical section; not a canonical snapshot.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Vanuatu",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize water and shelter capacity, consultation with local authorities and equitable distribution of assistance.",
+          "classification": "hypothetical",
+          "reason": "Proposed strategic priorities for this exercise; not an assertion of actual historical policy.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Vanuatu",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "Local civilian administration and voluntary inter-faction cooperation; only scenario-authorized actions are adjudicated.",
+          "classification": "hypothetical",
+          "reason": "Exercise authority boundary; no additional legal power inferred.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "c918766d434453644a137cfadfa901f4a8be96b5",
+            "path": "01_Foundations/02_History/07_Mainlander_Invasion.md",
+            "heading": "Vanuatu",
+            "reviewed_for": "2005-01-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "scenario-defined stock",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated quantitative resource inventory established; use reviewed scenario initial state only."
+        }
+      }
+    }
+  }
+}
