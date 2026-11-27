@@ -9,6 +9,7 @@ from age_runtime.mythos import (
     behavior, expectations, npc_travel, npc_agency,
 )
 from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment
+from age_runtime.core import opportunity_latitude as latitude
 
 def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, full_history=False):
     scene = rules.get("scene")
@@ -52,6 +53,7 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
         "inventory": [item for item in state["inventory"] if not item.startswith(("$", "Flask"))],
         "resources": state["resources"],
         "setting": rules.get("setting", "Fear!"),
+        "opportunity_latitude": state.get("opportunity_latitude", latitude.DEFAULT),
         "memories": [x["memory"] for x in state.get("dxd", {}).get("inspirations", [])],
         "memory_prompt": next(({"event": x["action"], "basis": x["basis"]}
             for x in state["dxd"]["inspirations"] if x["turn"] == state["turn"]
@@ -81,6 +83,7 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
     recent["memories"] = public["memories"][-4:]
     recent["memory_prompt"] = public["memory_prompt"]
     recent["opening"] = public["opening"]
+    recent["opportunity_latitude"] = public["opportunity_latitude"]
     if "pacing" in recent and recent["pacing"]["current_spotlight"]:
         active = copy.deepcopy(recent["pacing"]["current_spotlight"])
         active["activities"] = active["activities"][-6:]
@@ -158,9 +161,23 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
                            if not state["narrative_events"]["clocks"][key]["resolved"]],
                 "last_test": {k: pc["tests"][-1]["result"][k] for k in ("passed", "margin", "dos", "dof")}
                              if pc["tests"] and pc["tests"][-1]["turn"] == state["turn"] else None}}
+    packet["referee"]["opportunity_policy"] = narrative_opportunity_policy(state)
     if compact:
         compact_history(packet)
     return copy.deepcopy(packet)
+
+
+def narrative_opportunity_policy(state):
+    """Facilitation guidance only: never an eligibility or resolution modifier."""
+    policy = latitude.policy(state.get("opportunity_latitude", latitude.DEFAULT))
+    policy["constraints"].extend([
+        "A failed Test, closed approach, or unavailable NPC is not proof of terminal failure.",
+        "Offer only plausible alternatives consistent with established fictional facts and actual NPC consent.",
+        "Do not materialize an encounter, restore time or resources, reopen an ended session, or override a native Test merely to facilitate progress.",
+    ])
+    if state["ending"]:
+        policy["guidance"] = "Session ended; assess achieved outcomes only."
+    return policy
 
 
 def compact_history(packet):

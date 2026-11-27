@@ -760,3 +760,45 @@ class NarrativeConsolidationTests(unittest.TestCase):
             "kind": "discovered", "actor": None, "at": state["time"],
             "turn": state["turn"], "location": state["location"]}]
         self.assertNotIn("eleanor", reminders.projection(state, {"eleanor"}))
+
+    def test_narrative_opportunity_latitude_is_mechanically_neutral(self):
+        from age_runtime.core import opportunity_latitude as latitude
+        for sid in ("boothbay", "castine", "ram-island"):
+            base = mythos.initial(sid, 42)
+            for level in latitude.LEVELS:
+                state = mythos.initial(sid, 42, level)
+                self.assertEqual(mythos.view(state)["opportunity_latitude"], level)
+                self.assertEqual(mythos.gm_context(state, compact=True)["referee"]["opportunity_policy"]["level"], level)
+                self.assertEqual(player_recap.recap(mythos.view(state))["opportunity_latitude"], level)
+                self.assertEqual(mythos.view(state)["choices"], mythos.view(base)["choices"])
+                self.assertEqual({k:v for k,v in state.items() if k not in ("opportunity_latitude", "settings_digest")},
+                                 {k:v for k,v in base.items() if k not in ("opportunity_latitude", "settings_digest")})
+                mythos.verify(state)
+                action = mythos.view(state)["choices"][0]["id"]
+                after = mythos.step(state, action)
+                expected = mythos.step(base, action)
+                self.assertEqual({k:v for k,v in after.items() if k not in ("opportunity_latitude", "settings_digest")},
+                                 {k:v for k,v in expected.items() if k not in ("opportunity_latitude", "settings_digest")})
+                mythos.verify(after)
+            self.assertEqual(base["opportunity_latitude"], "balanced")
+            legacy = copy.deepcopy(base)
+            del legacy["opportunity_latitude"]
+            del legacy["settings_digest"]
+            mythos.verify(legacy)
+            self.assertEqual(mythos.gm_context(legacy)["referee"]["opportunity_policy"]["level"], "balanced")
+            corrupt = copy.deepcopy(base)
+            corrupt["opportunity_latitude"] = "strict"
+            with self.assertRaises(ValueError):
+                mythos.verify(corrupt)
+            with self.assertRaises(ValueError):
+                mythos.initial(sid, 42, "unlimited")
+
+    def test_narrative_opportunity_latitude_checkpoint(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "session.json"
+            public = mythos.start("boothbay", path, 42, "permissive")
+            self.assertEqual(public["opportunity_latitude"], "permissive")
+            next_action = public["choices"][0]["id"]
+            after = mythos.act(path, next_action, public["revision"])
+            self.assertEqual(after["opportunity_latitude"], "permissive")
+            self.assertEqual(mythos.inspect_gm(path)["referee"]["opportunity_policy"]["level"], "permissive")
