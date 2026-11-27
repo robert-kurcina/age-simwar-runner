@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core.runner import save
-from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel
+from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
@@ -162,6 +162,7 @@ def initial(sid, seed):
                 profile["concerns"] = dxd_conditions.initial(profile["dxd_attributes"])
                 profile["concerns"]["capacity"]["resilience"] += profile.get("skills", {}).get("Grit", 0)
     npc_time.initialize(state, rules)
+    npc_agency.initialize(state, rules)
     return state
 
 def npc_available(state, rules, action):
@@ -987,6 +988,7 @@ def gm_context(state):
                 **({"next_dialogue_id": len(state.get("dialogue", [])) + 1} if rules.get("narrative_batch") else {}),
                 **({"timed_detail_events": timed_details.projection(state)} if rules.get("timed_detail_event") else {}),
                 **({"npc_travel": npc_travel.projection(state)} if rules.get("npc_travel") else {}),
+                **({"npc_agency": npc_agency.projection(state)} if rules.get("npc_agency") else {}),
                 **({"narrative_locks": locks.projection(state, rules, npc_available, establishment.local_entities)} if rules.get("narrative_locks") else {}),
                 **({"established_details": establishment.referee_projection(state)} if "established_details" in state else {}),
                 **({"object_actions": copy.deepcopy(state["object_actions"][-8:])} if "object_actions" in state else {}),
