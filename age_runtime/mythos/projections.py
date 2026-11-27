@@ -28,6 +28,12 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
         scene_view["emotional_commitments"] = copy.deepcopy(state["dxd"]["commitments"])
     if "established_details" in state:
         scene_view["established_details"] = establishment.projection(state)
+        if full_history:
+            # Original witnessed description, not current off-scene state.
+            scene_view["remembered_details"] = [
+                {k: copy.deepcopy(e[k]) for k in ("id", "kind", "label", "description", "location", "at", "turn")}
+                for e in state["established_details"]
+            ]
     if "agreement_history" in state:
         scene_view["narrative_agreements"] = agreements.public_projection(state)
     if "dialogue" in state:
