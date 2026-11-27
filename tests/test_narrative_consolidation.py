@@ -389,6 +389,11 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertEqual(ref["npc_agency"]["martha"]["objectives"][0]["id"], "goal:account")
         self.assertNotIn("zebediah", ref["npc_agency"])
         self.assertNotIn("favor", ref["npc_agency"]["martha"])
+        self.assertEqual(ref["npc_agency"]["martha"]["social_tests"], [])
+        self.assertNotIn("npc_social_tests", state)
+        self.assertIn("emotional_context", ref)
+        self.assertIn("npc_temporal", ref)
+        self.assertIn("consequential_demeanor", ref)
         mythos.verify(state)
         with self.assertRaises(ValueError):
             mythos.establish_step(state, {"npc_objective": dict(objective, id="goal:other",
