@@ -96,3 +96,48 @@ jobs:
           path: ${{ runner.temp }}/chat-bundle/
           if-no-files-found: error
           retention-days: 14
+      - name: Assemble and verify standalone Conflagration draft package
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/conflagration-bundle"
+          mkdir -p "$out"
+          cp "$RUNNER_TEMP/chat-bundle/runner-source.zip" "$out/"
+          cp "$RUNNER_TEMP/chat-bundle/ENGINE_REVISION.txt" "$out/"
+          cp "$RUNNER_TEMP/chat-bundle/SHA256SUMS" "$out/"
+          cp 00_Meta/CONFLAGRATION_OFFLINE.md "$out/START_HERE.md"
+          work="$(mktemp -d)"
+          python -m zipfile -e "$out/runner-source.zip" "$work"
+          cd "$work/age-simwar-runner"
+          inventory=scenarios/sh44ser/conflagration/inventory.json
+          python play.py private discover "$inventory" > "$work/menu.json"
+          python - "$inventory" "$work/menu.json" <<'PY'
+          import json
+          import sys
+          from age_runtime.core.draft_rehearsal import start_rehearsal
+          from age_runtime.core.private_play import pending_factions, model_packet, model_choice, update, verify, decision_brief
+          menu = json.load(open(sys.argv[2]))
+          episodes = [e for g in menu["groups"] for e in g["episodes"]]
+          assert len(episodes) == 7 and sum(len(e["perspectives"]) for e in episodes) == 25
+          for episode in episodes:
+              assert episode["play_mode"] == "rehearse"
+              for actor in episode["perspectives"]:
+                  session = start_rehearsal(sys.argv[1], episode["id"], actor["id"])
+                  while not decision_brief(session)["complete"]:
+                      for faction in pending_factions(session):
+                          packet = model_packet(session, faction)
+                          session = model_choice(session, faction, {"packet_id": packet["packet_id"], "action": None})
+                      session = update(session, turns=1)
+                  verify(session)
+                  assert session["header"]["compiled"]["qualification"] == "unreviewed-rehearsal"
+          PY
+          python play.py private rehearse "$inventory" mainlander-ingress-regional-draft fiji "$work/session.json"
+          python play.py private decision-brief "$work/session.json"
+          cd "$out"
+          sha256sum -c SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: conflagration-draft-${{ github.sha }}
+          path: ${{ runner.temp }}/conflagration-bundle/
+          if-no-files-found: error
+          retention-days: 14
