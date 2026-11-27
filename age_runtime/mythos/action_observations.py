@@ -19,7 +19,8 @@ def record(state, rules, request, npc_available, local_entities, text):
     if len(ledger) >= 256 or any(e["id"] == oid or (e["npc"], e["action"]) == (npc, aid) for e in ledger):
         raise ValueError("duplicate observation or record limit")
     obj = local_entities(state).get(action["object"])
-    if not obj or obj.get("lifecycle") != action["outcome"]:
+    if (not obj or obj.get("lifecycle") != action["outcome"]
+            or ("function_after" in action and obj.get("function") != action["function_after"])):
         raise ValueError("observed outcome no longer matches local object")
     if kind == "witnessed":
         # A witness must be registered immediately, before another action,
@@ -36,6 +37,7 @@ def record(state, rules, request, npc_available, local_entities, text):
     # Store what the NPC observed, not the player's private authorization.
     ledger.append({"id": oid, "npc": npc, "action": aid, "object": action["object"],
                    "kind": kind, "outcome": action["outcome"], "condition": obj.get("properties", {}).get("condition"),
+                   **({"function": obj["function"]} if "function" in obj else {}),
                    "actor": "pc" if kind == "witnessed" else None,
                    "basis": text(request["basis"], 240), "at": state["time"],
                    "turn": state["turn"], "location": state["location"]})
