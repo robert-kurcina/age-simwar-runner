@@ -9,6 +9,8 @@ def text_field(value, limit):
 
 
 def validate(s):
+    if "runtime_propositions" in s and (s["runtime_propositions"] is not True or not s.get("material_communications")):
+        raise ValueError("runtime propositions require material communications")
     if "material_communications" in s and (s["material_communications"] is not True or len(s.get("actors", {})) < 2):
         raise ValueError("material communications require multiple actors")
     if "communication_propositions" in s:
@@ -34,7 +36,7 @@ def validate(s):
 def append(s, state, actor, command):
     if not s.get("material_communications") or actor not in s["actors"] or state["minute"] >= s["end_minute"]:
         raise ValueError("communication unavailable")
-    if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts", "speaker_intent"} or not {"id", "recipients", "claim"} <= set(command):
+    if not isinstance(command, dict) or set(command) - {"id", "recipients", "claim", "corrects", "proposition", "asserts", "speaker_intent", "introduce_proposition"} or not {"id", "recipients", "claim"} <= set(command):
         raise ValueError("invalid communication fields")
     cid = text_field(command["id"], 80)
     if cid == "authored_access" or (cid.startswith("report:") and any(
@@ -59,7 +61,23 @@ def append(s, state, actor, command):
         if intent not in ("unstated", "sincere", "deceive", "fabricate"):
             raise ValueError("invalid speaker intent")
         payload["speaker_intent"] = intent
-    if "proposition" in command or "asserts" in command:
+    # Introduction is inseparable from the actual originating utterance.
+    # It establishes a subject of discourse, never a new world fact.
+    if "introduce_proposition" in command:
+        introduction = command["introduce_proposition"]
+        if not s.get("runtime_propositions") or not isinstance(introduction, dict) or set(introduction) != {"id", "text"}:
+            raise ValueError("invalid runtime proposition introduction")
+        pid = text_field(introduction["id"], 80)
+        statement = text_field(introduction["text"], 400)
+        registry = proposition_registry(s, state)
+        if (not pid.startswith("inc:") or len(pid) <= 4 or pid in registry
+                or len(registry) >= 256 or command.get("proposition") != pid
+                or type(command.get("asserts")) is not bool or correction is not None
+                or any(item["text"].strip().casefold() == statement.casefold() for item in registry.values())):
+            raise ValueError("invalid or duplicate runtime proposition")
+        payload.update(introduce_proposition={"id": pid, "text": statement},
+                       proposition=pid, asserts=command["asserts"])
+    elif "proposition" in command or "asserts" in command:
         pid = command.get("proposition")
         if not isinstance(pid, str) or type(command.get("asserts")) is not bool or not access_sources(s, state, actor, pid):
             raise ValueError("linked claim requires accessible proposition and assertion polarity")
@@ -111,11 +129,26 @@ def report_source(s, state, actor, item):
             "as_of_minute": cutoff, "value": value, "asserts": satisfies}
 
 
+def proposition_registry(s, state):
+    registry = dict(s.get("communication_propositions", {}))
+    for record in state["requests"]:
+        if record.get("origin") != "communication":
+            continue
+        message = record["communication"]
+        introduction = message.get("introduce_proposition")
+        if introduction is not None:
+            registry[introduction["id"]] = {"text": introduction["text"],
+                "initial_access": [], "origin_claim": message["id"], "origin_actor": record["actor"]}
+    return registry
+
+
 def access_sources(s, state, actor, pid):
-    item = s.get("communication_propositions", {}).get(pid)
+    item = proposition_registry(s, state).get(pid)
     if item is None:
         return []
     result = [{"kind": "authored_access"}] if actor in item["initial_access"] else []
+    if item.get("origin_actor") == actor:
+        result.append({"kind": "originated_claim", "id": item["origin_claim"]})
     # Only actors already granted proposition access may see its registry text.
     # A report binding is not itself permission to discover a private proposition.
     for r in state["requests"]:
@@ -160,7 +193,7 @@ def assess(s, state, actor, command):
 
 def propositions_view(s, state, actor):
     result = {}
-    for pid, item in s.get("communication_propositions", {}).items():
+    for pid, item in proposition_registry(s, state).items():
         sources = access_sources(s, state, actor, pid)
         if not sources:
             continue
@@ -175,7 +208,7 @@ def propositions_view(s, state, actor):
 def view(s, state, actor):
     if not s.get("material_communications"):
         return {}
-    return {**({"propositions": propositions_view(s, state, actor)} if "communication_propositions" in s else {}), "communications": [
+    return {**({"propositions": propositions_view(s, state, actor)} if "communication_propositions" in s or s.get("runtime_propositions") else {}), "communications": [
         {"speaker": r["actor"], "turn": r["turn"], "minute": r["minute"], **{k: deepcopy(v) for k, v in r["communication"].items()
            if k != "speaker_intent" or r["actor"] == actor}}
         for r in state["requests"] if r.get("origin") == "communication"
