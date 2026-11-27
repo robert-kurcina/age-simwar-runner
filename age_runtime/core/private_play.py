@@ -173,7 +173,7 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
     catalog, group, entry, spec, compiled = select(path, scenario_id, owners)
     if actor not in eligible_perspectives(entry, compiled["scenario"]):
         raise ValueError("ineligible player faction")
-    if previous is not None and "player_factions" in entry and actor != previous["header"]["actor"]:
+    if previous is not None and ("player_factions" in entry or "remember_from" in entry) and actor != previous["header"]["actor"]:
         raise ValueError("continuation cannot change player faction")
     from age_runtime.core.presets import apply
     compiled, configuration = apply(entry, spec, compiled, preset)
@@ -190,9 +190,16 @@ def start(path, scenario_id, actor, owners, preset="standard", shared=False, pre
     if previous is not None:
         if preset != "standard" or shared:
             raise ValueError("continuity target requires standard single-perspective setup")
-        from age_runtime.core.private_continuity import derive
-        compiled, link = derive(catalog, entry, spec, compiled, previous)
-        configuration = {"id": "standard", "label": "Continuation — derived session outcome"}
+        if "remember_from" in entry:
+            if "carry_from" in entry:
+                raise ValueError("choose one reviewed continuity mode")
+            from age_runtime.core.phase_memory import derive
+            compiled, link = derive(catalog, entry, spec, compiled, previous)
+            configuration = {"id": "standard", "label": "Continuation — historical institutional memory"}
+        else:
+            from age_runtime.core.private_continuity import derive
+            compiled, link = derive(catalog, entry, spec, compiled, previous)
+            configuration = {"id": "standard", "label": "Continuation — derived session outcome"}
     if game_length is not None:
         if previous is not None or shared:
             raise ValueError("game length override requires fresh single-perspective scenario")
@@ -240,8 +247,13 @@ def verify(session):
         raise ValueError("compiled scenario mismatch")
     supported(s)
     if "continuity" in h:
-        from age_runtime.core.private_continuity import verify_record
+        if h["continuity"].get("classification") == "historical_session_memory":
+            from age_runtime.core.phase_memory import verify_record
+        else:
+            from age_runtime.core.private_continuity import verify_record
         verify_record(h["compiled"], h["continuity"])
+    elif "phase_memory" in s:
+        raise ValueError("historical memory requires approved continuity")
     if bool(s.get("civic_agreement")) != h.get("shared", False):
         raise ValueError("session participation mode mismatch")
     if h.get("shared") and (set(h.get("actor_contexts", {})) != set(s["actors"]) or h["briefing_context"] != h["actor_contexts"][h["actor"]]):
@@ -309,6 +321,7 @@ def briefing(session):
         **({"diplomatic_history": observation["diplomatic_history"]} if "diplomatic_history" in observation else {}),
         **({"established_context": observation["established_context"]} if "established_context" in observation else {}),
         **({"developments": observation["developments"]} if "developments" in observation else {}),
+        **({"phase_memory": observation["phase_memory"]} if "phase_memory" in observation else {}),
         **({"communications": observation["communications"]} if "communications" in observation else {}),
         **({"negotiation": observation["negotiation"]} if "negotiation" in observation else {}),
         **({"faction_strategy": observation["faction_strategy"]} if "faction_strategy" in observation else {}),
