@@ -52,7 +52,7 @@ The updated archive includes START_HERE.md; older artifacts without it use the b
 | Fear! — The Boothbay Incident | Bounded DXD trial |
 | Fear! — The Salt-Stained Silence (Castine) | Bounded investigation trial; full source arc not implemented |
 | Fear! — The Keeper at Ram Island | Executable bounded DXD trial |
-| Conflagration / SH44SER | Private content; offline distribution pending |
+| Conflagration / SH44SER | Seven unreviewed regional rehearsals; reviewed private distribution pending |
 
 The live catalog is authoritative: run `python game.py list` in the extracted repository. Do not offer imported scenarios as playable.
 
@@ -68,7 +68,7 @@ Choose an offered action or describe your intended action in ordinary language. 
 | --- | --- | --- |
 | age-simwar-standalone.zip | Public engine, Civic Recovery and Mythos | Public runtime artifact available; updated standalone guide included by new builds |
 | age-simwar-sh44ser.zip | Supported private SH44SER campaigns | Pending |
-| age-simwar-conflagration.zip | Conflagration only | Pending |
+| age-simwar-conflagration.zip | Full runtime with Conflagration-specific launch guide and seven draft episodes | Draft artifact `conflagration-draft-REV` on successful bundle build; reviewed distribution pending |
 
 GitHub Actions uses revision-specific artifact names; the intended archive names describe distribution scope, not a permanent release URL.
 
