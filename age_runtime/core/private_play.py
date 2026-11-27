@@ -548,6 +548,12 @@ def main(argv=None):
             sub.add_argument("request")
         if name == "advance":
             sub.add_argument("--turns", type=int, default=1)
+    for name in ("plan-interpret", "plan-review"):
+        sub = commands.add_parser(name)
+        sub.add_argument("session", type=Path)
+        sub.add_argument("instruction")
+        if name == "plan-review":
+            sub.add_argument("response", type=Path)
     for name in ("interpret", "proposal", "confirm"):
         sub = commands.add_parser(name)
         sub.add_argument("session", type=Path)
@@ -723,6 +729,12 @@ def main(argv=None):
             session = verify(read(a.session))
             result = propose(session, a.instruction, a.model, a.base)
             save(a.output, result["response"])
+        elif a.command in ("plan-interpret", "plan-review"):
+            from age_runtime.core.player_requests import planning_packet, planning_prompt, validate_plan
+            session = verify(read(a.session))
+            exchange = planning_packet(session, a.instruction)
+            result = ({"exchange": exchange, "prompt": planning_prompt(exchange)}
+                      if a.command == "plan-interpret" else validate_plan(session, exchange, read(a.response)))
         elif a.command in ("interpret", "proposal", "confirm"):
             from age_runtime.core.player_requests import packet, prompt, validate_proposal, confirm
             session = verify(read(a.session))
