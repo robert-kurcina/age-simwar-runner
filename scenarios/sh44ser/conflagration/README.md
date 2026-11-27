@@ -29,3 +29,15 @@ Future changes should be ordinary runner commits, with ZIPs generated only for d
 ## Dated grounding review
 
 ST-B revises opening context and delegated authority across the seven drafts without changing initial state, project definitions, actions, resource transfers, agreement prerequisites, evidence references or faction identities. The Arabian religious delegation's priority order is an illustrative design choice, not historical policy. The WPC candidate remains unbound. Actual source-backed compilation and reviewed registration remain pending.
+
+## Collective source compilation
+
+Use the shared draft-catalog entry point from the runner root with an already authorized owners mapping (local Git roots or connector-export-v1 records):
+
+```sh
+python -m age_runtime.core.draft_compilation \
+  scenarios/sh44ser/conflagration/inventory.json \
+  /private/owners.json /private/new-compiled-output
+```
+
+The destination must be new and outside the runner, catalog and local source checkouts. All entries must be drafts; every scenario compiles using the existing pinned-source compiler, checks its identity and supported mechanics, and verifies an opening checkpoint for each eligible perspective. Only after all entries pass are snapshots and a digest report written, with restrictive local permissions. The report is not a play registration or authorization to distribute output. Source bytes are not written to the output. CI uses explicitly synthetic evidence identities and bytes, not private vault content; actual canonical compilation remains separate. No live vault access is required to inspect an already compiled snapshot.
