@@ -204,7 +204,22 @@ def observe(s, state, actor_id):
                          "options": {name: deepcopy(a) for name, a in s["reserve_actions"].items()
                                      if name in requests and a["account"] == aid},
                          "basis": "Opening balance; release and recovery cannot fund this batch."}
+    stocks = {}
+    for aid, account in s.get("stock_accounts", {}).items():
+        if account["owner"] != actor_id:
+            continue
+        options = {name: deepcopy(a) for name, a in s.get("stock_actions", {}).items()
+                   if name in requests and a["source"] == aid}
+        gross = sum(s["stock_actions"][r["action"]]["amount"] for r in state["requests"]
+                    if r["actor"] == actor_id and r["status"] == "validated_request"
+                    and r["action"] in options)
+        stocks[aid] = {"unit": account["unit"], "balance": values[account["key"]],
+                       "pending_gross_debits": gross,
+                       "pending_overallocation": gross > values[account["key"]],
+                       "options": options,
+                       "basis": "Opening balance; incoming transfers and production cannot finance this batch."}
     observation = {
+        **({"stock_accounts": stocks} if "stock_accounts" in s else {}),
         **({"reserve_accounts": reserves} if "reserve_accounts" in s else {}),
         "objective_outcomes": outcomes,
         **negotiation_view(s, state, actor_id),
