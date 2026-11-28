@@ -10,7 +10,7 @@ from age_runtime.core.actors import validate_actors, evaluate
 from age_runtime.core.events import validate_dependent_events, resolve_dependent_events
 from age_runtime.core.economy import validate_projects, resolve_projects, validate_capacity_actions
 from age_runtime.core.observations import validate_views, observe
-from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
+from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_civic_writer_boundaries, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
 from age_runtime.core import negotiation, communications, diplomacy, establishment, event_generator, phase_memory, reserve_accounting, stock_accounting, matrix_effects
 
@@ -70,6 +70,7 @@ def validate(s):
     validate_service_rule(s)
     validate_civic_rules(s)
     validate_dependent_events(s)
+    validate_civic_writer_boundaries(s)
     validate_projects(s)
     validate_capacity_actions(s)
     validate_transfers(s)

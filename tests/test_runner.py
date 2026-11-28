@@ -10,6 +10,30 @@ class RunnerTest(unittest.TestCase):
     def setUp(self):
         self.s = json.loads((Path(__file__).resolve().parents[1] / "scenarios/demo.json").read_text())
 
+
+    def test_conditional_events_cannot_bypass_civic_accounting(self):
+        for rule, initial, actions in (
+            ("service_restoration", {"restoration_credits": 1, "open_service_centers": 0},
+             {"restore_service_center": "council"}),
+            ("community_assistance", {"aid_packages": 1, "households_assisted": 0},
+             {"deliver_aid": "council"}),
+            ("civic_agreement", {"participating_councils": 0, "council_a_joined": 0, "council_b_joined": 0},
+             {"join_council_a": "council_a", "join_council_b": "council_b"}),
+        ):
+            s = {"version": 1, "id": "writer-test", "turn_minutes": 10, "end_minute": 20,
+                 "initial": initial, "events": [], "constraints": [], rule: True,
+                 "actors": {a: {"label": a, "visible_keys": list(initial)} for a in set(actions.values())},
+                 "action_catalog": {k: {"description": k, "actors": [a]} for k, a in actions.items()}}
+            initialize(s)
+            actor = next(iter(actions.values()))
+            for key in initial:
+                bad = copy.deepcopy(s)
+                bad["dependent_events"] = [{"id": "bypass", "minute": 10, "participant": actor,
+                    "requires": [{"key": key, "at_least": 0}], "updates": {key: 1}}]
+                with self.subTest(rule=rule, key=key), self.assertRaisesRegex(ValueError, "governed civic"):
+                    initialize(bad)
+
+
     def test_subturn_and_boundary(self):
         a = initialize(self.s)
         b = advance(self.s, a)
