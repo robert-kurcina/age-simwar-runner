@@ -524,3 +524,7 @@ PR #257 Tests 46091990119 and bundle 46091990128 passed; #258 Tests 46092150169 
 ## Great War initial native rehearsal
 
 Source revision da7e1140e92d5450fd82393acc2a15a3ff36a037. Bounded illustrative two-Deity regional Event pool with seeded hands, complete Event then optional Tap then Time!, native mapped PL bands, hidden tableau, revelation/removal, public recharge and depletion, actor-local view, revision-bound commit and deterministic replay. No fixed faction turns or annual RP. Placeholder map, cards, identities and one symbol per year are not canonical. No PR, combat, nation simulation or scoring. CLI pilot and tests added; CI pending. Next provide legal choice enumeration and independent model exchange; integrate discovery and packaging only after native pilot verification. Author UAT deferred.
+
+## Great War Deity decision exchange
+
+#262 Tests 46093279364 passed; bundle 46093279381 pending at inspection. Add legal Event/Tap enumeration against the actual resolver (including just-created hidden Fount), scoped decision packets and exact indexed responses, stale rejection and recent public Plays. Eight seeded scripted full-horizon routes test legal actions, private scope, replay and rejected choices. No arbitrary fallback for unplayable required cards. Next integrate general discovery and offline delivery. No new numerical rules. CI pending.
