@@ -186,7 +186,26 @@ def observe(s, state, actor_id):
     outcomes = objective_outcomes(actor.get("objectives", {}), observed_objectives, reports,
                                   projects, state["minute"], s["end_minute"], s["turn_minutes"],
                                   institutional)
+    reserves = {}
+    for aid, account in s.get("reserve_accounts", {}).items():
+        if account["owner"] != actor_id:
+            continue
+        available = values[account["available"]]
+        commitments = {cid: values[key] for cid, key in account["commitments"].items()}
+        pending = [s["reserve_actions"][r["action"]] for r in state["requests"]
+                   if r["actor"] == actor_id and r["status"] == "validated_request"
+                   and r["action"] in s["reserve_actions"]
+                   and s["reserve_actions"][r["action"]]["account"] == aid]
+        gross = sum(a["amount"] for a in pending if a["operation"] in ("reserve", "spend"))
+        reserves[aid] = {"capacity": account["capacity"], "available": available,
+                         "reserved": sum(commitments.values()), "depleted": values[account["depleted"]],
+                         "commitments": commitments, "recovery_per_interval": account["recovery"],
+                         "pending_gross_allocations": gross, "pending_overallocation": gross > available,
+                         "options": {name: deepcopy(a) for name, a in s["reserve_actions"].items()
+                                     if name in requests and a["account"] == aid},
+                         "basis": "Opening balance; release and recovery cannot fund this batch."}
     observation = {
+        **({"reserve_accounts": reserves} if "reserve_accounts" in s else {}),
         "objective_outcomes": outcomes,
         **negotiation_view(s, state, actor_id),
         **communication_view(s, state, actor_id),
