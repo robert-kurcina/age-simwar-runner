@@ -46,3 +46,14 @@ class CampaignDiscoveryTests(unittest.TestCase):
             self.assertEqual(episodes[1]["availability"], "requires-authorized-sources")
             self.assertTrue(all(e["play_mode"] is None and not e["perspectives"]
                                 for e in episodes))
+
+
+    def test_bundled_catalog_includes_both_draft_campaigns(self):
+        from age_runtime.core.campaign_discovery import bundled_catalog
+        campaigns = bundled_catalog()
+        self.assertEqual(len(campaigns), 2)
+        self.assertEqual(sum(len(c["episodes"]) for c in campaigns), 8)
+        self.assertEqual(sum(len(e["perspectives"]) for c in campaigns for e in c["episodes"]), 29)
+        self.assertTrue(all(c["qualification"] == "unreviewed-rehearsal" for c in campaigns))
+        self.assertEqual(campaigns[1]["id"], "near-melanesia-2044")
+        self.assertEqual(campaigns, bundled_catalog())
