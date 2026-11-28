@@ -1,5 +1,6 @@
 {
-  "version": 92,
+  "version": 93,
+  "protagonist_knowledge": true,
   "protagonist_identity": true,
   "social_epistemic": true,
   "npc_agency": {
