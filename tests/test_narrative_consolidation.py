@@ -187,6 +187,36 @@ class NarrativeConsolidationTests(unittest.TestCase):
                 self.assertEqual(mythos.gm_context(after)["player_surface"]["revision"],
                                  mythos.digest(after))
 
+    def test_terminal_checkpoint_blocks_further_gameplay(self):
+        state = mythos.step(mythos.initial("boothbay", 42), "depart")
+        before = copy.deepcopy(state)
+        for operation in (
+            lambda: mythos.step(state, "observe"),
+            lambda: mythos.establish_step(state, {}),
+            lambda: mythos.dialogue_step(state, {}),
+            lambda: mythos.apply_memory(state, "observe", "A memory."),
+            lambda: mythos.narrative_step(state, {"kind": "open", "id": "new", "label": "New focus"}),
+        ):
+            with self.assertRaises(ValueError):
+                operation()
+            self.assertEqual(state, before)
+        self.assertEqual(mythos.view(state)["choices"], [])
+        mythos.verify(state)
+
+    def test_death_projection_does_not_claim_self_preservation(self):
+        from age_runtime.core import dxd_injury
+        state = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        injury = state["dxd"]["injury"]
+        dxd_injury.apply(injury, injury["capacity"] + 2 * injury["size"])
+        state["flags"].append("written_account")
+        ending = mythos.ending_projection(state, rules, "limit", "await_assistance")
+        self.assertEqual(ending["reason"], "character_death")
+        self.assertEqual(ending["scores"]["Self Preserved"], 0)
+        self.assertTrue(ending["account_prepared"])
+        self.assertFalse(ending["account_relayed"])
+        self.assertIn("died", ending["epilogue"])
+
     def test_common_ending_projection_preserves_scenario_flags(self):
         for sid in ("boothbay", "castine", "ram-island"):
             with self.subTest(scenario=sid):
