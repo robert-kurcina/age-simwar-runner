@@ -41,5 +41,26 @@ class HitpointTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.step(state, "observe")
         after = mythos.step(state, "await_assistance")
-        self.assertTrue(after["dxd"]["hitpoints"]["unconscious"])
+        self.assertFalse(after["dxd"]["hitpoints"]["unconscious"])
         self.assertEqual(after["dxd"]["hitpoints"]["current"], 0)
+
+    def test_native_awakening_intervals(self):
+        self.assertEqual(hp.minimum_seconds(5), 300)
+        self.assertEqual(hp.minimum_seconds(0), 10)
+        pc = self.pc()
+        hp.subdue(pc, 17)
+        self.assertFalse(hp.advance_unconscious(pc, 119))
+        self.assertTrue(hp.advance_unconscious(pc, 1))
+        self.assertFalse(hp.incapacitated(pc))
+
+    def test_stun_recheck(self):
+        from unittest.mock import patch
+        pc = self.pc()
+        pc["attributes"] = {"POW": 10}
+        hp.lose(pc["hitpoints"], 12)
+        dxd_injury.apply(pc["injury"], 1)
+        with patch("age_runtime.core.dxd_hitpoints.dxd.test", side_effect=[{"passed": True}, {"passed": False}]):
+            hp.stun_resistance(pc, 42)
+            self.assertFalse(hp.advance_stun(pc, 59))
+            self.assertTrue(hp.advance_stun(pc, 1))
+        self.assertTrue(hp.incapacitated(pc))

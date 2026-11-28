@@ -64,6 +64,9 @@ def compile_beat(state, rules, request):
             raise ValueError("Hitpoint consequence unavailable")
         if subdue and (spec.get("allow_incapacity") is not True or "injury" not in state["dxd"]):
             raise ValueError("Subdue requires explicit incapacity authority")
+    stun = outcome(cfg, spec, "resolved_stun_on_dof", False)
+    if type(stun) is not bool or (stun and (not rules.get("native_awakening") or not injury or subdue or spec.get("allow_incapacity") is not True or not state["dxd"].get("hitpoints"))):
+        raise ValueError("Stun requires reviewed Injury and incapacity authority")
     permanent = outcome(cfg, spec, "permanent_location_on_dof")
     if permanent is not None:
         dxd_physical_disability.validate(permanent)
@@ -96,6 +99,9 @@ def record(state, rules, action, result):
             dxd_hitpoints.lose(state["dxd"]["hitpoints"], hp)
         if subdue:
             dxd_hitpoints.subdue(state["dxd"], subdue)
+        if (outcome(cfg, spec, "resolved_stun_on_dof", False) and not state["dxd"]["hitpoints"]["current"]
+                and not dxd_hitpoints.incapacitated(state["dxd"]) and not state["dxd"]["hitpoints"].get("stun_pending")):
+            dxd_hitpoints.stun_resistance(state["dxd"], f"{state['seed']}:{state['turn']}:beat")
     if result["passed"]:
         state["observations"].append(outcome(cfg, spec, "success_observation"))
         degree = outcome(cfg, spec, "degree_observation")

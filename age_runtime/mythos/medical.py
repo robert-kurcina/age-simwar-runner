@@ -74,3 +74,23 @@ def resolve(state, rules, event, npc_available):
         event["hitpoints_restored"] = restored
     event.update(status="completed", bodypoints_restored=before - injury["injury"])
     state["observations"].append("Bandaging has restored one Bodypoint." if before else "Bandaging is complete.")
+
+
+def awaken(state, rules, request, npc_available, text):
+    """Reviewed present caregiver attempts to rouse a subdued patient."""
+    if not rules.get("native_awakening") or state["ending"] or not isinstance(request, dict) or set(request) != {"npc", "basis"}:
+        raise ValueError("assisted awakening unavailable")
+    nid = request["npc"]
+    if not isinstance(nid, str) or nid not in rules.get("medical_bandaging", {}).get("caregivers", {}):
+        raise ValueError("caregiver not reviewed")
+    if not eligible(state, rules, nid, state["location"], npc_available):
+        raise ValueError("caregiver unavailable")
+    if any(e["npc"] == nid and e["status"] == "scheduled" for e in state.get("timed_detail_events", [])):
+        raise ValueError("caregiver has conflicting commitment")
+    basis = text(request["basis"], 240)
+    pc = state["dxd"]
+    if not pc.get("hitpoints", {}).get("unconscious"):
+        raise ValueError("patient not unconscious")
+    result = dxd_hitpoints.assisted_awaken(pc, state["seed"])
+    pc["hitpoints"]["awakening_checks"][-1].update(npc=nid, basis=basis, at=state["time"])
+    state["observations"].append("You regain consciousness with assistance." if result["passed"] else "An attempt to rouse you was unsuccessful.")
