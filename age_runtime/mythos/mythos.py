@@ -63,6 +63,7 @@ def initial(sid, seed, opportunity_latitude=None):
 def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
     latitude.validate(rules.get("opportunity_latitude", latitude.DEFAULT))
     continuity.validate(rules)
+    narrative_events.validate_dated(rules)
     epistemic.validate_propositions(rules)
     proposals.validate_local(rules)
     if rules.get("resolution") != "dxd":
