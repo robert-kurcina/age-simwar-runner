@@ -8,7 +8,7 @@ Status: author-approved pivot to Twilight Wars — 2026-11-27. This ordered road
 |---|---|
 | DONE (merged #286; post-merge CI verification remains) | Correct the Great War Quiet Event fixture without weakening validation. Historical Manafount/Experiment rehearsal remains isolated; verify both required workflows on the merged head. |
 | P0 WIP (initial code audit recorded below) | Audit existing strategic resource stock, flow, capacity, access, ownership, commitment, project, recovery, transfer and loss semantics against concrete Great War decisions. Inventory actual code paths and tests; reuse before adding; identify gaps and conflicting ledgers. |
-| P0 IN PROGRESS | Source-pinned historical boundary and strict eight-quarter matrix calendar added (nonplayable; tests pending). Next inspect workbook, Sarna Len manuscript, dated Deity records and historical maps to reconstruct 1524–1523 BCE actors, Domains, polity agency, geography, technology and resource access. Keep FIXED/WORKING/OPEN distinct; no 286 CE projection. |
+| P0 IN PROGRESS | Exact historical source revisions located; manuscript GM chapter and selected dated records inspected. Boundary and eight-quarter calendar implemented. Next reconcile workbook cells, complete era roster and map authority before scenario configuration. Keep FIXED/WORKING/OPEN distinct; no 286 CE projection. |
 | P1 | Build minimal Great War historical scenario configuration for eight quarterly Turns, simultaneous independent Deity decisions, asymmetric objectives and autonomous mortal institutions. Resolve source-supported setup; unknown consequential values require explicit rehearsal assumptions or author decision. No invented canonical roster. |
 | P1 WIP (bounded reserves and mortal stocks merged; matrix effects submitted) | Resource accounting vertical slice: bounded owned stocks, available/reserved/depleted capacity where applicable, commitments, production/recovery, access and transfer, irreversible losses and provenance. Distinguish mapped PL, PR, mortal RP and other resource types; no automatic conversions or duplicate ledgers. Test atomic rejection, competing allocations, conservation where applicable, release vs expenditure, time-bound flows and replay. |
 | P1 WIP (accounted opposing effects submitted; CI pending) | Qualify matrix decision loop with contextual actor-local briefings, proposals, negotiations, opposition, authorized resource effects and autonomous mortal responses. No LLM mutation of authoritative state; same affordability and authority checks for humans and model actors. Aggregate institutions and populations, not individual schedules. |
@@ -31,6 +31,22 @@ Status: author-approved pivot to Twilight Wars — 2026-11-27. This ordered road
 - Preserve prior rehearsal and Conflagration compatibility, deterministic replay, portable JSON, contextual recall, information scope, Chat-first gate and independent narrative roadmap.
 
 Relevant source entry points: [Great War history](https://github.com/robert-kurcina/vault-great-war/blob/main/history/README.md), [historical dynamics](https://github.com/robert-kurcina/vault-great-war/blob/main/history/HISTORICAL_DYNAMICS.md), [event index](https://github.com/robert-kurcina/vault-great-war/blob/main/history/events/EVENT_INDEX.md), [scenario configuration](https://github.com/robert-kurcina/vault-great-war/blob/main/scenarios/README.md), [PR architecture](https://github.com/robert-kurcina/vault-great-war/blob/main/deities/PROMINENCE_LIMIT_RECOVERY.md). Pin exact revisions for implementation; these links are navigation, not a compiled source inventory.
+
+## Historical source acquisition checkpoint
+
+Read-only source inventory pinned to Great War revision `da7e1140e92d5450fd82393acc2a15a3ff36a037` and Sarna Len revision `fe2d4bcf16f1c127efd92ace8642f1cdd9c739e6`. The public runner must not reproduce restricted historical evidence, including hidden identities, relationships, source-derived starting rosters or private author commentary. The following is a navigation and readiness ledger only.
+
+| Evidence group | Status | Next step |
+|---|---|---|
+| Great War historical index and conventions | Read at pinned file blobs; exact repository revision located | reconcile source index with manuscript dates |
+| Great War deity records | Selected chronology records read at pinned revision | finish era eligibility, distinguish independent entities from persistent combinations and avoid duplicate actor identities |
+| Sarna Len master GM chapter | Read at pinned revision, blob `fd363f5ab6b18cc6169443ad7d669b22e907ed10` | resolve period-specific actors and institutions with dated records |
+| Sarna Len chronological and polity guidance | Selected indexes read at pinned revision | reconcile era-specific relationships and distinguish political autonomy from patronage |
+| Historical workbook | Base64 retrieval succeeded, blob `66eeb3f6c8cc57a7100f08ccd7ee7c91e3785b10`; cells not inspected | authorized local decoding and sheet review |
+| Complete manuscript | Exact blob identified; selected master chapter read, not entire manuscript | consult relevant sections, not assume complete coverage |
+| Historical geography | Modern map cannot establish opening political state | acquire dated geographic evidence and mark uncertain borders explicitly |
+
+The reviewed material narrows possible participants but does not establish complete dated Domain ratings, opening resource balances, or a fully authorized roster. Do not replace unknowns with the present-day identity sheets. Later historical events must not be enforced as inevitable simulation outcomes. Continue private source reconciliation before promoting the scenario. No new generic engine mechanics in this increment.
 
 ## Great War historical boundary — implementation checkpoint
 
