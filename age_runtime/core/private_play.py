@@ -539,6 +539,7 @@ def main(argv=None):
     model_memory.add_argument("session", type=Path)
     model_memory.add_argument("target")
     continuation.add_argument("--approve", required=True, help="Digest of selected transition preview")
+    commands.add_parser("bundled-catalog", help="Discover bundled strategic rehearsal campaigns")
     discover = commands.add_parser("discover", help="Player-facing available campaign openings")
     discover.add_argument("inventory")
     discover.add_argument("--owners", type=Path)
@@ -686,6 +687,9 @@ def main(argv=None):
         elif a.command == "progression":
             from age_runtime.core.campaign_discovery import progression
             result = progression(a.inventory, read(a.session))
+        elif a.command == "bundled-catalog":
+            from age_runtime.core.campaign_discovery import bundled_catalog
+            result = bundled_catalog()
         elif a.command == "discover":
             from age_runtime.core.campaign_discovery import discover
             result = discover(a.inventory, read(a.owners) if a.owners else None)
