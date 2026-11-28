@@ -100,3 +100,40 @@ class MatrixEffectsTests(unittest.TestCase):
             self.assertEqual(state["minute"], 80)
             results.append(state["values"]["support"])
         self.assertGreater(results[0], results[1])
+
+
+    def test_consequential_choice_cost_and_goal_tension(self):
+        s = scenario()
+        s["actors"]["deity"]["strategy"] = {
+            "motivation": "Preserve influence", "priorities": ["influence"]}
+        state = runner.initialize(s)
+        brief = decision_brief(observe(s, state, "deity"))
+        choice = brief["consequential_choices"]["alternatives"][0]
+        self.assertEqual(brief["remaining_turns"], 8)
+        self.assertEqual(choice["opening_feasibility"], "within_opening_limits")
+        self.assertEqual(choice["cost"]["amount"], 3)
+        self.assertEqual(choice["goal_tradeoffs"][0]["direction"], "advances")
+        self.assertEqual(choice["goal_tradeoffs"][0]["isolated_if_fulfilled"], 8)
+        state = runner.submit_request(s, state, "deity", {"action": "intervene"})
+        state = runner.advance(s, model_choice(s, state, "resist"))
+        brief = decision_brief(observe(s, state, "deity"))
+        result = brief["consequential_choices"]
+        self.assertEqual(result["remaining_turns"], 7)
+        self.assertEqual(result["reported_changes"], {})
+        self.assertEqual(result["recent_own_resolutions"][0]["fulfillment"], "spent")
+        self.assertEqual(result["recent_own_resolutions"][0]["matrix_contribution"], {"support": 3})
+        self.assertNotIn("grain", str(result))
+        self.assertNotIn("resist", str(result))
+        state = runner.submit_request(s, state, "deity", {"action": "intervene"})
+        result = decision_brief(observe(s, state, "deity"))["consequential_choices"]
+        self.assertEqual(result["alternatives"][0]["opening_feasibility"],
+                         "insufficient_unallocated_balance")
+
+    def test_reported_change_not_opponent_intention(self):
+        s = scenario()
+        state = runner.submit_request(s, runner.initialize(s), "deity", {"action": "intervene"})
+        state = runner.advance(s, model_choice(s, state, None))
+        result = decision_brief(observe(s, state, "council"))["consequential_choices"]
+        self.assertEqual(result["reported_changes"], {"support": {"before": 5, "value": 8, "delta": 3}})
+        self.assertEqual([a["id"] for a in result["alternatives"]], ["resist"])
+        self.assertNotIn("intervene", str(result))
