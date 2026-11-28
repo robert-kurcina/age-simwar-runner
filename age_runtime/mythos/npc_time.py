@@ -44,7 +44,7 @@ def record(state, rules, request, npc_available, text):
     if until > datetime.fromisoformat(rules["end"]):
         raise ValueError("NPC activity exceeds horizon")
     npc = state["npcs"][nid]
-    if npc["activity_plan"] is not None or pending_work(state, nid):
+    if npc["activity_plan"] is not None or committed_event(state, nid):
         raise ValueError("NPC activity already planned; interrupt through interaction")
     if len(state["npc_activity_history"]) >= 256:
         raise ValueError("NPC activity record limit")
@@ -132,7 +132,7 @@ def lifecycle(state, rules, request, npc_available, text):
             minutes, interval = request["minutes"], request["interval_minutes"]
             if type(minutes) is not int or not 1 <= minutes <= 480 or type(interval) is not int or interval not in (1, 10, 60):
                 raise ValueError("invalid sustained environmental Stress interval")
-            if npc["activity_plan"] or pending_work(state, nid):
+            if npc["activity_plan"] or committed_event(state, nid):
                 raise ValueError("NPC already has an explicit activity")
             until = now + timedelta(minutes=minutes)
             if until > datetime.fromisoformat(rules["end"]):
@@ -153,6 +153,12 @@ def occupational_window(npc, at):
     minute = at.hour*60 + at.minute
     return next((w for w in npc.get("daily_schedule", []) if w["location"] == npc["location"]
                  and w["start_minute"] <= minute < w["end_minute"]), None)
+
+def committed_event(state, nid):
+    """Any scheduled event occupies the actor, not only native examination work."""
+    return next((e for e in state.get("timed_detail_events", [])
+                 if e["npc"] == nid and e["status"] == "scheduled"), None)
+
 
 def pending_work(state, nid):
     return next((e for e in state.get("timed_detail_events", [])
