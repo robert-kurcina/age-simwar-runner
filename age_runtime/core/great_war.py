@@ -26,6 +26,12 @@ def validate(s):
     actors = s["deities"]
     if not isinstance(actors, list) or not 2 <= len(actors) <= 6 or len(set(actors)) != len(actors):
         raise ValueError("distinct Deities required")
+    if "motivations" in s:
+        motivations = s["motivations"]
+        if (not isinstance(motivations, dict) or set(motivations) != set(actors)
+                or any(not isinstance(v, str) or not v.strip() or len(v) > 1000
+                       for v in motivations.values())):
+            raise ValueError("invalid Deity motivations")
     if type(s["hand_size"]) is not int or s["hand_size"] < 1:
         raise ValueError("positive hand size required")
     if type(s["endpoint"]) is not int or not 1 <= s["endpoint"] <= 5:
@@ -189,6 +195,41 @@ def legal_choices(s, state, actor):
     return choices
 
 
+def assess_choice(s, state, actor, command):
+    """Describe immediate, deterministic consequences; no forecast of future draws."""
+    after = play(s, state, actor, command)
+    changes = []
+    for pid, pile in state["piles"].items():
+        if pile["deity"] == actor:
+            new = after["piles"][pid]["pl"]
+            if new != pile["pl"]:
+                changes.append({"pile": pid, "before": pile["pl"], "after": new,
+                                "gain": new - pile["pl"], "public_marker_after": marker(new)})
+    founts = []
+    for fid in sorted(set(state["founts"]) | set(after["founts"])):
+        old = state["founts"].get(fid)
+        new = after["founts"].get(fid)
+        if old != new:
+            founts.append({"fount": fid, "before": deepcopy(old), "after": deepcopy(new)})
+    choice = command["tap"]
+    card = s["cards"][command["card"]]
+    tapped = None
+    if choice is not None:
+        f = state["founts"].get(choice["fount"])
+        if f is None and card["event"] == "manafount" and choice["fount"] == command["card"]:
+            f = {"region": card["region"], "status": "hidden", "controller": actor}
+        tapped = {"fount": choice["fount"], "prior_status": f["status"],
+                  "effect": ("remove-hidden" if choice["disposition"] == "remove" else
+                             "reveal-public" if f["status"] == "hidden" else
+                             "drain-public" if f["status"] == "wondrous" else "remove-drained")}
+    return {"year_after": after["year"], "time_advance": after["year"] - state["year"],
+            "remaining_years": s["endpoint"] - after["year"],
+            "own_prominence_changes": changes, "public_fount_changes": founts,
+            "tap": tapped, "regional_tap_limits_reset": bool(card["time"]),
+            "establishes_fount": command["card"] if card["event"] == "manafount" else None,
+            "ends_rehearsal": complete(s, after)}
+
+
 def decision_packet(s, session, actor):
     observation = observe(s, session, actor)
     if observation["complete"] or observation["active"] != actor:
@@ -196,8 +237,9 @@ def decision_packet(s, session, actor):
     if not observation["choices"]:
         raise ValueError("no legal Event; scenario requires an explicit fallback rule")
     packet = {"version": 1, "observation": observation,
-              "instruction": "Choose one offered command by index. Respect your own interests, "
-                             "public information and private hand; do not invent effects or opposing PL."}
+              "instruction": "Choose one offered command by index. Weigh your own motivation, "
+                             "immediate gains, shared access, time and future uncertainty. "
+                             "Motivation is advisory, not compulsory. Do not invent effects or opposing PL."}
     return {**packet, "packet_id": digest(packet)}
 
 
@@ -221,6 +263,7 @@ def observe(s, session, actor):
     projected = deepcopy(state)
     if not complete(s, state) and actor == s["deities"][state["active"]]:
         replenish(s, projected, actor)
+    choices = legal_choices(s, state, actor)
     return {"actor": actor, "active": s["deities"][state["active"]], "year": state["year"],
             "complete": complete(s, state), "revision": digest(session),
             "hand": {cid: deepcopy(s["cards"][cid]) for cid in projected["hands"][actor]},
@@ -229,7 +272,11 @@ def observe(s, session, actor):
                       for pid, p in state["piles"].items()},
             "founts": deepcopy(state["founts"]),
             "tapped": deepcopy(state["tapped"]),
-            "choices": legal_choices(s, state, actor),
+            "choices": choices,
+            "choice_assessments": [assess_choice(s, state, actor, c) for c in choices],
+            **({"motivation": s["motivations"][actor]} if "motivations" in s else {}),
+            "assessment_basis": "Immediate deterministic resolution only; no forecast of future draws or opponent decisions.",
+            "remaining_years": s["endpoint"] - state["year"],
             "recent_plays": deepcopy(state["log"][-3:]),
             "plays": len(state["log"]), "qualification": s["qualification"],
             "conclusion": "Time! endpoint" if state["year"] >= s["endpoint"] else
