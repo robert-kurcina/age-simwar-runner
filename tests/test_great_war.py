@@ -154,3 +154,51 @@ class GreatWarTests(unittest.TestCase):
         bad["motivations"].pop(actor)
         with self.assertRaises(ValueError):
             gw.validate(bad)
+
+
+    def test_persistent_experiment_time_and_termination(self):
+        s = self.s
+        state = gw.initialize(s, 42)
+        def event(state, card):
+            actor = s["deities"][state["active"]]
+            state = deepcopy(state)
+            state["hands"][actor] = [card]
+            return gw.play(s, state, actor, {"card": card, "tap": None})
+        state = event(state, "event-16")
+        self.assertEqual(state["commitments"]["event-16"]["remaining"], 2)
+        self.assertNotIn("event-16", state["discard"])
+        state = event(state, "event-04")
+        self.assertEqual(state["commitments"]["event-16"]["remaining"], 2)
+        # An opposing Deity cannot conclude Amber's commitment.
+        state["active"] = 1
+        state = event(state, "event-18")
+        self.assertIn("event-16", state["commitments"])
+        cancelled = event(state, "event-18")
+        self.assertNotIn("event-16", cancelled["commitments"])
+        self.assertEqual(cancelled["commitment_history"][-1]["reason"], "voluntary")
+        self.assertIn("event-16", cancelled["discard"])
+        state = event(state, "event-06")
+        self.assertEqual(state["commitments"]["event-16"]["remaining"], 1)
+        state = event(state, "event-07")
+        self.assertNotIn("event-16", state["commitments"])
+        self.assertEqual(state["commitment_history"][-1]["reason"], "completed")
+        self.assertEqual(state["commitment_history"][-1]["ended_year"], 2)
+        self.assertEqual(state["discard"].count("event-16"), 1)
+
+    def test_persistent_events_replay(self):
+        s = self.s
+        seen = False
+        for seed in range(12):
+            session = gw.start(s, seed)
+            while not gw.complete(s, session["state"]):
+                actor = s["deities"][session["state"]["active"]]
+                view = gw.observe(s, session, actor)
+                index = next((i for i, c in enumerate(view["choices"])
+                              if s["cards"][c["card"]]["event"] == "experiment"), 0)
+                cmd = view["choices"][index]
+                assessment = view["choice_assessments"][index]
+                session = gw.commit(s, session, actor, view["revision"], cmd)
+                self.assertEqual(assessment["commitments_after"], session["state"]["commitments"])
+                self.assertEqual(gw.verify(s, session), session)
+                seen |= bool(session["state"]["commitments"] or session["state"]["commitment_history"])
+        self.assertTrue(seen)
