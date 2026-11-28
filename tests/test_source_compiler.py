@@ -199,3 +199,17 @@ class SourceCompilerTest(unittest.TestCase):
                 compile_scenario(self.spec, bad)
         with self.assertRaisesRegex(ValueError, "no local HEAD"):
             stale_dependencies(expected, owners)
+
+
+    def test_signed_historical_source_dates(self):
+        self.record["effective_date"] = "-1524-01-01"
+        self.write_source()
+        self.ref["revision"] = self.git("rev-parse", "HEAD").strip()
+        self.ref["effective_date"] = self.spec["effective_date"] = "-1524-01-01"
+        snapshot = compile_scenario(self.spec, self.owners)
+        self.assertEqual(snapshot, compile_scenario(self.spec, self.owners))
+        self.assertEqual(snapshot["dependencies"]["restoration_credits"]["effective_date"],
+                         "-1524-01-01")
+        self.ref["effective_date"] = "-1523-01-01"
+        with self.assertRaisesRegex(ValueError, "effective date differs"):
+            compile_scenario(self.spec, self.owners)
