@@ -92,7 +92,7 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 - DONE: scripted Fiji 12-turn strategic alternatives, resource guards, actor visibility and exact replay (vault-sh44ser #993, run 45873529443; export step failed separately).
 - DONE (mechanical): strategic decision support and one-turn resolution (#97), connector source adapter (#99), Critical Decision pacing (#102; CI 45881735000/45881734972), and actual private portable scenario qualification (vault #995, run 45882376581, artifact 15147307624). Fiji is a mechanical regression fixture, not the standard consim design.
 - DONE (mechanical): strategic cooperation and negotiation (#124, #126), consequential diplomatic decisions (#127), and bounded same-project strategic continuity (#131; Tests 45902970747 and bundle 45902970730).
-- NEXT (P1 strategic): establish dated faction configurations across the eight verified Conflagration campaign groups, recover the previously approved roster, and prioritize representative scenario content over generic engine expansion. Keep historical phase, player perspective and hypothetical variations distinct. See [strategic plan](PLAN_STRATEGIC.md).
+- NEXT (P0 strategic): repair merged #273 CI regressions, audit reusable resource accounting and reconstruct the 1524–1523 BCE Great War opening for the approved Twilight Wars matrix campaign. Conflagration mechanical drafts retained; canonical compilation blocked and author UAT deferred. See [strategic plan](PLAN_STRATEGIC.md).
 - WIP (P1): strategic experiential qualification (author-led testing deferred at author request) and dependency ownership migration. Follow scenario configuration ownership above; migrate generic SimWar-specific tools out of SH44SER only after a verified replacement. Do not expand mechanics merely to hit a decision quota.
 - DEFERRED (P2): first bounded Sarna Len scenario, until the narrative foundation is qualified.
 
@@ -102,7 +102,7 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 |---|---|---|
 | Shared foundation | DONE for existing verified capabilities; WIP for demonstrated gaps | Shared authoritative runtime, source bindings, replay and delivery. Evolve as gameplay experiments require. |
 | [Narrative sub-game](PLAN_NARRATIVE.md) | WIP (P1) | GM-directed, character-scale gameplay; qualify Boothbay, then other Fear! scenarios. |
-| [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; establish phase-specific Conflagration factions and qualify meaningful independent faction decisions. |
+| [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; Twilight Wars campaign, first Great War scenario with eight quarterly Turns, robust resource management and independent Deity/mortal decisions. |
 | [Planned and ad hoc narrative scenarios](PLAN_NARRATIVE.md#subsequent-phase--planned-and-ad-hoc-scenario-facility-deferred-p2) | DEFERRED (P2) | After main narrative engine implementation and mechanical readiness, enable detailed scenario preparation and gist-led play through one native runtime. UAT remains a separate deferred acceptance requirement. |
 | Full-stack service | DEFERRED (P3) | Final experimental phase; see the last section of this plan. |
 
