@@ -465,6 +465,9 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             interval = narrative_events.next_boundary(state, rules)
             if interval is not None:
                 boundary = min(boundary, cursor + timedelta(seconds=interval))
+        exposure = narrative_events.exposure_boundary(state, rules, mode)
+        if exposure is not None:
+            boundary = min(boundary, cursor + timedelta(seconds=exposure))
         injury = pc.get("injury")
         interval = dxd_injury.next_boundary(injury)
         if interval is not None:
@@ -500,6 +503,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         npc_time.advance(state, rules, actual, engaged=engaged)
         narrative_events.advance_time(state, rules, actual)
         visible_events = advance_events(state, rules, cursor, in_transit=mode == "travel")
+        narrative_events.advance_exposure(state, rules, actual, mode)
         npc_travel.resolve(state, rules, cursor)
         medical.interrupt_unavailable(state, rules, npc_available, engaged=engaged, moving=mode == "travel")
         timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
