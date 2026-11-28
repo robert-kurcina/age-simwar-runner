@@ -262,6 +262,19 @@ def earn_flag(state, rules, flag, action):
                        "action": action, "turn": state["turn"], "at": state["time"]})
 
 
+def reacquisition_available(state, rules, action):
+    """Only reviewed previously attempted investigations may be reopened."""
+    if (not state.get("protagonist") or state["protagonist"]["id"] == "pc:1"
+            or action["id"] not in rules.get("personal_reacquisition_actions", [])
+            or action["id"] not in state["used"]):
+        return False
+    grants = action.get("grant", [])
+    return (bool(grants) and all(f in rules.get("personal_prerequisite_flags", []) for f in grants)
+            and any(not action_flag(state, rules, f) for f in grants)
+            and not any(e["action"] == action["id"] and current_protagonist_record(state, e)
+                        for e in state.get("reacquisition_attempts", [])))
+
+
 def action_flag(state, rules, flag):
     """For successor eligibility, distinguish personal prerequisites from world facts.
 
