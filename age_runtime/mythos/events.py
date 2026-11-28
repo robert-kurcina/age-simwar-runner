@@ -102,12 +102,14 @@ def encounter_check(state, rules, kind):
 def complete_action(state, rules, action, success, local_seconds):
     if "narrative_events" not in state:
         return
-    for key, cfg in rules.get("event_clocks", {}).items():
-        if eligible(state, cfg):
-            amount = sum(t["marks"] for t in cfg.get("triggers", [])
-                         if t["action"] == action["id"] and t.get("outcome", "any") in
-                         ("any", "success" if success else "failure"))
-            mark(state, key, cfg, amount)
+    # Like timed clocks, evaluate eligibility against one pre-mark snapshot.
+    due = [(key, cfg) for key, cfg in rules.get("event_clocks", {}).items()
+           if eligible(state, cfg)]
+    for key, cfg in due:
+        amount = sum(t["marks"] for t in cfg.get("triggers", [])
+                     if t["action"] == action["id"] and t.get("outcome", "any") in
+                     ("any", "success" if success else "failure"))
+        mark(state, key, cfg, amount)
     if not rules.get("encounter_table") or state["location"] not in rules.get("encounter_exposure_locations", []):
         return
     e = state["narrative_events"]["encounter"]
