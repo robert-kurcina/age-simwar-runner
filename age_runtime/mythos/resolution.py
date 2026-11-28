@@ -35,7 +35,7 @@ def resolve(state, rules, action, digest):
     condition += sum(x["penalty"] for x in physical)
     hook = (dxd_commitment.effective_demeanor(state, action.get("npc"), action) if rules.get("demeanor") and spec["attribute"] == "PRE"
             else 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0)
-    cue = spec.get("inspiration")
+    cue = spec.get("inspiration") if not state.get("retired_protagonists") else None
     inspiration_dm = dxd_inspiration.applicable_dm(pc["inspirations"], [cue["tag"]] if cue else [])
     policy = cfg["favor"]
     emicted = dxd.emicted_favor(available=pc["favor"], maximum=policy["maximum"],
