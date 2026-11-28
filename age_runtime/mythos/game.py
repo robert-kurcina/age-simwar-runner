@@ -78,6 +78,10 @@ def main():
     establish.add_argument("session", type=Path)
     establish.add_argument("request", type=Path)
     establish.add_argument("--revision", required=True)
+    successor = sub.add_parser("replace-protagonist")
+    successor.add_argument("session", type=Path)
+    successor.add_argument("profile")
+    successor.add_argument("--revision", required=True)
     memory = sub.add_parser("memory")
     memory.add_argument("session", type=Path)
     memory.add_argument("event")
@@ -118,6 +122,8 @@ def main():
         result = mythos.establish(args.session, json.loads(args.request.read_text(encoding="utf-8")), args.revision)
     elif args.command == "dialogue":
         result = mythos.dialogue(args.session, json.loads(args.request.read_text(encoding="utf-8")), args.revision)
+    elif args.command == "replace-protagonist":
+        result = mythos.replace_protagonist(args.session, args.profile, args.revision)
     elif args.command == "memory":
         result = mythos.enrich_memory(args.session, args.event, args.text, args.revision)
     elif args.command == "narrative":
