@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "id": "near-melanesia-2044",
+  "title": "Near Melanesia — critical-goods production",
+  "groups": [
+    {
+      "id": "production-accord",
+      "title": "Melanesian Production Accord",
+      "status": "provisional",
+      "scenarios": [
+        {
+          "id": "production-accord-critical-goods-draft",
+          "title": "Critical-goods readiness — 2044 (draft)",
+          "status": "draft-unreviewed",
+          "spec": "scenario-spec.json",
+          "player_factions": [
+            "inguria",
+            "fiji",
+            "vanuatu",
+            "caledonia"
+          ]
+        }
+      ]
+    }
+  ]
+}
