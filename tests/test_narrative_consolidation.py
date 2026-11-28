@@ -9,6 +9,24 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
+    def test_spent_patrol_approach_does_not_preclude_withdrawal(self):
+        from age_runtime.mythos import beats
+        _, rules = mythos.load("boothbay")
+        state = mythos.initial("boothbay", 42)
+        state["location"] = "Lighthouse (Western Point)"
+        state["flags"].extend(["patrol_risk", "written_account", "patrol_blocked"])
+        state["used"].append("beat:patrol_approach")
+        offers = beats.available(state, rules)
+        self.assertNotIn("beat:patrol_approach", {a["action"] for a in offers})
+        request = {"action": "beat:patrol_withdrawal", "approach": "withdraw",
+                   "intent": "Leave the exposed approach."}
+        self.assertIn(request["action"], {a["action"] for a in offers})
+        compiled = beats.compile_beat(state, rules, request)
+        self.assertEqual(compiled["grant"], ["patrol_withdrawn"])
+        self.assertEqual(compiled["grant_failure"], ["patrol_withdrawn"])
+        state["flags"].append("patrol_withdrawn")
+        self.assertNotIn(request["action"], {a["action"] for a in beats.available(state, rules)})
+
     def test_intent_authority_is_read_only_and_terminal_aware(self):
         from age_runtime.mythos import proposals
         for sid in ("boothbay", "castine", "ram-island"):
