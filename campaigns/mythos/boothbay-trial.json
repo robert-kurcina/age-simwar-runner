@@ -1,6 +1,13 @@
 {
-  "version": 107,
-  "bounded_waiting": [10, 30, 60, 120, 240, 480],
+  "version": 108,
+  "bounded_waiting": [
+    10,
+    30,
+    60,
+    120,
+    240,
+    480
+  ],
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2595,7 +2602,44 @@
             "decision": true,
             "narrative": true
           }
-        },
+        }
+      },
+      "grant": [
+        "patrol_passage"
+      ],
+      "grant_failure": [
+        "patrol_blocked"
+      ],
+      "concern_failure": {
+        "stress": 3,
+        "fatigue": 1
+      },
+      "degree_failure_concern": {
+        "stress": 1
+      },
+      "success_observation": "You reach the lighthouse approach without attracting the patrol's attention.",
+      "failure_observation": "The patrol notices movement; you break off the approach before reaching the radio.",
+      "degree_observation": "You have a clear opportunity to seek the radio now."
+    },
+    "beat:patrol_withdrawal": {
+      "location": "Lighthouse (Western Point)",
+      "requires_flags": [
+        "patrol_risk",
+        "written_account"
+      ],
+      "excludes_flags": [
+        "account_relayed",
+        "patrol_passage",
+        "patrol_withdrawn"
+      ],
+      "objective": "Withdraw from the exposed approach without attempting the relay",
+      "stakes": "Failure increases distress; no passage to the radio is granted.",
+      "terrain": "Exposed coastal approach with rough ground",
+      "objects": [
+        "Lighthouse (destination landmark)"
+      ],
+      "seconds": 60,
+      "approaches": {
         "withdraw": {
           "description": "Break off the approach and seek cover on the landward side",
           "objective": "Withdraw from the exposed approach without attempting the relay",
@@ -2624,23 +2668,7 @@
           "failure_observation": "You reach cover after a hurried retreat, shaken and winded.",
           "degree_observation": "You identify a sheltered position away from the exposed approach."
         }
-      },
-      "grant": [
-        "patrol_passage"
-      ],
-      "grant_failure": [
-        "patrol_blocked"
-      ],
-      "concern_failure": {
-        "stress": 3,
-        "fatigue": 1
-      },
-      "degree_failure_concern": {
-        "stress": 1
-      },
-      "success_observation": "You reach the lighthouse approach without attracting the patrol's attention.",
-      "failure_observation": "The patrol notices movement; you break off the approach before reaching the radio.",
-      "degree_observation": "You have a clear opportunity to seek the radio now."
+      }
     }
   },
   "narrative_functions": {

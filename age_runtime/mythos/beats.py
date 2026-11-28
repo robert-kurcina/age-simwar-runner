@@ -33,21 +33,18 @@ def available(state, rules):
         for approach, spec in cfg["approaches"].items():
             if not prerequisites(state, cfg, spec):
                 continue
+            try:
+                validate_consequences(state, rules, cfg, spec)
+            except ValueError:
+                # A reviewed consequence can become unavailable as condition changes.
+                continue
             result.append({"action": key, "approach": approach, "objective": spec.get("objective", cfg["objective"]),
                            "stakes": spec.get("stakes", cfg["stakes"]), "terrain": cfg["terrain"], "objects": cfg["objects"],
                            "seconds": cfg["seconds"], "description": spec["description"]})
     return result
 
-def compile_beat(state, rules, request):
-    if not isinstance(request, dict) or set(request) != {"action", "approach", "intent"} or any(not isinstance(v, str) for v in request.values()):
-        raise ValueError("invalid Beat proposal")
-    if not request["intent"].strip() or len(request["intent"]) > 240 or any(ord(c) < 32 for c in request["intent"]):
-        raise ValueError("invalid Beat intent")
-    offer = next((x for x in available(state, rules) if x["action"] == request["action"] and x["approach"] == request["approach"]), None)
-    if offer is None:
-        raise ValueError("Beat unavailable")
-    cfg = rules["danger_beats"][offer["action"]]
-    spec = cfg["approaches"][offer["approach"]]
+def validate_consequences(state, rules, cfg, spec):
+    """Use the same native consequence preconditions in offers and compilation."""
     injury = outcome(cfg, spec, "resolved_injury_on_dof", 0)
     if type(injury) is not int or injury < 0:
         raise ValueError("invalid resolved Beat Injury")
@@ -72,6 +69,19 @@ def compile_beat(state, rules, request):
         dxd_physical_disability.validate(permanent)
         if not injury or not rules.get("native_permanent_locations"):
             raise ValueError("permanent loss requires reviewed resolved Injury authority")
+
+
+def compile_beat(state, rules, request):
+    if not isinstance(request, dict) or set(request) != {"action", "approach", "intent"} or any(not isinstance(v, str) for v in request.values()):
+        raise ValueError("invalid Beat proposal")
+    if not request["intent"].strip() or len(request["intent"]) > 240 or any(ord(c) < 32 for c in request["intent"]):
+        raise ValueError("invalid Beat intent")
+    offer = next((x for x in available(state, rules) if x["action"] == request["action"] and x["approach"] == request["approach"]), None)
+    if offer is None:
+        raise ValueError("Beat unavailable")
+    cfg = rules["danger_beats"][offer["action"]]
+    spec = cfg["approaches"][offer["approach"]]
+    validate_consequences(state, rules, cfg, spec)
     loc = state["location"]
     return {"id": offer["action"], "label": offer["objective"], "location": loc,
             "duration_seconds": cfg["seconds"], "local_seconds": cfg["seconds"],
