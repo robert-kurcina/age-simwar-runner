@@ -292,13 +292,13 @@
       ]
     },
     "patron_d_river": {
-      "description": "everia river",
+      "description": "patron_d river",
       "actors": [
         "patron_d"
       ]
     },
     "patron_d_counter": {
-      "description": "everia counter",
+      "description": "patron_d counter",
       "actors": [
         "patron_d"
       ]
