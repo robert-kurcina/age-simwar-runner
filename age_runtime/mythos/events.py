@@ -155,19 +155,33 @@ def complete_action(state, rules, action, success, local_seconds):
                      if t["action"] == action["id"] and t.get("outcome", "any") in
                      ("any", "success" if success else "failure"))
         mark(state, key, cfg, amount)
-    if not rules.get("encounter_table") or state["location"] not in rules.get("encounter_exposure_locations", []):
+    if "activity" not in rules:
+        advance_exposure(state, rules, local_seconds, action.get("activity", "active"))
+    if exposed(state, rules) and action.get("encounter_trigger"):
+        encounter_check(state, rules, "trigger")
+
+
+def exposed(state, rules):
+    return bool(rules.get("encounter_table") and
+                state["location"] in rules.get("encounter_exposure_locations", []))
+
+
+def exposure_boundary(state, rules, mode):
+    """Next elapsed-time exposure increment, independent of action completion."""
+    if not exposed(state, rules) or mode in ("rest", "sleep", "travel", "incapacitated"):
+        return None
+    return 1800 - state["narrative_events"]["encounter"]["seconds"]
+
+
+def advance_exposure(state, rules, seconds, mode):
+    if exposure_boundary(state, rules, mode) is None:
         return
     e = state["narrative_events"]["encounter"]
-    if action.get("activity") not in ("rest", "sleep") and local_seconds:
-        # Local narrative interval 10 min; normal exposed activity adds
-        # one die per three intervals. No travel or opposition double count.
-        count, e["seconds"] = divmod(e["seconds"] + local_seconds, 1800)
-        for _ in range(count):
-            e["dice"] += 1
-            if e["dice"] >= 6:
-                encounter_check(state, rules, "overflow")
-    if action.get("encounter_trigger"):
-        encounter_check(state, rules, "trigger")
+    count, e["seconds"] = divmod(e["seconds"] + seconds, 1800)
+    for _ in range(count):
+        e["dice"] += 1
+        if e["dice"] >= 6:
+            encounter_check(state, rules, "overflow")
 
 def projection(state, rules):
     data = state["narrative_events"]

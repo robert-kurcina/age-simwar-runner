@@ -485,6 +485,35 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertTrue(relay["established"])
         self.assertFalse(relay["authored_routes_exhausted"])
 
+    def test_elapsed_exposure_is_independent_of_activity_partition(self):
+        from age_runtime.mythos import events
+        _, rules = mythos.load("boothbay")
+        whole = mythos.initial("boothbay", 42)
+        split = copy.deepcopy(whole)
+        mythos.activity_segment(whole, rules, 1800, "active")
+        for seconds in (10, 50, 600, 1140):
+            mythos.activity_segment(split, rules, seconds, "active")
+        self.assertEqual(whole["time"], split["time"])
+        self.assertEqual(whole["narrative_events"]["encounter"],
+                         split["narrative_events"]["encounter"])
+        self.assertEqual(whole["narrative_events"]["encounter"]["dice"], 1)
+        events.complete_action(whole, rules, {"id": "observe"}, True, 1800)
+        self.assertEqual(whole["narrative_events"]["encounter"]["dice"], 1)
+
+    def test_interrupted_exposure_credits_only_elapsed_time(self):
+        from datetime import datetime, timedelta
+        _, rules = mythos.load("boothbay")
+        state = mythos.initial("boothbay", 42)
+        at = datetime.fromisoformat(state["time"]) + timedelta(seconds=600)
+        cfg = dict(rules, events=[{"id": "test_interrupt", "at": at.isoformat(),
+                                  "observation": "An interruption.", "interrupt_activity": True}])
+        reason = mythos.activity_segment(state, cfg, 3600, "low_energy", interruptible=True)
+        self.assertEqual(reason, "event")
+        self.assertEqual(state["time"], at.isoformat())
+        self.assertEqual(state["narrative_events"]["encounter"]["seconds"], 600)
+        mythos.activity_segment(state, cfg, 1200, "active")
+        self.assertEqual(state["narrative_events"]["encounter"]["dice"], 1)
+
     def test_dated_event_validation_rejects_ambiguous_sources(self):
         from age_runtime.mythos import events
         _, rules = mythos.load("boothbay")
