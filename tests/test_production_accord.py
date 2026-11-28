@@ -114,21 +114,26 @@ class ProductionAccordTests(unittest.TestCase):
         def proposal(state):
             apply(s, state, "fiji", {"kind": "propose", "id": "licence",
                   "recipient": "inguria", "permission": "chassis_licence", "due_minute": 3 * turn})
-        for route in ("unanswered", "rejected", "accepted", "revoked", "expired"):
+        for route in ("unanswered", "rejected", "accepted", "revoked", "expired", "boundary"):
             state = initialize(s)
             proposal(state)
             if route == "rejected":
                 apply(s, state, "inguria", {"kind": "reject", "id": "licence"})
-            elif route in ("accepted", "revoked", "expired"):
+            elif route in ("accepted", "revoked", "expired", "boundary"):
                 apply(s, state, "inguria", {"kind": "accept", "id": "licence"})
                 if route == "revoked":
                     apply(s, state, "inguria", {"kind": "revoke", "id": "licence"})
-            minute = 3 * turn if route == "expired" else turn
-            resolve(s, state, minute)
+            minute = turn
+            if route in ("expired", "boundary"):
+                resolve(s, state, 3 * turn)
+                state["minute"] = (3 if route == "expired" else 2) * turn
+                minute = state["minute"] + turn
+            else:
+                resolve(s, state, minute)
             resolve_projects(s, state, minute)
-            self.assertEqual(state["values"]["fiji_chassis_progress"], int(route == "accepted"), route)
+            self.assertEqual(state["values"]["fiji_chassis_progress"], int(route in ("accepted", "boundary")), route)
             row = next(r for r in state["project_results"] if r["id"] == "fiji_chassis")
-            self.assertEqual(row["outcome"], "clear" if route == "accepted" else "permission_blocked")
+            self.assertEqual(row["outcome"], "clear" if route in ("accepted", "boundary") else "permission_blocked")
         for invalid in (["unknown"], ["chassis_licence", "chassis_licence"]):
             bad = deepcopy(s)
             bad["project_permissions"]["fiji_chassis"] = invalid
@@ -173,11 +178,6 @@ class ProductionAccordTests(unittest.TestCase):
                                "vanuatu": "vanuatu_maintenance_improve_industrial"}
                 elif turn == 3 and route == "revocation":
                     choices = {"inguria": {"kind": "revoke", "id": "licence"}}
-                elif turn == 5 and route == "cooperation":
-                    # The licence expires at the final resolution. Renewal
-                    # cannot occur while an equivalent permission is active.
-                    # Retain the actual achieved milestones, not a fabricated stage.
-                    pass
                 for actor in pending_factions(session):
                     packet = model_packet(session, actor)
                     session = model_choice(session, actor,
@@ -187,14 +187,16 @@ class ProductionAccordTests(unittest.TestCase):
             final = decision_brief(session)
             self.assertTrue(final["complete"])
             self.assertFalse(final["recovery_assessment"]["alternatives"])
+            self.assertEqual(final["objective_outcomes"]["readiness"]["status"],
+                             "achieved" if route == "cooperation" else "objective_failure")
             return session, history
 
         expected = {
-            "cooperation": [0, 0, 1, 2, 3, 3],
+            "cooperation": [0, 0, 1, 2, 3, 4],
             "refusal": [0, 0, 0, 0, 0, 0],
             "no-funding": [0, 0, 0, 0, 0, 0],
             "revocation": [0, 0, 1, 1, 1, 1],
-            "expiry": [0, 0, 1, 2, 2, 2],
+            "expiry": [0, 0, 1, 2, 3, 3],
         }
         for route, milestones in expected.items():
             with self.subTest(route=route):
