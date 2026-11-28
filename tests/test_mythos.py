@@ -764,6 +764,31 @@ class MythosTrialTests(unittest.TestCase):
         events.advance_time(s, rules, 3600)
         self.assertEqual(len(s["narrative_events"]["ledger"]), before)
 
+    def test_action_clock_eligibility_uses_shared_pre_mark_snapshot(self):
+        from age_runtime.mythos import events
+        _, rules = mythos.load("boothbay")
+        trigger = {"action": "observe", "marks": 1}
+        first = {"name": "First", "source": "test", "segments": 1,
+                 "triggers": [trigger], "grant": ["first_done"]}
+        second = {"name": "Second", "source": "test", "segments": 1,
+                  "triggers": [trigger], "requires_flags": ["first_done"],
+                  "grant": ["second_done"]}
+        for clocks in ({"first": first, "second": second},
+                       {"second": second, "first": first}):
+            with self.subTest(order=list(clocks)):
+                state = mythos.initial("boothbay", 42)
+                # Exercise the clock mechanism directly; the synthetic clock
+                # configuration is not an authored Boothbay scenario.
+                state["narrative_events"]["clocks"] = {
+                    key: {"marks": 0, "resolved": False, "seconds": 0}
+                    for key in clocks}
+                cfg = dict(rules, event_clocks=clocks, encounter_table=[])
+                events.complete_action(state, cfg, {"id": "observe"}, True, 0)
+                self.assertIn("first_done", state["flags"])
+                self.assertNotIn("second_done", state["flags"])
+                events.complete_action(state, cfg, {"id": "observe"}, True, 0)
+                self.assertIn("second_done", state["flags"])
+
     def test_encounter_scope_and_dice(self):
         from age_runtime.mythos import events
         _, rules = mythos.load("boothbay")
@@ -1672,6 +1697,22 @@ class MythosTrialTests(unittest.TestCase):
         self.assertNotIn("timed_detail_events", mythos.view(scheduled))
         with self.assertRaises(ValueError):
             mythos.establish_step(scheduled, {"event": dict(event, id="evt:duplicate")})
+        # A separate acknowledged commitment does not permit simultaneous
+        # incompatible work by the same NPC.
+        conflict = say(scheduled, "eleanor", "I'll also clean the tin.")
+        conflict = say(conflict, "pc", "Thank you for that too.")
+        conflict = mythos.establish_step(conflict, {"details": [{
+            "id": "inc:tin", "kind": "object", "label": "Tin",
+            "description": "A dusty tin.", "basis": "Mundane diner object",
+            "custodian": "eleanor", "properties": {"condition": "Dusty"}}]})
+        conflict = mythos.establish_step(conflict, {"agreement": {
+            "operation": "create", "id": "agr:tin", "kind": "commitment",
+            "npc": "eleanor", "issuer": "eleanor", "terms": "Clean the tin",
+            "condition": None, "claim_ids": [3, 4]}})
+        with self.assertRaisesRegex(ValueError, "conflicting pending NPC event"):
+            mythos.establish_step(conflict, {"event": dict(
+                event, id="evt:tin", object="inc:tin", permission="agr:tin")})
+        mythos.verify(conflict)
         # Move away before the event is due, then cross its boundary remotely.
         moved = mythos.step(scheduled, "move:Harbor Docks")
         self.assertEqual(moved["timed_detail_events"][0]["status"], "scheduled")
@@ -1747,6 +1788,27 @@ class MythosTrialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mythos.step(revoked, action)
         mythos.verify(revoked)
+        renewed = say(revoked, "pc", "May I look at it now?")
+        renewed = say(renewed, "eleanor", "Yes, you may.")
+        renewed = mythos.establish_step(renewed, {"agreement": dict(
+            grant, id="agr:renewed", claim_ids=[4, 5])})
+        renewed = mythos.establish_step(renewed, {"lock": dict(
+            lock, id="lock:renewed", permission="agr:renewed")})
+        self.assertIn("examine:lock:renewed", choices(renewed))
+        self.assertNotIn(action, choices(renewed))
+        mythos.verify(renewed)
+        # Revocation and renewal cannot reopen an already spent examination.
+        spent = say(played, "eleanor", "Please stop looking at the cup.")
+        spent = mythos.establish_step(spent, {"agreement": {
+            "operation": "resolve", "id": "agr:cup", "status": "revoked", "claim_ids": [3]}})
+        spent = say(spent, "pc", "May I look again?")
+        spent = say(spent, "eleanor", "Yes.")
+        spent = mythos.establish_step(spent, {"agreement": dict(
+            grant, id="agr:renewed", claim_ids=[4, 5])})
+        with self.assertRaises(ValueError):
+            mythos.establish_step(spent, {"lock": dict(
+                lock, id="lock:renewed", permission="agr:renewed")})
+        mythos.verify(spent)
 
     def test_narrative_agreement_lifecycle_and_claim_provenance(self):
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")

@@ -14,9 +14,14 @@ def record(state, rules, request, npc_available, local_entities, text):
     if not isinstance(aid, str) or not isinstance(oid, str):
         raise ValueError("invalid lock references")
     locks = state["narrative_locks"]
-    if len(locks) >= 64 or any(x["id"] == lid or x["object"] == oid for x in locks):
+    permissions = agreements.project(state)
+    # A revoked or released permission is historical, not a permanent ban.
+    # A spent examination remains spent; renewal cannot farm another Test.
+    if len(locks) >= 64 or any(x["id"] == lid or (x["object"] == oid and
+            ("examine:" + x["id"] in state["used"] or
+             permissions.get(x["permission"], {}).get("status") == "active")) for x in locks):
         raise ValueError("duplicate lock or record limit")
-    a = agreements.project(state).get(aid)
+    a = permissions.get(aid)
     entity = local_entities(state).get(oid)
     if (not a or a["kind"] != "permission" or a["status"] != "active"
             or a["issuer"] != a["npc"] or a["condition"] is not None
