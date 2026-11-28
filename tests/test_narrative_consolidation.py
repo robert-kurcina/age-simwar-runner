@@ -9,6 +9,24 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
+    def test_short_local_work_prevents_premature_session_exhaustion(self):
+        from datetime import datetime, timedelta
+        from age_runtime.mythos import proposals
+        state = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        state["discoveries"].append("Reviewed evidence")
+        rules["end"] = (datetime.fromisoformat(state["time"]) + timedelta(seconds=180)).isoformat()
+        rules["actions"] = []
+        before = copy.deepcopy(state)
+        self.assertEqual(mythos.options(state, rules), [])
+        self.assertTrue(mythos.has_playable_action(state, rules))
+        self.assertIn("review_notes", {c["approach"] for c in
+            proposals.local_capabilities(state, rules, mythos.npc_available)})
+        self.assertEqual(state, before)
+        state["time"] = rules["end"]
+        self.assertFalse(mythos.has_playable_action(state, rules))
+
     def test_objective_linked_travel_retains_actor_owned_purpose(self):
         from age_runtime.mythos import npc_agency
         state = mythos.initial("boothbay", 42)
