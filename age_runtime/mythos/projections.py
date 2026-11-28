@@ -192,7 +192,10 @@ def narrative_opportunity_policy(state):
         "Do not materialize an encounter, restore time or resources, reopen an ended session, or override a native Test merely to facilitate progress.",
     ])
     if state["ending"]:
-        policy["guidance"] = "Session ended; assess achieved outcomes only."
+        policy["guidance"] = ("Session ended. Give a concise epilogue in one to three sentences: "
+                              "the established terminal consequence, immediate objective outcome, "
+                              "and any material unresolved circumstance. Do not invent a cause of death, "
+                              "simulate subsequent events, offer choices, or continue play.")
     return policy
 
 
