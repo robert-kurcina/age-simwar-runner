@@ -76,7 +76,7 @@ def validate(s):
                 raise ValueError("spending does not require commitment")
         elif not isinstance(commitment, str) or commitment not in account["commitments"]:
             raise ValueError("unknown reserve commitment")
-    if set(actions) != set(s.get("action_catalog", {})):
+    if set(actions) & set(s.get("stock_actions", {})) or set(actions) | set(s.get("stock_actions", {})) != set(s.get("action_catalog", {})):
         raise ValueError("reserve slice only supports authored reserve requests")
     if s["end_minute"] % s["turn_minutes"]:
         raise ValueError("reserve recovery requires complete intervals")
