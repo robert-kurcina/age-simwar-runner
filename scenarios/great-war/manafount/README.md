@@ -22,3 +22,7 @@ The general strategic menu (`python play.py private bundled-catalog`) includes G
 ## Contextual decisions
 
 Each Deity receives only its own illustrative motivation. Amber favors durable regional access; Azure favors immediate gains and denial when useful. These preferences do not restrict legal choices or change resolution. Each indexed choice includes its deterministic own PL changes, public Fount transitions, immediate Time! advance and remaining horizon. No prediction of future draws, rival intent or winner is supplied.
+
+## Persistent Event pilot
+
+The illustrative pool now includes regional Experiment Events retained face up until two Time! advances or an own regional conclusion Event. Establishment requires mapped local Prominence; one Experiment per Deity/Region. The conclusion Event resolves quietly if no own Experiment exists. These are rehearsal-specific card texts, not finalized native Experiment rules; completion records a lifecycle result only, with no invented PL, PR, VP or mortal effect. Time! triggers process each actual year advanced, including the establishment Play if applicable. Commitments and their history are public tableau information. No upkeep phase. PR reservation, Embodiments and substantive Experiment effects await authored card definitions.
