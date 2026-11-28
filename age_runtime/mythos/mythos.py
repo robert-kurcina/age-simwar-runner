@@ -66,6 +66,12 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
     narrative_events.validate_dated(rules)
     epistemic.validate_propositions(rules)
     proposals.validate_local(rules)
+    if "bounded_waiting" in rules:
+        waits = rules["bounded_waiting"]
+        if (not rules.get("activity") or not isinstance(waits, list) or not waits
+                or any(type(m) is not int or not 1 <= m <= 720 for m in waits)
+                or waits != sorted(set(waits))):
+            raise ValueError("invalid bounded waiting configuration")
     if rules.get("resolution") != "dxd":
         raise ValueError("unsupported narrative resolver")
     state = {"scenario": sid, "seed": seed, "source": digest([story, rules]),
@@ -313,6 +319,16 @@ def options(state, rules):
                                "location": state["location"], "seconds": duration, "activity": "sleep",
                                "interval_seconds": 3600, "repeatable": True,
                                "cost": {"cash_cents": rules["activity"]["sleep_cost_cents"]}})
+    if clock and rules.get("bounded_waiting"):
+        # Stationary waiting is not automatically safe or restorative.
+        remaining = int((datetime.fromisoformat(rules["end"]) -
+                         datetime.fromisoformat(state["time"])).total_seconds())
+        for minutes in rules["bounded_waiting"]:
+            if minutes * 60 <= remaining:
+                candidates.append({"id": f"wait:{minutes}", "label": f"Wait here for {minutes} minutes",
+                                   "location": state["location"], "minutes": minutes,
+                                   "activity": "low_energy", "interval_seconds": 600 if minutes < 60 else 3600,
+                                   "repeatable": True})
     candidates += locks.actions(state, rules, npc_available, establishment.local_entities)
     timed = []
     for a in candidates:

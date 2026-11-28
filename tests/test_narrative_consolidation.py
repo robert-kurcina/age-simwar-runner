@@ -485,6 +485,40 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertTrue(relay["established"])
         self.assertFalse(relay["authored_routes_exhausted"])
 
+    def test_bounded_waiting_advances_world_and_preserves_location(self):
+        from datetime import datetime, timedelta
+        state = mythos.initial("boothbay", 42)
+        before = copy.deepcopy(state)
+        choice = next(c for c in mythos.view(state)["choices"] if c["id"] == "wait:120")
+        self.assertEqual(choice["seconds"], 7200)
+        after = mythos.step(state, "wait:120")
+        self.assertEqual(after["time"], (datetime.fromisoformat(state["time"]) +
+                                        timedelta(hours=2)).isoformat())
+        self.assertEqual(after["location"], state["location"])
+        self.assertEqual(after["resources"], state["resources"])
+        self.assertEqual(after["discoveries"], state["discoveries"])
+        self.assertEqual(after["dxd"]["tests"], state["dxd"]["tests"])
+        self.assertEqual(after["dxd"]["activity"]["awake_seconds"], 7200)
+        self.assertNotIn("wait:120", after["used"])
+        self.assertEqual(state, before)
+        mythos.verify(after)
+        with self.assertRaises(ValueError):
+            mythos.step(state, "wait:121")
+
+    def test_bounded_waiting_stops_at_perceptible_interruption(self):
+        from datetime import datetime, timedelta
+        story, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        state = mythos._initial("boothbay", 42, story, rules)
+        at = (datetime.fromisoformat(state["time"]) + timedelta(minutes=15)).isoformat()
+        rules["events"] = [{"id": "wait_notice", "at": at, "observation": "A notice.",
+                            "interrupt_activity": True}]
+        after = mythos._step(copy.deepcopy(state), rules, "wait:120")
+        self.assertEqual(after["time"], at)
+        self.assertEqual(after["last_result"]["interrupted"], "event")
+        self.assertEqual(after["dxd"]["activity"]["awake_seconds"], 900)
+        self.assertEqual(after["narrative_events"]["encounter"]["seconds"], 900)
+
     def test_elapsed_exposure_is_independent_of_activity_partition(self):
         from age_runtime.mythos import events
         _, rules = mythos.load("boothbay")
