@@ -28,6 +28,8 @@ def bottleneck(need, capacities):
 
 def validate_projects(s):
     if "economy_projects" not in s:
+        if "project_dependencies" in s:
+            raise ValueError("dependencies require economy projects")
         return
     projects = s["economy_projects"]
     if not isinstance(projects, list) or not projects:
@@ -73,6 +75,7 @@ def validate_projects(s):
         bottleneck(p["need"], ratings)
         if any(k not in actor.get("visible_keys", []) or actor.get("report_delay_minutes", {}).get(k, 0) for k in keys):
             raise ValueError("project properties must be currently observable")
+    validate_dependencies(s)
     if owned.intersection(inputs):
         raise ValueError("project counters cannot also be capacity inputs")
     # For this bounded slice, capacity updates are unconditional dated
@@ -88,17 +91,69 @@ def validate_projects(s):
             if not 0 <= values[e["key"]] <= 5:
                 raise ValueError("scheduled capacity outside 0–5")
 
+
+def validate_dependencies(s):
+    """Opt-in milestone gates. Both sponsors must know the reported prerequisite."""
+    if "project_dependencies" not in s:
+        return
+    rules = s["project_dependencies"]
+    projects = {p["id"]: p for p in s["economy_projects"]}
+    if not isinstance(rules, dict) or not rules:
+        raise ValueError("invalid project dependencies")
+    for pid, dependencies in rules.items():
+        if pid not in projects or not isinstance(dependencies, list) or not dependencies:
+            raise ValueError("unknown dependent project or empty prerequisites")
+        sponsor = s["actors"][projects[pid]["participant"]]
+        seen = set()
+        for rule in dependencies:
+            if (not isinstance(rule, dict) or set(rule) != {"project", "minimum_stage"}
+                    or not isinstance(rule["project"], str) or rule["project"] not in projects
+                    or rule["project"] == pid or rule["project"] in seen):
+                raise ValueError("invalid project prerequisite")
+            predecessor = projects[rule["project"]]
+            if (predecessor["participant"] == projects[pid]["participant"]
+                    or type(rule["minimum_stage"]) is not int
+                    or not 1 <= rule["minimum_stage"] <= predecessor["stages"]):
+                raise ValueError("dependency requires a cross-faction milestone")
+            key = predecessor["progress"]
+            if key not in sponsor.get("visible_keys", []) or sponsor.get("report_delay_minutes", {}).get(key, 0):
+                raise ValueError("dependency milestone must be currently observable")
+            seen.add(rule["project"])
+    # Reject cycles rather than silently creating deadlocked industrial programs.
+    pending = set(projects)
+    while pending:
+        ready = {pid for pid in pending if not any(r["project"] in pending for r in rules.get(pid, []))}
+        if not ready:
+            raise ValueError("cyclic project dependencies")
+        pending -= ready
+
+
+def dependency_status(s, pid, values):
+    projects = {p["id"]: p for p in s.get("economy_projects", [])}
+    return [{"project": rule["project"], "minimum_stage": rule["minimum_stage"],
+             "observed_stage": values[projects[rule["project"]]["progress"]],
+             "met": values[projects[rule["project"]]["progress"]] >= rule["minimum_stage"]}
+            for rule in s.get("project_dependencies", {}).get(pid, [])]
+
+
 def resolve_projects(s, state, minute):
+    # Snapshot before any project advances: no list-order benefit or same-turn cascade.
+    opening_values = dict(state["values"]) if s.get("project_dependencies") else {}
     for p in s.get("economy_projects", []):
         v = state["values"]
         if v[p["progress"]] >= p["stages"]:
             continue
         result = bottleneck(p["need"], [(a["axis"], v[a["key"]]) for a in p["axes"]])
+        dependencies = dependency_status(s, p["id"], opening_values)
+        if dependencies and not all(r["met"] for r in dependencies):
+            result = {**result, "outcome": "dependency_blocked"}
+        if dependencies:
+            result["dependencies"] = dependencies
         outcome = result["outcome"]
         # A delay is one lost project turn, not an additional global clock
         # advance. Persistent shortfall is re-evaluated next turn.
         updates = ({p["progress"]: 1} if outcome == "clear" else
-                   {p["delay"]: 1} if outcome == "minor_delay" else
+                   {p["delay"]: 1} if outcome in ("minor_delay", "dependency_blocked") else
                    {p["delay"]: 1, p["complications"]: 1} if outcome == "serious_delay" else {})
         for key, delta in updates.items():
             v[key] += delta
