@@ -44,10 +44,12 @@ def validate(s):
         if p["deity"] not in actors or p["region"] not in regions or type(p["pl"]) is not int or not 1 <= p["pl"] <= 30:
             raise ValueError("invalid Prominence")
     for card in s["cards"].values():
-        if set(card) != {"event", "region", "tap", "time"} or card["event"] not in ("manafount", "quiet"):
+        if set(card) != ({"event", "region", "tap", "time", "duration"} if card["event"] == "experiment" else {"event", "region", "tap", "time"}) or card["event"] not in ("manafount", "quiet", "experiment", "conclude-experiment"):
             raise ValueError("invalid Event")
         if card["region"] not in regions or card["tap"] not in ("none", "optional", "required") or type(card["time"]) is not int or not 0 <= card["time"] <= 5:
             raise ValueError("invalid Event scope")
+        if card["event"] == "experiment" and (type(card["duration"]) is not int or not 1 <= card["duration"] <= 5):
+            raise ValueError("invalid illustrative Experiment duration")
     if len(s["cards"]) < len(actors) * s["hand_size"] or sum(c["time"] for c in s["cards"].values()) < s["endpoint"]:
         raise ValueError("insufficient Event pool")
 
@@ -59,7 +61,7 @@ def initialize(s, seed):
     deck = sorted(s["cards"])
     random.Random(seed).shuffle(deck)
     state = {"year": 0, "active": 0, "piles": deepcopy(s["piles"]),
-             "founts": {}, "tapped": [], "deck": deck,
+             "founts": {}, "commitments": {}, "commitment_history": [], "tapped": [], "deck": deck,
              "hands": {a: [] for a in s["deities"]}, "discard": [], "log": []}
     for actor in s["deities"]:
         replenish(s, state, actor)
@@ -109,6 +111,12 @@ def tap(s, state, actor, choice, region):
     state["tapped"].append([actor, region])
 
 
+def end_commitment(state, key, reason, year):
+    record = state["commitments"].pop(key)
+    state["commitment_history"].append({"card": key, **record, "reason": reason, "ended_year": year})
+    state["discard"].append(key)
+
+
 def play(s, state, actor, command):
     if complete(s, state) or actor != s["deities"][state["active"]]:
         raise ValueError("not active Deity")
@@ -123,16 +131,36 @@ def play(s, state, actor, command):
     result["hands"][actor].remove(cid)
     if c["event"] == "manafount":
         result["founts"][cid] = {"region": c["region"], "status": "hidden", "controller": actor}
+    if c["event"] == "experiment":
+        if not any(p["deity"] == actor and p["region"] == c["region"] for p in result["piles"].values()):
+            raise ValueError("Experiment requires local Prominence")
+        if any(p["owner"] == actor and p["region"] == c["region"] for p in result["commitments"].values()):
+            raise ValueError("Experiment already maintained in Region")
+        result["commitments"][cid] = {"owner": actor, "region": c["region"],
+                                       "remaining": c["duration"], "started_year": result["year"]}
+    elif c["event"] == "conclude-experiment":
+        target = next((key for key, p in result["commitments"].items()
+                       if p["owner"] == actor and p["region"] == c["region"]), None)
+        if target is None:
+            raise ValueError("no own Experiment to conclude")
+        end_commitment(result, target, "voluntary", result["year"])
     if command["tap"] is not None:
         if c["tap"] == "none":
             raise ValueError("Event does not permit Tap Fount")
         tap(s, result, actor, command["tap"], c["region"])
     elif c["tap"] == "required":
         raise ValueError("required opportunity omitted")
-    if cid not in result["discard"] and (cid not in result["founts"] or result["founts"][cid]["status"] != "hidden"):
+    if cid not in result["commitments"] and cid not in result["discard"] and (cid not in result["founts"] or result["founts"][cid]["status"] != "hidden"):
         result["discard"].append(cid)
     if c["time"]:
-        result["year"] = min(s["endpoint"], result["year"] + c["time"])
+        old_year = result["year"]
+        result["year"] = min(s["endpoint"], old_year + c["time"])
+        for year in range(old_year + 1, result["year"] + 1):
+            for key in sorted(result["commitments"]):
+                p = result["commitments"][key]
+                p["remaining"] -= 1
+                if p["remaining"] == 0:
+                    end_commitment(result, key, "completed", year)
         result["tapped"] = []
         for f in result["founts"].values():
             if f["status"] == "emitter":
@@ -227,7 +255,9 @@ def assess_choice(s, state, actor, command):
             "own_prominence_changes": changes, "public_fount_changes": founts,
             "tap": tapped, "regional_tap_limits_reset": bool(card["time"]),
             "establishes_fount": command["card"] if card["event"] == "manafount" else None,
-            "ends_rehearsal": complete(s, after)}
+            "ends_rehearsal": complete(s, after),
+            "commitments_after": deepcopy(after["commitments"]),
+            "commitments_ended": deepcopy(after["commitment_history"][len(state["commitment_history"]):])}
 
 
 def decision_packet(s, session, actor):
@@ -271,6 +301,8 @@ def observe(s, session, actor):
                       {"deity": p["deity"], "region": p["region"], "marker": marker(p["pl"])}
                       for pid, p in state["piles"].items()},
             "founts": deepcopy(state["founts"]),
+            "commitments": deepcopy(state["commitments"]),
+            "commitment_history": deepcopy(state["commitment_history"]),
             "tapped": deepcopy(state["tapped"]),
             "choices": choices,
             "choice_assessments": [assess_choice(s, state, actor, c) for c in choices],
