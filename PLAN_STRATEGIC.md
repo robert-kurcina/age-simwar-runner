@@ -536,3 +536,7 @@ Source revision da7e1140e92d5450fd82393acc2a15a3ff36a037. Bounded illustrative t
 ## Great War contextual decision support
 
 #265 Tests 46093638618 passed; bundle 46093638613 pending at inspection. Add hypothetical private Deity motivations and exact immediate consequence assessments using the existing resolver. Verify own PL scope, public Fount changes, timing and unchanged legal choices under altered motivations; no behavioral mandate or predictive scoring. Next assess persistent divine commitments against native source rules. CI pending.
+
+## Great War persistent Event checkpoint
+
+#267 both CI workflows passed. Native Event grammar supports face-up commitments, regional Prominence requirements, Time! triggers and voluntary/hostile termination, but exact card effects and PR calibration remain WIP. Implement illustrative regional Experiment lifecycle (two Time! advances or own conclusion Event), public tableau/history, immediate choice assessments and deterministic replay. No canonical numerical effects, PR, VP or Embodiment mechanics invented. Rehearsal-specific duration and card pool are hypothetical. CI pending. Next assess meaningful native neutral-world Event mechanics rather than invent unratified divine costs.
