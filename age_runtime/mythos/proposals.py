@@ -154,6 +154,17 @@ def object_available(entity, spec=None):
                 and entity.get("custodian") in holders and object_actions.usable(entity))
 
 
+def object_condition(entity):
+    """Material examination identity; custody and location alone do not reset it."""
+    return {"lifecycle": entity.get("lifecycle", "intact"), "function": entity.get("function")}
+
+
+def examination_available(state, kind, entity):
+    condition = object_condition(entity)
+    return not any(r["kind"] == kind and r["target"] == entity["id"]
+                   and r.get("object_condition") == condition for r in state.get("local_records", []))
+
+
 def completion_available(state, rules, action, npc_available):
     spec = action.get("local_spec")
     if spec is None:
@@ -163,7 +174,8 @@ def completion_available(state, rules, action, npc_available):
         return (object_available(entity, spec)
                 and entity.get("custodian") == action["object_custodian_before"]
                 and entity.get("lifecycle", "intact") == action["object_before"]
-                and entity.get("function") == action.get("object_function_before"))
+                and entity.get("function") == action.get("object_function_before")
+                and examination_available(state, action["local_capability"], entity))
     if spec["target"] == "npc":
         from age_runtime.mythos.epistemic import conversation_available
         return conversation_available(state, rules, action["npc"], npc_available)
@@ -197,7 +209,9 @@ def local_capabilities(state, rules, npc_available):
                 # Changed source material requires a fresh task, not credit.
                 prior = None
             needed = prior["task_duration"]["seconds"] - prior["worked_seconds"] if prior else minimum
-            if action not in state["used"] and needed <= remaining:
+            unused = (examination_available(state, kind, entities[target])
+                      if spec["target"] == "object" else action not in state["used"])
+            if unused and needed <= remaining:
                 result.append({"action": action, "approach": kind, "target": target,
                                "resolution": spec["resolution"],
                                **({"remaining_seconds": needed, "resuming": True} if prior else
@@ -231,6 +245,7 @@ def compile_local(state, rules, request, npc_available):
         action["object_custodian_before"] = entity.get("custodian")
         action["object_before"] = entity.get("lifecycle", "intact")
         action["object_function_before"] = entity.get("function")
+        action["object_condition"] = object_condition(entity)
     if spec["resolution"] == "test":
         action["test"] = copy.deepcopy(spec["test"])
         action["concern_failure"] = copy.deepcopy(spec.get("concern_failure", {}))
@@ -245,6 +260,7 @@ def record_local(state, action, success, result):
               "effect": result["margin"] if result is not None else None}
     if "object_target" in action:
         record["location"] = state["location"]
+        record["object_condition"] = copy.deepcopy(action["object_condition"])
     if "task_duration" in action:
         record["task_duration"] = copy.deepcopy(action["task_duration"])
     if spec.get("count_evidence"):
