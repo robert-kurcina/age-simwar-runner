@@ -102,6 +102,8 @@ def record(state, rules, request, npc_available):
         # This is the NPC's subjective response to this actual exchange,
         # not a new fact, promise, mechanical modifier or PC inner state.
         entry["npc_reaction"] = {key: _text(value, 240) for key, value in reaction.items()}
+    if state.get("protagonist") and "pc" in (entry["speaker"], entry["listener"]):
+        entry["protagonist_id"] = state["protagonist"]["id"]
     # Exact duplicates within one engine turn add no new continuity.
     if any({k: v for k, v in e.items() if k != "id"} == {k: v for k, v in entry.items() if k != "id"} for e in ledger):
         raise ValueError("duplicate dialogue claim")

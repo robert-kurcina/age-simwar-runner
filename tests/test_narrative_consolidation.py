@@ -31,6 +31,20 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replay mismatch"):
             mythos.verify(state)
 
+    def test_dialogue_attribution_and_replay(self):
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        claim = {"npc": "eleanor", "speaker": "pc", "claim": "I have a question.",
+                 "stance": "unstated", "intent": "unstated"}
+        state = mythos.dialogue_step(state, claim)
+        self.assertEqual(state["dialogue"][-1]["protagonist_id"], "pc:1")
+        self.assertEqual(mythos.view(state)["dialogue"][-1]["protagonist_id"], "pc:1")
+        mythos.verify(state)
+        with self.assertRaisesRegex(ValueError, "duplicate dialogue"):
+            mythos.dialogue_step(state, claim)
+        state["dialogue"][-1]["protagonist_id"] = "pc:2"
+        with self.assertRaisesRegex(ValueError, "replay mismatch"):
+            mythos.verify(state)
+
     def test_public_projection_is_detached_for_every_trial(self):
         for sid in ("boothbay", "castine", "ram-island"):
             with self.subTest(scenario=sid):
