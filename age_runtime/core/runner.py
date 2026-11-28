@@ -12,7 +12,7 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
-from age_runtime.core import negotiation, communications, diplomacy, establishment, event_generator, phase_memory, reserve_accounting
+from age_runtime.core import negotiation, communications, diplomacy, establishment, event_generator, phase_memory, reserve_accounting, stock_accounting
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -27,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment", "permission_terms", "event_templates", "phase_memory", "project_dependencies", "project_permissions", "reserve_accounts", "reserve_actions"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment", "permission_terms", "event_templates", "phase_memory", "project_dependencies", "project_permissions", "reserve_accounts", "reserve_actions", "stock_accounts", "stock_actions", "stock_flows"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -80,13 +80,14 @@ def validate(s):
     event_generator.validate(s)
     phase_memory.validate(s)
     reserve_accounting.validate(s)
+    stock_accounting.validate(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
-    if factions and not (s.get("economy_projects") or s.get("agreements") or s.get("reserve_accounts")):
+    if factions and not (s.get("economy_projects") or s.get("agreements") or s.get("reserve_accounts") or s.get("stock_accounts")):
         raise ValueError("model factions require reviewed civilian projects or institutional commitments")
     for actor in factions:
-        if any(name not in (s.get("capacity_actions", {}).keys() | s.get("resource_transfers", {}).keys() | s.get("reserve_actions", {}).keys() | agreement_actions(s)) for name, spec in s.get("action_catalog", {}).items() if actor in spec["actors"]):
+        if any(name not in (s.get("capacity_actions", {}).keys() | s.get("resource_transfers", {}).keys() | s.get("reserve_actions", {}).keys() | s.get("stock_actions", {}).keys() | agreement_actions(s)) for name, spec in s.get("action_catalog", {}).items() if actor in spec["actors"]):
             raise ValueError("model factions may select only supported capacity, transfer or consent actions")
 
 def initialize(s):
@@ -133,12 +134,13 @@ def advance(s, state):
                 result["ledger"].append({"id": event["id"], "minute": minute,
                     "key": key, "delta": event["delta"], "value": result["values"][key]})
         if minute == end:
-            if s.get("reserve_accounts"):
-                # Reserve requests adjudicate as one batch, not FIFO.
+            if s.get("reserve_accounts") or s.get("stock_accounts"):
+                # Accounting requests adjudicate as one batch, not FIFO.
                 reviewed = [r for r in result["requests"] if r["status"] == "validated_request"]
                 for r in reviewed:
                     r.update(status="reviewed", reviewed_minute=end)
                 reserve_accounting.resolve(s, result, end, reviewed)
+                stock_accounting.resolve(s, result, end, reviewed)
             else:
                 resolve_reviews(s, result, end)
             resolve_agreements(s, result, end)
