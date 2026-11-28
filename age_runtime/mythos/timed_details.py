@@ -22,8 +22,8 @@ def record(state, rules, request, npc_available, local_entities, text):
     if len(ledger) >= 64 or any(e["id"] == eid or e["permission"] == aid for e in ledger):
         raise ValueError("duplicate event or record limit")
     a = agreements.project(state).get(aid)
-    if any(e.get("authority") in ("npc_initiative", "npc_native_test") and e["status"] == "scheduled" and (e["object"] == oid or (a and e["npc"] == a["npc"])) for e in ledger):
-        raise ValueError("conflicting pending NPC initiative")
+    if any(e["status"] == "scheduled" and (e["object"] == oid or (a and e["npc"] == a["npc"])) for e in ledger):
+        raise ValueError("conflicting pending NPC event")
     obj = local_entities(state).get(oid)
     delay = request["delay_minutes"]
     if type(delay) is not int or delay not in cfg["delays_minutes"]:
