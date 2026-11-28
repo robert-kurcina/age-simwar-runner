@@ -638,7 +638,14 @@ class MythosTrialTests(unittest.TestCase):
         s = mythos.initial("boothbay", 42)
         while not s["ending"]:
             choices = mythos.view(s)["choices"]
-            if not any(a["id"] == "observe" for a in choices):
+            if not choices:
+                ref = mythos.gm_context(s)["referee"]
+                offers = ref["local_capabilities"] + mythos.view(s).get("danger", [])
+                self.assertTrue(offers, "Live session must have a playable opportunity")
+                offer = offers[0]
+                s = mythos.step(s, offer["action"], {"action": offer["action"],
+                    "approach": offer["approach"], "intent": "Complete the remaining available activity."})
+            elif not any(a["id"] == "observe" for a in choices):
                 s = mythos.step(s, choices[0]["id"])
             else:
                 s = mythos.step(s, "observe")
@@ -1168,6 +1175,8 @@ class MythosTrialTests(unittest.TestCase):
         s = mythos.establish_step(s, {"npc_activity": {"npc": "eleanor", "mode": "rest",
             "safe": True, "minutes": 30, "basis": "She takes a quiet break in safety."}})
         s = mythos.step(s, "move:Harbor Docks")
+        s = mythos.step(s, "wait:30")
+        self.assertIsNone(s["npcs"]["eleanor"]["activity_plan"])
         s = mythos.establish_step(s, {"npc_initiative": {"operation": "schedule", "id": "evt:tidy",
             "npc": "eleanor", "object": "inc:tin", "delay_minutes": 30,
             "basis": "She chooses to tidy her belongings after her break."}})

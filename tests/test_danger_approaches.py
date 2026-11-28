@@ -13,7 +13,7 @@ class DangerApproachTests(unittest.TestCase):
         return story, rules
 
     def request(self, approach):
-        return {"action": "beat:patrol_approach", "approach": approach,
+        return {"action": "beat:patrol_withdrawal" if approach == "withdraw" else "beat:patrol_approach", "approach": approach,
                 "intent": "Resolve the reviewed objective."}
 
     def test_withdrawal_does_not_grant_passage(self):
@@ -36,7 +36,7 @@ class DangerApproachTests(unittest.TestCase):
 
     def test_approach_prerequisites_and_completion(self):
         story, rules = self.fixture()
-        spec = rules["danger_beats"]["beat:patrol_approach"]["approaches"]["withdraw"]
+        spec = rules["danger_beats"]["beat:patrol_withdrawal"]["approaches"]["withdraw"]
         spec["requires_flags"] = ["shelter_known"]
         spec["excludes_flags"] = ["shelter_closed"]
         with patch.object(mythos, "load", return_value=(story, rules)):
