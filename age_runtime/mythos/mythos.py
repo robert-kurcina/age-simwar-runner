@@ -519,7 +519,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             reason = "involuntary_sleep"
             break
         if interruptible and any(e.get("interrupt_activity") and datetime.fromisoformat(e["at"]) == cursor
-                                 and (not e.get("locations") or state["location"] in e["locations"]) for e in events):
+                                 and event_visible(state, e) for e in events):
             reason = "event"
             break
     return reason
@@ -764,6 +764,13 @@ def _step(state, rules, action, proposal=None, commitment=None):
         state["ending"] = ending_projection(state, rules, action if terminal else "limit", action)
     return state
 
+def event_visible(state, event):
+    """Dated world effects are independent of the observer's access."""
+    return (all(flag in state["flags"] for flag in event.get("visible_requires", []))
+            and not any(flag in state["flags"] for flag in event.get("visible_excludes", []))
+            and (not event.get("locations") or state["location"] in event["locations"]))
+
+
 def advance_events(state, rules, elapsed):
     """Apply dated events once; long actions cannot retroactively alter earlier milestones."""
     for event in sorted(rules.get("events", []), key=lambda e: e["at"]):
@@ -783,7 +790,7 @@ def advance_events(state, rules, elapsed):
                 state["observations"].append(event["manifestation"])
             elif progression["arrested"]:
                 state["observations"].append("The changes previously recorded appear to have stabilized for now.")
-        if all(flag in state["flags"] for flag in event.get("visible_requires", [])):
+        if event_visible(state, event) and event.get("observation"):
             state["observations"].append(event["observation"])
 
 def ending_projection(state, rules, reason, action):
