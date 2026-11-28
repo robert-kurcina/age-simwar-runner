@@ -16,7 +16,8 @@ def projection(state, participants):
         shared = [e for e in public if {e["speaker"], e["listener"]} == {"pc", npc}]
         witnessed = [o for o in state.get("action_observations", [])
                      if o["npc"] == npc and o["kind"] == "witnessed" and o["actor"] == "pc"]
-        if not shared and not witnessed:
+        routines = [o for o in state.get("routine_observations", []) if o["npc"] == npc]
+        if not shared and not witnessed and not routines:
             continue
         by_id = {e["id"]: e for e in shared}
         # Recent exchanges plus older significant material, never private
@@ -44,7 +45,15 @@ def projection(state, participants):
         actions = [{k: o[k] for k in ("id", "object", "outcome", "condition", "at", "location")}
                    | ({"function": o["function"]} if "function" in o else {}) | age(state, o)
                    for o in older_actions + selected]
+        # Routine observations are NPC-owned and concern the PC's actual
+        # conduct. Recall the facts, never the private interpretation.
+        salient_refs = {ref for p in state.get("behavioral_recognition", [])
+                        if p["npc"] == npc for ref in p["evidence"]}
+        older_routines = [o for o in routines[:-4] if o["id"] in salient_refs][-3:]
+        routine_cues = [{k: o[k] for k in ("id", "kind", "text", "at", "location")}
+                        | age(state, o) for o in older_routines + routines[-4:]]
         result[npc] = {"last_shared_exchange": age(state, shared[-1]) if shared else None,
+                       "observed_routines": routine_cues,
                        "shared_actions": actions,
                        "utterances": cues, "active_agreements": obligations}
     return result
