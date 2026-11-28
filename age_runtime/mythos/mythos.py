@@ -230,17 +230,22 @@ def _available_local_npcs(state, rules):
             and npc_available(state, rules, {"npc": nid, "location": state["location"]})}
 
 
-def _local_action_available(state, rules, action):
-    """Revalidate the same prerequisites at arrival and after local activity."""
+def action_prerequisites(state, rules, action):
+    """Shared factual prerequisites, independent of offer or completion time."""
     return (not any(f in state["flags"] for f in action.get("excludes_flags", []))
             and all(f in state["flags"] for f in action.get("requires_flags", []))
             and (not action.get("requires_any_flags") or any(f in state["flags"] for f in action["requires_any_flags"]))
             and all(f in state["used"] for f in action.get("requires_used", []))
             and len(state["discoveries"]) >= action.get("requires", 0)
             and all(state["relationships"][k] >= v for k, v in action.get("requires_relationship", {}).items())
+            and npc_available(state, rules, action))
+
+
+def _local_action_available(state, rules, action):
+    """Revalidate factual and temporal prerequisites after elapsed activity."""
+    return (action_prerequisites(state, rules, action)
             and (not action.get("available_from") or state["time"] >= action["available_from"])
             and (not action.get("available_until") or state["time"] <= action["available_until"])
-            and npc_available(state, rules, action)
             and locks.action_available(state, rules, action, npc_available, establishment.local_entities)
             and beats.completion_available(state, rules, action)
             and proposals.completion_available(state, rules, action, npc_available))
@@ -299,13 +304,7 @@ def options(state, rules):
                                local_seconds=60, interval_seconds=60))
         return result
     candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
-                  and len(state["discoveries"]) >= a.get("requires", 0)
-                  and all(f in state["flags"] for f in a.get("requires_flags", []))
-                  and (not a.get("requires_any_flags") or any(f in state["flags"] for f in a["requires_any_flags"]))
-                  and all(f in state["used"] for f in a.get("requires_used", []))
-                  and not any(f in state["flags"] for f in a.get("excludes_flags", []))
-                  and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
-                  and npc_available(state, rules, a)
+                  and action_prerequisites(state, rules, a)
                   and continuity.reconsideration_allowed(state, a)
                   and ("spatial" in rules or not a.get("available_from") or state["time"] >= a["available_from"])
                   and (not a.get("available_until") or state["time"] < a["available_until"])
@@ -549,6 +548,12 @@ def history_entry(action, proposal, commitment):
         return {"action": action, "proposal": copy.deepcopy(proposal), "commitment": copy.deepcopy(commitment)}
     return action if proposal is None else {"proposal": copy.deepcopy(proposal)}
 
+def has_playable_action(state, rules):
+    """An empty authored menu is not exhaustion of reviewed proposal authority."""
+    return bool(options(state, rules) or beats.available(state, rules)
+                or proposals.local_capabilities(state, rules, npc_available))
+
+
 def finish_activity(state, rules, action, a, success, reason=None, proposal=None):
     state["last_result"] = {"action": action, "success": success}
     if "task_duration" in a:
@@ -563,7 +568,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
     state["history"].append(history_entry(action, proposal, a.get("commitment")))
-    if reason == "deadline" or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
+    if reason == "deadline" or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not has_playable_action(state, rules):
         state["ending"] = ending_projection(state, rules, "limit", action)
     return state
 
@@ -791,7 +796,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
     pacing.record(state, a)
     state["history"].append(history_entry(action, proposal, a.get("commitment")))
     terminal = a.get("terminal") and (success or not a.get("terminal_on_success"))
-    if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
+    if terminal or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not has_playable_action(state, rules):
         state["ending"] = ending_projection(state, rules, action if terminal else "limit", action)
     return state
 
