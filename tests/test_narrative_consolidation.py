@@ -811,6 +811,28 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             proposals.validate_local(invalid)
 
+    def test_dated_notice_at_exact_task_completion_does_not_discard_work(self):
+        from datetime import datetime, timedelta
+        from age_runtime.core import dxd
+        story, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        state = mythos._initial("boothbay", 42, story, rules)
+        request = {"action": "local:compose_notes:Harbor Docks",
+                   "approach": "compose_notes", "intent": "Organize my notes."}
+        roll = dxd.task_duration("42:task-duration:1:" + request["action"], 60)
+        at = (datetime.fromisoformat(state["time"]) + timedelta(seconds=roll["seconds"])).isoformat()
+        rules["events"] = [{"id": "completion_notice", "at": at,
+                            "observation": "A notice at completion.",
+                            "grant": ["notice_received"], "interrupt_activity": True}]
+        after = mythos._step(copy.deepcopy(state), rules, request["action"], request)
+        self.assertEqual(after["time"], at)
+        self.assertIn("notice_received", after["flags"])
+        self.assertIn("A notice at completion.", after["observations"])
+        self.assertNotIn("interrupted", after["last_result"])
+        self.assertEqual(after["local_records"][-1]["task_duration"], roll)
+        self.assertEqual(len(after["dxd"]["tests"]), len(state["dxd"]["tests"]) + 1)
+        self.assertNotIn(request["action"], after.get("pending_work", {}))
+
     def test_reviewed_note_task_resumes_without_duration_reroll(self):
         from datetime import datetime, timedelta
         from age_runtime.mythos import proposals
