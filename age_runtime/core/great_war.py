@@ -8,6 +8,8 @@ from copy import deepcopy
 import json
 from pathlib import Path
 import random
+import os
+import tempfile
 from age_runtime.core.runner import digest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,10 +83,14 @@ def tap(s, state, actor, choice, region):
     if f["status"] == "hidden":
         if disposition == "remove":
             del state["founts"][choice["fount"]]
+            if choice["fount"] not in state["discard"]:
+                state["discard"].append(choice["fount"])
         elif disposition in s["regions"][region] and not any(
                 other.get("hex") == disposition for other in state["founts"].values()):
             f.update(status="wondrous", hex=disposition)
             del f["controller"]
+            if choice["fount"] not in state["discard"]:
+                state["discard"].append(choice["fount"])
         else:
             raise ValueError("invalid revelation hex")
     elif disposition is not None:
@@ -117,7 +123,8 @@ def play(s, state, actor, command):
         tap(s, result, actor, command["tap"], c["region"])
     elif c["tap"] == "required":
         raise ValueError("required opportunity omitted")
-    result["discard"].append(cid)
+    if cid not in result["discard"] and (cid not in result["founts"] or result["founts"][cid]["status"] != "hidden"):
+        result["discard"].append(cid)
     if c["time"]:
         result["year"] = min(s["endpoint"], result["year"] + c["time"])
         result["tapped"] = []
@@ -195,7 +202,7 @@ def main():
     s = json.loads(SPEC.read_text(encoding="utf-8"))
     if args.operation == "start":
         session = start(s, args.seed)
-        with args.session.open("x", encoding="utf-8") as stream:
+        with os.fdopen(os.open(args.session, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8") as stream:
             json.dump(session, stream)
         actor = s["deities"][0]
     else:
@@ -204,8 +211,14 @@ def main():
         if args.operation == "play":
             session = commit(s, session, actor, args.revision,
                              json.loads(args.command.read_text(encoding="utf-8")))
-            from age_runtime.core.runner import atomic_write
-            atomic_write(args.session, session)
+            fd, temporary = tempfile.mkstemp(dir=args.session.parent)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                    json.dump(session, stream)
+                os.replace(temporary, args.session)
+            finally:
+                if os.path.exists(temporary):
+                    os.unlink(temporary)
     print(json.dumps(observe(s, session, actor), indent=2))
 
 
