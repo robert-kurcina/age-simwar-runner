@@ -6,7 +6,7 @@ the established modifier order, Favor policy, Inspiration and Test ledger.
 import copy
 from age_runtime.core import (
     dxd, dxd_conditions, dxd_inspiration, dxd_modifiers,
-    dxd_psychology, dxd_commitment, dxd_context, dxd_injury,
+    dxd_psychology, dxd_commitment, dxd_context, dxd_injury, dxd_physical_disability,
 )
 
 def resolve(state, rules, action, digest):
@@ -31,6 +31,8 @@ def resolve(state, rules, action, digest):
     condition = dxd_conditions.penalty_dice(pc["concerns"], decision=spec.get("decision", False))
     if "injury" in pc:
         condition += dxd_injury.penalty_dice(pc["injury"])
+    physical = dxd_physical_disability.penalties(pc.get("injury", {}), spec)
+    condition += sum(x["penalty"] for x in physical)
     hook = (dxd_commitment.effective_demeanor(state, action.get("npc"), action) if rules.get("demeanor") and spec["attribute"] == "PRE"
             else 1 if spec.get("relationship_bonus") and state["relationships"][spec["relationship_bonus"]] >= 1 else 0)
     cue = spec.get("inspiration")
@@ -99,7 +101,7 @@ def resolve(state, rules, action, digest):
     dxd_context.record(state, emotional_triggers, result)
     pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
-                        "condition_penalty_dice": condition, "relationship": hook,
+                        "condition_penalty_dice": condition, **({"physical_location_penalties": physical} if physical else {}), "relationship": hook,
                         **({"emotional_commitment": emotional_dm, "commitment_leverage": leverage_dm} if "commitments" in pc else {}),
                         "inspiration": inspiration_dm, "emicted": emicted, "psychology": psychology, "progression": progression_dm},
                         "gathered": gathered, **({"character_hook": copy.deepcopy(action["character_hook"])} if "character_hook" in action else {}), **({"contextual": contextual, "npc_gathered": npc_gathered} if "character_profiles" in state else {}), "net_bonus": bonus, "net_penalty": penalty,
