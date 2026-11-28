@@ -74,7 +74,7 @@ def depart(state, rules, request, npc_available, text):
     No retroactive arrival, automatic departures or interruption of a
     committed activity merely because a routine window has begun.
     """
-    if not isinstance(request, dict) or set(request) != {"npc", "destination", "basis"}:
+    if not isinstance(request, dict) or set(request) not in ({"npc", "destination", "basis"}, {"npc", "destination", "basis", "objective"}):
         raise ValueError("invalid agenda departure")
     nid = request["npc"]
     if not isinstance(nid, str) or nid not in rules.get("npc_agendas", {}):
