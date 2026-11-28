@@ -4,7 +4,7 @@ from age_runtime.core.communications import view as communication_view, observed
 from age_runtime.core.negotiation import view as negotiation_view
 from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
-from age_runtime.core.economy import bottleneck, dependency_status
+from age_runtime.core.economy import bottleneck, dependency_status, permission_status
 from age_runtime.core.diplomacy import history as diplomatic_history
 from age_runtime.core.establishment import view as established_context
 from age_runtime.core.event_generator import view as development_view
@@ -29,6 +29,9 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
         ratings = [(a["axis"], values[a["key"]]) for a in p["axes"]]
         current = bottleneck(p["need"], ratings)
         dependencies = dependency_status(s, p["id"], values)
+        permissions = permission_status(s, state, p["id"])
+        next_permissions = permission_status(s, state, p["id"], min(state["minute"] + s["turn_minutes"], s["end_minute"]))
+        permission_blocked = any(not row["met"] for row in next_permissions)
         blocked = any(not row["met"] for row in dependencies)
         stages_left = p["stages"] - values[p["progress"]]
         assessments.append({"id": p["id"],
@@ -36,12 +39,14 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
                                         "maximum_future_stages": remaining,
                                         "slack_turns": remaining - stages_left,
                                         "possible_at_maximum_rate": stages_left <= remaining,
-                                        "progress_if_capacity_unchanged": min(stages_left, remaining) if current["outcome"] == "clear" and not blocked else 0}, "progress": values[p["progress"]],
+                                        "progress_if_capacity_unchanged": min(stages_left, remaining) if current["outcome"] == "clear" and not blocked and not permission_blocked else 0}, "progress": values[p["progress"]],
                             "stages": p["stages"], "delay": values[p["delay"]],
                             "complications": values[p["complications"]],
                             "complete": values[p["progress"]] >= p["stages"],
                             "capacities": dict(ratings), "bottleneck": current,
-                            **({"dependencies": dependencies, "dependency_blocked": blocked} if dependencies else {})})
+                            **({"dependencies": dependencies, "dependency_blocked": blocked} if dependencies else {}),
+                            **({"permissions": permissions, "permission_blocked_next_resolution": permission_blocked,
+                                "permission_projection": "Current permission is not guaranteed for future intervals."} if permissions else {})})
     choices = {}
     own_projects = {p["id"]: p for p in projects}
     for action in requests:
@@ -75,6 +80,9 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
         if dependencies:
             choice["dependencies"] = dependencies
             choice["dependency_blocked"] = any(not row["met"] for row in dependencies)
+        permissions = permission_status(s, state, p["id"], min(state["minute"] + s["turn_minutes"], s["end_minute"]))
+        if permissions:
+            choice["permissions_at_next_resolution"] = permissions
         choices[action] = choice
     # Compare report cutoffs, not hidden current values. A delayed report may
     # first become available this turn; never infer the unknown prior value.

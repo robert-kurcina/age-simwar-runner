@@ -61,6 +61,8 @@ class ProductionAccordTests(unittest.TestCase):
         self.assertEqual(assessment["horizon"]["progress_if_capacity_unchanged"], 0)
         self.assertEqual(len(assessment["dependencies"]), 2)
         scenario = deepcopy(opening["header"]["compiled"]["scenario"])
+        # Isolate milestone mechanics from separately tested licence gate.
+        scenario.pop("project_permissions")
         for project in scenario["economy_projects"]:
             for axis in project["axes"]:
                 scenario["initial"][axis["key"]] = 3
@@ -91,3 +93,48 @@ class ProductionAccordTests(unittest.TestCase):
                 s["project_dependencies"]["fiji_chassis"][0]["minimum_stage"] = 5
             with self.subTest(change=change), self.assertRaises(ValueError):
                 validate_projects(s)
+
+
+    def test_permission_lifecycle_blocks_progress_independently(self):
+        from copy import deepcopy
+        from age_runtime.core.economy import resolve_projects, validate_projects
+        from age_runtime.core.negotiation import apply, resolve
+        from age_runtime.core.private_play import decision_brief
+        from age_runtime.core.runner import initialize
+        opening = start_rehearsal(ROOT, SID, "fiji")
+        assessment = next(p for p in decision_brief(opening)["projects"] if p["id"] == "fiji_chassis")
+        self.assertTrue(assessment["permission_blocked_next_resolution"])
+        s = deepcopy(opening["header"]["compiled"]["scenario"])
+        for project in s["economy_projects"]:
+            for axis in project["axes"]:
+                s["initial"][axis["key"]] = 3
+        for key in ("inguria_certification_progress", "caledonia_refining_progress"):
+            s["initial"][key] = 1
+        turn = s["turn_minutes"]
+        def proposal(state):
+            apply(s, state, "fiji", {"kind": "propose", "id": "licence",
+                  "recipient": "inguria", "permission": "chassis_licence", "due_minute": 3 * turn})
+        for route in ("unanswered", "rejected", "accepted", "revoked", "expired"):
+            state = initialize(s)
+            proposal(state)
+            if route == "rejected":
+                apply(s, state, "inguria", {"kind": "reject", "id": "licence"})
+            elif route in ("accepted", "revoked", "expired"):
+                apply(s, state, "inguria", {"kind": "accept", "id": "licence"})
+                if route == "revoked":
+                    apply(s, state, "inguria", {"kind": "revoke", "id": "licence"})
+            minute = 3 * turn if route == "expired" else turn
+            resolve(s, state, minute)
+            resolve_projects(s, state, minute)
+            self.assertEqual(state["values"]["fiji_chassis_progress"], int(route == "accepted"), route)
+            row = next(r for r in state["project_results"] if r["id"] == "fiji_chassis")
+            self.assertEqual(row["outcome"], "clear" if route == "accepted" else "permission_blocked")
+        for invalid in (["unknown"], ["chassis_licence", "chassis_licence"]):
+            bad = deepcopy(s)
+            bad["project_permissions"]["fiji_chassis"] = invalid
+            with self.assertRaises(ValueError):
+                validate_projects(bad)
+        bad = deepcopy(s)
+        bad["project_permissions"] = {"vanuatu_maintenance": ["chassis_licence"]}
+        with self.assertRaises(ValueError):
+            validate_projects(bad)

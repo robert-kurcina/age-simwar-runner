@@ -413,6 +413,19 @@
           "minimum_stage": 1
         }
       ]
+    },
+    "permission_terms": {
+      "chassis_licence": {
+        "issuer": "inguria",
+        "grantee": "fiji",
+        "description": "Temporary access to non-sensitive standard chassis manufacturing documentation for the readiness exercise; no protected launch-control or strategic software rights.",
+        "max_due_minute": 259200
+      }
+    },
+    "project_permissions": {
+      "fiji_chassis": [
+        "chassis_licence"
+      ]
     }
   },
   "initial_refs": {},

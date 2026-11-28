@@ -28,7 +28,7 @@ def bottleneck(need, capacities):
 
 def validate_projects(s):
     if "economy_projects" not in s:
-        if "project_dependencies" in s:
+        if "project_dependencies" in s or "project_permissions" in s:
             raise ValueError("dependencies require economy projects")
         return
     projects = s["economy_projects"]
@@ -76,6 +76,7 @@ def validate_projects(s):
         if any(k not in actor.get("visible_keys", []) or actor.get("report_delay_minutes", {}).get(k, 0) for k in keys):
             raise ValueError("project properties must be currently observable")
     validate_dependencies(s)
+    validate_project_permissions(s)
     if owned.intersection(inputs):
         raise ValueError("project counters cannot also be capacity inputs")
     # For this bounded slice, capacity updates are unconditional dated
@@ -136,6 +137,37 @@ def dependency_status(s, pid, values):
             for rule in s.get("project_dependencies", {}).get(pid, [])]
 
 
+def validate_project_permissions(s):
+    if "project_permissions" not in s:
+        return
+    rules = s["project_permissions"]
+    projects = {p["id"]: p for p in s["economy_projects"]}
+    terms = s.get("permission_terms", {})
+    if not isinstance(rules, dict) or not rules or not isinstance(terms, dict):
+        raise ValueError("invalid project permission gates")
+    for pid, names in rules.items():
+        if (pid not in projects or not isinstance(names, list) or not names
+                or any(not isinstance(name, str) or name not in terms for name in names)
+                or len(set(names)) != len(names)):
+            raise ValueError("invalid project permission reference")
+        for name in names:
+            term = terms[name]
+            if not isinstance(term, dict) or term.get("grantee") != projects[pid]["participant"]:
+                raise ValueError("project permission must belong to sponsor")
+
+
+def permission_status(s, state, pid, minute=None):
+    """Read exact bilateral scope; at resolution require coverage through interval end."""
+    from age_runtime.core.negotiation import active_permission
+    at = state["minute"] if minute is None else minute
+    rows = []
+    for name in s.get("project_permissions", {}).get(pid, []):
+        term = s["permission_terms"][name]
+        active = active_permission(s, {**state, "minute": at}, name, term["issuer"], term["grantee"])
+        rows.append({"permission": name, "issuer": term["issuer"], "met": active})
+    return rows
+
+
 def resolve_projects(s, state, minute):
     # Snapshot before any project advances: no list-order benefit or same-turn cascade.
     opening_values = dict(state["values"]) if s.get("project_dependencies") else {}
@@ -149,11 +181,16 @@ def resolve_projects(s, state, minute):
             result = {**result, "outcome": "dependency_blocked"}
         if dependencies:
             result["dependencies"] = dependencies
+        permissions = permission_status(s, state, p["id"], minute)
+        if permissions:
+            result["permissions"] = permissions
+            if not all(row["met"] for row in permissions):
+                result["outcome"] = "permission_blocked"
         outcome = result["outcome"]
         # A delay is one lost project turn, not an additional global clock
         # advance. Persistent shortfall is re-evaluated next turn.
         updates = ({p["progress"]: 1} if outcome == "clear" else
-                   {p["delay"]: 1} if outcome in ("minor_delay", "dependency_blocked") else
+                   {p["delay"]: 1} if outcome in ("minor_delay", "dependency_blocked", "permission_blocked") else
                    {p["delay"]: 1, p["complications"]: 1} if outcome == "serious_delay" else {})
         for key, delta in updates.items():
             v[key] += delta

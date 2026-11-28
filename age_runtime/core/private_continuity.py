@@ -16,7 +16,7 @@ def economy_signature(s):
     for p in projects.values():
         keys.update(p[k] for k in ("progress", "delay", "complications"))
         keys.update(a["key"] for a in p["axes"])
-    return keys, projects, stocks, s["capacity_actions"], s.get("resource_transfers", {}), s.get("funding_reserves", {})
+    return keys, projects, stocks, s["capacity_actions"], s.get("resource_transfers", {}), s.get("funding_reserves", {}), s.get("project_dependencies", {}), s.get("project_permissions", {}), s.get("permission_terms", {})
 
 
 def continuity_keys(source, target):
