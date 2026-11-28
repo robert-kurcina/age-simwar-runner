@@ -1,6 +1,5 @@
 """Explicit, referee-approved private civilian continuity; no implicit transfers."""
 from copy import deepcopy
-from datetime import timedelta
 from age_runtime.core.continuity import transfer_values
 from age_runtime.core.runner import digest
 from age_runtime.core.source_compiler import checked_date
@@ -63,7 +62,7 @@ def derive(catalog, entry, spec, compiled, previous):
         raise ValueError("continuity requires the same assistance catchment assumptions")
     if source.get("community_assistance") != target.get("community_assistance") or source.get("service_restoration") != target.get("service_restoration"):
         raise ValueError("continuity mechanics mismatch")
-    end_date = checked_date(h["effective_date"]) + timedelta(days=(source["end_minute"] + 1439) // 1440)
+    end_date = checked_date(h["effective_date"]).add_days((source["end_minute"] + 1439) // 1440)
     if checked_date(spec["effective_date"]) < end_date:
         raise ValueError("target begins before source completion")
     result, transferred = transfer_values(source, previous["state"], target, rule["variables"])
