@@ -1,6 +1,5 @@
 """Historical actor-local carry, not live authority or accounting."""
 from copy import deepcopy
-from datetime import timedelta
 
 KINDS = ("communications", "propositions", "established_context", "developments",
          "proposals", "agreements", "diplomatic_history")
@@ -58,7 +57,7 @@ def derive(catalog, entry, spec, compiled, previous):
             or state["minute"] != source["end_minute"]
             or "phase_memory" in target):
         raise ValueError("no approved historical continuity mapping")
-    end = checked_date(h["effective_date"]) + timedelta(days=(state["minute"] + 1439) // 1440)
+    end = checked_date(h["effective_date"]).add_days((state["minute"] + 1439) // 1440)
     if checked_date(spec["effective_date"]) < end:
         raise ValueError("target starts before source completion")
     actors = rule["actors"]
