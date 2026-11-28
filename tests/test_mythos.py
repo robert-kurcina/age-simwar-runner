@@ -1241,6 +1241,7 @@ class MythosTrialTests(unittest.TestCase):
         mythos.verify(resolved)
 
     def test_observed_ordinary_routines_support_expectations(self):
+        import copy
         s = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         arrival = {"id": "routine:first", "npc": "eleanor", "kind": "arrival",
                    "basis": "She sees him enter."}
@@ -1267,6 +1268,16 @@ class MythosTrialTests(unittest.TestCase):
         packet = mythos.gm_context(s)["referee"]
         self.assertEqual(packet["behavioral_context"]["eleanor"]["evidence"]["routine:meal"]["kind"], "activity")
         self.assertEqual(packet["npc_expectations"]["eleanor"][0]["status"], "pending")
+        cues = packet["contextual_reminders"]["eleanor"]["observed_routines"]
+        self.assertIn("routine:meal", {c["id"] for c in cues})
+        self.assertIn("routine:meal2", {c["id"] for c in cues})
+        self.assertNotIn("He often eats at the diner.", str(cues))
+        self.assertNotIn("basis", cues[0])
+        from age_runtime.mythos import reminders
+        self.assertNotIn("elias", reminders.projection(s, {"elias"}))
+        before = copy.deepcopy(s)
+        reminders.projection(s, {"eleanor"})
+        self.assertEqual(s, before)
         self.assertNotIn("routine_observations", mythos.view(s))
         self.assertNotIn("routine_source", mythos.view(s))
         mythos.verify(s)
