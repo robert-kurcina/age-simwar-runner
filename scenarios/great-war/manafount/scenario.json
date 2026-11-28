@@ -1,0 +1,143 @@
+{
+  "id": "manafount-rehearsal",
+  "qualification": "unreviewed-rehearsal",
+  "source_revision": "da7e1140e92d5450fd82393acc2a15a3ff36a037",
+  "deities": [
+    "amber",
+    "azure"
+  ],
+  "hand_size": 2,
+  "endpoint": 5,
+  "regions": {
+    "north": [
+      "N1",
+      "N2",
+      "N3"
+    ],
+    "south": [
+      "S1",
+      "S2",
+      "S3"
+    ]
+  },
+  "piles": {
+    "amber_n": {
+      "deity": "amber",
+      "region": "north",
+      "pl": 3
+    },
+    "azure_n": {
+      "deity": "azure",
+      "region": "north",
+      "pl": 10
+    },
+    "amber_s": {
+      "deity": "amber",
+      "region": "south",
+      "pl": 6
+    },
+    "azure_s": {
+      "deity": "azure",
+      "region": "south",
+      "pl": 11
+    }
+  },
+  "cards": {
+    "event-00": {
+      "event": "manafount",
+      "region": "north",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-01": {
+      "event": "manafount",
+      "region": "south",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-02": {
+      "event": "manafount",
+      "region": "north",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-03": {
+      "event": "manafount",
+      "region": "south",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-04": {
+      "event": "quiet",
+      "region": "north",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-05": {
+      "event": "quiet",
+      "region": "south",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-06": {
+      "event": "quiet",
+      "region": "north",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-07": {
+      "event": "quiet",
+      "region": "south",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-08": {
+      "event": "quiet",
+      "region": "north",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-09": {
+      "event": "quiet",
+      "region": "south",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-10": {
+      "event": "quiet",
+      "region": "north",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-11": {
+      "event": "quiet",
+      "region": "south",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-12": {
+      "event": "quiet",
+      "region": "north",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-13": {
+      "event": "quiet",
+      "region": "south",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-14": {
+      "event": "quiet",
+      "region": "north",
+      "tap": "optional",
+      "time": 1
+    },
+    "event-15": {
+      "event": "quiet",
+      "region": "south",
+      "tap": "optional",
+      "time": 1
+    }
+  }
+}
