@@ -79,6 +79,10 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
         # Stable identity is distinct from the current mechanical actor slot.
         state["protagonist"] = {"id": "pc:1", "role": story["protagonist"]["role"],
                                 "entered_at": state["time"], "entered_turn": 0}
+    if rules.get("protagonist_knowledge"):
+        if not state.get("protagonist"):
+            raise ValueError("protagonist knowledge requires identity")
+        state["protagonist_knowledge"] = []
     if opportunity_latitude is not None:
         state["opportunity_latitude"] = latitude.validate(opportunity_latitude)
         state["settings_digest"] = digest([state["source"], seed, opportunity_latitude])
@@ -687,6 +691,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
         for flag in a.get("grant", []):
             if flag not in state["flags"]:
                 state["flags"].append(flag)
+            epistemic.earn_flag(state, rules, flag, action)
         for key, delta in a.get("relationship", {}).items():
             if rules.get("demeanor"):
                 change_demeanor(state, key, delta)
@@ -698,6 +703,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
     for flag in a.get("grant_failure", []) if not success else []:
         if flag not in state["flags"]:
             state["flags"].append(flag)
+        epistemic.earn_flag(state, rules, flag, action)
     if not success and a.get("failure_observation"):
         state["observations"].append(a["failure_observation"])
     advance_opposition(state, rules, a, success)
