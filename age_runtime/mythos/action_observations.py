@@ -39,7 +39,6 @@ def record(state, rules, request, npc_available, local_entities, text):
                    "kind": kind, "outcome": action["outcome"], "condition": obj.get("properties", {}).get("condition"),
                    **({"function": obj["function"]} if "function" in obj else {}),
                    "actor": "pc" if kind == "witnessed" else None,
-                   **({"protagonist_id": state["protagonist"]["id"]} if kind == "witnessed" and state.get("protagonist") else {}),
                    "basis": text(request["basis"], 240), "at": state["time"],
                    "turn": state["turn"], "location": state["location"]})
 
