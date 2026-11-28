@@ -51,9 +51,12 @@ class CampaignDiscoveryTests(unittest.TestCase):
     def test_bundled_catalog_includes_both_draft_campaigns(self):
         from age_runtime.core.campaign_discovery import bundled_catalog
         campaigns = bundled_catalog()
-        self.assertEqual(len(campaigns), 2)
-        self.assertEqual(sum(len(c["episodes"]) for c in campaigns), 8)
-        self.assertEqual(sum(len(e["perspectives"]) for c in campaigns for e in c["episodes"]), 29)
+        self.assertEqual(len(campaigns), 3)
+        self.assertEqual(sum(len(c["episodes"]) for c in campaigns), 9)
+        self.assertEqual(sum(len(e["perspectives"]) for c in campaigns for e in c["episodes"]), 31)
         self.assertTrue(all(c["qualification"] == "unreviewed-rehearsal" for c in campaigns))
         self.assertEqual(campaigns[1]["id"], "near-melanesia-2044")
+        self.assertEqual(campaigns[2]["framework"], "great-war")
+        self.assertEqual(campaigns[2]["episodes"][0]["duration"]["clock"], "event-driven-Time!")
+        self.assertNotIn("inventory", campaigns[2])
         self.assertEqual(campaigns, bundled_catalog())
