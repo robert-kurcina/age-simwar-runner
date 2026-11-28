@@ -31,6 +31,23 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replay mismatch"):
             mythos.verify(state)
 
+    def test_prior_protagonist_dialogue_is_not_current_personal_access(self):
+        from age_runtime.mythos import epistemic, agreements
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        state = mythos.dialogue_step(state, {"npc": "eleanor", "speaker": "pc",
+            "claim": "I have a question.", "stance": "unstated", "intent": "unstated",
+            "reaction": {"emotion": "uneasy"}})
+        self.assertTrue(epistemic.public_projection(state))
+        self.assertTrue(epistemic.relational_projection(state, ["eleanor"])["eleanor"]["current"])
+        # Synthetic identity boundary only; not a supported replacement transaction.
+        state["protagonist"]["id"] = "pc:2"
+        self.assertEqual(epistemic.public_projection(state), [])
+        self.assertEqual(epistemic.relational_projection(state, ["eleanor"])["eleanor"]["current"], {})
+        self.assertEqual(len(epistemic.referee_projection(state, ["eleanor"])), 1)
+        with self.assertRaisesRegex(ValueError, "current local dialogue"):
+            agreements._claims(state, [1], "eleanor")
+        self.assertEqual(state["dialogue"][0]["protagonist_id"], "pc:1")
+
     def test_dialogue_attribution_and_replay(self):
         state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
         claim = {"npc": "eleanor", "speaker": "pc", "claim": "I have a question.",

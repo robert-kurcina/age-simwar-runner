@@ -1,6 +1,7 @@
 """Explicitly acknowledged interpersonal agreements, separate from DXD effects."""
 import copy
 import re
+from age_runtime.mythos.epistemic import current_protagonist_record
 
 def project(state):
     agreements = {}
@@ -21,7 +22,7 @@ def _claims(state, ids, npc, minimum_sequence=-1):
     claims = []
     for i in ids:
         c = records.get(i)
-        if (c is None or {c["speaker"], c["listener"]} != {"pc", npc}
+        if (c is None or not current_protagonist_record(state, c) or {c["speaker"], c["listener"]} != {"pc", npc}
                 or c["location"] != state["location"] or c["turn"] != state["turn"]
                 or i <= minimum_sequence):
             raise ValueError("agreement requires actual current local dialogue")
@@ -52,7 +53,7 @@ def record(state, rules, request, npc_available):
     elif operation == "resolve":
         if set(request) != {"operation", "id", "status", "claim_ids"}:
             raise ValueError("invalid resolution fields")
-        if eid not in current or current[eid]["status"] != "active":
+        if eid not in current or current[eid]["status"] != "active" or not current_protagonist_record(state, current[eid]):
             raise ValueError("agreement not active")
         npc, issuer = current[eid]["npc"], current[eid]["issuer"]
     else:
@@ -74,7 +75,7 @@ def record(state, rules, request, npc_available):
         if condition is not None:
             condition = text(condition, 240)
         for a in current.values():
-            if (a["status"] == "active" and a["npc"] == npc and a["kind"] == request["kind"]
+            if (current_protagonist_record(state, a) and a["status"] == "active" and a["npc"] == npc and a["kind"] == request["kind"]
                     and a["issuer"] == issuer and a["terms"].casefold() == terms.casefold()
                     and a["condition"] == condition):
                 raise ValueError("equivalent active agreement")
@@ -105,4 +106,4 @@ def record(state, rules, request, npc_available):
     ledger.append(event)
 
 def public_projection(state):
-    return list(project(state).values())
+    return [a for a in project(state).values() if current_protagonist_record(state, a)]
