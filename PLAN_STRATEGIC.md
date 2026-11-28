@@ -1,24 +1,36 @@
 # Strategic game development plan
 
-Status: stabilization — 2026-11-27. Current roadmap supersedes historical NEXT/WIP ordering below. Shared constraints and full-stack gate remain in [PLAN.md](PLAN.md). Author UAT, historical approval and independent LLM experiential qualification remain separate and deferred.
+Status: author-approved pivot to Twilight Wars — 2026-11-27. This ordered roadmap supersedes all historical NEXT/WIP ordering below. Shared constraints and full-stack gate remain in [PLAN.md](PLAN.md). Author UAT and historical approval remain deferred.
 
 ## Current ordered roadmap
 
 | Priority / status | Deliverable and exit criterion |
 |---|---|
-| DONE (mechanical) | Strategic adjudication, actor-local information, commitments, objective bounds, Opportunity Latitude and contextual planning; #230 CI passed. |
-| DONE (mechanical) | Seven Conflagration drafts, 25 perspectives, preparation and discovery; #239 CI passed. Standalone Conflagration packaging subsequently passed bundle #255 (46091856503). |
-| DONE (mechanical) | Explicit cross-phase continuation, multi-hop memory, model-faction history and progression; #244–248 merged; #247 CI passed, #248 tests passed, later #255 integrated CI passed. |
-| DONE (mechanical) | Review packet and private selective staging, tested with synthetic evidence; #250 both workflows passed. No actual author approval inferred. |
-| DONE (mechanical) | 2044 Production Accord: one additional episode and four perspectives; #252 passed. #253 allowlist regression repaired in #255; both #255 workflows passed. |
-| DONE (mechanical) | #257 integrated industrial routes and licence boundary: both CI workflows passed. |
-| DONE (mechanical) | #258 unified bundled discovery: eight SH44SER episodes, 29 perspectives; both CI workflows passed. #260 private canonical batch infrastructure also passed both workflows. |
-| P1 BLOCKED | Actual pinned canonical compilation using authorized source bytes (connector-to-runtime handoff unavailable); produce private review packet and distinguish verification from approval. No vault edits, no private bytes in public Git or logs. |
-| DEFERRED | Author review/approval, reviewed private distribution, author UAT and independent LLM experiential qualification. |
-| P1 WIP | Great War native vertical slice: separate Deity/Event/Time! and Manafount pilot, replay and actor-local observations. Next qualify independent choices, eligible options, discovery and delivery. PR economy, mortal war, VP and historical setup remain deferred pending native rules and calibration. |
-| P3 DEFERRED | Full-stack service under unchanged master gate; AGE Enterprise is out of scope. |
+| P0 NEXT | Repair merged #273 regressions: Tests 46094546059 and Chat runtime bundle 46094546103 failed. Inspect logs, fix underlying defect, demonstrate both workflows green; retain Manafount/Experiment rehearsal as isolated experimental fixture, no further tabletop reproduction. |
+| P0 NEXT | Audit existing strategic resource stock, flow, capacity, access, ownership, commitment, project, recovery, transfer and loss semantics against concrete Great War decisions. Inventory actual code paths and tests; reuse before adding; identify gaps and conflicting ledgers. |
+| P0 NEXT | Read pinned Sarna Len manuscript, Great War historical records/workbook, dated Deity records and map authority. Reconstruct 1524–1523 BCE opening: dated actors, Domains, relationships, independent mortal polities, geography, technology and resource access. Distinguish FIXED/WORKING/OPEN; no backward projection from 286 CE. |
+| P1 | Build minimal Great War historical scenario configuration for eight quarterly Turns, simultaneous independent Deity decisions, asymmetric objectives and autonomous mortal institutions. Resolve source-supported setup; unknown consequential values require explicit rehearsal assumptions or author decision. No invented canonical roster. |
+| P1 | Resource accounting vertical slice: bounded owned stocks, available/reserved/depleted capacity where applicable, commitments, production/recovery, access and transfer, irreversible losses and provenance. Distinguish mapped PL, PR, mortal RP and other resource types; no automatic conversions or duplicate ledgers. Test atomic rejection, competing allocations, conservation where applicable, release vs expenditure, time-bound flows and replay. |
+| P1 | Qualify matrix decision loop with contextual actor-local briefings, proposals, negotiations, opposition, authorized resource effects and autonomous mortal responses. No LLM mutation of authoritative state; same affordability and authority checks for humans and model actors. Aggregate institutions and populations, not individual schedules. |
+| P1 | Complete eight-quarter Great War rehearsal with distinct strategic approaches, resource scarcity and opportunity costs, credible independent responses, replay, fog-of-war and terminal objectives. Test extracted offline/Chat-first delivery; mechanical evidence does not establish historical approval or experiential qualification. |
+| P2 | Extend Twilight Wars campaign only after first scenario is mechanically qualified: source-backed windows near 1555 BCE opening, 1552 BCE imperial peak, c.1500 BCE Many Rivers and 1199 BCE Spoiled Ones are candidate anchors, not automatic scenario definitions. Select meaningful conflicts, not every timeline entry. |
+| P2 | Qualify variable-duration transitions preserving actual resource balances, surviving actors, institutions, population changes, relationships, knowledge and commitments. Apply elapsed-time flows explicitly; preserve separate historical boundary, scenario setup and simulation outcome. No forced convergence to canon. |
+| DONE (mechanical) | Conflagration seven draft scenarios / 25 perspectives, integrated continuation, decision support and private staging; separate 2044 Production Accord adds one episode / four perspectives. #255, #257, #258 and #260 integrated CI passed. Preserve existing behavior. |
+| BLOCKED (separate) | Actual pinned Conflagration canonical compilation: connector-to-runtime source-byte handoff unavailable. Private review packet, author approval and reviewed distribution remain outstanding; Hexaday catalog-only. Do not imply finished canonical campaign. |
+| DEFERRED | Author UAT, independent LLM experiential qualification, detailed tabletop reproduction (Mazemouth/Blackgate/Blacktower, PR calibration, military counter mechanics) unless a concrete historical matrix scenario requires a bounded subset. |
+| P3 DEFERRED | Full-stack service under unchanged master gate; AGE Enterprise out of scope. |
 
-Stop generic mechanical expansion absent a concrete scenario defect or user-directed capability. Preserve deterministic replay, bounded native rules, independent faction choices and actor-local scope. Mechanical tests are not evidence of predictive accuracy or experiential acceptance.
+## Approved campaign and Turn architecture
+
+- Campaign: Twilight Wars, c.1555–1199 BCE; first playable scenario Great War, 1524–1523 BCE. Eight quarterly simulation Turns, not eight mandatory Critical Decisions. Preserve shared 6/12/24 decision targets independently.
+- Each Turn: dated world situation and scoped intelligence; resource assessment; independent Deity intentions and allocations; interaction/negotiation and mortal opposition; matrix adjudication; validated effects and resource accounting; advance the quarter and resolve due commitments/flows. Simultaneous intentions do not imply simultaneous unrestricted spending: resolve competing claims against shared state using explicit ordering/conflict policy.
+- Players represent historically appropriate Deities, not Nations. Mortal rulers, institutions and populations have autonomous interests. Do not infer authority from local Prominence.
+- Use existing strategic engine, not a new general tabletop engine. Native continuous Event/Time! rules remain relevant to the experimental fixture and selected semantic constraints, not the approved quarterly matrix cadence.
+- Resource presentation: concise actor-local balances, commitments, bottlenecks, access, uncertainty and actionable tradeoffs. Population, geography, knowledge and legitimacy are not automatically spendable currencies. LLM proposes effects; engine validates and records authorized changes with sources/sinks where applicable. Avoid exhaustive economic simulation.
+- Source policy: read-only pinned vaults; runner owns scenario configuration, not canon. Historical records distinguish FIXED, WORKING and OPEN; current map is 286 CE. Keep restricted source content out of public Git and CI. Reuse authorized acquisition path; if blocked, label missing evidence and do not invent source-derived values.
+- Preserve prior rehearsal and Conflagration compatibility, deterministic replay, portable JSON, contextual recall, information scope, Chat-first gate and independent narrative roadmap.
+
+Relevant source entry points: [Great War history](https://github.com/robert-kurcina/vault-great-war/blob/main/history/README.md), [historical dynamics](https://github.com/robert-kurcina/vault-great-war/blob/main/history/HISTORICAL_DYNAMICS.md), [event index](https://github.com/robert-kurcina/vault-great-war/blob/main/history/events/EVENT_INDEX.md), [scenario configuration](https://github.com/robert-kurcina/vault-great-war/blob/main/scenarios/README.md), [PR architecture](https://github.com/robert-kurcina/vault-great-war/blob/main/deities/PROMINENCE_LIMIT_RECOVERY.md). Pin exact revisions for implementation; these links are navigation, not a compiled source inventory.
 
 ## Historical development record (superseded ordering)
 
