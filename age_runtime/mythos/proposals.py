@@ -49,7 +49,7 @@ def validate_local(rules):
         if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", kind) or not isinstance(spec, dict):
             raise ValueError("invalid capability identity")
         required = {"target", "resolution"}
-        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect"}
+        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect", "resumable"}
         if not required <= set(spec) or set(spec) - allowed:
             raise ValueError("invalid capability fields")
         if spec["target"] not in ("location", "npc", "object"):
@@ -62,6 +62,9 @@ def validate_local(rules):
         elif "object_effect" in spec:
             raise ValueError("object effect requires object target")
         duration_range(spec)
+        if "resumable" in spec and (type(spec["resumable"]) is not bool or
+                spec["target"] != "location" or "variable_interval_seconds" not in spec):
+            raise ValueError("resumption requires reviewed variable location task")
         if type(spec.get("requires_evidence", 0)) is not int or spec.get("requires_evidence", 0) < 0:
             raise ValueError("invalid capability evidence prerequisite")
         if type(spec.get("count_evidence", False)) is not bool:
@@ -107,11 +110,35 @@ def duration_range(spec):
     return 3 * interval, 18 * interval
 
 
+def pending_work(state, action_id):
+    return state.get("pending_work", {}).get(action_id)
+
+
+def pause_work(state, action, started, reason):
+    """Credit only elapsed work for explicitly reviewed resumable tasks."""
+    if not action.get("local_spec", {}).get("resumable") or reason not in ("event", "involuntary_sleep", "unconsciousness"):
+        return
+    elapsed = int((datetime.fromisoformat(state["time"]) - started).total_seconds())
+    prior = pending_work(state, action["id"])
+    total = action["task_duration"]["seconds"]
+    worked = (prior["worked_seconds"] if prior else 0) + elapsed
+    if 0 < worked < total:
+        state.setdefault("pending_work", {})[action["id"]] = {
+            "task_duration": copy.deepcopy(action["task_duration"]),
+            "worked_seconds": worked, "location": state["location"],
+            "evidence": copy.deepcopy(state["discoveries"])}
+
+
 def resolve_duration(state, action):
     """Resolve only after accepted proposal validation; previews never roll."""
     spec = action.get("local_spec", {})
     if "variable_interval_seconds" not in spec:
         return action
+    prior = pending_work(state, action["id"])
+    if prior and spec.get("resumable"):
+        roll = copy.deepcopy(prior["task_duration"])
+        remaining = roll["seconds"] - prior["worked_seconds"]
+        return dict(action, duration_seconds=remaining, local_seconds=remaining, task_duration=roll)
     interval = spec["variable_interval_seconds"]
     roll = dxd.task_duration(f"{state['seed']}:task-duration:{state['turn'] + 1}:{action['id']}", interval)
     return dict(action, duration_seconds=roll["seconds"], local_seconds=roll["seconds"],
@@ -149,7 +176,7 @@ def local_capabilities(state, rules, npc_available):
     result = []
     for kind, spec in cfg.items():
         minimum, maximum = duration_range(spec)
-        if minimum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
+        if len(state["discoveries"]) < spec.get("requires_evidence", 0):
             continue
         if spec["target"] == "object":
             entities = establishment.local_entities(state)
@@ -161,10 +188,16 @@ def local_capabilities(state, rules, npc_available):
             targets = [state["location"]]
         for target in targets:
             action = "local:" + kind + ":" + target
-            if action not in state["used"]:
+            prior = pending_work(state, action) if spec.get("resumable") else None
+            if prior and prior["evidence"] != state["discoveries"]:
+                # Changed source material requires a fresh task, not credit.
+                prior = None
+            needed = prior["task_duration"]["seconds"] - prior["worked_seconds"] if prior else minimum
+            if action not in state["used"] and needed <= remaining:
                 result.append({"action": action, "approach": kind, "target": target,
                                "resolution": spec["resolution"],
-                               **({"duration_range_seconds": [minimum, maximum],
+                               **({"remaining_seconds": needed, "resuming": True} if prior else
+                                  {"duration_range_seconds": [minimum, maximum],
                                    "time_interval_seconds": spec["variable_interval_seconds"],
                                    **({"deadline_risk": True} if maximum > remaining else {})}
                                   if "variable_interval_seconds" in spec else {"seconds": minimum})})
@@ -180,6 +213,8 @@ def compile_local(state, rules, request, npc_available):
     kind, target = cap["approach"], cap["target"]
     spec = rules["local_proposals"][kind]
     loc, seconds = state["location"], duration_range(spec)[1]
+    if not cap.get("resuming"):
+        state.get("pending_work", {}).pop(cap["action"], None)
     action = {"id": cap["action"], "label": kind, "location": loc,
               "duration_seconds": seconds, "local_seconds": seconds, "interval_seconds": spec.get("variable_interval_seconds", 600),
               "activity": "active", "route": {"nodes": [loc], "seconds": 0, "minutes": 0, "terrain": []},
@@ -212,6 +247,7 @@ def record_local(state, action, success, result):
     if success and spec.get("established"):
         record["established"] = spec["established"]
     state["local_records"].append(record)
+    state.get("pending_work", {}).pop(action["id"], None)
 
 
 def prepared_duration(state, action, seconds):
