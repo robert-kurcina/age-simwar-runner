@@ -676,7 +676,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
             for key, amount in a.get("cost", {}).items():
                 state["resources"][key] -= amount
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
-    if action != "observe" and not a.get("repeatable"):
+    if action != "observe" and not a.get("repeatable") and action not in state["used"]:
         state["used"].append(action)
     if not clock:
         for key, amount in a.get("cost", {}).items():
