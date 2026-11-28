@@ -468,6 +468,9 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         interval = dxd_injury.next_boundary(injury)
         if interval is not None:
             boundary = min(boundary, cursor + timedelta(seconds=interval))
+        stun = dxd_hitpoints.stun_boundary(pc)
+        if stun is not None:
+            boundary = min(boundary, cursor + timedelta(seconds=stun))
         awakening = dxd_hitpoints.awakening_boundary(pc)
         if awakening is not None:
             boundary = min(boundary, cursor + timedelta(seconds=awakening))
@@ -502,6 +505,10 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         npc_agenda.observe_boundary(state, rules, engaged=engaged)
         if injury and dxd_injury.projection(injury)["status"] == "dead":
             reason = "character_death"
+            break
+        if dxd_hitpoints.advance_stun(pc, actual):
+            state["observations"].append("You lose consciousness.")
+            reason = "unconsciousness"
             break
         if awakened:
             state["observations"].append("You regain consciousness.")
