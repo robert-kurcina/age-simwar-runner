@@ -11,11 +11,11 @@ Status: stabilization — 2026-11-27. Current roadmap supersedes historical NEXT
 | DONE (mechanical) | Explicit cross-phase continuation, multi-hop memory, model-faction history and progression; #244–248 merged; #247 CI passed, #248 tests passed, later #255 integrated CI passed. |
 | DONE (mechanical) | Review packet and private selective staging, tested with synthetic evidence; #250 both workflows passed. No actual author approval inferred. |
 | DONE (mechanical) | 2044 Production Accord: one additional episode and four perspectives; #252 passed. #253 allowlist regression repaired in #255; both #255 workflows passed. |
-| P0 VERIFY | #257 integrated industrial routes and corrected licence boundary: tests 46091990119 and bundle 46091990128 pending at inspection. Resolve any failure before marking qualified. |
-| P1 WIP | Unified bundled strategic discovery and launch documentation: eight episodes, 29 perspectives; verify extracted archive with current CI. |
-| P1 NEXT | Actual pinned canonical compilation using authorized source bytes; produce private review packet and distinguish verification from approval. No vault edits, no private bytes in public Git or logs. |
+| DONE (mechanical) | #257 integrated industrial routes and licence boundary: both CI workflows passed. |
+| DONE (mechanical) | #258 unified bundled discovery: eight SH44SER episodes, 29 perspectives; both CI workflows passed. #260 private canonical batch infrastructure also passed both workflows. |
+| P1 BLOCKED | Actual pinned canonical compilation using authorized source bytes (connector-to-runtime handoff unavailable); produce private review packet and distinguish verification from approval. No vault edits, no private bytes in public Git or logs. |
 | DEFERRED | Author review/approval, reviewed private distribution, author UAT and independent LLM experiential qualification. |
-| P2 CONDITIONAL | Additional native-system adapters only on demonstrated gameplay need. Great War requires its own deity/Event/Time! semantics; no generic faction-turn port. |
+| P1 WIP | Great War native vertical slice: separate Deity/Event/Time! and Manafount pilot, replay and actor-local observations. Next qualify independent choices, eligible options, discovery and delivery. PR economy, mortal war, VP and historical setup remain deferred pending native rules and calibration. |
 | P3 DEFERRED | Full-stack service under unchanged master gate; AGE Enterprise is out of scope. |
 
 Stop generic mechanical expansion absent a concrete scenario defect or user-directed capability. Preserve deterministic replay, bounded native rules, independent faction choices and actor-local scope. Mechanical tests are not evidence of predictive accuracy or experiential acceptance.
@@ -520,3 +520,7 @@ PR #255 merged; CI pending at inspection. Correct expiry boundary so completed w
 ## Canonical batch preparation checkpoint
 
 PR #257 Tests 46091990119 and bundle 46091990128 passed; #258 Tests 46092150169 and bundle 46092150146 passed. Actual pinned-source connector preflight at runner main b059ba2ac5bdcaf4e7143968e5648c18726ce0d1 retrieved all nine referenced files and found all sixteen distinct referenced headings across both inventories. This is not Python compilation: local environment cannot resolve GitHub and connector bytes have no direct runtime handoff. Add private batch command reusing authorized acquisition, verification, draft compiler and review packet, with deduplicated retrieval and failure cleanup; tests synthetic. Actual compiled canonical snapshots remain outstanding pending authorized runtime transport. No approval, vault modification or publication. No generic expansion recommended. CI pending.
+
+## Great War initial native rehearsal
+
+Source revision da7e1140e92d5450fd82393acc2a15a3ff36a037. Bounded illustrative two-Deity regional Event pool with seeded hands, complete Event then optional Tap then Time!, native mapped PL bands, hidden tableau, revelation/removal, public recharge and depletion, actor-local view, revision-bound commit and deterministic replay. No fixed faction turns or annual RP. Placeholder map, cards, identities and one symbol per year are not canonical. No PR, combat, nation simulation or scoring. CLI pilot and tests added; CI pending. Next provide legal choice enumeration and independent model exchange; integrate discovery and packaging only after native pilot verification. Author UAT deferred.
