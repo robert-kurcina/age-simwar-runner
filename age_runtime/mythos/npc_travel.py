@@ -18,7 +18,7 @@ def record(state, rules, request, npc_available, text):
         raise ValueError("travel requires available anchored NPC")
     if destination == origin or destination not in cfg.get("eligible_locations", [origin]):
         raise ValueError("destination outside reviewed NPC locations")
-    if any(e["npc"] == nid and e["status"] == "scheduled" for e in state.get("timed_detail_events", [])):
+    if npc.get("activity_plan") or any(e["npc"] == nid and e["status"] == "scheduled" for e in state.get("timed_detail_events", [])):
         raise ValueError("NPC has conflicting pending event")
     # Pilot permits only ungated routes: PC-earned route knowledge is not NPC knowledge.
     config = dict(rules["spatial"], edges=[e for e in rules["spatial"]["edges"]

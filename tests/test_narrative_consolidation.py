@@ -9,6 +9,28 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
+    def test_npc_travel_requires_explicit_end_of_committed_activity(self):
+        from age_runtime.mythos import npc_time
+        state = mythos.initial("boothbay", 42)
+        for action in ("talk_eleanor", "visit_elias", "inspect_room", "speak_burroughs"):
+            state = mythos.step(state, action)
+        state = mythos.establish_step(state, {"npc_activity": {
+            "npc": "burroughs", "mode": "low_energy", "safe": False,
+            "minutes": 30, "basis": "He is reviewing paperwork."}})
+        request = {"npc": "burroughs", "destination": "Harbor Diner",
+                   "basis": "He intends to visit the diner."}
+        before = copy.deepcopy(state)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, {"npc_travel": request})
+        self.assertEqual(state, before)
+        self.assertIsNotNone(state["npcs"]["burroughs"]["activity_plan"])
+        self.assertIsNone(npc_time.committed_event(state, "burroughs"))
+        state = mythos.step(state, "wait:30")
+        self.assertIsNone(state["npcs"]["burroughs"]["activity_plan"])
+        traveling = mythos.establish_step(state, {"npc_travel": request})
+        self.assertEqual(traveling["npc_travel"][-1]["status"], "traveling")
+        mythos.verify(traveling)
+
     def test_spent_patrol_approach_does_not_preclude_withdrawal(self):
         from age_runtime.mythos import beats
         _, rules = mythos.load("boothbay")

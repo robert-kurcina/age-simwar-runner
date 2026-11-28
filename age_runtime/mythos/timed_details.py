@@ -38,6 +38,8 @@ def record(state, rules, request, npc_available, local_entities, text):
             or not npc_available(state, rules, {"npc": a["npc"], "location": state["location"]})
             or obj.get("properties", {}).get("condition") != cfg["before"]):
         raise ValueError("event requires current NPC commitment and matching object condition")
+    if state["npcs"][a["npc"]].get("activity_plan"):
+        raise ValueError("event conflicts with committed activity")
     ledger.append({"id": eid, "object": oid, "permission": aid, "npc": a["npc"],
                    "location": state["location"], "scheduled_at": state["time"],
                    "due": due.isoformat(), "status": "scheduled",
@@ -74,7 +76,7 @@ def initiative(state, rules, request, npc_available, local_entities, text):
     oid, delay = request["object"], request["delay_minutes"]
     if not isinstance(oid, str) or type(delay) is not int or delay not in cfg["delays_minutes"]:
         raise ValueError("invalid initiative object or delay")
-    if any(e["status"] == "scheduled" and (e["object"] == oid or e["npc"] == npc) for e in ledger):
+    if state["npcs"][npc].get("activity_plan") or any(e["status"] == "scheduled" and (e["object"] == oid or e["npc"] == npc) for e in ledger):
         raise ValueError("conflicting pending NPC event")
     due = datetime.fromisoformat(state["time"]) + timedelta(minutes=delay)
     if due > datetime.fromisoformat(rules["end"]):
@@ -136,6 +138,8 @@ def native_test(state, rules, request, npc_available, local_entities, text):
         raise ValueError("NPC Test exceeds scenario horizon")
     from age_runtime.mythos import npc_time
     basis = text(request["basis"], 240)
+    if npc.get("activity_plan"):
+        raise ValueError("NPC Test conflicts with committed activity")
     npc_time.interrupt(state, nid)
     ledger.append({"id": eid, "object": oid, "permission": None, "npc": nid,
                    "authority": "npc_native_test", "location": location,
@@ -170,7 +174,7 @@ def task_control(state, rules, request, npc_available, local_entities, text):
         location = npc["location"]
         if location is None or location != e["location"] or not npc_available(state, rules, {"npc": nid, "location": location}):
             raise ValueError("task requires available NPC at original location")
-        if any(other["status"] == "scheduled" and (other["npc"] == nid or other["object"] == e["object"]) for other in state["timed_detail_events"]):
+        if npc.get("activity_plan") or any(other["status"] == "scheduled" and (other["npc"] == nid or other["object"] == e["object"]) for other in state["timed_detail_events"]):
             raise ValueError("conflicting pending event")
         cfg = test_config(rules, nid)
         obj = local_entities(dict(state, location=location)).get(e["object"])
@@ -231,8 +235,6 @@ def next_boundary(state, cursor, finish):
 def resolve(state, rules, elapsed, npc_available, local_entities):
     from age_runtime.mythos import agreements
     cfg = rules.get("timed_detail_event")
-    if not cfg:
-        return
     for e in sorted(state.get("timed_detail_events", []), key=lambda x: (x["due"], x["id"])):
         if e["status"] != "scheduled" or datetime.fromisoformat(e["due"]) > elapsed:
             continue
@@ -255,7 +257,7 @@ def resolve(state, rules, elapsed, npc_available, local_entities):
         a = agreements.project(state).get(e["permission"])
         independent = e.get("authority") == "npc_initiative"
         effect = rules["npc_initiative"] if independent else cfg
-        authorized = independent or (a and a["status"] == "active")
+        authorized = bool(effect and (independent or (a and a["status"] == "active")))
         eligible = (authorized and obj and obj.get("lifecycle", "intact") == "intact"
                     and obj.get("custodian") == e["npc"]
                     and state["npcs"][e["npc"]]["location"] == e["location"]
