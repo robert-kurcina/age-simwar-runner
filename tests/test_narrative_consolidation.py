@@ -665,6 +665,40 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             proposals.validate_local(invalid)
 
+    def test_reviewed_note_task_resumes_without_duration_reroll(self):
+        from datetime import datetime, timedelta
+        from age_runtime.mythos import proposals
+        story, rules = mythos.load("boothbay")
+        rules = copy.deepcopy(rules)
+        state = mythos._initial("boothbay", 42, story, rules)
+        start = datetime.fromisoformat(state["time"])
+        rules["events"] = [{"id": "pause_notes", "at": (start + timedelta(seconds=60)).isoformat(),
+                            "observation": "An interruption.", "interrupt_activity": True}]
+        request = {"action": "local:compose_notes:Harbor Docks",
+                   "approach": "compose_notes", "intent": "Organize my notes."}
+        paused = mythos._step(copy.deepcopy(state), rules, request["action"], request)
+        self.assertEqual(paused["last_result"]["interrupted"], "event")
+        pending = paused["pending_work"][request["action"]]
+        self.assertEqual(pending["worked_seconds"], 60)
+        self.assertEqual(paused["dxd"]["tests"], state["dxd"]["tests"])
+        self.assertEqual(paused["local_records"], [])
+        self.assertNotIn(request["action"], paused["used"])
+        roll = pending["task_duration"]
+        cap = next(c for c in proposals.local_capabilities(paused, rules, mythos.npc_available)
+                   if c["action"] == request["action"])
+        self.assertTrue(cap["resuming"])
+        self.assertEqual(cap["remaining_seconds"], roll["seconds"] - 60)
+        finished = mythos._step(copy.deepcopy(paused), rules, request["action"], request)
+        self.assertEqual(finished["last_result"]["task_duration"], roll)
+        self.assertEqual((datetime.fromisoformat(finished["time"]) - start).total_seconds(), roll["seconds"])
+        self.assertEqual(len(finished["dxd"]["tests"]), len(state["dxd"]["tests"]) + 1)
+        self.assertNotIn(request["action"], finished["pending_work"])
+        changed = copy.deepcopy(paused)
+        changed["discoveries"].append("New evidence.")
+        cap = next(c for c in proposals.local_capabilities(changed, rules, mythos.npc_available)
+                   if c["action"] == request["action"])
+        self.assertFalse(cap.get("resuming", False))
+
     def test_variable_task_deadline_preserves_elapsed_time_without_completion(self):
         from datetime import datetime, timedelta
         from age_runtime.core import dxd
