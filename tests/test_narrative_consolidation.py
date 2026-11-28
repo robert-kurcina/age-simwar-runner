@@ -461,6 +461,33 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertEqual(whole["npcs"]["matteo"]["concerns"], expected)
         self.assertIsNone(whole["npcs"]["matteo"]["activity_plan"])
 
+    def test_dated_event_visibility_does_not_control_world_effect(self):
+        from datetime import datetime
+        _, rules = mythos.load("boothbay")
+        for transit, location, known, visible in (
+            (False, "Harbor Diner", True, True),
+            (False, "Harbor Diner", False, False),
+            (False, "Harbor Docks", True, False),
+            (True, "Harbor Diner", True, False),
+        ):
+            with self.subTest(transit=transit, location=location, known=known):
+                state = mythos.initial("boothbay", 42)
+                state["location"] = location
+                if known:
+                    state["flags"].append("prior_notice")
+                event = {"id": "test_closure", "at": state["time"],
+                         "locations": ["Harbor Diner"], "visible_requires": ["prior_notice"],
+                         "grant": ["door_closed"], "observation": "The door is closed.",
+                         "interrupt_activity": True}
+                cfg = dict(rules, events=[event])
+                at = datetime.fromisoformat(state["time"])
+                observed = mythos.advance_events(state, cfg, at, in_transit=transit)
+                self.assertIn("door_closed", state["flags"])
+                self.assertIn("test_closure", state["events_seen"])
+                self.assertEqual(bool(observed), visible)
+                self.assertEqual("The door is closed." in state["observations"], visible)
+                self.assertEqual(mythos.advance_events(state, cfg, at), [])
+
     def test_dated_event_cannot_use_later_completion_discovery(self):
         # Synthetic timing fixture: the actual Castine action succeeds,
         # but an earlier event must not see the clue earned on completion.
