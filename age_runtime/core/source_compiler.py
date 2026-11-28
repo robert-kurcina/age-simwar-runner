@@ -3,7 +3,7 @@ import argparse
 import base64
 import binascii
 import copy
-from datetime import date
+from age_runtime.core.historical_dates import checked_date
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -78,12 +78,6 @@ def read_pinned_source(owners, owner, revision, path):
     if blob != record["blob_sha"]:
         raise ValueError("connector source blob mismatch")
     return raw
-
-
-def checked_date(value):
-    if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
-        raise ValueError("expected ISO effective date")
-    return date.fromisoformat(value)
 
 
 def resolve_reference(ref, owners, effective_date):
