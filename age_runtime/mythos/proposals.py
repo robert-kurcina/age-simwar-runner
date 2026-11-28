@@ -196,8 +196,8 @@ def local_capabilities(state, rules, npc_available):
             if action not in state["used"] and needed <= remaining:
                 result.append({"action": action, "approach": kind, "target": target,
                                "resolution": spec["resolution"],
-                               **({"remaining_seconds": needed, "resuming": True} if prior else {}),
-                               **({"duration_range_seconds": [minimum, maximum],
+                               **({"remaining_seconds": needed, "resuming": True} if prior else
+                                  {"duration_range_seconds": [minimum, maximum],
                                    "time_interval_seconds": spec["variable_interval_seconds"],
                                    **({"deadline_risk": True} if maximum > remaining else {})}
                                   if "variable_interval_seconds" in spec else {"seconds": minimum})})
