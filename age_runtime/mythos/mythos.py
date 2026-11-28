@@ -362,7 +362,7 @@ def change_demeanor(state, key, delta):
     if new != old:
         state["relationships"][key] = new
         dxd_commitment.supersede_demeanor(state, key)
-        state["relationship_changes"].append({"npc": key, "at": state["time"], "delta": new - old})
+        state["relationship_changes"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "npc": key, "at": state["time"], "delta": new - old})
 
 def consequential_demeanor(state, rules, request):
     """Apply the existing persistent Demeanor limits to a witnessed incident."""
@@ -389,7 +389,7 @@ def consequential_demeanor(state, rules, request):
                   "requested_delta": rules["consequential_demeanor"][severity]}
     if len(state["relationship_changes"]) == count:
         # Record adjudication even when ordinary limits prevent a change.
-        state["relationship_changes"].append({"npc": npc, "at": state["time"], "delta": 0, **provenance})
+        state["relationship_changes"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "npc": npc, "at": state["time"], "delta": 0, **provenance})
     else:
         state["relationship_changes"][-1].update(provenance)
     assert state["relationships"][npc] <= old
@@ -425,7 +425,7 @@ def social_demeanor(state, rules, request):
     provenance = {"source": "social_conduct", "kind": kind, "claims": list(refs),
                   "basis": basis, "turn": state["turn"], "requested_delta": delta}
     if len(history) == count:
-        history.append({"npc": nid, "at": state["time"], "delta": 0, **provenance})
+        history.append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "npc": nid, "at": state["time"], "delta": 0, **provenance})
     else:
         history[-1].update(provenance)
 
@@ -836,7 +836,7 @@ def apply_memory(state, event, memory):
         raise ValueError("no eligible unedited Inspiration")
     found[0]["memory"] = memory
     found[0]["source"] = "model"
-    pc["memory_edits"].append({"turn": state["turn"], "event": event, "memory": memory})
+    pc["memory_edits"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "turn": state["turn"], "event": event, "memory": memory})
 
 def _apply_narrative(state, rules, request):
     pacing.control(state, rules, request)
