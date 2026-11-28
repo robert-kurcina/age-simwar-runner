@@ -31,6 +31,23 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replay mismatch"):
             mythos.verify(state)
 
+    def test_authored_proposition_access_does_not_follow_successor(self):
+        from age_runtime.mythos import epistemic
+        _, rules = mythos.load("boothbay")
+        for seed in range(50):
+            state = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
+            if "badge" in state["flags"]:
+                break
+        else:
+            self.fail("No earned badge")
+        self.assertTrue(epistemic.sources(state, rules, "pc", "badge_found"))
+        self.assertEqual(state["protagonist_knowledge"][0]["protagonist_id"], "pc:1")
+        mythos.verify(state)
+        # Synthetic identity boundary; replacement is not enabled yet.
+        state["protagonist"]["id"] = "pc:2"
+        self.assertIn("badge", state["flags"])
+        self.assertEqual(epistemic.sources(state, rules, "pc", "badge_found"), [])
+
     def test_prior_protagonist_dialogue_is_not_current_personal_access(self):
         from age_runtime.mythos import epistemic, agreements
         state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
