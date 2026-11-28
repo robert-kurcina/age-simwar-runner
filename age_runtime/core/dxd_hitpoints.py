@@ -115,3 +115,49 @@ def assisted_awaken(pc, seed):
     if result["passed"]:
         pool["unconscious"] = False
     return result
+
+
+def stun_resistance(pc, seed):
+    """Resolved Stun with zero HP and actual Injury, not a raw attack."""
+    pool = pc["hitpoints"]
+    if pool["current"] or not pc["injury"]["injury"] or incapacitated(pc):
+        raise ValueError("Stun resistance requires conscious injured patient at zero HP")
+    if pool.get("stun_pending"):
+        raise ValueError("Stun resistance already pending")
+    pool["stun_pending"] = {"seconds": 0, "checks": 0, "seed": seed}
+    return check_stun(pc)
+
+
+def check_stun(pc):
+    pool = pc["hitpoints"]
+    pending = pool["stun_pending"]
+    result = dxd.test(f"{pending['seed']}:stun:{pending['checks']}", tn=7,
+                      dm=dxd.attribute_dm(pc["attributes"]["POW"]))
+    pending["checks"] += 1
+    pending["seconds"] = 0
+    pool["last_stun_check"] = result
+    if not result["passed"]:
+        pool.pop("stun_pending")
+        pool.update(unconscious=True, unconscious_seconds=0,
+                    minimum_seconds=minimum_seconds(pc["injury"]["injury"]), awakening_checks=[])
+    return result
+
+
+def advance_stun(pc, seconds):
+    pool = pc.get("hitpoints", {})
+    pending = pool.get("stun_pending")
+    if not pending:
+        return False
+    if pool["current"] or incapacitated(pc):
+        pool.pop("stun_pending")
+        return False
+    pending["seconds"] += seconds
+    if pending["seconds"] >= 60:
+        return not check_stun(pc)["passed"]
+    return False
+
+
+def stun_boundary(pc):
+    pool = pc.get("hitpoints", {})
+    pending = pool.get("stun_pending")
+    return 60 - pending["seconds"] if pending else None
