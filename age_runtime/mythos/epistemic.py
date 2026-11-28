@@ -102,8 +102,6 @@ def record(state, rules, request, npc_available):
         # This is the NPC's subjective response to this actual exchange,
         # not a new fact, promise, mechanical modifier or PC inner state.
         entry["npc_reaction"] = {key: _text(value, 240) for key, value in reaction.items()}
-    if state.get("protagonist") and "pc" in (entry["speaker"], entry["listener"]):
-        entry["protagonist_id"] = state["protagonist"]["id"]
     # Exact duplicates within one engine turn add no new continuity.
     if any({k: v for k, v in e.items() if k != "id"} == {k: v for k, v in entry.items() if k != "id"} for e in ledger):
         raise ValueError("duplicate dialogue claim")
@@ -163,15 +161,10 @@ def record_testimony(state, rules, request, npc_available):
         raise ValueError("duplicate testimony or record limit")
     ledger.append(entry)
 
-def current_protagonist_record(state, record):
-    """Legacy sessions use the original actor slot; opted-in records require identity."""
-    return not state.get("protagonist") or record.get("protagonist_id") == state["protagonist"]["id"]
-
-
 def public_projection(state):
     """Only what was actually communicated; no truth or intent annotation."""
     return [{k: v for k, v in e.items() if k not in ("speaker_stance", "speaker_intent", "proposition", "asserts", "listener_stance", "npc_reaction", "relay_source")}
-            for e in state.get("dialogue", []) if "pc" in (e["speaker"], e["listener"]) and current_protagonist_record(state, e)]
+            for e in state.get("dialogue", []) if "pc" in (e["speaker"], e["listener"])]
 
 def referee_projection(state, participants):
     """Return relevant private records, with stable references to prior claims."""
@@ -252,44 +245,6 @@ def revise_belief(state, rules, request, npc_available):
         raise ValueError("duplicate belief revision or record limit")
     ledger.append(entry)
 
-def earn_flag(state, rules, flag, action):
-    """Record reviewed proposition access separately from the world flag."""
-    if "protagonist_knowledge" not in state or flag not in ({p.get("flag") for p in rules.get("propositions", {}).values()} | set(rules.get("personal_prerequisite_flags", []))):
-        return
-    ledger = state["protagonist_knowledge"]
-    if not any(e["flag"] == flag and current_protagonist_record(state, e) for e in ledger):
-        ledger.append({"flag": flag, "protagonist_id": state["protagonist"]["id"],
-                       "action": action, "turn": state["turn"], "at": state["time"]})
-
-
-def reacquisition_available(state, rules, action):
-    """Only reviewed previously attempted investigations may be reopened."""
-    if (not state.get("protagonist") or state["protagonist"]["id"] == "pc:1"
-            or action["id"] not in rules.get("personal_reacquisition_actions", [])
-            or action["id"] not in state["used"]):
-        return False
-    grants = action.get("grant", [])
-    return (bool(grants) and all(f in rules.get("personal_prerequisite_flags", []) for f in grants)
-            and any(not action_flag(state, rules, f) for f in grants)
-            and not any(e["action"] == action["id"] and current_protagonist_record(state, e)
-                        for e in state.get("reacquisition_attempts", [])))
-
-
-def action_flag(state, rules, flag):
-    """For successor eligibility, distinguish personal prerequisites from world facts.
-
-    Original-character authored eligibility is preserved until the scenario
-    is migrated to explicit personal grants throughout. No successor is yet enabled.
-    """
-    if flag not in state["flags"]:
-        return False
-    if (not state.get("protagonist") or state["protagonist"]["id"] == "pc:1"
-            or flag not in rules.get("personal_prerequisite_flags", [])):
-        return True
-    return any(e["flag"] == flag and current_protagonist_record(state, e)
-               for e in state.get("protagonist_knowledge", []))
-
-
 def sources(state, rules, actor, pid):
     """Access is not belief. Keep authored access and received claims distinct."""
     spec = registry(state, rules)[pid]
@@ -297,12 +252,9 @@ def sources(state, rules, actor, pid):
     if actor in spec["initial_knowers"]:
         result.append({"kind": "hypothesis_origin", "id": spec["source"]} if spec["kind"] == "hypothesis" else {"kind": "authored_access"})
     if actor == "pc" and spec.get("flag") in state["flags"]:
-        if "protagonist_knowledge" not in state or any(
-                e["flag"] == spec["flag"] and current_protagonist_record(state, e)
-                for e in state["protagonist_knowledge"]):
-            result.append({"kind": "earned", "flag": spec["flag"]})
+        result.append({"kind": "earned", "flag": spec["flag"]})
     for e in state.get("dialogue", []):
-        if e.get("proposition") == pid and e["listener"] == actor and (actor != "pc" or current_protagonist_record(state, e)):
+        if e.get("proposition") == pid and e["listener"] == actor:
             result.append({"kind": "received_claim", "id": e["id"], "asserts": e["asserts"]})
     return result
 
@@ -317,7 +269,7 @@ def proposition_projection(state, rules, participants):
                 continue
             revisions = []
             for e in state.get("dialogue", []):
-                if e.get("proposition") != pid or (actor == "pc" and not current_protagonist_record(state, e)):
+                if e.get("proposition") != pid:
                     continue
                 if e["speaker"] == actor and e["speaker_stance"] != "unstated":
                     revisions.append({"id": e["id"], "stance": e["speaker_stance"], "asserts": e["asserts"]})
@@ -329,7 +281,7 @@ def proposition_projection(state, rules, participants):
                 latest = copy.deepcopy(explicit[-1])
             actors[actor] = {"access": access, "latest_stance": latest}
             if rules.get("social_epistemic"):
-                received = [e for e in state["dialogue"] if e.get("proposition") == pid and e["listener"] == actor and (actor != "pc" or current_protagonist_record(state, e))]
+                received = [e for e in state["dialogue"] if e.get("proposition") == pid and e["listener"] == actor]
                 actors[actor]["conflicting_accounts"] = bool({e["asserts"] for e in received} == {True, False})
                 actors[actor]["account_ids"] = [e["id"] for e in received]
         if actors:
@@ -351,7 +303,7 @@ def relational_projection(state, participants):
         for entry in state.get("dialogue", []):
             if npc not in (entry["speaker"], entry["listener"]):
                 continue
-            if "pc" not in (entry["speaker"], entry["listener"]) or not current_protagonist_record(state, entry):
+            if "pc" not in (entry["speaker"], entry["listener"]):
                 continue
             reaction = entry.get("npc_reaction", {})
             for field, value in reaction.items():

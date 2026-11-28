@@ -36,7 +36,7 @@ def record(state, rules, request, local_entities, text):
     remnants = text(request["remnants"], 160)
     # Destruction releases remnants at the action location; damaged objects
     # remain held. Neither transition changes ownership or grants evidence.
-    ledger.append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "id": eid, "object": oid, "before": before, "outcome": outcome,
+    ledger.append({"id": eid, "object": oid, "before": before, "outcome": outcome,
                    "authorization": authorization, "basis": basis, "remnants": remnants, **function,
                    "location": state["location"], "at": state["time"], "turn": state["turn"],
                    "sequence": len(state["history"])})

@@ -9,114 +9,6 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
-    def test_protagonist_identity_and_ending_attribution(self):
-        state = mythos.initial("boothbay", 42)
-        identity = state["protagonist"]
-        self.assertEqual(identity["id"], "pc:1")
-        self.assertEqual(identity["entered_at"], state["time"])
-        public = mythos.view(state)
-        self.assertEqual(public["protagonist"], identity)
-        self.assertEqual(mythos.gm_context(state)["player_surface"]["protagonist"], identity)
-        public["protagonist"]["id"] = "tampered"
-        self.assertEqual(state["protagonist"]["id"], "pc:1")
-        _, rules = mythos.load("boothbay")
-        ending = mythos.ending_projection(state, rules, "limit", None)
-        self.assertEqual(ending["protagonist_id"], identity["id"])
-        self.assertEqual(ending["ended_at"], state["time"])
-        mythos.verify(state)
-        state = mythos.step(state, "move:Harbor Diner")
-        self.assertEqual(state["protagonist"], identity)
-        mythos.verify(state)
-        state["protagonist"]["id"] = "pc:2"
-        with self.assertRaisesRegex(ValueError, "replay mismatch"):
-            mythos.verify(state)
-
-    def test_reviewed_reacquisition_is_limited_to_one_attempt_per_successor(self):
-        from age_runtime.mythos import epistemic
-        _, rules = mythos.load("boothbay")
-        for seed in range(50):
-            state = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
-            if "badge" in state["flags"]:
-                break
-        else:
-            self.fail("No earned badge")
-        mythos.verify(state)
-        self.assertNotIn("inspect_docks", {a["id"] for a in mythos.options(state, rules)})
-        # Synthetic successor; actual replacement remains unavailable.
-        state["protagonist"]["id"] = "pc:2"
-        self.assertIn("inspect_docks", {a["id"] for a in mythos.options(state, rules)})
-        self.assertNotIn("transmit_account", {a["id"] for a in mythos.options(state, rules)})
-        after = mythos.step(state, "inspect_docks")
-        self.assertEqual(after["used"].count("inspect_docks"), 1)
-        self.assertEqual(after["reacquisition_attempts"][-1]["protagonist_id"], "pc:2")
-        self.assertGreater(after["time"], state["time"])
-        self.assertNotIn("inspect_docks", {a["id"] for a in mythos.options(after, rules)})
-        self.assertEqual(after["discoveries"].count("A census badge lies near the waterfront."), 1)
-
-    def test_successor_personal_prerequisites_and_world_flags(self):
-        from age_runtime.mythos import epistemic, beats
-        state = mythos.initial("boothbay", 42)
-        _, rules = mythos.load("boothbay")
-        state["flags"].extend(["journal", "patrol_risk", "written_account"])
-        self.assertTrue(epistemic.action_flag(state, rules, "journal"))
-        # Synthetic successor boundary; no actual replacement transaction.
-        state["protagonist"]["id"] = "pc:2"
-        self.assertFalse(epistemic.action_flag(state, rules, "journal"))
-        self.assertTrue(epistemic.action_flag(state, rules, "patrol_risk"))
-        self.assertFalse(beats.prerequisites(state, {"requires_flags": ["written_account"]}, {}, rules))
-        epistemic.earn_flag(state, rules, "journal", "visit_elias")
-        self.assertTrue(epistemic.action_flag(state, rules, "journal"))
-        self.assertFalse(epistemic.action_flag(state, rules, "written_account"))
-        self.assertIn("written_account", state["flags"])
-
-    def test_authored_proposition_access_does_not_follow_successor(self):
-        from age_runtime.mythos import epistemic
-        _, rules = mythos.load("boothbay")
-        for seed in range(50):
-            state = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
-            if "badge" in state["flags"]:
-                break
-        else:
-            self.fail("No earned badge")
-        self.assertTrue(epistemic.sources(state, rules, "pc", "badge_found"))
-        self.assertEqual(state["protagonist_knowledge"][0]["protagonist_id"], "pc:1")
-        mythos.verify(state)
-        # Synthetic identity boundary; replacement is not enabled yet.
-        state["protagonist"]["id"] = "pc:2"
-        self.assertIn("badge", state["flags"])
-        self.assertEqual(epistemic.sources(state, rules, "pc", "badge_found"), [])
-
-    def test_prior_protagonist_dialogue_is_not_current_personal_access(self):
-        from age_runtime.mythos import epistemic, agreements
-        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
-        state = mythos.dialogue_step(state, {"npc": "eleanor", "speaker": "pc",
-            "claim": "I have a question.", "stance": "unstated", "intent": "unstated",
-            "reaction": {"emotion": "uneasy"}})
-        self.assertTrue(epistemic.public_projection(state))
-        self.assertTrue(epistemic.relational_projection(state, ["eleanor"])["eleanor"]["current"])
-        # Synthetic identity boundary only; not a supported replacement transaction.
-        state["protagonist"]["id"] = "pc:2"
-        self.assertEqual(epistemic.public_projection(state), [])
-        self.assertEqual(epistemic.relational_projection(state, ["eleanor"])["eleanor"]["current"], {})
-        self.assertEqual(len(epistemic.referee_projection(state, ["eleanor"])), 1)
-        with self.assertRaisesRegex(ValueError, "current local dialogue"):
-            agreements._claims(state, [1], "eleanor")
-        self.assertEqual(state["dialogue"][0]["protagonist_id"], "pc:1")
-
-    def test_dialogue_attribution_and_replay(self):
-        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
-        claim = {"npc": "eleanor", "speaker": "pc", "claim": "I have a question.",
-                 "stance": "unstated", "intent": "unstated"}
-        state = mythos.dialogue_step(state, claim)
-        self.assertEqual(state["dialogue"][-1]["protagonist_id"], "pc:1")
-        self.assertEqual(mythos.view(state)["dialogue"][-1]["protagonist_id"], "pc:1")
-        mythos.verify(state)
-        with self.assertRaisesRegex(ValueError, "duplicate dialogue"):
-            mythos.dialogue_step(state, claim)
-        state["dialogue"][-1]["protagonist_id"] = "pc:2"
-        with self.assertRaisesRegex(ValueError, "replay mismatch"):
-            mythos.verify(state)
-
     def test_public_projection_is_detached_for_every_trial(self):
         for sid in ("boothbay", "castine", "ram-island"):
             with self.subTest(scenario=sid):
@@ -448,31 +340,6 @@ class NarrativeConsolidationTests(unittest.TestCase):
             mythos.establish_step(after, {"social_demeanor": harm})
         mythos.verify(after)
 
-    def test_predecessor_custody_does_not_follow_active_character(self):
-        from age_runtime.mythos import establishment
-        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
-        state = mythos.establish_step(state, {"details": [{"id": "inc:cup",
-            "kind": "object", "label": "Cup", "description": "A ceramic cup.",
-            "basis": "Diner object", "custodian": "eleanor"}]})
-        state = mythos.establish_step(state, {"transfers": [{"id": "inc:cup",
-            "from": "eleanor", "to": "pc", "pc_authorization": "I accept the cup.",
-            "npc_consent": "Here you are.", "basis": "Voluntary transfer"}]})
-        self.assertEqual(establishment.local_entities(state)["inc:cup"]["custodian"], "pc")
-        self.assertEqual(state["custody_transfers"][-1]["protagonist_id"], "pc:1")
-        mythos.verify(state)
-        # Synthetic identity boundary, not a supported replacement operation.
-        state["protagonist"]["id"] = "pc:2"
-        self.assertNotIn("inc:cup", establishment.local_entities(state))
-        self.assertEqual(state["custody_transfers"][-1]["protagonist_id"], "pc:1")
-
-    def test_personal_demeanor_history_is_attributed(self):
-        state = mythos.initial("boothbay", 42)
-        mythos.change_demeanor(state, "eleanor", -1)
-        self.assertEqual(state["relationship_changes"][-1]["protagonist_id"], "pc:1")
-        legacy = mythos.initial("ram-island", 42)
-        mythos.change_demeanor(legacy, "matteo", -1)
-        self.assertNotIn("protagonist_id", legacy["relationship_changes"][-1])
-
     def test_native_demeanor_rolling_limits_across_coarse_time(self):
         from datetime import datetime, timedelta
         state = mythos.initial("ram-island", 42)
@@ -769,7 +636,6 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertIn(proposal["action"], {c["action"] for c in mythos.gm_context(after)["referee"]["local_capabilities"]})
         with self.assertRaises(ValueError):
             mythos.establish_step(after, {"object_action": dict(request, id="act:repeat")})
-        self.assertEqual(after["object_actions"][-1]["protagonist_id"], "pc:1")
         witnessed = mythos.establish_step(after, {"action_observation": {
             "id": "obs:watch_stop", "npc": "eleanor", "action": "act:stop_watch",
             "kind": "witnessed", "basis": "Eleanor sees the action and its result."}})

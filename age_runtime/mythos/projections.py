@@ -21,8 +21,6 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
         scene_view["scene"]["zone"] = config["nodes"][state["location"]]["zone"]
         scene_view["scene"]["routes"] = [r for r in spatial.reachable(config, state) if r["seconds"] <= (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()] if not state["ending"] else []
         scene_view["scene"]["contacts_here"] = [p["name"] for nid, p in state["npcs"].items() if p["encounters"] and p["location"] == state["location"] and npc_available(state, rules, {"npc": nid, "location": state["location"]})]
-    if "protagonist" in state:
-        scene_view["protagonist"] = copy.deepcopy(state["protagonist"])
     if "pacing" in state:
         scene_view["pacing"] = pacing.projection(state, rules)
     if rules.get("danger_beats"):
@@ -83,8 +81,6 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
     recent = {k: public[k] for k in ("scenario", "time", "location", "turn",
               "ending", "last_result", "condition", "resources", "revision", "choices")}
     recent.update({k: public[k] for k in ("scene", "pacing", "activity", "event_pressure", "local_records", "danger", "emotional_commitments", "established_details", "narrative_agreements") if k in public})
-    if "protagonist" in public:
-        recent["protagonist"] = public["protagonist"]
     recent["observations"] = state["observations"][-8:]
     recent["discoveries"] = list(state["discoveries"])
     recent["contacts"] = public["contacts"]

@@ -91,7 +91,7 @@ def resolve(state, rules, action, digest):
                 last_turn=pc["inspirations"][-1]["turn"] if pc["inspirations"] else None,
                 consequence=cue["consequence"], maximum=policy["maximum"],
                 extra_base=favor)):
-        inspired = {**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "turn": state["turn"], "action": action["id"],
+        inspired = {"turn": state["turn"], "action": action["id"],
                     "tag": cue["tag"], "memory": cue["memory"],
                     "basis": cue["memory"], "source": "authored"}
         pc["inspirations"].append(inspired)
@@ -99,7 +99,7 @@ def resolve(state, rules, action, digest):
         result = dxd.test(digest(seed_parts + ["inspiration"]), **retry)
         dxd_conditions.add(pc["concerns"], weariness=1)
     dxd_context.record(state, emotional_triggers, result)
-    pc["tests"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "turn": state["turn"], "action": action["id"],
+    pc["tests"].append({"turn": state["turn"], "action": action["id"],
                         "inputs": args, "components": {"attribute": attr, "skill": skill,
                         "condition_penalty_dice": condition, **({"physical_location_penalties": physical} if physical else {}), "relationship": hook,
                         **({"emotional_commitment": emotional_dm, "commitment_leverage": leverage_dm} if "commitments" in pc else {}),
