@@ -325,3 +325,43 @@ class DraftCompilationTest(unittest.TestCase):
         self.assertEqual(len(sessions), 3)
         self.assertNotIn("Synthetic evidence only.", json.dumps(packet))
         self.assertNotIn("content_base64", json.dumps(packet))
+
+
+    def test_private_batch_preparation_and_atomic_failure(self):
+        from age_runtime.core.canonical_batch import prepare
+        import shutil
+        other = self.root / "second-catalog"
+        shutil.copytree(self.catalog, other)
+        path2 = other / "inventory.json"
+        catalog = parse_json(path2.read_bytes())
+        catalog["id"] = "second-synthetic"
+        path2.write_text(json.dumps(catalog), encoding="utf-8")
+        calls = []
+        def transport(item, token):
+            calls.append((item["owner"], item["revision"], item["path"]))
+            record = next(r for r in self.owners[item["owner"]]["files"]
+                          if r["path"] == item["path"] and r["revision"] == item["revision"])
+            return {"type": "file", "path": item["path"], "encoding": "base64",
+                    "sha": record["blob_sha"], "content": record["content_base64"]}
+        out = self.root / "batch"
+        summary = prepare([self.path, path2], out, token="fixture",
+                          approved_owners=["synthetic-fixture"], transport=transport)
+        self.assertEqual(len(calls), len(self.headings))
+        self.assertEqual(summary["author_review"], "pending")
+        self.assertEqual(sum(c["scenarios"] for c in summary["catalogs"]), 14)
+        self.assertEqual(sum(c["perspectives"] for c in summary["catalogs"]), 50)
+        self.assertEqual(out.stat().st_mode & 0o777, 0o700)
+        self.assertTrue(all(p.stat().st_mode & 0o777 == 0o600
+                            for p in out.rglob("*") if p.is_file()))
+        self.assertNotIn("content_base64", json.dumps(summary))
+        for index in (0, 1):
+            packet = parse_json((out / ("catalog-" + str(index)) / "review-packet.json").read_bytes())
+            self.assertEqual(packet.pop("packet_digest"), digest(packet))
+        with self.assertRaises(OSError):
+            prepare([self.path], out, owners=self.owners)
+        self.assertTrue((out / "manifest.json").exists())
+        invalid = self.root / "invalid-batch"
+        path2.write_text("{}", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            prepare([self.path, path2], invalid, owners=self.owners)
+        self.assertFalse(invalid.exists())
