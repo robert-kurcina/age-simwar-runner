@@ -1,5 +1,4 @@
 """Read-only historical transition preparation; no automatic carry or approval."""
-from datetime import timedelta
 from copy import deepcopy
 
 from age_runtime.core.private_play import verify, inventory, view, eligible_perspectives
@@ -34,7 +33,7 @@ def transition_preview(path, previous, target_id, selectors=None):
     target = compiled["scenario"]
     if target_id == source["id"]:
         raise ValueError("select a different target episode")
-    end = checked_date(h["effective_date"]) + timedelta(days=(source["end_minute"] + 1439) // 1440)
+    end = checked_date(h["effective_date"]).add_days((source["end_minute"] + 1439) // 1440)
     opening = checked_date(spec["effective_date"])
     if opening < end:
         raise ValueError("target starts before source completion")
