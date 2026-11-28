@@ -115,7 +115,9 @@ class GreatWarTests(unittest.TestCase):
         session = gw.start(s, 4)
         actor = s["deities"][0]
         cid = next(iter(gw.observe(s, session, actor)["hand"]))
-        s["cards"][cid].update(event="quiet", tap="required")
+        original = s["cards"][cid]
+        s["cards"][cid] = {"event": "quiet", "tap": "required",
+                           "region": original["region"], "time": original["time"]}
         session = gw.start(s, 4)
         self.assertFalse(any(c["card"] == cid for c in gw.observe(s, session, actor)["choices"]))
 
