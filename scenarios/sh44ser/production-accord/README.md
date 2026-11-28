@@ -10,3 +10,7 @@ python play.py private rehearse scenarios/sh44ser/production-accord/inventory.js
 ```
 
 Use normal strategic decision and model-faction procedures. Canonical compilation and author review remain separate. No vault edits or raw source excerpts are included.
+
+## Industrial interdependence
+
+Fiji chassis readiness requires one previously completed milestone each from Inguria certification and Caledonia refining. These are hypothetical exercise gates, not canonical licensing or supply contracts. Both progress counters are explicitly current and visible to Fiji; no private budgets or other capacities are exposed. All projects read prerequisite progress before any project resolves, so readiness attained in one interval becomes usable in the next. A blocked interval adds one delay, without changing the local Shortfall calculation or creating resources. Independent sponsors retain control of investments and transfers.
