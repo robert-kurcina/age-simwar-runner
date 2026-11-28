@@ -4,6 +4,8 @@ Status: WIP (P1) — 2026-11-27. Shared constraints, priority levels, status voc
 
 ## Current ordered implementation roadmap — 2026-11-27
 
+**N87 implementation update:** PRs #264 and #266 merged, introducing Boothbay v88–v89 protagonist identity and interpersonal record attribution. Proposed v90 extends attribution to Demeanor changes, native Tests, Inspiration and memory edits, and object actions. CI for v90 remains pending. Attribution alone does not isolate knowledge, custody, obligations, or personal state; replacement remains disabled pending that work. No change to package ordering or UAT deferral.
+
 Author direction: defer UAT for now and continue implementation. This roadmap is the current execution order; older N1–N12 and versioned WIP/NEXT notes below are historical evidence, not competing active queues. Do not erase prior failures or imply complete native-rule coverage. PR #259 merged; Tests and Chat runtime bundle passed. Boothbay v87 is the verified narrative baseline. The existing bounded trials exercise the core runtime, native DXD, dialogue, actor-specific knowledge, objectives, relationships, Concern recovery, movement, events, pacing, scoped establishment, revision-bound transactions and replay. Coverage varies by scenario; no experiential acceptance is claimed.
 
 ### P1 — remaining main narrative implementation (revised)
