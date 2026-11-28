@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from age_runtime.core import opportunity_latitude as latitude
 from age_runtime.core.runner import save
-from age_runtime.mythos import projections, resolution, npc_agenda, settlement_activity, incidental_people
+from age_runtime.mythos import projections, resolution, npc_agenda, settlement_activity, incidental_people, replacement
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency, medical
 from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression, dxd_injury, dxd_hitpoints
 
@@ -958,11 +958,14 @@ def verify(state):
         latitude.validate(level)
     replay = _initial(sid, state["seed"], copy.deepcopy(story), copy.deepcopy(rules),
                       opportunity_latitude=level)
-    edits = state["dxd"]["memory_edits"]
+    edits = [e for retired in state.get("retired_protagonists", []) for e in retired["dxd"]["memory_edits"]] + state["dxd"]["memory_edits"]
     cursor = 0
     for entry in state["history"]:
         operation = copy.deepcopy(entry)
         config = copy.deepcopy(rules)
+        if isinstance(operation, dict) and "replace_protagonist" in operation:
+            replacement.apply(replay, config, operation["replace_protagonist"])
+            continue
         if isinstance(operation, dict) and "establish" in operation:
             _apply_establishment(replay, config, operation["establish"])
             continue
@@ -1017,6 +1020,17 @@ def inspect(path, *, full_history=False):
 
 def act(path, action, revision, proposal=None, commitment=None):
     return _commit(path, revision, step, action, proposal, commitment)
+
+def replace_step(state, request):
+    result = copy.deepcopy(state)
+    _, rules = load(result["scenario"])
+    replacement.apply(result, rules, request)
+    return result
+
+
+def replace_protagonist(path, profile, revision):
+    return _commit(path, revision, replace_step, {"profile": profile})
+
 
 def enrich_memory(path, event, memory, revision):
     def edit(state, event, memory):
