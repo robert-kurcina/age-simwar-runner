@@ -138,6 +138,32 @@
       "region": "south",
       "tap": "optional",
       "time": 1
+    },
+    "event-16": {
+      "event": "experiment",
+      "region": "north",
+      "tap": "none",
+      "time": 0,
+      "duration": 2
+    },
+    "event-17": {
+      "event": "experiment",
+      "region": "south",
+      "tap": "none",
+      "time": 0,
+      "duration": 2
+    },
+    "event-18": {
+      "event": "conclude-experiment",
+      "region": "north",
+      "tap": "optional",
+      "time": 0
+    },
+    "event-19": {
+      "event": "conclude-experiment",
+      "region": "south",
+      "tap": "optional",
+      "time": 0
     }
   },
   "motivations": {
