@@ -118,3 +118,39 @@ class GreatWarTests(unittest.TestCase):
         s["cards"][cid].update(event="quiet", tap="required")
         session = gw.start(s, 4)
         self.assertFalse(any(c["card"] == cid for c in gw.observe(s, session, actor)["choices"]))
+
+
+    def test_choice_assessment_is_exact_private_and_advisory(self):
+        s = self.s
+        saw_tap = False
+        for seed in range(8):
+            session = gw.start(s, seed)
+            while not gw.complete(s, session["state"]):
+                actor = s["deities"][session["state"]["active"]]
+                other = next(a for a in s["deities"] if a != actor)
+                view = gw.decision_packet(s, session, actor)["observation"]
+                self.assertEqual(view["motivation"], s["motivations"][actor])
+                self.assertNotIn(s["motivations"][other], json.dumps(view))
+                before = deepcopy(session)
+                for cmd, assessment in zip(view["choices"], view["choice_assessments"]):
+                    after = gw.play(s, session["state"], actor, cmd)
+                    self.assertEqual(assessment["year_after"], after["year"])
+                    self.assertEqual(assessment["ends_rehearsal"], gw.complete(s, after))
+                    for row in assessment["own_prominence_changes"]:
+                        self.assertEqual(after["piles"][row["pile"]]["deity"], actor)
+                        self.assertEqual(row["after"], after["piles"][row["pile"]]["pl"])
+                self.assertEqual(session, before)
+                index = next((i for i, c in enumerate(view["choices"]) if c["tap"] is not None), 0)
+                saw_tap |= view["choices"][index]["tap"] is not None
+                session = gw.commit(s, session, actor, view["revision"], view["choices"][index])
+        self.assertTrue(saw_tap)
+        altered = deepcopy(s)
+        altered["motivations"] = {a: "Contrasting preference." for a in s["deities"]}
+        a, b = gw.start(s, 42), gw.start(altered, 42)
+        self.assertEqual(a["state"], b["state"])
+        actor = s["deities"][0]
+        self.assertEqual(gw.observe(s, a, actor)["choices"], gw.observe(altered, b, actor)["choices"])
+        bad = deepcopy(s)
+        bad["motivations"].pop(actor)
+        with self.assertRaises(ValueError):
+            gw.validate(bad)

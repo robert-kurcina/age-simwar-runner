@@ -18,3 +18,7 @@ Run `python -m age_runtime.core.great_war packet SESSION ACTOR` for the current 
 ## Discovery and offline launch
 
 The general strategic menu (`python play.py private bundled-catalog`) includes Great War with its native launcher, guide, two selectable Deities and event-driven duration. `python game.py describe great-war manafount-rehearsal` reports the public profile. Start with `python -m age_runtime.core.great_war start SESSION --seed 42 --actor azure` (or amber); the selected opening view does not change which Deity acts first. The facilitator must resolve the actual active Deity before asking the selected player to act. The same commands work in the extracted public runtime without GitHub.
+
+## Contextual decisions
+
+Each Deity receives only its own illustrative motivation. Amber favors durable regional access; Azure favors immediate gains and denial when useful. These preferences do not restrict legal choices or change resolution. Each indexed choice includes its deterministic own PL changes, public Fount transitions, immediate Time! advance and remaining horizon. No prediction of future draws, rival intent or winner is supplied.
