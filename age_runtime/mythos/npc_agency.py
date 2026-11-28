@@ -168,10 +168,6 @@ def review_activities(state, entry):
     """A suspended/closed objective cannot silently continue its linked work."""
     if entry.get("status") not in ("deferred", "achieved", "abandoned"):
         return
-    for trip in state.get("npc_travel", []):
-        if trip.get("objective") == entry["id"] and trip["status"] == "traveling":
-            trip.update(status="interrupted", resolved_at=state["time"],
-                        interruption="objective_" + entry["status"])
     for event in linked_activities(state, entry["id"]):
         if event["status"] not in ("scheduled", "interrupted"):
             continue
