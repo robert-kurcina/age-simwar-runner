@@ -393,6 +393,23 @@ class NarrativeConsolidationTests(unittest.TestCase):
             mythos.establish_step(after, {"social_demeanor": harm})
         mythos.verify(after)
 
+    def test_predecessor_custody_does_not_follow_active_character(self):
+        from age_runtime.mythos import establishment
+        state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")
+        state = mythos.establish_step(state, {"details": [{"id": "inc:cup",
+            "kind": "object", "label": "Cup", "description": "A ceramic cup.",
+            "basis": "Diner object", "custodian": "eleanor"}]})
+        state = mythos.establish_step(state, {"transfers": [{"id": "inc:cup",
+            "from": "eleanor", "to": "pc", "pc_authorization": "I accept the cup.",
+            "npc_consent": "Here you are.", "basis": "Voluntary transfer"}]})
+        self.assertEqual(establishment.local_entities(state)["inc:cup"]["custodian"], "pc")
+        self.assertEqual(state["custody_transfers"][-1]["protagonist_id"], "pc:1")
+        mythos.verify(state)
+        # Synthetic identity boundary, not a supported replacement operation.
+        state["protagonist"]["id"] = "pc:2"
+        self.assertNotIn("inc:cup", establishment.local_entities(state))
+        self.assertEqual(state["custody_transfers"][-1]["protagonist_id"], "pc:1")
+
     def test_personal_demeanor_history_is_attributed(self):
         state = mythos.initial("boothbay", 42)
         mythos.change_demeanor(state, "eleanor", -1)
