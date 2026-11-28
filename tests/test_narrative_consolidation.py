@@ -9,6 +9,35 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
+    def test_intent_authority_is_read_only_and_terminal_aware(self):
+        from age_runtime.mythos import proposals
+        for sid in ("boothbay", "castine", "ram-island"):
+            with self.subTest(scenario=sid):
+                state = mythos.initial(sid, 42)
+                before = copy.deepcopy(state)
+                packet = mythos.gm_context(state)
+                authority = packet["referee"]["intent_authority"]
+                self.assertEqual(authority["status"], "active")
+                self.assertEqual(set(authority["classifications"]),
+                                 {"certain", "uncertain", "conditional", "impossible", "unsupported"})
+                self.assertNotIn("intent_authority", mythos.view(state))
+                self.assertEqual(state, before)
+                ended = copy.deepcopy(state)
+                ended["ending"] = {"reason": "limit"}
+                self.assertEqual(proposals.intent_authority(ended, {})["status"], "ended")
+        state = mythos.initial("boothbay", 42)
+        state["dxd"]["activity"]["status"] = "asleep"
+        self.assertEqual(proposals.intent_authority(state, {})["status"], "asleep")
+
+    def test_authored_approach_projection_matches_compiler_constraints(self):
+        from age_runtime.mythos import proposals
+        rules = {"gm_proposals": {"example": {"alternate": {"tn": 8}}}}
+        action = {"id": "example", "test": {"tn": 7}}
+        self.assertEqual(set(proposals.authored_approaches(action, rules)), {"alternate"})
+        for blocked in (dict(action, terminal=True), dict(action, cost={"cash_cents": 1}),
+                        dict(action, until="later"), {"id": "example"}):
+            self.assertEqual(proposals.authored_approaches(blocked, rules), {})
+
     def test_public_projection_is_detached_for_every_trial(self):
         for sid in ("boothbay", "castine", "ram-island"):
             with self.subTest(scenario=sid):
