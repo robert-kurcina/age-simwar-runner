@@ -254,12 +254,27 @@ def revise_belief(state, rules, request, npc_available):
 
 def earn_flag(state, rules, flag, action):
     """Record reviewed proposition access separately from the world flag."""
-    if "protagonist_knowledge" not in state or flag not in {p.get("flag") for p in rules.get("propositions", {}).values()}:
+    if "protagonist_knowledge" not in state or flag not in ({p.get("flag") for p in rules.get("propositions", {}).values()} | set(rules.get("personal_prerequisite_flags", []))):
         return
     ledger = state["protagonist_knowledge"]
     if not any(e["flag"] == flag and current_protagonist_record(state, e) for e in ledger):
         ledger.append({"flag": flag, "protagonist_id": state["protagonist"]["id"],
                        "action": action, "turn": state["turn"], "at": state["time"]})
+
+
+def action_flag(state, rules, flag):
+    """For successor eligibility, distinguish personal prerequisites from world facts.
+
+    Original-character authored eligibility is preserved until the scenario
+    is migrated to explicit personal grants throughout. No successor is yet enabled.
+    """
+    if flag not in state["flags"]:
+        return False
+    if (not state.get("protagonist") or state["protagonist"]["id"] == "pc:1"
+            or flag not in rules.get("personal_prerequisite_flags", [])):
+        return True
+    return any(e["flag"] == flag and current_protagonist_record(state, e)
+               for e in state.get("protagonist_knowledge", []))
 
 
 def sources(state, rules, actor, pid):

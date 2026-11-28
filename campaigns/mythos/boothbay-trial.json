@@ -1,5 +1,6 @@
 {
-  "version": 93,
+  "version": 94,
+  "personal_prerequisite_flags": ["badge", "eleanor_account", "paperwork", "journal", "water_warning", "tide_clue", "written_account", "tide_window_known", "water_risk_known", "ecological_tide_pattern", "police_clearance", "patrol_passage"],
   "protagonist_knowledge": true,
   "protagonist_identity": true,
   "social_epistemic": true,

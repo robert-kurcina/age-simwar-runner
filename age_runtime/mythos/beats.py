@@ -1,6 +1,7 @@
 """Optional local danger: decisive objectives, existing Zones, no AP loop."""
 from datetime import datetime, timedelta
 import copy
+from age_runtime.mythos import epistemic
 from age_runtime.core import dxd_physical_disability, dxd_hitpoints
 
 
@@ -8,8 +9,8 @@ def outcome(cfg, spec, key, default=None):
     return copy.deepcopy(spec.get(key, cfg.get(key, default)))
 
 
-def prerequisites(state, cfg, spec):
-    return (all(f in state["flags"] for f in cfg.get("requires_flags", []) + spec.get("requires_flags", []))
+def prerequisites(state, cfg, spec, rules=None):
+    return (all(epistemic.action_flag(state, rules or {}, f) for f in cfg.get("requires_flags", []) + spec.get("requires_flags", []))
             and not any(f in state["flags"] for f in cfg.get("excludes_flags", []) + spec.get("excludes_flags", []))
             and all(item in state["inventory"] for item in spec.get("items", [])))
 
@@ -19,7 +20,7 @@ def completion_available(state, rules, action):
         return True
     cfg = rules["danger_beats"][action["id"]]
     spec = cfg["approaches"][action["beat_approach"]]
-    return state["location"] == cfg["location"] and prerequisites(state, cfg, spec)
+    return state["location"] == cfg["location"] and prerequisites(state, cfg, spec, rules)
 
 def available(state, rules):
     if state["ending"] or dxd_hitpoints.incapacitated(state["dxd"]) or state["dxd"].get("activity", {}).get("status") != "awake":
@@ -31,7 +32,7 @@ def available(state, rules):
         if datetime.fromisoformat(state["time"]) + timedelta(seconds=cfg["seconds"]) > datetime.fromisoformat(rules["end"]):
             continue
         for approach, spec in cfg["approaches"].items():
-            if not prerequisites(state, cfg, spec):
+            if not prerequisites(state, cfg, spec, rules):
                 continue
             result.append({"action": key, "approach": approach, "objective": spec.get("objective", cfg["objective"]),
                            "stakes": spec.get("stakes", cfg["stakes"]), "terrain": cfg["terrain"], "objects": cfg["objects"],

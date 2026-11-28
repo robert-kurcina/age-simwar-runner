@@ -31,6 +31,22 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replay mismatch"):
             mythos.verify(state)
 
+    def test_successor_personal_prerequisites_and_world_flags(self):
+        from age_runtime.mythos import epistemic, beats
+        state = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        state["flags"].extend(["journal", "patrol_risk", "written_account"])
+        self.assertTrue(epistemic.action_flag(state, rules, "journal"))
+        # Synthetic successor boundary; no actual replacement transaction.
+        state["protagonist"]["id"] = "pc:2"
+        self.assertFalse(epistemic.action_flag(state, rules, "journal"))
+        self.assertTrue(epistemic.action_flag(state, rules, "patrol_risk"))
+        self.assertFalse(beats.prerequisites(state, {"requires_flags": ["written_account"]}, {}, rules))
+        epistemic.earn_flag(state, rules, "journal", "visit_elias")
+        self.assertTrue(epistemic.action_flag(state, rules, "journal"))
+        self.assertFalse(epistemic.action_flag(state, rules, "written_account"))
+        self.assertIn("written_account", state["flags"])
+
     def test_authored_proposition_access_does_not_follow_successor(self):
         from age_runtime.mythos import epistemic
         _, rules = mythos.load("boothbay")
