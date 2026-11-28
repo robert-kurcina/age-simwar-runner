@@ -472,6 +472,15 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
                                                  seed=state["seed"], attributes=pc["attributes"])
         if injury:
             dxd_injury.advance(injury, actual)
+            regime = rules.get("injury_recuperation", {}).get("regime")
+            if regime:
+                eligible = (safe and mode in ("rest", "quiet", "sleep") and engaged is None
+                            and injury["capacity"] > injury["injury"] > 0
+                            and state["location"] in rules["injury_recuperation"]["locations"])
+                recovered = dxd_injury.recuperate(injury, actual,
+                    regime="post_dying" if injury.get("ever_dying") else regime, eligible=eligible)
+                if recovered:
+                    state["observations"].append(f"Extended recuperation restored {recovered} Bodypoints.")
         dxd_morale.calm(pc["morale"], safe=safe, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
         cursor += timedelta(seconds=actual)
         state["time"] = cursor.isoformat()
