@@ -74,3 +74,47 @@ class GreatWarTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gw.commit(s, session, actor, digest(session), {"card": card, "tap": None})
         self.assertEqual(before, session)
+
+
+    def test_independent_deity_packets_and_full_plays(self):
+        s = self.s
+        observed_taps = 0
+        for seed in range(8):
+            session = gw.start(s, seed)
+            while not gw.complete(s, session["state"]):
+                actor = s["deities"][session["state"]["active"]]
+                other = next(a for a in s["deities"] if a != actor)
+                packet = gw.decision_packet(s, session, actor)
+                view = packet["observation"]
+                self.assertEqual(gw.observe(s, session, other)["choices"], [])
+                with self.assertRaises(ValueError):
+                    gw.decision_packet(s, session, other)
+                before = deepcopy(session)
+                for command in view["choices"]:
+                    gw.play(s, session["state"], actor, command)
+                self.assertEqual(session, before)
+                # Prefer a legal Tap, otherwise advance history when possible.
+                choices = view["choices"]
+                index = next((i for i, c in enumerate(choices) if c["tap"] is not None),
+                             next((i for i, c in enumerate(choices) if view["hand"][c["card"]]["time"]), 0))
+                observed_taps += int(choices[index]["tap"] is not None)
+                response = {"packet_id": packet["packet_id"], "choice": index}
+                for bad in ({**response, "choice": True}, {**response, "choice": len(choices)},
+                            {**response, "packet_id": "stale"}, {**response, "effects": {}}):
+                    with self.assertRaises(ValueError):
+                        gw.resolve_choice(s, session, actor, bad)
+                session = gw.resolve_choice(s, session, actor, response)
+                with self.assertRaises(ValueError):
+                    gw.resolve_choice(s, session, actor, response)
+                self.assertEqual(gw.verify(s, session), session)
+            self.assertEqual(session["state"]["year"], s["endpoint"])
+        self.assertGreater(observed_taps, 0)
+
+    def test_required_card_with_no_legal_icon_is_not_offered(self):
+        s = self.s
+        session = gw.start(s, 4)
+        actor = s["deities"][0]
+        cid = next(iter(gw.observe(s, session, actor)["hand"]))
+        s["cards"][cid].update(event="quiet", tap="required")
+        session = gw.start(s, 4)
+        self.assertFalse(any(c["card"] == cid for c in gw.observe(s, session, actor)["choices"]))
