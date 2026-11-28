@@ -77,6 +77,7 @@ def decision_brief(observation):
     return deepcopy({
         "actor": observation["actor"], "turn": observation["turn"], "minute": observation["minute"],
         "goals": goals, "remaining_turns": support.get("remaining_turns"),
+        **({"matrix": observation["matrix"]} if "matrix" in observation else {}),
         **({"reserve_accounts": observation["reserve_accounts"]} if "reserve_accounts" in observation else {}),
         **({"stock_accounts": observation["stock_accounts"]} if "stock_accounts" in observation else {}),
         "objective_outcomes": observation.get("objective_outcomes", {}),
