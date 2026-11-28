@@ -87,3 +87,28 @@ class ReserveAccountingTests(unittest.TestCase):
         bad["values"]["free"] += 1
         with self.assertRaises(ValueError):
             runner.verify_checkpoint(s, bad)
+
+    def test_actor_local_brief_and_pending_warning(self):
+        from age_runtime.core.observations import observe
+        from age_runtime.core.decision_support import decision_brief
+        s = scenario()
+        s["actors"]["other"] = {"label": "Other", "visible_keys": []}
+        state = runner.initialize(s)
+        for action in ("hold", "spend"):
+            state = runner.submit_request(s, state, "deity", {"action": action})
+        own = decision_brief(observe(s, state, "deity"))["reserve_accounts"]["pr"]
+        self.assertEqual(own["available"], 6)
+        self.assertEqual(own["pending_gross_allocations"], 8)
+        self.assertTrue(own["pending_overallocation"])
+        self.assertEqual(observe(s, state, "other")["reserve_accounts"], {})
+
+    def test_model_actor_uses_same_accounting(self):
+        s = scenario()
+        s["model_factions"] = ["deity"]
+        state = runner.initialize(s)
+        packet = runner.faction_packet(s, state, "deity")
+        state = runner.accept_faction_choice(s, state, "deity", packet,
+                                            {"packet_id": packet["packet_id"], "action": "hold"})
+        state = runner.advance(s, state)
+        runner.verify_checkpoint(s, state)
+        self.assertEqual(state["values"]["project"], 4)
