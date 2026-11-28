@@ -492,3 +492,7 @@ PR #246 merged; Tests 46084860762 and bundle 46084860783 passed. Explicit prior-
 ## Campaign progression presentation checkpoint
 
 PR #247 merged; its CI was pending at inspection. Add read-only `private progression INVENTORY SESSION` using verified actor observation, campaign discovery and transition preview. Filter to later available draft episodes after source completion, expose fresh perspective choices and historical selection eligibility, observed objective outcomes and retained origin references without model-faction data. No automatic transition or scoring. Tests use actual Mainlander Ingress completion. CI pending. Next review provenance delivery and campaign-wide mechanical qualification; UAT deferred.
+
+## Reviewed delivery preparation checkpoint
+
+PR #247 passed Tests 46085131305 and bundle 46085131340; #248 Tests 46085256924 passed, bundle 46085256894 pending at inspection. Add digest-bound author review packets and selective private staging using the existing draft compiler and reviewed opening validator. No actual approval assumed, no public inventory edits, no raw source bytes in packet or package; reject unreviewed sessions in reviewed archive reader. Synthetic evidence regression verifies approval binding, isolation and export. Actual canonical bytes and author sign-off remain separate outstanding tasks; UAT deferred. Next resolve available pinned sources and consolidate remaining implementation priorities, including bounded additional system coverage. CI pending.
