@@ -156,6 +156,62 @@ def verify(s, session):
     return session
 
 
+def legal_choices(s, state, actor):
+    """Enumerate bounded authored commands using the same resolver as commit."""
+    if complete(s, state) or actor != s["deities"][state["active"]]:
+        return []
+    projected = deepcopy(state)
+    replenish(s, projected, actor)
+    choices = []
+    for cid in projected["hands"][actor]:
+        c = s["cards"][cid]
+        candidates = [None] if c["tap"] != "required" else []
+        if c["tap"] != "none" and [actor, c["region"]] not in state["tapped"]:
+            founts = deepcopy(state["founts"])
+            if c["event"] == "manafount":
+                founts[cid] = {"region": c["region"], "status": "hidden", "controller": actor}
+            for fid, f in sorted(founts.items()):
+                if f["region"] != c["region"] or (f["status"] == "hidden" and f["controller"] != actor):
+                    continue
+                dispositions = (["remove"] + s["regions"][c["region"]]
+                                if f["status"] == "hidden" else [None])
+                for pid, pile in sorted(state["piles"].items()):
+                    if pile["deity"] == actor and pile["region"] == c["region"]:
+                        candidates.extend({"fount": fid, "pile": pid, "disposition": d}
+                                          for d in dispositions)
+        for choice in candidates:
+            command = {"card": cid, "tap": choice}
+            try:
+                play(s, state, actor, command)
+            except ValueError:
+                continue
+            choices.append(command)
+    return choices
+
+
+def decision_packet(s, session, actor):
+    observation = observe(s, session, actor)
+    if observation["complete"] or observation["active"] != actor:
+        raise ValueError("no active decision for Deity")
+    if not observation["choices"]:
+        raise ValueError("no legal Event; scenario requires an explicit fallback rule")
+    packet = {"version": 1, "observation": observation,
+              "instruction": "Choose one offered command by index. Respect your own interests, "
+                             "public information and private hand; do not invent effects or opposing PL."}
+    return {**packet, "packet_id": digest(packet)}
+
+
+def resolve_choice(s, session, actor, response):
+    packet = decision_packet(s, session, actor)
+    if (not isinstance(response, dict) or set(response) != {"packet_id", "choice"}
+            or response["packet_id"] != packet["packet_id"]
+            or type(response["choice"]) is not int
+            or not 0 <= response["choice"] < len(packet["observation"]["choices"])):
+        raise ValueError("invalid or stale Deity choice")
+    return commit(s, session, actor, packet["observation"]["revision"],
+                  packet["observation"]["choices"][response["choice"]])
+
+
 def observe(s, session, actor):
     verify(s, session)
     if actor not in s["deities"]:
@@ -173,6 +229,8 @@ def observe(s, session, actor):
                       for pid, p in state["piles"].items()},
             "founts": deepcopy(state["founts"]),
             "tapped": deepcopy(state["tapped"]),
+            "choices": legal_choices(s, state, actor),
+            "recent_plays": deepcopy(state["log"][-3:]),
             "plays": len(state["log"]), "qualification": s["qualification"],
             "conclusion": "Time! endpoint" if state["year"] >= s["endpoint"] else
                           "Event pool exhausted" if complete(s, state) else None}
@@ -188,7 +246,7 @@ def commit(s, session, actor, revision, command):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="operation", required=True)
-    for name in ("start", "observe", "play"):
+    for name in ("start", "observe", "play", "packet", "choose"):
         p = sub.add_parser(name)
         p.add_argument("session", type=Path)
         if name == "start":
@@ -198,6 +256,8 @@ def main():
         if name == "play":
             p.add_argument("revision")
             p.add_argument("command", type=Path)
+        if name == "choose":
+            p.add_argument("response", type=Path)
     args = parser.parse_args()
     s = json.loads(SPEC.read_text(encoding="utf-8"))
     if args.operation == "start":
@@ -208,9 +268,16 @@ def main():
     else:
         session = json.loads(args.session.read_text(encoding="utf-8"))
         actor = args.actor
-        if args.operation == "play":
-            session = commit(s, session, actor, args.revision,
-                             json.loads(args.command.read_text(encoding="utf-8")))
+        if args.operation == "packet":
+            print(json.dumps(decision_packet(s, session, actor), indent=2))
+            return
+        if args.operation in ("play", "choose"):
+            if args.operation == "play":
+                session = commit(s, session, actor, args.revision,
+                                 json.loads(args.command.read_text(encoding="utf-8")))
+            else:
+                session = resolve_choice(s, session, actor,
+                                         json.loads(args.response.read_text(encoding="utf-8")))
             fd, temporary = tempfile.mkstemp(dir=args.session.parent)
             try:
                 with os.fdopen(fd, "w", encoding="utf-8") as stream:
