@@ -164,6 +164,18 @@ def permission_status(s, state, pid, minute=None):
     for name in s.get("project_permissions", {}).get(pid, []):
         term = s["permission_terms"][name]
         active = active_permission(s, {**state, "minute": at}, name, term["issuer"], term["grantee"])
+        # Resolution closes the preceding work interval. A licence accepted
+        # by its opening and expiring exactly at its end covers that interval,
+        # but never grants access to a subsequent interval. Revocation and
+        # release are not expiry and cannot qualify for this exception.
+        if minute is not None and state["minute"] < at and not active:
+            active = any(p.get("permission") == name
+                         and (p.get("issuer"), p.get("grantee")) == (term["issuer"], term["grantee"])
+                         and p.get("status") in ("active", "expired")
+                         and p.get("accepted_minute", at) <= state["minute"]
+                         and p["due_minute"] == at
+                         and (p["status"] == "active" or p.get("resolved_minute") == at)
+                         for p in state.get("negotiations", {}).values())
         rows.append({"permission": name, "issuer": term["issuer"], "met": active})
     return rows
 

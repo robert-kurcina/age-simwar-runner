@@ -114,21 +114,26 @@ class ProductionAccordTests(unittest.TestCase):
         def proposal(state):
             apply(s, state, "fiji", {"kind": "propose", "id": "licence",
                   "recipient": "inguria", "permission": "chassis_licence", "due_minute": 3 * turn})
-        for route in ("unanswered", "rejected", "accepted", "revoked", "expired"):
+        for route in ("unanswered", "rejected", "accepted", "revoked", "expired", "boundary"):
             state = initialize(s)
             proposal(state)
             if route == "rejected":
                 apply(s, state, "inguria", {"kind": "reject", "id": "licence"})
-            elif route in ("accepted", "revoked", "expired"):
+            elif route in ("accepted", "revoked", "expired", "boundary"):
                 apply(s, state, "inguria", {"kind": "accept", "id": "licence"})
                 if route == "revoked":
                     apply(s, state, "inguria", {"kind": "revoke", "id": "licence"})
-            minute = 3 * turn if route == "expired" else turn
-            resolve(s, state, minute)
+            minute = turn
+            if route in ("expired", "boundary"):
+                resolve(s, state, 3 * turn)
+                state["minute"] = (3 if route == "expired" else 2) * turn
+                minute = state["minute"] + turn
+            else:
+                resolve(s, state, minute)
             resolve_projects(s, state, minute)
-            self.assertEqual(state["values"]["fiji_chassis_progress"], int(route == "accepted"), route)
+            self.assertEqual(state["values"]["fiji_chassis_progress"], int(route in ("accepted", "boundary")), route)
             row = next(r for r in state["project_results"] if r["id"] == "fiji_chassis")
-            self.assertEqual(row["outcome"], "clear" if route == "accepted" else "permission_blocked")
+            self.assertEqual(row["outcome"], "clear" if route in ("accepted", "boundary") else "permission_blocked")
         for invalid in (["unknown"], ["chassis_licence", "chassis_licence"]):
             bad = deepcopy(s)
             bad["project_permissions"]["fiji_chassis"] = invalid
@@ -138,3 +143,64 @@ class ProductionAccordTests(unittest.TestCase):
         bad["project_permissions"] = {"vanuatu_maintenance": ["chassis_licence"]}
         with self.assertRaises(ValueError):
             validate_projects(bad)
+
+
+    def test_integrated_industrial_routes(self):
+        from age_runtime.core.private_play import decision_brief
+
+        def play(route):
+            session = start_rehearsal(ROOT, SID, "fiji")
+            t = 43200
+            history = []
+            for turn in range(6):
+                # Each sponsor retains its own decision. These are scripted
+                # inputs, not independent LLM deliberation.
+                choices = {}
+                if turn == 0:
+                    session = record_decision(session, digest(session), "licence-request",
+                        "Request temporary chassis documentation.",
+                        negotiation_command={"kind": "propose", "id": "licence",
+                            "recipient": "inguria", "permission": "chassis_licence",
+                            "due_minute": (5 if route == "expiry" else 6) * t})
+                    session = record_decision(session, digest(session), "industrial",
+                        "Improve chassis industrial capacity.", action="fiji_chassis_improve_industrial")
+                    choices = {"inguria": {"kind": "reject" if route == "refusal" else "accept", "id": "licence"},
+                               "caledonia": "caledonia_refining_improve_materials",
+                               "vanuatu": "vanuatu_support_caledonia" if route != "no-funding" else None}
+                elif turn == 1:
+                    session = record_decision(session, digest(session), "energy",
+                        "Improve chassis energy capacity.", action="fiji_chassis_improve_energy")
+                    choices = {"inguria": "inguria_certification_improve_industrial",
+                               "caledonia": "caledonia_refining_improve_energy",
+                               "vanuatu": "vanuatu_maintenance_improve_energy"}
+                elif turn == 2:
+                    choices = {"inguria": "inguria_support_fiji",
+                               "vanuatu": "vanuatu_maintenance_improve_industrial"}
+                elif turn == 3 and route == "revocation":
+                    choices = {"inguria": {"kind": "revoke", "id": "licence"}}
+                for actor in pending_factions(session):
+                    packet = model_packet(session, actor)
+                    session = model_choice(session, actor,
+                        {"packet_id": packet["packet_id"], "action": choices.get(actor)})
+                session = verify(update(session, turns=1))
+                history.append(session["state"]["values"]["fiji_chassis_progress"])
+            final = decision_brief(session)
+            self.assertTrue(final["complete"])
+            self.assertFalse(final["recovery_assessment"]["alternatives"])
+            self.assertEqual(final["objective_outcomes"]["readiness"]["status"],
+                             "achieved" if route == "cooperation" else "objective_failure")
+            return session, history
+
+        expected = {
+            "cooperation": [0, 0, 1, 2, 3, 4],
+            "refusal": [0, 0, 0, 0, 0, 0],
+            "no-funding": [0, 0, 0, 0, 0, 0],
+            "revocation": [0, 0, 1, 1, 1, 1],
+            "expiry": [0, 0, 1, 2, 3, 3],
+        }
+        for route, milestones in expected.items():
+            with self.subTest(route=route):
+                session, actual = play(route)
+                self.assertEqual(actual, milestones)
+                self.assertEqual(session["state"]["values"]["fiji_credits"], 1)
+                self.assertEqual(verify(session), session)
