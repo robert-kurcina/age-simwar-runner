@@ -630,8 +630,9 @@ def _step(state, rules, action, proposal=None, commitment=None):
         elif a.get("cost"):
             for key, amount in a["cost"].items():
                 state["resources"][key] -= amount
+        work_started = datetime.fromisoformat(state["time"])
         reason = activity_segment(state, rules, a.get("local_seconds", a["duration_seconds"]), mode,
-                                  safe=a.get("safe", False), interruptible=mode in ("rest", "low_energy", "sleep", "restorative", "quiet"), engaged=engaged)
+                                  safe=a.get("safe", False), interruptible=mode in ("rest", "low_energy", "sleep", "restorative", "quiet") or a.get("local_spec", {}).get("resumable", False), engaged=engaged)
         if mode == "sleep":
             pc = state["dxd"]
             before = dxd_conditions.degrees(pc["concerns"])["stress"]
@@ -642,6 +643,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
             dxd_morale.calm(pc["morale"], safe=False, stress_degrees_removed=before - dxd_conditions.degrees(pc["concerns"])["stress"])
             return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
         if reason:
+            proposals.pause_work(state, a, work_started, reason)
             return finish_activity(state, rules, action, a, False, reason, proposal)
         if deadline_limited:
             return finish_activity(state, rules, action, a, False, "deadline", proposal)
