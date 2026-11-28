@@ -291,13 +291,13 @@
         "patron_c"
       ]
     },
-    "everia_river": {
+    "patron_d_river": {
       "description": "everia river",
       "actors": [
         "patron_d"
       ]
     },
-    "everia_counter": {
+    "patron_d_counter": {
       "description": "everia counter",
       "actors": [
         "patron_d"
@@ -315,8 +315,8 @@
         "institution_a"
       ]
     },
-    "regional_security": {
-      "description": "regional security",
+    "institution_b_security": {
+      "description": "institution b security",
       "actors": [
         "institution_b"
       ]
@@ -411,13 +411,13 @@
       "amount": 3,
       "commitment": null
     },
-    "everia_river": {
+    "patron_d_river": {
       "account": "patron_d",
       "operation": "spend",
       "amount": 3,
       "commitment": null
     },
-    "everia_counter": {
+    "patron_d_counter": {
       "account": "patron_d",
       "operation": "spend",
       "amount": 3,
@@ -454,12 +454,6 @@
       "amount": 3,
       "purpose": "Synthetic institutional allocation"
     },
-    "regional_security": {
-      "source": "institution_b",
-      "destination": null,
-      "amount": 3,
-      "purpose": "Synthetic institutional allocation"
-    },
     "institution_b_routes": {
       "source": "institution_b",
       "destination": null,
@@ -474,6 +468,12 @@
     },
     "institution_d_counter": {
       "source": "institution_d",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    },
+    "institution_b_security": {
+      "source": "institution_b",
       "destination": null,
       "amount": 3,
       "purpose": "Synthetic institutional allocation"
@@ -711,10 +711,10 @@
     "patron_c_river": {
       "local_autonomy": -2
     },
-    "everia_river": {
+    "patron_d_river": {
       "local_autonomy": 2
     },
-    "everia_counter": {
+    "patron_d_counter": {
       "network_cohesion": -2
     },
     "institution_a_routes": {
@@ -722,9 +722,6 @@
     },
     "institution_a_cohesion": {
       "network_cohesion": 2
-    },
-    "regional_security": {
-      "regional_security": 2
     },
     "institution_b_routes": {
       "transit_access": -1
@@ -734,6 +731,9 @@
     },
     "institution_d_counter": {
       "network_cohesion": -1
+    },
+    "institution_b_security": {
+      "regional_security": 2
     }
   }
 }
