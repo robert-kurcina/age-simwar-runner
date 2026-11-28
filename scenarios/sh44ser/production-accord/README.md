@@ -14,3 +14,7 @@ Use normal strategic decision and model-faction procedures. Canonical compilatio
 ## Industrial interdependence
 
 Fiji chassis readiness requires one previously completed milestone each from Inguria certification and Caledonia refining. These are hypothetical exercise gates, not canonical licensing or supply contracts. Both progress counters are explicitly current and visible to Fiji; no private budgets or other capacities are exposed. All projects read prerequisite progress before any project resolves, so readiness attained in one interval becomes usable in the next. A blocked interval adds one delay, without changing the local Shortfall calculation or creating resources. Independent sponsors retain control of investments and transfers.
+
+### Technology access
+
+Fiji also requires an active, explicitly accepted Ingurian licence for non-sensitive chassis documentation. This hypothetical term does not convey strategic IP. The licence must remain active beyond the resolution boundary (expiry at that boundary blocks progress); refusal, revocation, release or expiry prevents future stages, not previously earned milestones. Local investment remains possible. The next-resolution brief distinguishes access from local capacity and external milestones; no guaranteed long-term projection or technology tree.
