@@ -100,6 +100,8 @@ def record(state, rules, request, npc_available):
         if status == "broken" and issuer not in speakers:
             raise ValueError("breakage requires issuer acknowledgement")
         event.update(status=status, claim_ids=list(request["claim_ids"]))
+    if state.get("protagonist"):
+        event["protagonist_id"] = state["protagonist"]["id"]
     ledger.append(event)
 
 def public_projection(state):
