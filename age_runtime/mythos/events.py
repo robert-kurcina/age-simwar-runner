@@ -11,10 +11,54 @@ def eligible(state, spec):
             and not any(f in state["flags"] for f in spec.get("excludes_flags", []))
             and (not spec.get("locations") or state["location"] in spec["locations"]))
 
+def validate_scope(spec, locations, *, flag_keys=("requires_flags", "excludes_flags")):
+    if "locations" in spec:
+        scope = spec["locations"]
+        if not isinstance(scope, list) or not scope or any(
+                not isinstance(location, str) or location not in locations for location in scope):
+            raise ValueError("invalid event location scope")
+    for key in flag_keys:
+        if key in spec:
+            flags = spec[key]
+            if not isinstance(flags, list) or any(not isinstance(f, str) or not f.strip() for f in flags):
+                raise ValueError("invalid event flag scope")
+            if len(set(flags)) != len(flags):
+                raise ValueError("duplicate event flag")
+    if set(spec.get(flag_keys[0], [])) & set(spec.get(flag_keys[1], [])):
+        raise ValueError("contradictory event flag scope")
+
+
+def validate_dated(rules):
+    locations = set(rules["locations"])
+    start, end = datetime.fromisoformat(rules["start"]), datetime.fromisoformat(rules["end"])
+    ids = set()
+    for event in rules.get("events", []):
+        eid = event.get("id")
+        if not isinstance(eid, str) or not eid.strip() or eid in ids:
+            raise ValueError("invalid or duplicate dated event identity")
+        ids.add(eid)
+        try:
+            at = datetime.fromisoformat(event["at"])
+            if not start <= at <= end:
+                raise ValueError("dated event outside scenario horizon")
+        except (TypeError, KeyError) as exc:
+            raise ValueError("invalid dated event time") from exc
+        validate_scope(event, locations, flag_keys=("visible_requires", "visible_excludes"))
+        if "grant" in event and (not isinstance(event["grant"], list) or any(
+                not isinstance(f, str) or not f.strip() for f in event["grant"])):
+            raise ValueError("invalid dated event grants")
+        if "observation" in event and (not isinstance(event["observation"], str) or not event["observation"].strip()):
+            raise ValueError("invalid dated event observation")
+        if "interrupt_activity" in event and type(event["interrupt_activity"]) is not bool:
+            raise ValueError("invalid dated event interruption")
+
+
 def validate(rules):
     locations = set(rules["locations"])
     actions = {a["id"] for a in rules["actions"]}
     for key, cfg in rules.get("event_clocks", {}).items():
+        validate_scope(cfg, locations)
+        validate_scope(cfg.get("visibility", {}), locations)
         if type(cfg["segments"]) is not int or cfg["segments"] <= 0 or not cfg.get("source") or not cfg.get("name"):
             raise ValueError("invalid Event Clock")
         if not cfg.get("triggers") and not cfg.get("interval_seconds"):
@@ -28,6 +72,7 @@ def validate(rules):
             raise ValueError("Event Clock needs consequence")
     ids = set()
     for entry in rules.get("encounter_table", []):
+        validate_scope(entry, locations)
         if entry["id"] in ids or type(entry["weight"]) is not int or entry["weight"] <= 0 or not entry.get("locations") or not set(entry["locations"]) <= locations or not entry.get("observation"):
             raise ValueError("invalid encounter entry")
         ids.add(entry["id"])
