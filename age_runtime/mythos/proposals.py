@@ -149,7 +149,7 @@ def local_capabilities(state, rules, npc_available):
     result = []
     for kind, spec in cfg.items():
         minimum, maximum = duration_range(spec)
-        if maximum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
+        if minimum > remaining or len(state["discoveries"]) < spec.get("requires_evidence", 0):
             continue
         if spec["target"] == "object":
             entities = establishment.local_entities(state)
@@ -165,7 +165,8 @@ def local_capabilities(state, rules, npc_available):
                 result.append({"action": action, "approach": kind, "target": target,
                                "resolution": spec["resolution"],
                                **({"duration_range_seconds": [minimum, maximum],
-                                   "time_interval_seconds": spec["variable_interval_seconds"]}
+                                   "time_interval_seconds": spec["variable_interval_seconds"],
+                                   **({"deadline_risk": True} if maximum > remaining else {})}
                                   if "variable_interval_seconds" in spec else {"seconds": minimum})})
     return result
 

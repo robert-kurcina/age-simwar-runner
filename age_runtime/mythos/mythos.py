@@ -547,7 +547,7 @@ def finish_activity(state, rules, action, a, success, reason=None, proposal=None
     pacing.reconcile_scene(state, rules)
     pacing.record(state, a)
     state["history"].append(history_entry(action, proposal, a.get("commitment")))
-    if ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
+    if reason == "deadline" or ("pacing" not in rules and state["turn"] >= rules["max_turns"]) or not options(state, rules):
         state["ending"] = ending_projection(state, rules, "limit", action)
     return state
 
@@ -583,8 +583,15 @@ def _step(state, rules, action, proposal=None, commitment=None):
     a = proposals.resolve_duration(state, a)
     started = datetime.fromisoformat(state["time"])
     elapsed = started + timedelta(seconds=a["duration_seconds"])
-    if elapsed > datetime.fromisoformat(rules["end"]):
-        raise ValueError("action exceeds scenario deadline")
+    deadline = datetime.fromisoformat(rules["end"])
+    deadline_limited = elapsed > deadline
+    if deadline_limited:
+        if "task_duration" not in a or not a.get("local_capability") or not state["dxd"].get("activity"):
+            raise ValueError("action exceeds scenario deadline")
+        # A reviewed variable task can start if its minimum fits. A longer
+        # roll consumes only the available time, without a completion Test.
+        seconds = int((deadline - started).total_seconds())
+        a = dict(a, duration_seconds=seconds, local_seconds=seconds)
     state["turn"] += 1
     if rules.get("routine_observations"):
         state["routine_source"] = None
@@ -636,6 +643,8 @@ def _step(state, rules, action, proposal=None, commitment=None):
             return finish_activity(state, rules, action, a, woke if action == "wake_early" else not bool(reason), reason)
         if reason:
             return finish_activity(state, rules, action, a, False, reason, proposal)
+        if deadline_limited:
+            return finish_activity(state, rules, action, a, False, "deadline", proposal)
         if rules.get("npc_lifecycle") and engaged and state["npcs"][engaged].get("activity", {}).get("sleep_episode") != sleep_episode:
             return finish_activity(state, rules, action, a, False, "npc_sleep_interruption", proposal)
         if not _local_action_available(state, rules, a):

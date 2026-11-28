@@ -665,6 +665,36 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             proposals.validate_local(invalid)
 
+    def test_variable_task_deadline_preserves_elapsed_time_without_completion(self):
+        from datetime import datetime, timedelta
+        from age_runtime.core import dxd
+        from age_runtime.mythos import proposals
+        story, rules = mythos.load("boothbay")
+        request = {"action": "local:compose_notes:Harbor Docks",
+                   "approach": "compose_notes", "intent": "Organize my investigative notes."}
+        for seed in range(100):
+            state = mythos._initial("boothbay", seed, copy.deepcopy(story), copy.deepcopy(rules))
+            roll = dxd.task_duration(f"{seed}:task-duration:1:{request['action']}", 60)
+            if roll["seconds"] > 180:
+                break
+        else:
+            self.fail("No duration exceeding minimum")
+        cfg = copy.deepcopy(rules)
+        cfg["end"] = (datetime.fromisoformat(state["time"]) + timedelta(seconds=180)).isoformat()
+        offers = proposals.local_capabilities(state, cfg, mythos.npc_available)
+        cap = next(c for c in offers if c["action"] == request["action"])
+        self.assertTrue(cap["deadline_risk"])
+        before = copy.deepcopy(state)
+        after = mythos._step(copy.deepcopy(state), cfg, request["action"], request)
+        self.assertEqual(after["time"], cfg["end"])
+        self.assertEqual(after["last_result"]["interrupted"], "deadline")
+        self.assertEqual(after["last_result"]["task_duration"], roll)
+        self.assertFalse(after["last_result"]["success"])
+        self.assertEqual(after["dxd"]["tests"], before["dxd"]["tests"])
+        self.assertEqual(after["local_records"], before["local_records"])
+        self.assertNotIn(request["action"], after["used"])
+        self.assertEqual(after["ending"]["reason"], "limit")
+
     def test_variable_complex_task_rolls_before_completion_test(self):
         from datetime import datetime
         state = mythos.initial("boothbay", 42)
