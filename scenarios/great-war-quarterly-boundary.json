@@ -1,0 +1,52 @@
+{
+  "id": "great-war-quarterly-rehearsal",
+  "clock": "quarterly_matrix",
+  "start_year": -1524,
+  "end_year": -1523,
+  "start_status": "WORKING",
+  "end_status": "WORKING",
+  "map_reference_year": 286,
+  "map_epoch_status": "FIXED",
+  "playable": false,
+  "sources": [
+    {
+      "repo": "robert-kurcina/vault-great-war",
+      "path": "history/README.md",
+      "blob_sha": "69e48246dce661c8e2f2ad192c2d38d805998989"
+    },
+    {
+      "repo": "robert-kurcina/vault-great-war",
+      "path": "history/events/EVENT_INDEX.md",
+      "blob_sha": "de776e788bec640e1499046ebc31b11be25cd496"
+    },
+    {
+      "repo": "robert-kurcina/vault-great-war",
+      "path": "history/MODEL_CONVENTIONS.md",
+      "blob_sha": "50b7d8f7767fd34f8e87037b2ac28f49d36031a0"
+    },
+    {
+      "repo": "robert-kurcina/vault-great-war",
+      "path": "history/HISTORICAL_DYNAMICS.md",
+      "blob_sha": "fcba9ace2b1c8079310644ebd499030f08edd5ca"
+    },
+    {
+      "repo": "robert-kurcina/vault-great-war",
+      "path": "deities/PROMINENCE_LIMIT_RECOVERY.md",
+      "blob_sha": "54e3782791b2ea69b4604f85065e54d1c0864d9d"
+    },
+    {
+      "repo": "robert-kurcina/vault-great-war",
+      "path": "scenarios/README.md",
+      "blob_sha": "fea727714b8f6627d524439e24cc7cf7ecd42dda"
+    }
+  ],
+  "unresolved": [
+    "deity_roster",
+    "deity_domains",
+    "dated_prominence",
+    "mortal_polities",
+    "regional_geography",
+    "starting_resources",
+    "objectives"
+  ]
+}
