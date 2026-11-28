@@ -26,6 +26,20 @@ class HistoricalDate:
         year = f"-{abs(self.year):04d}" if self.year < 0 else f"{self.year:04d}"
         return f"{year}-{self.month:02d}-{self.day:02d}"
 
+    def _ordinal(self):
+        cycles, year = divmod(self.year, 400)
+        return cycles * 146097 + date(2000 + year, self.month, self.day).toordinal()
+
+    def __sub__(self, other):
+        if not isinstance(other, HistoricalDate):
+            return NotImplemented
+        return timedelta(days=self._ordinal() - other._ordinal())
+
+    def __add__(self, other):
+        if not isinstance(other, timedelta):
+            return NotImplemented
+        return self.add_days(other.days)
+
     def add_days(self, days):
         # Map signed years into positive Gregorian cycles, perform ordinary
         # date arithmetic, then restore the signed model year. Reduce across
