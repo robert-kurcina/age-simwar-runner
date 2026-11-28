@@ -498,7 +498,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         state["time"] = cursor.isoformat()
         npc_time.advance(state, rules, actual, engaged=engaged)
         narrative_events.advance_time(state, rules, actual)
-        advance_events(state, rules, cursor)
+        visible_events = advance_events(state, rules, cursor, in_transit=mode == "travel")
         npc_travel.resolve(state, rules, cursor)
         medical.interrupt_unavailable(state, rules, npc_available, engaged=engaged, moving=mode == "travel")
         timed_details.resolve(state, rules, cursor, npc_available, establishment.local_entities)
@@ -518,8 +518,7 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
             reason = "involuntary_sleep"
             break
-        if interruptible and any(e.get("interrupt_activity") and datetime.fromisoformat(e["at"]) == cursor
-                                 and event_visible(state, e) for e in events):
+        if interruptible and any(e.get("interrupt_activity") for e in visible_events):
             reason = "event"
             break
     return reason
@@ -597,7 +596,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
                 # No partial edge position is modeled: retain the last anchored node.
                 return finish_activity(state, rules, action, a, False, reason, proposal)
         else:
-            advance_events(state, rules, arrival)
+            advance_events(state, rules, arrival, in_transit=True)
         state["transitions"].append({"turn": state["turn"], "start": departure, "arrival": arrival.isoformat(), **a["route"]})
     state["location"] = a.get("location", state["location"])
     npc_agenda.observe_boundary(state, rules, engaged=a.get("npc"))
@@ -764,15 +763,16 @@ def _step(state, rules, action, proposal=None, commitment=None):
         state["ending"] = ending_projection(state, rules, action if terminal else "limit", action)
     return state
 
-def event_visible(state, event):
+def event_visible(state, event, *, in_transit=False):
     """Dated world effects are independent of the observer's access."""
     return (all(flag in state["flags"] for flag in event.get("visible_requires", []))
             and not any(flag in state["flags"] for flag in event.get("visible_excludes", []))
-            and (not event.get("locations") or state["location"] in event["locations"]))
+            and (not event.get("locations") or (not in_transit and state["location"] in event["locations"])))
 
 
-def advance_events(state, rules, elapsed):
-    """Apply dated events once; long actions cannot retroactively alter earlier milestones."""
+def advance_events(state, rules, elapsed, *, in_transit=False):
+    """Apply dated events once; return only events perceptible at resolution."""
+    visible = []
     for event in sorted(rules.get("events", []), key=lambda e: e["at"]):
         if event["id"] in state["events_seen"] or elapsed < datetime.fromisoformat(event["at"]):
             continue
@@ -790,8 +790,11 @@ def advance_events(state, rules, elapsed):
                 state["observations"].append(event["manifestation"])
             elif progression["arrested"]:
                 state["observations"].append("The changes previously recorded appear to have stabilized for now.")
-        if event_visible(state, event) and event.get("observation"):
-            state["observations"].append(event["observation"])
+        if event_visible(state, event, in_transit=in_transit):
+            visible.append(event)
+            if event.get("observation"):
+                state["observations"].append(event["observation"])
+    return visible
 
 def ending_projection(state, rules, reason, action):
     """Common terminal record for completed and interrupted activities."""
