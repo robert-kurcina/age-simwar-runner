@@ -64,7 +64,6 @@ def progression(path, previous):
     from age_runtime.core.runner import digest
     from age_runtime.core.transition_preview import transition_preview
     from age_runtime.core.source_compiler import checked_date
-    from datetime import timedelta
 
     current = view(previous)
     header = previous["header"]
@@ -84,7 +83,7 @@ def progression(path, previous):
     if not current["complete"]:
         result["guidance"] = "Finish the current episode before choosing a continuation."
         return result
-    end = checked_date(header["effective_date"]) + timedelta(days=(scenario["end_minute"] + 1439) // 1440)
+    end = checked_date(header["effective_date"]).add_days((scenario["end_minute"] + 1439) // 1440)
     menu = discover(path)
     for group in menu["groups"]:
         for episode in group["episodes"]:
