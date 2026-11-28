@@ -75,16 +75,6 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
-    if rules.get("protagonist_identity"):
-        # Stable identity is distinct from the current mechanical actor slot.
-        state["protagonist"] = {"id": "pc:1", "role": story["protagonist"]["role"],
-                                "entered_at": state["time"], "entered_turn": 0}
-    if rules.get("protagonist_knowledge"):
-        if not state.get("protagonist"):
-            raise ValueError("protagonist knowledge requires identity")
-        state["protagonist_knowledge"] = []
-        if rules.get("personal_reacquisition_actions"):
-            state["reacquisition_attempts"] = []
     if opportunity_latitude is not None:
         state["opportunity_latitude"] = latitude.validate(opportunity_latitude)
         state["settings_digest"] = digest([state["source"], seed, opportunity_latitude])
@@ -236,8 +226,8 @@ def _available_local_npcs(state, rules):
 def _local_action_available(state, rules, action):
     """Revalidate the same prerequisites at arrival and after local activity."""
     return (not any(f in state["flags"] for f in action.get("excludes_flags", []))
-            and all(epistemic.action_flag(state, rules, f) for f in action.get("requires_flags", []))
-            and (not action.get("requires_any_flags") or any(epistemic.action_flag(state, rules, f) for f in action["requires_any_flags"]))
+            and all(f in state["flags"] for f in action.get("requires_flags", []))
+            and (not action.get("requires_any_flags") or any(f in state["flags"] for f in action["requires_any_flags"]))
             and all(f in state["used"] for f in action.get("requires_used", []))
             and len(state["discoveries"]) >= action.get("requires", 0)
             and all(state["relationships"][k] >= v for k, v in action.get("requires_relationship", {}).items())
@@ -301,10 +291,10 @@ def options(state, rules):
             result.append(dict(result[0], id="wake_early", label="Attempt to wake early", duration_seconds=60,
                                local_seconds=60, interval_seconds=60))
         return result
-    candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"] or epistemic.reacquisition_available(state, rules, a))
+    candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
                   and len(state["discoveries"]) >= a.get("requires", 0)
-                  and all(epistemic.action_flag(state, rules, f) for f in a.get("requires_flags", []))
-                  and (not a.get("requires_any_flags") or any(epistemic.action_flag(state, rules, f) for f in a["requires_any_flags"]))
+                  and all(f in state["flags"] for f in a.get("requires_flags", []))
+                  and (not a.get("requires_any_flags") or any(f in state["flags"] for f in a["requires_any_flags"]))
                   and all(f in state["used"] for f in a.get("requires_used", []))
                   and not any(f in state["flags"] for f in a.get("excludes_flags", []))
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
@@ -312,7 +302,7 @@ def options(state, rules):
                   and continuity.reconsideration_allowed(state, a)
                   and ("spatial" in rules or not a.get("available_from") or state["time"] >= a["available_from"])
                   and (not a.get("available_until") or state["time"] < a["available_until"])
-                  and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"] or epistemic.reacquisition_available(state, rules, a))] + [
+                  and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
     if clock and state["location"] == rules["activity"]["sleep_location"]:
         available = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
@@ -351,7 +341,7 @@ def change_demeanor(state, key, delta):
     rulings are deliberately not supported by this first implementation.
     """
     now = datetime.fromisoformat(state["time"])
-    history = [e for e in state["relationship_changes"] if e["npc"] == key and e["delta"] != 0 and epistemic.current_protagonist_record(state, e)]
+    history = [e for e in state["relationship_changes"] if e["npc"] == key and e["delta"] != 0]
     def recent(days):
         return [e["delta"] for e in history
                 if now - datetime.fromisoformat(e["at"]) < timedelta(days=days)]
@@ -368,7 +358,7 @@ def change_demeanor(state, key, delta):
     if new != old:
         state["relationships"][key] = new
         dxd_commitment.supersede_demeanor(state, key)
-        state["relationship_changes"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "npc": key, "at": state["time"], "delta": new - old})
+        state["relationship_changes"].append({"npc": key, "at": state["time"], "delta": new - old})
 
 def consequential_demeanor(state, rules, request):
     """Apply the existing persistent Demeanor limits to a witnessed incident."""
@@ -380,7 +370,7 @@ def consequential_demeanor(state, rules, request):
     if state["npcs"][npc]["location"] != state["location"] or not npc_available(state, rules, {"npc": npc, "location": state["location"]}):
         raise ValueError("Demeanor requires available local NPC")
     obs = next((o for o in state["action_observations"] if o["id"] == oid and o["npc"] == npc), None)
-    if not obs or not epistemic.current_protagonist_record(state, obs) or obs["kind"] != "witnessed" or obs["actor"] != "pc" or obs["turn"] != state["turn"] or obs["location"] != state["location"]:
+    if not obs or obs["kind"] != "witnessed" or obs["actor"] != "pc" or obs["turn"] != state["turn"] or obs["location"] != state["location"]:
         raise ValueError("Demeanor requires current directly attributed conduct")
     if not isinstance(severity, str) or severity not in rules["consequential_demeanor"]:
         raise ValueError("invalid Demeanor severity")
@@ -395,7 +385,7 @@ def consequential_demeanor(state, rules, request):
                   "requested_delta": rules["consequential_demeanor"][severity]}
     if len(state["relationship_changes"]) == count:
         # Record adjudication even when ordinary limits prevent a change.
-        state["relationship_changes"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "npc": npc, "at": state["time"], "delta": 0, **provenance})
+        state["relationship_changes"].append({"npc": npc, "at": state["time"], "delta": 0, **provenance})
     else:
         state["relationship_changes"][-1].update(provenance)
     assert state["relationships"][npc] <= old
@@ -413,16 +403,16 @@ def social_demeanor(state, rules, request):
         raise ValueError("unsupported social consequence")
     if not isinstance(refs, list) or not 1 <= len(refs) <= 4 or any(type(i) is not int for i in refs) or len(set(refs)) != len(refs):
         raise ValueError("invalid social consequence claims")
-    claims = [c for c in state["dialogue"] if c["id"] in refs and epistemic.current_protagonist_record(state, c) and {c["speaker"], c["listener"]} == {"pc", nid}
+    claims = [c for c in state["dialogue"] if c["id"] in refs and {c["speaker"], c["listener"]} == {"pc", nid}
               and c["turn"] == state["turn"] and c["location"] == state["location"]]
     if len(claims) != len(refs) or not any(c["speaker"] == "pc" for c in claims):
         raise ValueError("consequence requires current actual player conduct")
     history = state["relationship_changes"]
-    if any(epistemic.current_protagonist_record(state, e) and e["npc"] == nid and (set(e.get("claims", [])) & set(refs) or
+    if any(e["npc"] == nid and (set(e.get("claims", [])) & set(refs) or
            e.get("source") == "social_conduct" and e.get("turn") == state["turn"]) for e in history):
         raise ValueError("social consequence already adjudicated")
     if kind == "reparation":
-        if not any(c["speaker"] == nid for c in claims) or not any(epistemic.current_protagonist_record(state, e) and e["npc"] == nid and e["delta"] < 0 for e in history):
+        if not any(c["speaker"] == nid for c in claims) or not any(e["npc"] == nid and e["delta"] < 0 for e in history):
             raise ValueError("reparation requires acknowledged conduct and prior relationship harm")
     basis = establishment.text(request["basis"], 240)
     count = len(history)
@@ -431,7 +421,7 @@ def social_demeanor(state, rules, request):
     provenance = {"source": "social_conduct", "kind": kind, "claims": list(refs),
                   "basis": basis, "turn": state["turn"], "requested_delta": delta}
     if len(history) == count:
-        history.append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "npc": nid, "at": state["time"], "delta": 0, **provenance})
+        history.append({"npc": nid, "at": state["time"], "delta": 0, **provenance})
     else:
         history[-1].update(provenance)
 
@@ -653,10 +643,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
             for key, amount in a.get("cost", {}).items():
                 state["resources"][key] -= amount
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
-    if epistemic.reacquisition_available(state, rules, a):
-        state["reacquisition_attempts"].append({"action": action, "protagonist_id": state["protagonist"]["id"],
-                                                "turn": state["turn"], "at": state["time"]})
-    if action != "observe" and not a.get("repeatable") and action not in state["used"]:
+    if action != "observe" and not a.get("repeatable"):
         state["used"].append(action)
     if not clock:
         for key, amount in a.get("cost", {}).items():
@@ -689,14 +676,13 @@ def _step(state, rules, action, proposal=None, commitment=None):
         if a.get("arrest_progression"):
             state["progression"]["arrested"] = True
             state["progression"]["changes"].append({"at": state["time"], "kind": "arrest", "stage": state["progression"]["stage"]})
-        if "disclosure" in a and a["disclosure"] not in npc["disclosed"]:
+        if "disclosure" in a:
             npc["disclosed"].append(a["disclosure"])
         if "discovery" in a and a["discovery"] not in state["discoveries"]:
             state["discoveries"].append(a["discovery"])
         for flag in a.get("grant", []):
             if flag not in state["flags"]:
                 state["flags"].append(flag)
-            epistemic.earn_flag(state, rules, flag, action)
         for key, delta in a.get("relationship", {}).items():
             if rules.get("demeanor"):
                 change_demeanor(state, key, delta)
@@ -708,7 +694,6 @@ def _step(state, rules, action, proposal=None, commitment=None):
     for flag in a.get("grant_failure", []) if not success else []:
         if flag not in state["flags"]:
             state["flags"].append(flag)
-        epistemic.earn_flag(state, rules, flag, action)
     if not success and a.get("failure_observation"):
         state["observations"].append(a["failure_observation"])
     advance_opposition(state, rules, a, success)
@@ -806,10 +791,7 @@ def ending_projection(state, rules, reason, action):
     flags = rules.get("ending_flags", {
         "account_prepared": "written_account", "account_relayed": "account_relayed",
         "account_entrusted": "account_entrusted"})
-    identity = ({"protagonist_id": state["protagonist"]["id"],
-                 "ended_at": state["time"], "ended_turn": state["turn"]}
-                if "protagonist" in state else {})
-    return {"reason": reason, **identity, "evidence_count": len(state["discoveries"]),
+    return {"reason": reason, "evidence_count": len(state["discoveries"]),
             **{key: flag in state["flags"] for key, flag in flags.items()},
             "epilogue": ("Your character has died. Previously established outcomes remain." if reason == "character_death" and reason not in rules["ending_text"] else rules["ending_text"][reason]), "scores": scores(state, action)}
 
@@ -847,7 +829,7 @@ def apply_memory(state, event, memory):
         raise ValueError("no eligible unedited Inspiration")
     found[0]["memory"] = memory
     found[0]["source"] = "model"
-    pc["memory_edits"].append({**({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}), "turn": state["turn"], "event": event, "memory": memory})
+    pc["memory_edits"].append({"turn": state["turn"], "event": event, "memory": memory})
 
 def _apply_narrative(state, rules, request):
     pacing.control(state, rules, request)
