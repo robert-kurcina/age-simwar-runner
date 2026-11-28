@@ -2,7 +2,6 @@
 import argparse
 import json
 from pathlib import Path
-from datetime import timedelta
 from age_runtime.core.source_compiler import parse_json, compile_scenario, checked_date
 from age_runtime.core.runner import initialize, verify_checkpoint, submit_request, advance, digest, save, faction_packet, accept_faction_choice, commit_decision, GAME_LENGTHS
 from age_runtime.core.observations import observe
@@ -349,7 +348,7 @@ def briefing(session):
         "shared": h.get("shared", False),
         "continued": "continuity" in h,
         "preset": h.get("preset", {"id": "standard", "label": "Standard — configured baseline"}),
-        "date": (start_date + timedelta(days=elapsed // 1440)).isoformat(),
+        "date": start_date.add_days(elapsed // 1440).isoformat(),
         "elapsed_minutes": elapsed, "turn": observation["turn"],
         "complete": current["complete"],
         "objective_outcomes": observation.get("objective_outcomes", {}),
