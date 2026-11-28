@@ -28,20 +28,25 @@ def projection(state, rules, legal):
     A route not immediately legal is not necessarily permanently lost.
     """
     choices = {a["id"] for a in legal}
+    actions = {a["id"]: a for a in rules["actions"]}
     result = []
     for key, cfg in rules.get("narrative_functions", {}).items():
         established = any(f in state["flags"] for f in cfg["flags"])
         carriers = []
         for c in cfg["carriers"]:
-            action = next(a for a in rules["actions"] if a["id"] == c["action"])
+            action = actions[c["action"]]
             unavailable = (action.get("npc") is not None and blocked(state, rules["npcs"][action["npc"]]))
             unavailable = unavailable or any(blocked(state, rules["npcs"][key]) and flag not in state["flags"]
                 for key, flag in c.get("access_carriers", {}).items())
             spent = action["id"] in state["used"] and not action.get("repeatable")
-            status = "blocked" if unavailable else "spent" if spent else "ready" if action["id"] in choices else "conditional"
+            expired = bool(action.get("available_until") and state["time"] >= action["available_until"])
+            excluded = any(f in state["flags"] for f in action.get("excludes_flags", []))
+            status = ("spent" if spent else "blocked" if unavailable or expired or excluded
+                      else "ready" if action["id"] in choices else "conditional")
             carriers.append({"action": action["id"], "kind": c["kind"], "status": status})
         result.append({"id": key, "purpose": cfg["purpose"], "established": established,
-                       "carriers": carriers, "no_immediate_route": not established and not any(c["status"] == "ready" for c in carriers)})
+                       "carriers": carriers, "no_immediate_route": not established and not any(c["status"] == "ready" for c in carriers),
+                       "authored_routes_exhausted": not established and all(c["status"] in ("spent", "blocked") for c in carriers)})
     return result
 
 
