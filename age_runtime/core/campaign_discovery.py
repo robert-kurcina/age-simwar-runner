@@ -124,4 +124,6 @@ def bundled_catalog(root=None):
                     if e["availability"] == "available" and e["play_mode"] == "rehearse"]
         result.append({"id": menu["id"], "title": menu["title"], "inventory": relative,
                        "qualification": "unreviewed-rehearsal", "episodes": episodes})
+    from age_runtime.core.great_war import discovery
+    result.append(discovery(root))
     return result

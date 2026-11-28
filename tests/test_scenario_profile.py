@@ -23,3 +23,11 @@ class ScenarioProfileTests(unittest.TestCase):
             profile("../mythos", "boothbay")
         with self.assertRaises(ValueError):
             profile("mythos", "../boothbay")
+
+    def test_great_war_native_profile(self):
+        p = profile("great-war", "manafount-rehearsal")
+        self.assertEqual(p["duration"], {"clock": "event-driven-Time!", "endpoint_year": 5})
+        self.assertEqual(p["perspectives"], ["amber", "azure"])
+        self.assertFalse(p["conclusion"]["competitive_scoring"])
+        with self.assertRaises(ValueError):
+            profile("great-war", "../unknown")

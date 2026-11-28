@@ -75,10 +75,19 @@ jobs:
           python - "$work/strategic-catalog.json" <<'PY'
           import json, sys
           campaigns = json.load(open(sys.argv[1]))
-          assert len(campaigns) == 2
-          assert sum(len(c["episodes"]) for c in campaigns) == 8
-          assert sum(len(e["perspectives"]) for c in campaigns for e in c["episodes"]) == 29
+          assert len(campaigns) == 3
+          assert sum(len(c["episodes"]) for c in campaigns) == 9
+          assert sum(len(e["perspectives"]) for c in campaigns for e in c["episodes"]) == 31
           PY
+          python -m age_runtime.core.great_war start "$work/great-war.json" --seed 42 --actor azure > "$work/gw-opening.json"
+          python -m age_runtime.core.great_war packet "$work/great-war.json" amber > "$work/gw-packet.json"
+          python - "$work/gw-packet.json" "$work/gw-response.json" <<'PY'
+          import json, sys
+          packet = json.load(open(sys.argv[1]))
+          json.dump({"packet_id": packet["packet_id"], "choice": 0}, open(sys.argv[2], "w"))
+          PY
+          python -m age_runtime.core.great_war choose "$work/great-war.json" amber "$work/gw-response.json"
+          python game.py describe great-war manafount-rehearsal
           python game.py start boothbay "$work/mythos.json" --seed 42 > "$work/opening.json"
           revision="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["revision"])' "$work/opening.json")"
           python game.py act "$work/mythos.json" inspect_docks --revision "$revision"

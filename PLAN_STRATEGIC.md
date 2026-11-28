@@ -528,3 +528,7 @@ Source revision da7e1140e92d5450fd82393acc2a15a3ff36a037. Bounded illustrative t
 ## Great War Deity decision exchange
 
 #262 Tests 46093279364 passed; bundle 46093279381 pending at inspection. Add legal Event/Tap enumeration against the actual resolver (including just-created hidden Fount), scoped decision packets and exact indexed responses, stale rejection and recent public Plays. Eight seeded scripted full-horizon routes test legal actions, private scope, replay and rejected choices. No arbitrary fallback for unplayable required cards. Next integrate general discovery and offline delivery. No new numerical rules. CI pending.
+
+## Great War discovery and delivery checkpoint
+
+#263 Tests 46093407351 passed; bundle 46093407340 pending at inspection. Integrate native Great War discovery into existing bundled strategic catalog (three campaigns, nine episodes, 31 perspectives; SH44SER alone remains eight/29). Native descriptive profile exposes Event-driven Time! and state-summary conclusion, not fixed Turns or scored victory. Select opening actor explicitly; keep actual active Deity unchanged. Extracted offline bundle smoke test starts, obtains an active packet, commits a legal choice and describes profile. Update launch guidance; no new mechanics or canonical registration. Next add authored Deity motivations and contextual choice consequences, then assess native persistent commitments. CI pending.
