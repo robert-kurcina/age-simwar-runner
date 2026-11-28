@@ -1,5 +1,5 @@
 {
-  "version": 106,
+  "version": 107,
   "bounded_waiting": [10, 30, 60, 120, 240, 480],
   "social_epistemic": true,
   "npc_agency": {
