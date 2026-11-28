@@ -1,7 +1,7 @@
 """Optional local danger: decisive objectives, existing Zones, no AP loop."""
 from datetime import datetime, timedelta
 import copy
-from age_runtime.core import dxd_physical_disability
+from age_runtime.core import dxd_physical_disability, dxd_hitpoints
 
 
 def outcome(cfg, spec, key, default=None):
@@ -22,7 +22,7 @@ def completion_available(state, rules, action):
     return state["location"] == cfg["location"] and prerequisites(state, cfg, spec)
 
 def available(state, rules):
-    if state["ending"] or state["dxd"].get("activity", {}).get("status") != "awake":
+    if state["ending"] or dxd_hitpoints.incapacitated(state["dxd"]) or state["dxd"].get("activity", {}).get("status") != "awake":
         return []
     result = []
     for key, cfg in rules.get("danger_beats", {}).items():
@@ -54,6 +54,16 @@ def compile_beat(state, rules, request):
     if injury and ("injury" not in state["dxd"] or injury >= state["dxd"]["injury"]["capacity"] or state["dxd"]["injury"]["injury"] + 1 >= state["dxd"]["injury"]["capacity"]):
         if not (rules.get("native_injury_lifecycle") and spec.get("allow_incapacity") is True and "injury" in state["dxd"]):
             raise ValueError("potentially incapacitating Injury requires explicit consequence authority")
+    hp = outcome(cfg, spec, "hitpoint_loss_on_dof", 0)
+    subdue = outcome(cfg, spec, "resolved_subdue_on_dof", 0)
+    if any(type(n) is not int or n < 0 for n in (hp, subdue)) or (hp and subdue) or (subdue and injury):
+        raise ValueError("invalid reviewed Hitpoint consequence")
+    if hp or subdue:
+        pool = state["dxd"].get("hitpoints")
+        if not rules.get("native_hitpoints") or not pool or hp > pool["current"]:
+            raise ValueError("Hitpoint consequence unavailable")
+        if subdue and (spec.get("allow_incapacity") is not True or "injury" not in state["dxd"]):
+            raise ValueError("Subdue requires explicit incapacity authority")
     permanent = outcome(cfg, spec, "permanent_location_on_dof")
     if permanent is not None:
         dxd_physical_disability.validate(permanent)
@@ -79,6 +89,13 @@ def record(state, rules, action, result):
         permanent = outcome(cfg, spec, "permanent_location_on_dof")
         if permanent is not None and dxd_injury.projection(state["dxd"]["injury"])["status"] != "dead":
             dxd_physical_disability.record(state["dxd"]["injury"], permanent)
+    if not result["passed"] and result["dof"]:
+        hp = outcome(cfg, spec, "hitpoint_loss_on_dof", 0)
+        subdue = outcome(cfg, spec, "resolved_subdue_on_dof", 0)
+        if hp:
+            dxd_hitpoints.lose(state["dxd"]["hitpoints"], hp)
+        if subdue:
+            dxd_hitpoints.subdue(state["dxd"], subdue)
     if result["passed"]:
         state["observations"].append(outcome(cfg, spec, "success_observation"))
         degree = outcome(cfg, spec, "degree_observation")
