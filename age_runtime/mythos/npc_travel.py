@@ -7,7 +7,7 @@ def pending(state, nid):
     return next((e for e in state.get("npc_travel", []) if e["npc"] == nid and e["status"] == "traveling"), None)
 
 def record(state, rules, request, npc_available, text):
-    if not rules.get("npc_travel") or not isinstance(request, dict) or set(request) != {"npc", "destination", "basis"}:
+    if not rules.get("npc_travel") or not isinstance(request, dict) or set(request) not in ({"npc", "destination", "basis"}, {"npc", "destination", "basis", "objective"}):
         raise ValueError("invalid NPC travel")
     nid, destination = request["npc"], request["destination"]
     if not isinstance(nid, str) or nid not in state["npcs"] or not isinstance(destination, str):
@@ -29,10 +29,12 @@ def record(state, rules, request, npc_available, text):
     due = datetime.fromisoformat(state["time"]) + timedelta(seconds=route["seconds"])
     if due > datetime.fromisoformat(rules["end"]) or len(state["npc_travel"]) >= 128:
         raise ValueError("NPC travel horizon or record limit")
+    from age_runtime.mythos import npc_agency
+    objective = npc_agency.objective_link(state, nid, request)
     basis = text(request["basis"], 240)
     npc_time.interrupt(state, nid)
     state["npc_travel"].append({"npc": nid, "origin": origin, "destination": destination,
-        "route": route, "at": state["time"], "due": due.isoformat(), "status": "traveling", "basis": basis})
+        "route": route, "at": state["time"], "due": due.isoformat(), "status": "traveling", "basis": basis, **objective})
 
 def next_boundary(state, cursor, finish):
     return min([finish] + [datetime.fromisoformat(e["due"]) for e in state.get("npc_travel", [])

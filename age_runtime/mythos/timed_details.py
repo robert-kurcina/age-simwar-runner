@@ -93,12 +93,10 @@ def initiative(state, rules, request, npc_available, local_entities, text):
 
 
 def objective_link(state, rules, npc, request):
-    if "objective" not in request:
-        return {}
     from age_runtime.mythos import npc_agency
-    if not rules.get("npc_agency") or not npc_agency.active_objective(state, npc, request["objective"]):
+    if "objective" in request and not rules.get("npc_agency"):
         raise ValueError("activity requires own active objective")
-    return {"objective": request["objective"]}
+    return npc_agency.objective_link(state, npc, request)
 
 
 def test_config(rules, nid):

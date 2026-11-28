@@ -152,6 +152,14 @@ def active_objective(state, nid, oid):
     return bool(goal and goal["npc"] == nid and goal["status"] == "active")
 
 
+def objective_link(state, nid, request):
+    if "objective" not in request:
+        return {}
+    if not active_objective(state, nid, request["objective"]):
+        raise ValueError("activity requires own active objective")
+    return {"objective": request["objective"]}
+
+
 def linked_activities(state, oid):
     return [e for e in state.get("timed_detail_events", []) if e.get("objective") == oid]
 
@@ -235,6 +243,9 @@ def projection(state):
                   "pursuit": [{"id": e["id"], "objective": e["objective"], "status": e["status"],
                                "authority": e["authority"], "object": e["object"], "due": e["due"]}
                               for e in state.get("timed_detail_events", []) if e["npc"] == nid and "objective" in e],
+                  "journeys": [{"destination": e["destination"], "objective": e["objective"],
+                                "status": e["status"], "due": e["due"]}
+                               for e in state.get("npc_travel", []) if e["npc"] == nid and "objective" in e][-6:],
                   "recent_closed": [copy.deepcopy(e) for e in current.values() if e["npc"] == nid and e["status"] in ("achieved", "abandoned")][-4:],
                   **({"favor": npc["favor"]} if "favor" in npc else {}),
                   "social_tests": [copy.deepcopy(e) for e in state.get("npc_social_tests", []) if nid in (e["npc"], e["target"])][-6:]}

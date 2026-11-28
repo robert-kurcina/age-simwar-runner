@@ -9,6 +9,31 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
+    def test_objective_linked_travel_retains_actor_owned_purpose(self):
+        from age_runtime.mythos import npc_agency
+        state = mythos.initial("boothbay", 42)
+        for action in ("talk_eleanor", "visit_elias", "inspect_room", "speak_burroughs"):
+            state = mythos.step(state, action)
+        goal = {"operation": "create", "id": "goal:visit_diner", "npc": "burroughs",
+                "goal": "Visit the diner.", "priority": "normal",
+                "intention": "Speak with Eleanor.", "basis": "His current intention.",
+                "sources": []}
+        state = mythos.establish_step(state, {"npc_objective": goal})
+        request = {"npc": "burroughs", "destination": "Harbor Diner",
+                   "basis": "He pursues his own objective.", "objective": goal["id"]}
+        before = copy.deepcopy(state)
+        with self.assertRaises(ValueError):
+            mythos.establish_step(state, {"npc_travel": dict(request, objective="goal:unknown")})
+        self.assertEqual(state, before)
+        traveling = mythos.establish_step(state, {"npc_travel": request})
+        self.assertEqual(traveling["npc_travel"][-1]["objective"], goal["id"])
+        self.assertEqual(npc_agency.projection(traveling)["burroughs"]["journeys"][-1]["status"], "traveling")
+        arrived = mythos.step(traveling, "observe")
+        self.assertEqual(arrived["npc_travel"][-1]["status"], "completed")
+        self.assertEqual(npc_agency.project(arrived)[goal["id"]]["status"], "active")
+        self.assertNotIn("npc_agency", mythos.view(arrived))
+        mythos.verify(arrived)
+
     def test_npc_travel_requires_explicit_end_of_committed_activity(self):
         from age_runtime.mythos import npc_time
         state = mythos.initial("boothbay", 42)
