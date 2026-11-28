@@ -26,11 +26,11 @@ then advance after all model actors have decided. Keep referee checkpoints
 private. For the public fixture, substitute its path and `patron_a`.
 
 Resolve historical evidence against pinned local vault checkouts or authorized
-connector exports using the existing source reader. The general source
-compiler currently accepts ISO CE effective dates; do not encode BCE as a
-false CE date to bypass that restriction. Until historical date support is
-implemented, the explicit historical JSON and a separate provenance/assumption
-record are a manual private draft, not a compiled source-qualified snapshot.
+connector exports using the existing source reader. The source compiler accepts signed historical-model dates, e.g. `-1524-01-01`.
+An abstract quarterly matrix is not a literal Gregorian calendar: use the
+historical boundary schedule for quarter labels. A dated evidence reference
+pins a reviewed source section; it does not resolve missing numerical facts.
+The historical JSON remains unreviewed until private compilation and calibration.
 
 The public fixture uses the same accounting and matrix paths as the historical
 draft. Its regression test exercises two independent policy sets and eight
