@@ -842,6 +842,19 @@ class NarrativeConsolidationTests(unittest.TestCase):
             "outcome": "damaged", "authorization": "I chip the cup.",
             "basis": "Certain incidental damage", "remnants": "Chipped rim"}})
         self.assertFalse(proposals.completion_available(damaged, rules, compiled, mythos.npc_available))
+        with self.assertRaises(ValueError):
+            mythos.step(after, request["action"], request)
+        changed = mythos.establish_step(after, {"object_action": {
+            "id": "act:chip_after", "object": "inc:cup", "before": "intact",
+            "outcome": "damaged", "authorization": "I chip the cup.",
+            "basis": "Certain incidental damage", "remnants": "Chipped rim"}})
+        again = mythos.step(changed, request["action"], request)
+        self.assertEqual(again["local_records"][-1]["object_condition"]["lifecycle"], "damaged")
+        self.assertEqual(len(again["dxd"]["tests"]), len(after["dxd"]["tests"]) + 1)
+        self.assertEqual(again["used"].count(request["action"]), 1)
+        with self.assertRaises(ValueError):
+            mythos.step(again, request["action"], request)
+        mythos.verify(again)
         destroyed = mythos.establish_step(damaged, {"object_action": {
             "id": "act:break", "object": "inc:cup", "before": "damaged",
             "outcome": "destroyed", "authorization": "I drop the cup.",
