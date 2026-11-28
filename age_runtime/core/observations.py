@@ -218,7 +218,23 @@ def observe(s, state, actor_id):
                        "pending_overallocation": gross > values[account["key"]],
                        "options": options,
                        "basis": "Opening balance; incoming transfers and production cannot finance this batch."}
-    matrix = {"properties": {key: {**spec, "reported_value": values.get(key)}
+    matrix_changes = {}
+    if "matrix_effects" in s and state["turn"]:
+        previous = max(0, (state["turn"] - 1) * s["turn_minutes"])
+        for key in s["matrix_properties"]:
+            report = reports.get(key, {})
+            if report.get("status") != "current":
+                continue
+            before = s["initial"][key]
+            for entry in state["ledger"]:
+                if entry["key"] == key and entry["minute"] <= previous:
+                    before = entry["value"]
+            if before != report["value"]:
+                matrix_changes[key] = {"before": before, "value": report["value"],
+                                       "delta": report["value"] - before}
+    matrix = {"remaining_turns": (max(0, s["end_minute"] - state["minute"]) + s["turn_minutes"] - 1) // s["turn_minutes"],
+              "reported_changes": matrix_changes,
+              "properties": {key: {**spec, "reported_value": values.get(key)}
                              for key, spec in s.get("matrix_properties", {}).items()
                              if key in keys},
               "own_options": {name: deepcopy(changes)
