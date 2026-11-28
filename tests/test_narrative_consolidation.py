@@ -780,6 +780,34 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertEqual(after["discoveries"], state["discoveries"])
         mythos.verify(after)
 
+    def test_unheld_object_inspection_preserves_custody(self):
+        from age_runtime.mythos import proposals, establishment
+        state = mythos.initial("boothbay", 42)
+        state = mythos.establish_step(state, {"details": [{
+            "id": "inc:loose_note", "kind": "object", "label": "Loose note",
+            "description": "An unattended scrap of paper.",
+            "basis": "Mundane local object"}]})
+        request = {"action": "local:inspect_object:inc:loose_note",
+                   "approach": "inspect_object", "intent": "Examine the paper in place."}
+        _, rules = mythos.load("boothbay")
+        before = copy.deepcopy(state)
+        self.assertIn(request["action"], {c["action"] for c in
+            proposals.local_capabilities(state, rules, mythos.npc_available)})
+        compiled = proposals.compile_local(state, rules, request, mythos.npc_available)
+        self.assertIsNone(compiled["object_custodian_before"])
+        held = mythos.establish_step(state, {"transfers": [{
+            "id": "inc:loose_note", "from": None, "to": "pc",
+            "pc_authorization": "I pick up the note.", "npc_consent": None,
+            "basis": "Unheld local object"}]})
+        self.assertFalse(proposals.completion_available(held, rules, compiled, mythos.npc_available))
+        after = mythos.step(state, request["action"], request)
+        self.assertEqual(state, before)
+        self.assertIsNone(establishment.local_entities(after)["inc:loose_note"].get("custodian"))
+        self.assertEqual(after["custody_transfers"], state["custody_transfers"])
+        self.assertEqual(after["discoveries"], state["discoveries"])
+        self.assertEqual(len(after["dxd"]["tests"]), len(state["dxd"]["tests"]) + 1)
+        mythos.verify(after)
+
     def test_object_inspection_requires_custody_and_preserves_lifecycle(self):
         from age_runtime.mythos import proposals
         state = mythos.step(mythos.initial("boothbay", 42), "move:Harbor Diner")

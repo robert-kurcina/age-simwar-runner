@@ -1,5 +1,5 @@
 {
-  "version": 104,
+  "version": 105,
   "bounded_waiting": [10, 30, 60, 120, 240, 480],
   "social_epistemic": true,
   "npc_agency": {
@@ -2431,6 +2431,7 @@
   },
   "local_proposals": {
     "inspect_object": {
+      "access": "held_or_unheld",
       "target": "object",
       "object_effect": "inspect",
       "variable_interval_seconds": 60,
