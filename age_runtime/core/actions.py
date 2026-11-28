@@ -49,7 +49,7 @@ def validate_service_rule(s):
 def fulfill_service_request(s, state, record, end):
     if not s.get("service_restoration") or record["action"] != "restore_service_center":
         return
-    if state["values"]["restoration_credits"] == 0:
+    if state["values"]["restoration_credits"] <= 0:
         record["fulfillment"] = "insufficient_credits"
         return
     for key, delta in (("restoration_credits", -1), ("open_service_centers", 1)):
@@ -97,6 +97,19 @@ def validate_civic_rules(s):
                     raise ValueError("each council must control its own consent")
 
 
+def validate_civic_writer_boundaries(s):
+    """Prevent conditional Events from bypassing civic accounting."""
+    protected = set()
+    if s.get("service_restoration"):
+        protected.update(("restoration_credits", "open_service_centers"))
+    if s.get("community_assistance"):
+        protected.update(("aid_packages", "households_assisted"))
+    if s.get("civic_agreement"):
+        protected.update(("participating_councils", "council_a_joined", "council_b_joined"))
+    if any(protected.intersection(e["updates"]) for e in s.get("dependent_events", [])):
+        raise ValueError("dependent event may not write governed civic fields")
+
+
 def commit_civic_delta(state, record, end, key, delta):
     state["values"][key] += delta
     state["ledger"].append({"id": "civic-request:" + str(record["sequence"]) + ":" + key,
@@ -107,7 +120,7 @@ def commit_civic_delta(state, record, end, key, delta):
 def fulfill_civic_request(s, state, record, end):
     action = record["action"]
     if s.get("community_assistance") and action == "deliver_aid":
-        if state["values"]["aid_packages"] == 0:
+        if state["values"]["aid_packages"] <= 0:
             record["fulfillment"] = "insufficient_packages"
             return
         cap = s.get("assistance_capacity")
