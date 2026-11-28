@@ -1,0 +1,653 @@
+{
+  "version": 1,
+  "effective_date": "2044-05-01",
+  "scenario": {
+    "version": 1,
+    "id": "production-accord-critical-goods-draft",
+    "turn_minutes": 43200,
+    "end_minute": 259200,
+    "initial": {
+      "inguria_credits": 4,
+      "inguria_certification_progress": 0,
+      "inguria_certification_delay": 0,
+      "inguria_certification_complications": 0,
+      "inguria_certification_industrial": 2,
+      "inguria_certification_energy": 3,
+      "fiji_credits": 2,
+      "fiji_chassis_progress": 0,
+      "fiji_chassis_delay": 0,
+      "fiji_chassis_complications": 0,
+      "fiji_chassis_industrial": 2,
+      "fiji_chassis_energy": 2,
+      "vanuatu_credits": 3,
+      "vanuatu_maintenance_progress": 0,
+      "vanuatu_maintenance_delay": 0,
+      "vanuatu_maintenance_complications": 0,
+      "vanuatu_maintenance_energy": 2,
+      "vanuatu_maintenance_industrial": 2,
+      "caledonia_credits": 1,
+      "caledonia_refining_progress": 0,
+      "caledonia_refining_delay": 0,
+      "caledonia_refining_complications": 0,
+      "caledonia_refining_materials": 2,
+      "caledonia_refining_energy": 2
+    },
+    "events": [],
+    "constraints": [],
+    "actors": {
+      "inguria": {
+        "label": "Inguria",
+        "visible_keys": [
+          "inguria_credits",
+          "inguria_certification_progress",
+          "inguria_certification_delay",
+          "inguria_certification_complications",
+          "inguria_certification_industrial",
+          "inguria_certification_energy"
+        ],
+        "objectives": {
+          "readiness": {
+            "key": "inguria_certification_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete four abstract readiness milestones for inspection capacity and non-sensitive licensing."
+          },
+          "reserve": {
+            "key": "inguria_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted exercise credit."
+          }
+        },
+        "strategy": {
+          "motivation": "Enable critical local manufacturing while retaining high-risk IP custody and certification.",
+          "priorities": [
+            "readiness",
+            "reserve"
+          ]
+        }
+      },
+      "fiji": {
+        "label": "Fiji",
+        "visible_keys": [
+          "fiji_credits",
+          "fiji_chassis_progress",
+          "fiji_chassis_delay",
+          "fiji_chassis_complications",
+          "fiji_chassis_industrial",
+          "fiji_chassis_energy"
+        ],
+        "objectives": {
+          "readiness": {
+            "key": "fiji_chassis_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete four abstract readiness milestones for standard chassis assembly and repair readiness."
+          },
+          "reserve": {
+            "key": "fiji_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted exercise credit."
+          }
+        },
+        "strategy": {
+          "motivation": "Secure funded local chassis assembly and durable purchase commitments.",
+          "priorities": [
+            "readiness",
+            "reserve"
+          ]
+        }
+      },
+      "vanuatu": {
+        "label": "Vanuatu",
+        "visible_keys": [
+          "vanuatu_credits",
+          "vanuatu_maintenance_progress",
+          "vanuatu_maintenance_delay",
+          "vanuatu_maintenance_complications",
+          "vanuatu_maintenance_energy",
+          "vanuatu_maintenance_industrial"
+        ],
+        "objectives": {
+          "readiness": {
+            "key": "vanuatu_maintenance_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete four abstract readiness milestones for energy-maintenance equipment and local repair readiness."
+          },
+          "reserve": {
+            "key": "vanuatu_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted exercise credit."
+          }
+        },
+        "strategy": {
+          "motivation": "Prioritize reliable energy-maintenance production and avoid excessive new demand.",
+          "priorities": [
+            "readiness",
+            "reserve"
+          ]
+        }
+      },
+      "caledonia": {
+        "label": "Caledonia",
+        "visible_keys": [
+          "caledonia_credits",
+          "caledonia_refining_progress",
+          "caledonia_refining_delay",
+          "caledonia_refining_complications",
+          "caledonia_refining_materials",
+          "caledonia_refining_energy"
+        ],
+        "objectives": {
+          "readiness": {
+            "key": "caledonia_refining_progress",
+            "comparison": "at_least",
+            "threshold": 4,
+            "description": "Complete four abstract readiness milestones for nickel refining and component casting readiness."
+          },
+          "reserve": {
+            "key": "caledonia_credits",
+            "comparison": "at_least",
+            "threshold": 1,
+            "description": "Retain at least one uncommitted exercise credit."
+          }
+        },
+        "strategy": {
+          "motivation": "Gain value-added refining and casting participation rather than raw-material dependence.",
+          "priorities": [
+            "readiness",
+            "reserve"
+          ]
+        }
+      }
+    },
+    "action_catalog": {
+      "inguria_certification_improve_industrial": {
+        "description": "Fund one abstract capacity improvement for inspection capacity and non-sensitive licensing (industrial).",
+        "actors": [
+          "inguria"
+        ]
+      },
+      "inguria_certification_improve_energy": {
+        "description": "Fund one abstract capacity improvement for inspection capacity and non-sensitive licensing (energy).",
+        "actors": [
+          "inguria"
+        ]
+      },
+      "fiji_chassis_improve_industrial": {
+        "description": "Fund one abstract capacity improvement for standard chassis assembly and repair readiness (industrial).",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "fiji_chassis_improve_energy": {
+        "description": "Fund one abstract capacity improvement for standard chassis assembly and repair readiness (energy).",
+        "actors": [
+          "fiji"
+        ]
+      },
+      "vanuatu_maintenance_improve_energy": {
+        "description": "Fund one abstract capacity improvement for energy-maintenance equipment and local repair readiness (energy).",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "vanuatu_maintenance_improve_industrial": {
+        "description": "Fund one abstract capacity improvement for energy-maintenance equipment and local repair readiness (industrial).",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "caledonia_refining_improve_materials": {
+        "description": "Fund one abstract capacity improvement for nickel refining and component casting readiness (materials).",
+        "actors": [
+          "caledonia"
+        ]
+      },
+      "caledonia_refining_improve_energy": {
+        "description": "Fund one abstract capacity improvement for nickel refining and component casting readiness (energy).",
+        "actors": [
+          "caledonia"
+        ]
+      },
+      "inguria_support_fiji": {
+        "description": "Offer one abstract program credit to Fiji.",
+        "actors": [
+          "inguria"
+        ]
+      },
+      "inguria_support_caledonia": {
+        "description": "Offer one abstract program credit to Caledonia.",
+        "actors": [
+          "inguria"
+        ]
+      },
+      "vanuatu_support_caledonia": {
+        "description": "Offer one abstract program credit to Caledonia.",
+        "actors": [
+          "vanuatu"
+        ]
+      },
+      "fiji_support_vanuatu": {
+        "description": "Offer one abstract program credit to Vanuatu.",
+        "actors": [
+          "fiji"
+        ]
+      }
+    },
+    "administrative_reviews_per_turn": 4,
+    "economy_projects": [
+      {
+        "id": "inguria_certification",
+        "participant": "inguria",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "industrial",
+            "key": "inguria_certification_industrial"
+          },
+          {
+            "axis": "energy",
+            "key": "inguria_certification_energy"
+          }
+        ],
+        "stages": 4,
+        "progress": "inguria_certification_progress",
+        "delay": "inguria_certification_delay",
+        "complications": "inguria_certification_complications"
+      },
+      {
+        "id": "fiji_chassis",
+        "participant": "fiji",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "industrial",
+            "key": "fiji_chassis_industrial"
+          },
+          {
+            "axis": "energy",
+            "key": "fiji_chassis_energy"
+          }
+        ],
+        "stages": 4,
+        "progress": "fiji_chassis_progress",
+        "delay": "fiji_chassis_delay",
+        "complications": "fiji_chassis_complications"
+      },
+      {
+        "id": "vanuatu_maintenance",
+        "participant": "vanuatu",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "energy",
+            "key": "vanuatu_maintenance_energy"
+          },
+          {
+            "axis": "industrial",
+            "key": "vanuatu_maintenance_industrial"
+          }
+        ],
+        "stages": 4,
+        "progress": "vanuatu_maintenance_progress",
+        "delay": "vanuatu_maintenance_delay",
+        "complications": "vanuatu_maintenance_complications"
+      },
+      {
+        "id": "caledonia_refining",
+        "participant": "caledonia",
+        "need": 3,
+        "axes": [
+          {
+            "axis": "materials",
+            "key": "caledonia_refining_materials"
+          },
+          {
+            "axis": "energy",
+            "key": "caledonia_refining_energy"
+          }
+        ],
+        "stages": 4,
+        "progress": "caledonia_refining_progress",
+        "delay": "caledonia_refining_delay",
+        "complications": "caledonia_refining_complications"
+      }
+    ],
+    "capacity_actions": {
+      "inguria_certification_improve_industrial": {
+        "project": "inguria_certification",
+        "capacity": "inguria_certification_industrial",
+        "resource": "inguria_credits",
+        "cost": 1
+      },
+      "inguria_certification_improve_energy": {
+        "project": "inguria_certification",
+        "capacity": "inguria_certification_energy",
+        "resource": "inguria_credits",
+        "cost": 1
+      },
+      "fiji_chassis_improve_industrial": {
+        "project": "fiji_chassis",
+        "capacity": "fiji_chassis_industrial",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "fiji_chassis_improve_energy": {
+        "project": "fiji_chassis",
+        "capacity": "fiji_chassis_energy",
+        "resource": "fiji_credits",
+        "cost": 1
+      },
+      "vanuatu_maintenance_improve_energy": {
+        "project": "vanuatu_maintenance",
+        "capacity": "vanuatu_maintenance_energy",
+        "resource": "vanuatu_credits",
+        "cost": 1
+      },
+      "vanuatu_maintenance_improve_industrial": {
+        "project": "vanuatu_maintenance",
+        "capacity": "vanuatu_maintenance_industrial",
+        "resource": "vanuatu_credits",
+        "cost": 1
+      },
+      "caledonia_refining_improve_materials": {
+        "project": "caledonia_refining",
+        "capacity": "caledonia_refining_materials",
+        "resource": "caledonia_credits",
+        "cost": 1
+      },
+      "caledonia_refining_improve_energy": {
+        "project": "caledonia_refining",
+        "capacity": "caledonia_refining_energy",
+        "resource": "caledonia_credits",
+        "cost": 1
+      }
+    },
+    "resource_transfers": {
+      "inguria_support_fiji": {
+        "source": "inguria_credits",
+        "destination": "fiji_credits",
+        "amount": 1
+      },
+      "inguria_support_caledonia": {
+        "source": "inguria_credits",
+        "destination": "caledonia_credits",
+        "amount": 1
+      },
+      "vanuatu_support_caledonia": {
+        "source": "vanuatu_credits",
+        "destination": "caledonia_credits",
+        "amount": 1
+      },
+      "fiji_support_vanuatu": {
+        "source": "fiji_credits",
+        "destination": "vanuatu_credits",
+        "amount": 1
+      }
+    },
+    "dynamic_negotiation": true,
+    "model_factions": [
+      "fiji",
+      "vanuatu",
+      "caledonia"
+    ],
+    "game_length": "Short",
+    "material_communications": true,
+    "diplomatic_history": true,
+    "runtime_propositions": true,
+    "strategic_establishment": true
+  },
+  "initial_refs": {},
+  "evidence_refs": {
+    "accord": {
+      "owner": "robert-kurcina/vault-sh44ser",
+      "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+      "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+      "heading": "Melanesian Production Accord",
+      "reviewed_for": "2044-05-01",
+      "classification": "canonical"
+    }
+  },
+  "faction_profiles": {
+    "inguria": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "inguria",
+      "kind": "organization",
+      "effective_date": "2044-05-01",
+      "label": "Inguria",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Illustrative six-month planning window for the Melanesian Production Accord.",
+          "classification": "hypothetical",
+          "reason": "Exercise scope and date, not a canonical meeting.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Enable critical local manufacturing while retaining high-risk IP custody and certification.",
+          "classification": "hypothetical",
+          "reason": "Exercise priorities grounded in regional roles, not a canonical decision.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "May commit own exercise credits and negotiate voluntary cooperation; no automatic licensing of protected technology.",
+          "classification": "hypothetical",
+          "reason": "Bounded exercise authority.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "exercise credit",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated authorized program budget established; initial credits are hypothetical."
+        }
+      }
+    },
+    "fiji": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "fiji",
+      "kind": "organization",
+      "effective_date": "2044-05-01",
+      "label": "Fiji",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Illustrative six-month planning window for the Melanesian Production Accord.",
+          "classification": "hypothetical",
+          "reason": "Exercise scope and date, not a canonical meeting.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Secure funded local chassis assembly and durable purchase commitments.",
+          "classification": "hypothetical",
+          "reason": "Exercise priorities grounded in regional roles, not a canonical decision.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "May commit own exercise credits and negotiate voluntary cooperation; no automatic licensing of protected technology.",
+          "classification": "hypothetical",
+          "reason": "Bounded exercise authority.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "exercise credit",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated authorized program budget established; initial credits are hypothetical."
+        }
+      }
+    },
+    "vanuatu": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "vanuatu",
+      "kind": "organization",
+      "effective_date": "2044-05-01",
+      "label": "Vanuatu",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Illustrative six-month planning window for the Melanesian Production Accord.",
+          "classification": "hypothetical",
+          "reason": "Exercise scope and date, not a canonical meeting.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Prioritize reliable energy-maintenance production and avoid excessive new demand.",
+          "classification": "hypothetical",
+          "reason": "Exercise priorities grounded in regional roles, not a canonical decision.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "May commit own exercise credits and negotiate voluntary cooperation; no automatic licensing of protected technology.",
+          "classification": "hypothetical",
+          "reason": "Bounded exercise authority.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "exercise credit",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated authorized program budget established; initial credits are hypothetical."
+        }
+      }
+    },
+    "caledonia": {
+      "version": 1,
+      "world": "sh44ser",
+      "id": "caledonia",
+      "kind": "organization",
+      "effective_date": "2044-05-01",
+      "label": "Caledonia",
+      "rules_namespace": "sh44ser",
+      "properties": {
+        "conditions.opening": {
+          "unit": "text",
+          "value": "Illustrative six-month planning window for the Melanesian Production Accord.",
+          "classification": "hypothetical",
+          "reason": "Exercise scope and date, not a canonical meeting.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "motivations.priority": {
+          "unit": "text",
+          "value": "Gain value-added refining and casting participation rather than raw-material dependence.",
+          "classification": "hypothetical",
+          "reason": "Exercise priorities grounded in regional roles, not a canonical decision.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "commitments.authority": {
+          "unit": "text",
+          "value": "May commit own exercise credits and negotiate voluntary cooperation; no automatic licensing of protected technology.",
+          "classification": "hypothetical",
+          "reason": "Bounded exercise authority.",
+          "evidence": {
+            "owner": "robert-kurcina/vault-sh44ser",
+            "revision": "dda318e8d8f281c629a54bbd7513cb1362cd1578",
+            "path": "06_Megaprojects/02_Near_Melanesia_Industrial_Systems/07_Near_Melanesia_Manufacturing_Independence.md",
+            "heading": "Melanesian Production Accord",
+            "reviewed_for": "2044-05-01",
+            "classification": "canonical"
+          }
+        },
+        "resources.available": {
+          "unit": "exercise credit",
+          "value": null,
+          "classification": "unresolved",
+          "reason": "No dated authorized program budget established; initial credits are hypothetical."
+        }
+      }
+    }
+  }
+}
