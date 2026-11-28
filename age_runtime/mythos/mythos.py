@@ -553,6 +553,8 @@ def step(state, action, proposal=None, commitment=None):
 
 
 def _step(state, rules, action, proposal=None, commitment=None):
+    if state["ending"]:
+        raise ValueError("session ended; further gameplay unavailable")
     if dxd_hitpoints.incapacitated(state["dxd"]) and (action != "await_assistance" or proposal is not None or commitment is not None):
         raise ValueError("physical incapacity prevents voluntary action")
     request, _ = hooks.split(proposal)
@@ -585,7 +587,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
     clock = state["dxd"].get("activity")
     if action == "await_assistance":
         reason = activity_segment(state, rules, a["duration_seconds"], "incapacitated")
-        return finish_activity(state, rules, action, a, True, reason)
+        return finish_activity(state, rules, action, a, reason != "character_death", reason)
     if "spatial" in rules and a["route"]["seconds"]:
         departure = state["time"]
         arrival = datetime.fromisoformat(departure) + timedelta(seconds=a["route"]["seconds"])
@@ -793,7 +795,7 @@ def ending_projection(state, rules, reason, action):
         "account_entrusted": "account_entrusted"})
     return {"reason": reason, "evidence_count": len(state["discoveries"]),
             **{key: flag in state["flags"] for key, flag in flags.items()},
-            "epilogue": ("Your character has died. Previously established outcomes remain." if reason == "character_death" and reason not in rules["ending_text"] else rules["ending_text"][reason]), "scores": scores(state, action)}
+            "epilogue": ("Your character has died. The investigation ends here." if reason == "character_death" and reason not in rules["ending_text"] else rules["ending_text"][reason]), "scores": scores(state, action)}
 
 
 def scores(state, action):
@@ -808,6 +810,8 @@ def scores(state, action):
         raise ValueError("unsupported narrative resolver")
     if "progression" in state:
         self_preserved = max(10, self_preserved - 12 * (state["progression"]["stage"] - 1))
+    if state["dxd"].get("injury") and dxd_injury.projection(state["dxd"]["injury"])["status"] == "dead":
+        self_preserved = 0
     contained = min(100, 10 + 18 * state["containment"])
     return {"Truth Preserved": truth / 10, "Self Preserved": self_preserved / 10,
             "Horror Contained": contained / 10}
@@ -818,6 +822,8 @@ def apply_memory(state, event, memory):
     Only the latest Turn's already-triggered Inspiration is eligible.
     Wording is untrusted narrative input, not a source of new facts.
     """
+    if state["ending"]:
+        raise ValueError("session ended; memory editing unavailable")
     if not isinstance(event, str) or not isinstance(memory, str):
         raise ValueError("invalid memory input")
     memory = memory.strip()
@@ -846,6 +852,8 @@ def narrative(path, request, revision):
     return _commit(path, revision, narrative_step, request)
 
 def _apply_dialogue(state, rules, request):
+    if state["ending"]:
+        raise ValueError("session ended; further dialogue unavailable")
     if dxd_injury.incapacitated(state["dxd"].get("injury")):
         raise ValueError("physical incapacity prevents dialogue")
     epistemic.record(state, rules, request, npc_available)
@@ -863,6 +871,8 @@ def dialogue(path, request, revision):
     return _commit(path, revision, dialogue_step, request)
 
 def _apply_establishment(state, rules, request):
+    if state["ending"]:
+        raise ValueError("session ended; further establishment unavailable")
     if isinstance(request, dict) and set(request) == {"assisted_awakening"}:
         medical.awaken(state, rules, request["assisted_awakening"], npc_available, establishment.text)
         state["history"].append({"establish": copy.deepcopy(request)})
