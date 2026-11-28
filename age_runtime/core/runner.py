@@ -12,7 +12,7 @@ from age_runtime.core.economy import validate_projects, resolve_projects, valida
 from age_runtime.core.observations import validate_views, observe
 from age_runtime.core.actions import validate_catalog, register_request, validate_review_capacity, resolve_reviews, validate_service_rule, validate_civic_rules, validate_transfers, validate_agreements, agreement_actions, resolve_agreements
 
-from age_runtime.core import negotiation, communications, diplomacy, establishment, event_generator, phase_memory, reserve_accounting, stock_accounting
+from age_runtime.core import negotiation, communications, diplomacy, establishment, event_generator, phase_memory, reserve_accounting, stock_accounting, matrix_effects
 
 CHECKPOINT_VERSION = 2
 GAME_LENGTHS = {"Short": 6, "Standard": 12, "Extended": 24}
@@ -27,7 +27,7 @@ def validate(s):
     if not isinstance(s, dict):
         raise ValueError("scenario must be an object")
     required = {"version", "id", "turn_minutes", "end_minute", "initial", "events", "constraints"}
-    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment", "permission_terms", "event_templates", "phase_memory", "project_dependencies", "project_permissions", "reserve_accounts", "reserve_actions", "stock_accounts", "stock_actions", "stock_flows"}
+    optional = {"actors", "action_catalog", "administrative_reviews_per_turn", "service_restoration", "community_assistance", "civic_agreement", "assistance_capacity", "dependent_events", "economy_projects", "capacity_actions", "model_factions", "game_length", "resource_transfers", "agreements", "dynamic_negotiation", "funding_reserves", "material_communications", "communication_propositions", "runtime_propositions", "communication_delay_minutes", "diplomatic_history", "strategic_establishment", "permission_terms", "event_templates", "phase_memory", "project_dependencies", "project_permissions", "reserve_accounts", "reserve_actions", "stock_accounts", "stock_actions", "stock_flows", "matrix_properties", "matrix_effects"}
     if required - s.keys():
         raise ValueError("missing scenario fields: " + ", ".join(sorted(required - s.keys())))
     if s.keys() - required - optional:
@@ -81,6 +81,7 @@ def validate(s):
     phase_memory.validate(s)
     reserve_accounting.validate(s)
     stock_accounting.validate(s)
+    matrix_effects.validate(s)
     factions = s.get("model_factions", [])
     if not isinstance(factions, list) or any(not isinstance(a, str) or a not in s.get("actors", {}) for a in factions) or len(set(factions)) != len(factions):
         raise ValueError("invalid model faction IDs")
@@ -141,6 +142,7 @@ def advance(s, state):
                     r.update(status="reviewed", reviewed_minute=end)
                 reserve_accounting.resolve(s, result, end, reviewed)
                 stock_accounting.resolve(s, result, end, reviewed)
+                matrix_effects.resolve(s, result, end, reviewed)
             else:
                 resolve_reviews(s, result, end)
             resolve_agreements(s, result, end)
