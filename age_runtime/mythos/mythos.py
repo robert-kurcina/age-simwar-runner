@@ -538,7 +538,9 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
             reason = "involuntary_sleep"
             break
-        if interruptible and any(e.get("interrupt_activity") for e in visible_events):
+        # A notice at the exact finish cannot interrupt time already worked.
+        # Its world effects still precede completion prerequisite checks.
+        if cursor < finish and interruptible and any(e.get("interrupt_activity") for e in visible_events):
             reason = "event"
             break
     return reason
