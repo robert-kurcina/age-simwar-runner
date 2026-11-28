@@ -8,7 +8,7 @@ Status: author-approved pivot to Twilight Wars — 2026-11-27. This ordered road
 |---|---|
 | DONE (merged #286; post-merge CI verification remains) | Correct the Great War Quiet Event fixture without weakening validation. Historical Manafount/Experiment rehearsal remains isolated; verify both required workflows on the merged head. |
 | P0 WIP (initial code audit recorded below) | Audit existing strategic resource stock, flow, capacity, access, ownership, commitment, project, recovery, transfer and loss semantics against concrete Great War decisions. Inventory actual code paths and tests; reuse before adding; identify gaps and conflicting ledgers. |
-| P0 IN PROGRESS | Exact historical source revisions located; manuscript GM chapter and selected dated records inspected. Boundary and eight-quarter calendar implemented. Next reconcile workbook cells, complete era roster and map authority before scenario configuration. Keep FIXED/WORKING/OPEN distinct; no 286 CE projection. |
+| P0 IN PROGRESS | Exact historical source revisions located; manuscript GM chapter and selected dated records inspected. Boundary and eight-quarter calendar implemented. Workbook cells inspected; next complete era roster, dated settlement continuity and scenario-specific opening assumptions before configuration. Keep FIXED/WORKING/OPEN distinct; no 286 CE projection. |
 | P1 | Build minimal Great War historical scenario configuration for eight quarterly Turns, simultaneous independent Deity decisions, asymmetric objectives and autonomous mortal institutions. Resolve source-supported setup; unknown consequential values require explicit rehearsal assumptions or author decision. No invented canonical roster. |
 | P1 WIP (bounded reserves and mortal stocks merged; matrix effects submitted) | Resource accounting vertical slice: bounded owned stocks, available/reserved/depleted capacity where applicable, commitments, production/recovery, access and transfer, irreversible losses and provenance. Distinguish mapped PL, PR, mortal RP and other resource types; no automatic conversions or duplicate ledgers. Test atomic rejection, competing allocations, conservation where applicable, release vs expenditure, time-bound flows and replay. |
 | P1 WIP (accounted opposing effects submitted; CI pending) | Qualify matrix decision loop with contextual actor-local briefings, proposals, negotiations, opposition, authorized resource effects and autonomous mortal responses. No LLM mutation of authoritative state; same affordability and authority checks for humans and model actors. Aggregate institutions and populations, not individual schedules. |
@@ -42,11 +42,24 @@ Read-only source inventory pinned to Great War revision `da7e1140e92d5450fd82393
 | Great War deity records | Selected chronology records read at pinned revision | finish era eligibility, distinguish independent entities from persistent combinations and avoid duplicate actor identities |
 | Sarna Len master GM chapter | Read at pinned revision, blob `fd363f5ab6b18cc6169443ad7d669b22e907ed10` | resolve period-specific actors and institutions with dated records |
 | Sarna Len chronological and polity guidance | Selected indexes read at pinned revision | reconcile era-specific relationships and distinguish political autonomy from patronage |
-| Historical workbook | Base64 retrieval succeeded, blob `66eeb3f6c8cc57a7100f08ccd7ee7c91e3785b10`; cells not inspected | authorized local decoding and sheet review |
+| Historical workbook | Decoded XLSX XML and shared strings from pinned blob `66eeb3f6c8cc57a7100f08ccd7ee7c91e3785b10`; 24 worksheets identified, selected rows across 11 sheets inspected | reconcile remaining relevant rows and explicitly separate comparison baseline from opening estimates |
 | Complete manuscript | Exact blob identified; selected master chapter read, not entire manuscript | consult relevant sections, not assume complete coverage |
 | Historical geography | Modern map cannot establish opening political state | acquire dated geographic evidence and mark uncertain borders explicitly |
 
 The reviewed material narrows possible participants but does not establish complete dated Domain ratings, opening resource balances, or a fully authorized roster. Do not replace unknowns with the present-day identity sheets. Later historical events must not be enforced as inevitable simulation outcomes. Continue private source reconciliation before promoting the scenario. No new generic engine mechanics in this increment.
+
+## Historical workbook reconciliation checkpoint
+
+The pinned workbook can now be read directly through encoded source retrieval and ZIP/XML decoding within the authorized connector context, without committing source bytes to the public runner. Selected worksheet cells and cached values were inspected; formulas were not recalculated. This is source review, not a new import pipeline.
+
+- Parameters and Events agree with the approved scenario boundary; the earlier comparison baseline is not the opening year.
+- The historical comparison worksheet supplies working settlement populations and forms, with differentiated confidence. Preserve the source epoch and confidence, and do not infer continuous settlement identity, intervening growth, or exact 1524 BCE population without evidence.
+- Deity Summary contains current profiles and unresolved historical entries. Its numeric values are not default Great War Domain ratings or PR capacity. Reconcile each eligible actor against dated chronology; do not double-count persistent combinations.
+- Map Snapshots prohibits back-projection of contemporary density, settlements and divine distributions. Deity Presence includes undated transitions; Maritime Networks and Settlement Regimes also contain incomplete chronological bounds. Geography, routes and political access need individually dated support.
+- Institutional Conflict and Patronage Dynamics support independent mortal incentives. Do not equate religious patronage with political control, population with a currency balance, or later restrictions with operative law at the scenario opening.
+- Open Items explicitly retains unresolved era properties and chronology. No synthetic numerical assumptions are promoted to canonical status.
+
+**Next deliverable:** a private, minimal opening configuration with a dated evidence ledger, separate actor eligibility and actual participation, explicit uncertainty for resource calibration, and a narrow set of competing objectives. Public engine receives only approved distribution-safe configuration or synthetic tests. No further accounting or generic adjudication additions unless the configuration exposes a concrete blocker. The complete source-derived opening roster and historical map remain unverified.
 
 ## Great War historical boundary — implementation checkpoint
 
