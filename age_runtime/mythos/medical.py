@@ -4,7 +4,8 @@ Only the Bodypoint component is implemented; no Hitpoint pool exists yet.
 Supplies are explicit scenario allocations, not inferred from ambience.
 """
 from datetime import datetime, timedelta
-from age_runtime.core import dxd_injury
+from age_runtime.core import dxd_injury, dxd_hitpoints
+from random import Random
 
 
 def pending(state):
@@ -27,7 +28,8 @@ def schedule(state, rules, request, npc_available, text):
     nid = request["npc"]
     if not isinstance(nid, str) or nid not in cfg["caregivers"]:
         raise ValueError("caregiver not reviewed")
-    if not injury["injury"] or dxd_injury.projection(injury)["status"] == "dead":
+    pool = state["dxd"].get("hitpoints")
+    if (not injury["injury"] and not (pool and pool["current"] < pool["capacity"])) or dxd_injury.projection(injury)["status"] == "dead":
         raise ValueError("no treatable living patient")
     if not eligible(state, rules, nid, state["location"], npc_available):
         raise ValueError("caregiver unavailable")
@@ -66,5 +68,9 @@ def resolve(state, rules, event, npc_available):
     if injury["injury"] <= injury["capacity"]:
         injury["dying_seconds"] = 0
         injury["dying_latched"] = False
+    pool = state["dxd"].get("hitpoints")
+    if pool:
+        restored = dxd_hitpoints.recover(pool, Random(f"{state['seed']}:{event['id']}:bandage").randint(1, 6))
+        event["hitpoints_restored"] = restored
     event.update(status="completed", bodypoints_restored=before - injury["injury"])
     state["observations"].append("Bandaging has restored one Bodypoint." if before else "Bandaging is complete.")

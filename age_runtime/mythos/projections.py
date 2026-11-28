@@ -8,7 +8,7 @@ from age_runtime.mythos import (
     timed_details, emotions, reminders, npc_time, action_observations,
     behavior, expectations, npc_travel, npc_agency, npc_agenda, settlement_activity, incidental_people,
 )
-from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment, dxd_injury, dxd_physical_disability
+from age_runtime.core import dxd_conditions, dxd_morale, dxd_commitment, dxd_injury, dxd_physical_disability, dxd_hitpoints
 from age_runtime.core import opportunity_latitude as latitude
 
 def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, full_history=False):
@@ -65,6 +65,7 @@ def player_view(state, rules, legal, npc_available, digest, demeanor_labels, *, 
                       "encounters": p["encounters"], "last_contact": p["last_contact"]}
                      for nid, p in state["npcs"].items() if p["encounters"]],
         "condition": dict(dxd_conditions.describe(state["dxd"]["concerns"]),
+                          **({"hitpoints": dxd_hitpoints.projection(state["dxd"]["hitpoints"])} if "hitpoints" in state["dxd"] else {}),
                           **({"physical_injury": dxd_injury.projection(state["dxd"]["injury"])} if "injury" in state["dxd"] else {}),
                           **({"permanent_locations": dxd_physical_disability.projection(state["dxd"]["injury"])} if state["dxd"].get("injury", {}).get("permanent_locations") else {}),
                           fear=dxd_morale.describe(state["dxd"]["morale"])),
