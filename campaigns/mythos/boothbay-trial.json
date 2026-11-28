@@ -1,5 +1,5 @@
 {
-  "version": 83,
+  "version": 84,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2890,5 +2890,12 @@
       "burroughs": 2
     },
     "provenance": "Provisional scenario allocations of ordinary bandaging supplies; no professional medical qualification implied."
+  },
+  "injury_recuperation": {
+    "regime": "general",
+    "locations": [
+      "Sailor's Rest Boarding House"
+    ],
+    "provenance": "Reviewed safe rest only; scenario horizon shorter than native recovery interval."
   }
 }
