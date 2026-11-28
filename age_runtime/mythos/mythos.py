@@ -272,7 +272,7 @@ def options(state, rules):
         if injury and dxd_injury.projection(injury)["status"] == "dead":
             return []
         remaining = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
-        duration = min(remaining, dxd_injury.next_boundary(injury) or 600)
+        duration = min(remaining, dxd_injury.next_boundary(injury) or 600, dxd_hitpoints.awakening_boundary(state["dxd"]) or 600)
         if duration <= 0:
             return []
         return [{"id": "await_assistance", "label": "Advance time while incapacitated", "location": state["location"],
@@ -468,12 +468,17 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         interval = dxd_injury.next_boundary(injury)
         if interval is not None:
             boundary = min(boundary, cursor + timedelta(seconds=interval))
+        awakening = dxd_hitpoints.awakening_boundary(pc)
+        if awakening is not None:
+            boundary = min(boundary, cursor + timedelta(seconds=awakening))
         span = int((boundary - cursor).total_seconds())
         before = dxd_conditions.degrees(pc["concerns"])["stress"]
         actual = span if mode == "incapacitated" else dxd_conditions.advance_activity(pc["concerns"], clock, span, mode, safe=safe,
                                                  seed=state["seed"], attributes=pc["attributes"])
+        awakened = False
         if "hitpoints" in pc:
             dxd_hitpoints.advance(pc, actual, restful=mode in ("rest", "quiet", "sleep", "low_energy"))
+            awakened = dxd_hitpoints.advance_unconscious(pc, actual)
         if injury:
             dxd_injury.advance(injury, actual)
             regime = rules.get("injury_recuperation", {}).get("regime")
@@ -497,6 +502,10 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         npc_agenda.observe_boundary(state, rules, engaged=engaged)
         if injury and dxd_injury.projection(injury)["status"] == "dead":
             reason = "character_death"
+            break
+        if awakened:
+            state["observations"].append("You regain consciousness.")
+            reason = "regained_consciousness"
             break
         if mode not in ("sleep", "incapacitated") and clock["pending_sleep_seconds"] == 0:
             dxd_conditions.begin_sleep(pc["concerns"], clock, pc["attributes"])
@@ -568,8 +577,8 @@ def _step(state, rules, action, proposal=None, commitment=None):
         state["routine_source"] = None
     clock = state["dxd"].get("activity")
     if action == "await_assistance":
-        activity_segment(state, rules, a["duration_seconds"], "incapacitated")
-        return finish_activity(state, rules, action, a, True)
+        reason = activity_segment(state, rules, a["duration_seconds"], "incapacitated")
+        return finish_activity(state, rules, action, a, True, reason)
     if "spatial" in rules and a["route"]["seconds"]:
         departure = state["time"]
         arrival = datetime.fromisoformat(departure) + timedelta(seconds=a["route"]["seconds"])
@@ -847,6 +856,10 @@ def dialogue(path, request, revision):
     return _commit(path, revision, dialogue_step, request)
 
 def _apply_establishment(state, rules, request):
+    if isinstance(request, dict) and set(request) == {"assisted_awakening"}:
+        medical.awaken(state, rules, request["assisted_awakening"], npc_available, establishment.text)
+        state["history"].append({"establish": copy.deepcopy(request)})
+        return
     if isinstance(request, dict) and set(request) == {"medical_bandage"}:
         medical.schedule(state, rules, request["medical_bandage"], npc_available, establishment.text)
         state["history"].append({"establish": copy.deepcopy(request)})
