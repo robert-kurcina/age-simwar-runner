@@ -252,6 +252,16 @@ def revise_belief(state, rules, request, npc_available):
         raise ValueError("duplicate belief revision or record limit")
     ledger.append(entry)
 
+def earn_flag(state, rules, flag, action):
+    """Record reviewed proposition access separately from the world flag."""
+    if "protagonist_knowledge" not in state or flag not in {p.get("flag") for p in rules.get("propositions", {}).values()}:
+        return
+    ledger = state["protagonist_knowledge"]
+    if not any(e["flag"] == flag and current_protagonist_record(state, e) for e in ledger):
+        ledger.append({"flag": flag, "protagonist_id": state["protagonist"]["id"],
+                       "action": action, "turn": state["turn"], "at": state["time"]})
+
+
 def sources(state, rules, actor, pid):
     """Access is not belief. Keep authored access and received claims distinct."""
     spec = registry(state, rules)[pid]
@@ -259,7 +269,10 @@ def sources(state, rules, actor, pid):
     if actor in spec["initial_knowers"]:
         result.append({"kind": "hypothesis_origin", "id": spec["source"]} if spec["kind"] == "hypothesis" else {"kind": "authored_access"})
     if actor == "pc" and spec.get("flag") in state["flags"]:
-        result.append({"kind": "earned", "flag": spec["flag"]})
+        if "protagonist_knowledge" not in state or any(
+                e["flag"] == spec["flag"] and current_protagonist_record(state, e)
+                for e in state["protagonist_knowledge"]):
+            result.append({"kind": "earned", "flag": spec["flag"]})
     for e in state.get("dialogue", []):
         if e.get("proposition") == pid and e["listener"] == actor and (actor != "pc" or current_protagonist_record(state, e)):
             result.append({"kind": "received_claim", "id": e["id"], "asserts": e["asserts"]})
