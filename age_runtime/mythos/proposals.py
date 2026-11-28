@@ -49,7 +49,7 @@ def validate_local(rules):
         if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", kind) or not isinstance(spec, dict):
             raise ValueError("invalid capability identity")
         required = {"target", "resolution"}
-        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect", "resumable"}
+        allowed = required | {"seconds", "variable_interval_seconds", "test", "concern_failure", "established", "count_evidence", "requires_evidence", "object_effect", "resumable", "access"}
         if not required <= set(spec) or set(spec) - allowed:
             raise ValueError("invalid capability fields")
         if spec["target"] not in ("location", "npc", "object"):
@@ -61,6 +61,8 @@ def validate_local(rules):
                 raise ValueError("local object capabilities support inspection only")
         elif "object_effect" in spec:
             raise ValueError("object effect requires object target")
+        if "access" in spec and (spec["target"] != "object" or spec["access"] not in ("held", "held_or_unheld")):
+            raise ValueError("invalid object access policy")
         duration_range(spec)
         if "resumable" in spec and (type(spec["resumable"]) is not bool or
                 spec["target"] != "location" or "variable_interval_seconds" not in spec):
@@ -145,10 +147,11 @@ def resolve_duration(state, action):
                 task_duration=roll)
 
 
-def object_available(entity):
-    """Inspect only usable PC-held incidental objects. Locks govern NPC property."""
+def object_available(entity, spec=None):
+    """Inspect local held or explicitly permitted unheld objects; NPC property uses Locks."""
+    holders = (None, "pc") if (spec or {}).get("access") == "held_or_unheld" else ("pc",)
     return bool(entity and entity["kind"] == "object"
-                and entity.get("custodian") == "pc" and object_actions.usable(entity))
+                and entity.get("custodian") in holders and object_actions.usable(entity))
 
 
 def completion_available(state, rules, action, npc_available):
@@ -157,7 +160,8 @@ def completion_available(state, rules, action, npc_available):
         return True
     if spec["target"] == "object":
         entity = establishment.local_entities(state).get(action["object_target"])
-        return (object_available(entity)
+        return (object_available(entity, spec)
+                and entity.get("custodian") == action["object_custodian_before"]
                 and entity.get("lifecycle", "intact") == action["object_before"]
                 and entity.get("function") == action.get("object_function_before"))
     if spec["target"] == "npc":
@@ -180,7 +184,7 @@ def local_capabilities(state, rules, npc_available):
             continue
         if spec["target"] == "object":
             entities = establishment.local_entities(state)
-            targets = [oid for oid, entity in sorted(entities.items()) if object_available(entity)]
+            targets = [oid for oid, entity in sorted(entities.items()) if object_available(entity, spec)]
         elif spec["target"] == "npc":
             targets = [nid for nid, npc in sorted(state["npcs"].items())
                        if npc["encounters"] and conversation_available(state, rules, nid, npc_available)]
@@ -224,6 +228,7 @@ def compile_local(state, rules, request, npc_available):
     elif spec["target"] == "object":
         action["object_target"] = target
         entity = establishment.local_entities(state)[target]
+        action["object_custodian_before"] = entity.get("custodian")
         action["object_before"] = entity.get("lifecycle", "intact")
         action["object_function_before"] = entity.get("function")
     if spec["resolution"] == "test":
