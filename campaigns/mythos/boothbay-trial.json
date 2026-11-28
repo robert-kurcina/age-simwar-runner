@@ -1,5 +1,6 @@
 {
-  "version": 94,
+  "version": 95,
+  "personal_reacquisition_actions": ["inspect_docks", "talk_eleanor", "inspect_room", "visit_elias", "follow_eleanor", "read_journal", "compare_almanac", "examine_inlet", "inspect_inlet_pattern", "report"],
   "personal_prerequisite_flags": ["badge", "eleanor_account", "paperwork", "journal", "water_warning", "tide_clue", "written_account", "tide_window_known", "water_risk_known", "ecological_tide_pattern", "police_clearance", "patrol_passage"],
   "protagonist_knowledge": true,
   "protagonist_identity": true,
