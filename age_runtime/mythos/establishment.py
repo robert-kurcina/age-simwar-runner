@@ -146,15 +146,21 @@ def local_entities(state):
             continue
         entity = entities[change["id"]]
         if kind == "transfer":
-            entity["custodian"] = change["to"]
+            entity["custodian"] = (change.get("protagonist_id", "pc")
+                                   if change["to"] == "pc" else change["to"])
             entity["location"] = change["location"]
             entity.setdefault("properties", {}).pop("placement", None)
         else:
             entity.setdefault("properties", {})[change["property"]] = change["after"]
     for entity in entities.values():
         holder = entity.get("custodian")
-        if holder == "pc":
+        if holder == "pc" or (state.get("protagonist") and holder == state["protagonist"]["id"]):
+            entity["custodian"] = "pc"
             entity["location"] = state["location"]
+        elif isinstance(holder, str) and holder.startswith("pc:"):
+            # A predecessor\'s possessions are not available to the active PC.
+            # Replacement must establish their final location and transfer authority.
+            entity["location"] = None
         elif holder is not None:
             entity["location"] = None if npc_travel.pending(state, holder) else state["npcs"][holder]["location"]
     return {eid: e for eid, e in entities.items() if e["location"] == state["location"]}
@@ -198,6 +204,7 @@ def transfer(state, rules, transfers, npc_available):
         basis = text(item["basis"], 240)
         pending.append({"transfer_id": len(ledger) + len(pending) + 1,
                         "id": eid, "from": old, "to": new, "sequence": len(state["history"]),
+                        **({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}),
                         "pc_authorization": authorization, "npc_consent": consent,
                         "basis": basis, "location": state["location"],
                         "turn": state["turn"], "at": state["time"]})
