@@ -218,7 +218,15 @@ def observe(s, state, actor_id):
                        "pending_overallocation": gross > values[account["key"]],
                        "options": options,
                        "basis": "Opening balance; incoming transfers and production cannot finance this batch."}
+    matrix = {"properties": {key: {**spec, "reported_value": values.get(key)}
+                             for key, spec in s.get("matrix_properties", {}).items()
+                             if key in keys},
+              "own_options": {name: deepcopy(changes)
+                              for name, changes in s.get("matrix_effects", {}).items()
+                              if name in requests},
+              "basis": "Authored contributions require successful accounting; independent opposition and bounds may change the net outcome."}
     observation = {
+        **({"matrix": matrix} if "matrix_effects" in s else {}),
         **({"stock_accounts": stocks} if "stock_accounts" in s else {}),
         **({"reserve_accounts": reserves} if "reserve_accounts" in s else {}),
         "objective_outcomes": outcomes,
