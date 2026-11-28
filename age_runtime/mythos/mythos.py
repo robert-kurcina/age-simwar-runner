@@ -8,7 +8,7 @@ from age_runtime.core import opportunity_latitude as latitude
 from age_runtime.core.runner import save
 from age_runtime.mythos import projections, resolution, npc_agenda, settlement_activity, incidental_people
 from age_runtime.mythos import spatial, pacing, events as narrative_events, proposals, beats, continuity, nominations, hooks, epistemic, establishment, agreements, locks, timed_details, emotions, reminders, npc_time, action_observations, behavior, expectations, npc_travel, npc_agency, medical
-from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression, dxd_injury
+from age_runtime.core import dxd, dxd_conditions, dxd_inspiration, dxd_character, dxd_modifiers, dxd_morale, dxd_psychology, dxd_commitment, dxd_context, dxd_progression, dxd_injury, dxd_hitpoints
 
 ROOT = Path(__file__).resolve().parents[2] / "campaigns" / "mythos"
 
@@ -170,6 +170,8 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
                         "concerns": dxd_conditions.initial(derived["pc"]["attributes"]),
                         "inactive_major_attributes": {key: derived[key]["attributes"] for key in inactive_names},
                         "inactive_major_bodies": {key: derived[key] for key in inactive_names}}
+        if rules.get("native_hitpoints"):
+            state["dxd"]["hitpoints"] = dxd_hitpoints.initial(derived["pc"]["physical"]["base_hitpoints"])
         if rules.get("native_injury"):
             state["dxd"]["injury"] = dxd_injury.initial(derived["pc"]["physical"]["bodypoints"],
                                                     *([derived["pc"]["attributes"]["SIZ"], state["dxd"]["concerns"]["capacity"]["recovery_rate"]]
@@ -266,8 +268,8 @@ def options(state, rules):
     if state["ending"]:
         return []
     injury = state["dxd"].get("injury")
-    if dxd_injury.incapacitated(injury):
-        if dxd_injury.projection(injury)["status"] == "dead":
+    if dxd_hitpoints.incapacitated(state["dxd"]):
+        if injury and dxd_injury.projection(injury)["status"] == "dead":
             return []
         remaining = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
         duration = min(remaining, dxd_injury.next_boundary(injury) or 600)
@@ -470,6 +472,8 @@ def activity_segment(state, rules, seconds, mode, *, safe=False, interruptible=F
         before = dxd_conditions.degrees(pc["concerns"])["stress"]
         actual = span if mode == "incapacitated" else dxd_conditions.advance_activity(pc["concerns"], clock, span, mode, safe=safe,
                                                  seed=state["seed"], attributes=pc["attributes"])
+        if "hitpoints" in pc:
+            dxd_hitpoints.advance(pc, actual, restful=mode in ("rest", "quiet", "sleep", "low_energy"))
         if injury:
             dxd_injury.advance(injury, actual)
             regime = rules.get("injury_recuperation", {}).get("regime")
@@ -533,7 +537,7 @@ def step(state, action, proposal=None, commitment=None):
 
 
 def _step(state, rules, action, proposal=None, commitment=None):
-    if dxd_injury.incapacitated(state["dxd"].get("injury")) and (action != "await_assistance" or proposal is not None or commitment is not None):
+    if dxd_hitpoints.incapacitated(state["dxd"]) and (action != "await_assistance" or proposal is not None or commitment is not None):
         raise ValueError("physical incapacity prevents voluntary action")
     request, _ = hooks.split(proposal)
     request, nomination = nominations.split(request)
