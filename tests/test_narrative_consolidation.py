@@ -31,6 +31,51 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replay mismatch"):
             mythos.verify(state)
 
+    def test_reviewed_replacement_requires_death_and_isolates_character_state(self):
+        from age_runtime.mythos import replacement
+        from age_runtime.core import dxd_injury
+        _, rules = mythos.load("boothbay")
+        original = mythos.initial("boothbay", 42)
+        profile = copy.deepcopy(rules["dxd"]["character_profiles"]["pc"])
+        profile["background"]["heritage"] = None
+        profile["proficiencies"]["traits"] = {}
+        rules["replacement_profiles"] = {"successor": {
+            "role": "Reviewed successor", "location": original["location"],
+            "inventory": ["Notebook"], "attributes": copy.deepcopy(rules["dxd"]["attributes"]),
+            "body": copy.deepcopy(rules["dxd"]["body_profiles"]["pc"]),
+            "character_profile": profile,
+            "resources": {k: 0 for k in original["resources"]},
+            "relationships": {k: 0 for k in original["relationships"]},
+            "favor": 1, "awake_seconds": 0, "entry_basis": "Reviewed test entry"}}
+        with self.assertRaisesRegex(ValueError, "irreversible"):
+            replacement.apply(copy.deepcopy(original), rules, {"profile": "successor"})
+        dead = copy.deepcopy(original)
+        injury = dead["dxd"]["injury"]
+        dxd_injury.apply(injury, injury["capacity"] + 2 * injury["size"])
+        dead["ending"] = mythos.ending_projection(dead, rules, "limit", None)
+        dead["flags"].append("patrol_risk")
+        dead["discoveries"].append("Prior personal finding")
+        dead["observations"].append("Prior personal observation")
+        world = copy.deepcopy(dead["npcs"])
+        replacement.apply(dead, rules, {"profile": "successor"})
+        self.assertEqual(dead["protagonist"]["id"], "pc:2")
+        self.assertEqual(dead["inventory"], ["Notebook"])
+        self.assertEqual(dead["dxd"]["traits"], {})
+        self.assertEqual(dead["dxd"]["favor"], 1)
+        self.assertEqual(dead["discoveries"], [])
+        self.assertEqual(dead["observations"], [])
+        self.assertIn("patrol_risk", dead["flags"])
+        self.assertEqual(dead["time"], original["time"])
+        self.assertEqual(dead["turn"], original["turn"])
+        self.assertIsNone(dead["ending"])
+        self.assertEqual(dxd_injury.projection(dead["dxd"]["injury"])["status"], "uninjured")
+        retired = dead["retired_protagonists"][0]
+        self.assertEqual(retired["ending"]["reason"], "character_death")
+        self.assertEqual(dxd_injury.projection(retired["dxd"]["injury"])["status"], "dead")
+        self.assertEqual(retired["discoveries"], ["Prior personal finding"])
+        self.assertEqual(dead["npcs"].keys(), world.keys())
+        self.assertEqual(dead["history"][-1], {"replace_protagonist": {"profile": "successor"}})
+
     def test_reviewed_reacquisition_is_limited_to_one_attempt_per_successor(self):
         from age_runtime.mythos import epistemic
         _, rules = mythos.load("boothbay")
