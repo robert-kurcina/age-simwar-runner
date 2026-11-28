@@ -73,7 +73,6 @@ def record(state, rules, request, npc_available, text):
     if "pc" in awards and "activity" in state["dxd"]:
         dxd_conditions.refresh_sleep_limit(state["dxd"]["concerns"], state["dxd"]["activity"], state["dxd"]["attributes"])
     ledger.append({"id": eid, "npc": npc, "claim_ids": list(ids), "emotion": emotion,
-                   **({"protagonist_id": state["protagonist"]["id"]} if state.get("protagonist") else {}),
                    "intensity": intensity, "expression": expression, "cause": cause,
                    "severity": copy.deepcopy(stress), "awards": awards, "turn": state["turn"],
                    "at": state["time"], "location": state["location"],
