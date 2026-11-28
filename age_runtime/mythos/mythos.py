@@ -234,8 +234,8 @@ def _available_local_npcs(state, rules):
 def _local_action_available(state, rules, action):
     """Revalidate the same prerequisites at arrival and after local activity."""
     return (not any(f in state["flags"] for f in action.get("excludes_flags", []))
-            and all(f in state["flags"] for f in action.get("requires_flags", []))
-            and (not action.get("requires_any_flags") or any(f in state["flags"] for f in action["requires_any_flags"]))
+            and all(epistemic.action_flag(state, rules, f) for f in action.get("requires_flags", []))
+            and (not action.get("requires_any_flags") or any(epistemic.action_flag(state, rules, f) for f in action["requires_any_flags"]))
             and all(f in state["used"] for f in action.get("requires_used", []))
             and len(state["discoveries"]) >= action.get("requires", 0)
             and all(state["relationships"][k] >= v for k, v in action.get("requires_relationship", {}).items())
@@ -301,8 +301,8 @@ def options(state, rules):
         return result
     candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
                   and len(state["discoveries"]) >= a.get("requires", 0)
-                  and all(f in state["flags"] for f in a.get("requires_flags", []))
-                  and (not a.get("requires_any_flags") or any(f in state["flags"] for f in a["requires_any_flags"]))
+                  and all(epistemic.action_flag(state, rules, f) for f in a.get("requires_flags", []))
+                  and (not a.get("requires_any_flags") or any(epistemic.action_flag(state, rules, f) for f in a["requires_any_flags"]))
                   and all(f in state["used"] for f in a.get("requires_used", []))
                   and not any(f in state["flags"] for f in a.get("excludes_flags", []))
                   and all(state["relationships"][k] >= v for k, v in a.get("requires_relationship", {}).items())
