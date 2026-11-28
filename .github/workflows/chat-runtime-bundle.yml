@@ -91,7 +91,47 @@ jobs:
           python game.py start boothbay "$work/mythos.json" --seed 42 > "$work/opening.json"
           revision="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["revision"])' "$work/opening.json")"
           python game.py act "$work/mythos.json" inspect_docks --revision "$revision"
+          python game.py inspect "$work/mythos.json" > "$work/after-action.json"
+          revision="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["revision"])' "$work/after-action.json")"
+          python game.py gm "$work/mythos.json" --compact > "$work/gm.json"
+          python - "$work" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          work = Path(sys.argv[1])
+          gm = json.loads((work / "gm.json").read_text())
+          assert gm["audience"] == "gm_only"
+          assert gm["referee"]["intent_authority"]["status"] == "active"
+          request = {"details": [{"id": "inc:smoke_note", "kind": "object",
+                     "label": "Scrap of paper", "description": "An unattended scrap of paper.",
+                     "basis": "Mundane local object for offline verification"}]}
+          (work / "establish.json").write_text(json.dumps(request))
+          PY
+          python game.py establish "$work/mythos.json" "$work/establish.json" --revision "$revision" > "$work/established.json"
+          new_revision="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["revision"])' "$work/established.json")"
+          cp "$work/mythos.json" "$work/before-rejection.json"
+          if python game.py propose "$work/mythos.json" local:inspect_object:inc:smoke_note inspect_object --intent "Examine the paper in place." --revision "$revision"; then
+            echo "Stale revision was accepted" >&2
+            exit 1
+          fi
+          cmp "$work/mythos.json" "$work/before-rejection.json"
+          python game.py propose "$work/mythos.json" local:inspect_object:inc:smoke_note inspect_object --intent "Examine the paper in place." --revision "$new_revision" > "$work/proposed.json"
           python game.py inspect "$work/mythos.json" > "$work/inspected.json"
+          python - "$work" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          work = Path(sys.argv[1])
+          before, proposed, inspected = (json.loads((work / f"{name}.json").read_text())
+                                         for name in ("established", "proposed", "inspected"))
+          assert proposed == inspected
+          assert proposed["revision"] != before["revision"]
+          assert proposed["discoveries"] == before["discoveries"]
+          assert proposed["last_result"]["action"] == "local:inspect_object:inc:smoke_note"
+          assert proposed["last_result"]["approach"] == "inspect_object"
+          assert "interrupted" not in proposed["last_result"]
+          assert proposed["local_records"][-1]["target"] == "inc:smoke_note"
+          PY
           cp "$work/mythos.json" "$work/before-recall.json"
           python game.py recap "$work/mythos.json" > "$work/recap.json"
           python game.py recall "$work/mythos.json" dock > "$work/recall.json"
