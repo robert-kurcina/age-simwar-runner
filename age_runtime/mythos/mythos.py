@@ -83,6 +83,8 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
         if not state.get("protagonist"):
             raise ValueError("protagonist knowledge requires identity")
         state["protagonist_knowledge"] = []
+        if rules.get("personal_reacquisition_actions"):
+            state["reacquisition_attempts"] = []
     if opportunity_latitude is not None:
         state["opportunity_latitude"] = latitude.validate(opportunity_latitude)
         state["settings_digest"] = digest([state["source"], seed, opportunity_latitude])
@@ -299,7 +301,7 @@ def options(state, rules):
             result.append(dict(result[0], id="wake_early", label="Attempt to wake early", duration_seconds=60,
                                local_seconds=60, interval_seconds=60))
         return result
-    candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"])
+    candidates = [a for a in rules["actions"] if (a.get("repeatable") or a["id"] not in state["used"] or epistemic.reacquisition_available(state, rules, a))
                   and len(state["discoveries"]) >= a.get("requires", 0)
                   and all(epistemic.action_flag(state, rules, f) for f in a.get("requires_flags", []))
                   and (not a.get("requires_any_flags") or any(epistemic.action_flag(state, rules, f) for f in a["requires_any_flags"]))
@@ -310,7 +312,7 @@ def options(state, rules):
                   and continuity.reconsideration_allowed(state, a)
                   and ("spatial" in rules or not a.get("available_from") or state["time"] >= a["available_from"])
                   and (not a.get("available_until") or state["time"] < a["available_until"])
-                  and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"])] + [
+                  and ("disclosure" not in a or a["disclosure"] not in state["npcs"][a["npc"]]["disclosed"] or epistemic.reacquisition_available(state, rules, a))] + [
                       {"id":"observe", "label":"Spend time observing the surroundings", "location":state["location"], "minutes":rules.get("observe_minutes", 30)}]
     if clock and state["location"] == rules["activity"]["sleep_location"]:
         available = int((datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds())
@@ -651,7 +653,10 @@ def _step(state, rules, action, proposal=None, commitment=None):
             for key, amount in a.get("cost", {}).items():
                 state["resources"][key] -= amount
             return finish_activity(state, rules, action, a, False, "availability_changed", proposal)
-    if action != "observe" and not a.get("repeatable"):
+    if epistemic.reacquisition_available(state, rules, a):
+        state["reacquisition_attempts"].append({"action": action, "protagonist_id": state["protagonist"]["id"],
+                                                "turn": state["turn"], "at": state["time"]})
+    if action != "observe" and not a.get("repeatable") and action not in state["used"]:
         state["used"].append(action)
     if not clock:
         for key, amount in a.get("cost", {}).items():
@@ -684,7 +689,7 @@ def _step(state, rules, action, proposal=None, commitment=None):
         if a.get("arrest_progression"):
             state["progression"]["arrested"] = True
             state["progression"]["changes"].append({"at": state["time"], "kind": "arrest", "stage": state["progression"]["stage"]})
-        if "disclosure" in a:
+        if "disclosure" in a and a["disclosure"] not in npc["disclosed"]:
             npc["disclosed"].append(a["disclosure"])
         if "discovery" in a and a["discovery"] not in state["discoveries"]:
             state["discoveries"].append(a["discovery"])

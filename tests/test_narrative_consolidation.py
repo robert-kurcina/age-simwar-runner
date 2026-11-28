@@ -31,6 +31,28 @@ class NarrativeConsolidationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "replay mismatch"):
             mythos.verify(state)
 
+    def test_reviewed_reacquisition_is_limited_to_one_attempt_per_successor(self):
+        from age_runtime.mythos import epistemic
+        _, rules = mythos.load("boothbay")
+        for seed in range(50):
+            state = mythos.step(mythos.initial("boothbay", seed), "inspect_docks")
+            if "badge" in state["flags"]:
+                break
+        else:
+            self.fail("No earned badge")
+        mythos.verify(state)
+        self.assertNotIn("inspect_docks", {a["id"] for a in mythos.options(state, rules)})
+        # Synthetic successor; actual replacement remains unavailable.
+        state["protagonist"]["id"] = "pc:2"
+        self.assertIn("inspect_docks", {a["id"] for a in mythos.options(state, rules)})
+        self.assertNotIn("transmit_account", {a["id"] for a in mythos.options(state, rules)})
+        after = mythos.step(state, "inspect_docks")
+        self.assertEqual(after["used"].count("inspect_docks"), 1)
+        self.assertEqual(after["reacquisition_attempts"][-1]["protagonist_id"], "pc:2")
+        self.assertGreater(after["time"], state["time"])
+        self.assertNotIn("inspect_docks", {a["id"] for a in mythos.options(after, rules)})
+        self.assertEqual(after["discoveries"].count("A census badge lies near the waterfront."), 1)
+
     def test_successor_personal_prerequisites_and_world_flags(self):
         from age_runtime.mythos import epistemic, beats
         state = mythos.initial("boothbay", 42)
