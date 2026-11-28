@@ -34,3 +34,14 @@ class HistoricalDateTests(unittest.TestCase):
                       "-1523-02-29", "-1524-13-01", "1524", None):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 checked_date(value)
+
+    def test_date_distance_and_roundtrip(self):
+        for start in ("-1524-01-01", "-0001-12-31", "0000-02-28", "2003-04-01"):
+            d = checked_date(start)
+            for days in (-146097, -365, -1, 0, 1, 90, 365, 146097):
+                other = d.add_days(days)
+                self.assertEqual(other - d, timedelta(days=days))
+                self.assertEqual(d + timedelta(days=days), other)
+                self.assertEqual(d - other, timedelta(days=-days))
+        self.assertEqual(checked_date("2044-03-01") - checked_date("2044-01-01"),
+                         date(2044, 3, 1) - date(2044, 1, 1))
