@@ -461,6 +461,46 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertEqual(whole["npcs"]["matteo"]["concerns"], expected)
         self.assertIsNone(whole["npcs"]["matteo"]["activity_plan"])
 
+    def test_narrative_routes_distinguish_closed_and_conditional(self):
+        from age_runtime.mythos import continuity
+        state = mythos.initial("boothbay", 42)
+        _, rules = mythos.load("boothbay")
+        state["time"] = "1927-10-14T00:00:00"
+        state["flags"].append("patrol_risk")
+        functions = continuity.projection(state, rules, mythos.options(state, rules))
+        relay = next(f for f in functions if f["id"] == "preserve_account")
+        routes = {c["action"]: c["status"] for c in relay["carriers"]}
+        self.assertEqual(routes["transmit_account"], "blocked")
+        self.assertEqual(routes["relay_with_clearance"], "blocked")
+        self.assertEqual(routes["leave_copy"], "conditional")
+        self.assertEqual(routes["relay_after_patrol"], "conditional")
+        self.assertFalse(relay["authored_routes_exhausted"])
+        state["used"].extend(["leave_copy", "relay_after_patrol"])
+        relay = next(f for f in continuity.projection(state, rules, [])
+                     if f["id"] == "preserve_account")
+        self.assertTrue(relay["authored_routes_exhausted"])
+        state["flags"].append("account_entrusted")
+        relay = next(f for f in continuity.projection(state, rules, [])
+                     if f["id"] == "preserve_account")
+        self.assertTrue(relay["established"])
+        self.assertFalse(relay["authored_routes_exhausted"])
+
+    def test_dated_event_validation_rejects_ambiguous_sources(self):
+        from age_runtime.mythos import events
+        _, rules = mythos.load("boothbay")
+        event = {"id": "test", "at": rules["start"], "observation": "A notice."}
+        events.validate_dated(dict(rules, events=[event]))
+        for invalid in (
+            [event, event],
+            [dict(event, at="1920-01-01T00:00:00")],
+            [dict(event, locations=["Not a location"])],
+            [dict(event, visible_requires=["x"], visible_excludes=["x"])],
+            [dict(event, visible_requires="x")],
+            [dict(event, interrupt_activity="yes")],
+        ):
+            with self.subTest(events=invalid), self.assertRaises(ValueError):
+                events.validate_dated(dict(rules, events=invalid))
+
     def test_dated_event_visibility_does_not_control_world_effect(self):
         from datetime import datetime
         _, rules = mythos.load("boothbay")
