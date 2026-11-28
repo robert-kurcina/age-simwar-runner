@@ -37,6 +37,70 @@ def diplomatic_options(observation, remaining):
     return result
 
 
+def matrix_choices(observation):
+    """Explain cost and goal tension using only actor-visible opening reports.
+
+    Isolated bounded effects are illustrative, never predicted net outcomes.
+    No opponent order, hidden balance, or invented probability enters here.
+    """
+    matrix = observation["matrix"]
+    choices = []
+    for action, effects in matrix["own_options"].items():
+        row = {"id": action, "contributions": effects, "cost": None,
+               "opening_feasibility": "unconfirmed", "goal_tradeoffs": []}
+        for aid, account in observation.get("reserve_accounts", {}).items():
+            spec = account["options"].get(action)
+            if spec is None:
+                continue
+            op, slot = spec["operation"], spec["commitment"]
+            active = account["commitments"].get(slot, 0)
+            cost = spec["amount"] if op in ("reserve", "spend") else 0
+            row["cost"] = {"account": aid, "kind": "reserve", "operation": op,
+                           "amount": cost, "available": account["available"],
+                           "pending": account["pending_gross_allocations"]}
+            eligible = (not active if op == "reserve" else bool(active) if op in ("release", "consume") else True)
+            row["opening_feasibility"] = ("commitment_state_conflict" if not eligible else
+                "insufficient_unallocated_balance" if cost and cost + account["pending_gross_allocations"] > account["available"]
+                else "within_opening_limits")
+        for aid, account in observation.get("stock_accounts", {}).items():
+            spec = account["options"].get(action)
+            if spec is None:
+                continue
+            row["cost"] = {"account": aid, "kind": "stock", "amount": spec["amount"],
+                           "available": account["balance"], "pending": account["pending_gross_debits"]}
+            row["opening_feasibility"] = ("within_opening_limits"
+                if spec["amount"] + account["pending_gross_debits"] <= account["balance"]
+                else "insufficient_unallocated_balance")
+        for goal in observation.get("faction_strategy", {}).get("goals", []):
+            key = goal["key"]
+            prop = matrix["properties"].get(key)
+            if key not in effects or not prop or prop["reported_value"] is None:
+                continue
+            before = prop["reported_value"]
+            after = max(prop["minimum"], min(prop["maximum"], before + effects[key]))
+            threshold, comparison = goal["threshold"], goal["comparison"]
+            def distance(value):
+                if comparison == "at_least":
+                    return max(0, threshold - value)
+                if comparison == "at_most":
+                    return max(0, value - threshold)
+                return abs(value - threshold)
+            old, new = distance(before), distance(after)
+            row["goal_tradeoffs"].append({"goal": goal["id"], "property": key,
+                "before": before, "isolated_if_fulfilled": after,
+                "direction": "advances" if new < old else "setback" if new > old else "unchanged"})
+        choices.append(row)
+    return {"alternatives": choices,
+            "recent_own_resolutions": [r for r in observation["own_requests"]
+                if r.get("status") == "reviewed" and r["turn"] == observation["turn"] - 1],
+            "remaining_turns": matrix["remaining_turns"],
+            "reported_changes": matrix["reported_changes"],
+            "basis": "Costs and isolated effects only. Pending commitment collisions, opposition, bounds and later changes can alter results.",
+            "presentation": "Frame the choice around what is at risk, why it matters now, and what must be sacrificed. "
+                "Explain at least two materially different feasible approaches when present, including deliberate restraint if relevant. "
+                "Use recorded consequences and visible reports for the next scene; do not invent crises, guarantees, or hidden opponent intentions."}
+
+
 def decision_brief(observation):
     """Derive a concise decision packet from the existing observation."""
     history = recall(observation)
@@ -76,8 +140,8 @@ def decision_brief(observation):
                  for oid, result in observation["objectives"].items()]
     return deepcopy({
         "actor": observation["actor"], "turn": observation["turn"], "minute": observation["minute"],
-        "goals": goals, "remaining_turns": support.get("remaining_turns"),
-        **({"matrix": observation["matrix"]} if "matrix" in observation else {}),
+        "goals": goals, "remaining_turns": support.get("remaining_turns", observation.get("matrix", {}).get("remaining_turns")),
+        **({"matrix": observation["matrix"], "consequential_choices": matrix_choices(observation)} if "matrix" in observation else {}),
         **({"reserve_accounts": observation["reserve_accounts"]} if "reserve_accounts" in observation else {}),
         **({"stock_accounts": observation["stock_accounts"]} if "stock_accounts" in observation else {}),
         "objective_outcomes": observation.get("objective_outcomes", {}),

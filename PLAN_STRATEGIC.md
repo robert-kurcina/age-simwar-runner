@@ -20,6 +20,10 @@ Status: author-directed closure after completing the Great War — 2026-11-27. N
 | DEFERRED | Author UAT, independent LLM experiential qualification, detailed tabletop reproduction (Mazemouth/Blackgate/Blacktower, PR calibration, military counter mechanics) unless a concrete historical matrix scenario requires a bounded subset. |
 | P3 DEFERRED | Full-stack service under unchanged master gate; AGE Enterprise out of scope. |
 
+## Great War experience refinement
+
+Author directive: Choices Matter must arise from tension, elevated narrative and gameplay, not merely divergent numbers. See [Great War experience design](docs/great-war-experience.md). The final cycle prioritizes actor-visible concrete stakes, conflicting goals, real costs, autonomous opposition, causal repercussions and earned closure. The matrix brief now derives opening affordability, isolated goal effects and observed recent consequences from existing state; it does not predict opponent behavior or add mutable state. Next integrate the private historical opening and only those consent/development mechanics needed for its consequential dilemmas. Qualify divergent eight-quarter play, not scripted historical convergence.
+
 ## Closure and stabilization gate
 
 Finish the Great War eight-quarter scenario, qualify its runtime and delivery, then stop strategic feature development for this cycle. Merged head 6f1b2bad failed both workflows (464 tests; 17 errors and one failure): 14 elapsed-date errors from legacy continuity/progression paths, and four distinct narrative test failures/errors. This PR fixes the strategic elapsed-date call sites; narrative regressions require coordination with the narrative development thread and are not suppressed. Recheck both full workflows. Do not claim a green repository or qualified historical scenario before verification.
