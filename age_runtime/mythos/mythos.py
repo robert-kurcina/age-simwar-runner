@@ -75,6 +75,10 @@ def _initial(sid, seed, story, rules, *, opportunity_latitude=None):
             "resources": copy.deepcopy(rules["resources"]), "containment": 0, "last_result": None,
             "relationships": copy.deepcopy(rules["relationships"]), "flags": [],
             "observations": [], "events_seen": [], "npcs": npc_profiles(story, rules)}
+    if rules.get("protagonist_identity"):
+        # Stable identity is distinct from the current mechanical actor slot.
+        state["protagonist"] = {"id": "pc:1", "role": story["protagonist"]["role"],
+                                "entered_at": state["time"], "entered_turn": 0}
     if opportunity_latitude is not None:
         state["opportunity_latitude"] = latitude.validate(opportunity_latitude)
         state["settings_digest"] = digest([state["source"], seed, opportunity_latitude])
@@ -791,7 +795,10 @@ def ending_projection(state, rules, reason, action):
     flags = rules.get("ending_flags", {
         "account_prepared": "written_account", "account_relayed": "account_relayed",
         "account_entrusted": "account_entrusted"})
-    return {"reason": reason, "evidence_count": len(state["discoveries"]),
+    identity = ({"protagonist_id": state["protagonist"]["id"],
+                 "ended_at": state["time"], "ended_turn": state["turn"]}
+                if "protagonist" in state else {})
+    return {"reason": reason, **identity, "evidence_count": len(state["discoveries"]),
             **{key: flag in state["flags"] for key, flag in flags.items()},
             "epilogue": ("Your character has died. Previously established outcomes remain." if reason == "character_death" and reason not in rules["ending_text"] else rules["ending_text"][reason]), "scores": scores(state, action)}
 

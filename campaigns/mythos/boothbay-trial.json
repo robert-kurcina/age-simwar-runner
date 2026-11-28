@@ -1,5 +1,6 @@
 {
-  "version": 87,
+  "version": 88,
+  "protagonist_identity": true,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
