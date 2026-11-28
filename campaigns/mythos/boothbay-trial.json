@@ -1,5 +1,5 @@
 {
-  "version": 84,
+  "version": 85,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2897,5 +2897,6 @@
       "Sailor's Rest Boarding House"
     ],
     "provenance": "Reviewed safe rest only; scenario horizon shorter than native recovery interval."
-  }
+  },
+  "native_permanent_locations": true
 }
