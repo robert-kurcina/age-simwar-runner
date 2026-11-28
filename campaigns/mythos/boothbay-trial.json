@@ -1,5 +1,5 @@
 {
-  "version": 85,
+  "version": 86,
   "social_epistemic": true,
   "npc_agency": {
     "favor": {
@@ -2898,5 +2898,6 @@
     ],
     "provenance": "Reviewed safe rest only; scenario horizon shorter than native recovery interval."
   },
-  "native_permanent_locations": true
+  "native_permanent_locations": true,
+  "native_hitpoints": true
 }
