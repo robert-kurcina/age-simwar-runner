@@ -6,8 +6,8 @@ Status: author-approved pivot to Twilight Wars — 2026-11-27. This ordered road
 
 | Priority / status | Deliverable and exit criterion |
 |---|---|
-| P0 NEXT | Repair merged #273 regressions: Tests 46094546059 and Chat runtime bundle 46094546103 failed. Inspect logs, fix underlying defect, demonstrate both workflows green; retain Manafount/Experiment rehearsal as isolated experimental fixture, no further tabletop reproduction. |
-| P0 NEXT | Audit existing strategic resource stock, flow, capacity, access, ownership, commitment, project, recovery, transfer and loss semantics against concrete Great War decisions. Inventory actual code paths and tests; reuse before adding; identify gaps and conflicting ledgers. |
+| P0 WIP (fix submitted; CI pending) | Repair merged #273 regressions: Tests 46094546059 and Chat runtime bundle 46094546103 failed. Inspect logs, fix underlying defect, demonstrate both workflows green; retain Manafount/Experiment rehearsal as isolated experimental fixture, no further tabletop reproduction. |
+| P0 WIP (initial code audit recorded below) | Audit existing strategic resource stock, flow, capacity, access, ownership, commitment, project, recovery, transfer and loss semantics against concrete Great War decisions. Inventory actual code paths and tests; reuse before adding; identify gaps and conflicting ledgers. |
 | P0 NEXT | Read pinned Sarna Len manuscript, Great War historical records/workbook, dated Deity records and map authority. Reconstruct 1524–1523 BCE opening: dated actors, Domains, relationships, independent mortal polities, geography, technology and resource access. Distinguish FIXED/WORKING/OPEN; no backward projection from 286 CE. |
 | P1 | Build minimal Great War historical scenario configuration for eight quarterly Turns, simultaneous independent Deity decisions, asymmetric objectives and autonomous mortal institutions. Resolve source-supported setup; unknown consequential values require explicit rehearsal assumptions or author decision. No invented canonical roster. |
 | P1 | Resource accounting vertical slice: bounded owned stocks, available/reserved/depleted capacity where applicable, commitments, production/recovery, access and transfer, irreversible losses and provenance. Distinguish mapped PL, PR, mortal RP and other resource types; no automatic conversions or duplicate ledgers. Test atomic rejection, competing allocations, conservation where applicable, release vs expenditure, time-bound flows and replay. |
@@ -31,6 +31,26 @@ Status: author-approved pivot to Twilight Wars — 2026-11-27. This ordered road
 - Preserve prior rehearsal and Conflagration compatibility, deterministic replay, portable JSON, contextual recall, information scope, Chat-first gate and independent narrative roadmap.
 
 Relevant source entry points: [Great War history](https://github.com/robert-kurcina/vault-great-war/blob/main/history/README.md), [historical dynamics](https://github.com/robert-kurcina/vault-great-war/blob/main/history/HISTORICAL_DYNAMICS.md), [event index](https://github.com/robert-kurcina/vault-great-war/blob/main/history/events/EVENT_INDEX.md), [scenario configuration](https://github.com/robert-kurcina/vault-great-war/blob/main/scenarios/README.md), [PR architecture](https://github.com/robert-kurcina/vault-great-war/blob/main/deities/PROMINENCE_LIMIT_RECOVERY.md). Pin exact revisions for implementation; these links are navigation, not a compiled source inventory.
+
+## Resource accounting audit — initial code inspection
+
+#273 failures share one malformed test fixture: seeded selection now yields an Experiment, and changing only event/tap retains duration on a Quiet Event. Replace the entire fixture card with the exact Quiet schema, preserving region/time. Do not weaken validation. Both prior runs reported one error in 419 tests; Python 3.10 was cancelled. New CI must pass.
+
+Inspected current runner, actions, economy, events, continuity and decision_support paths (not a comprehensive writer or runtime audit).
+
+| Capability | Existing implementation to reuse | Gap / adaptation for Great War |
+|---|---|---|
+| Stock ownership | actions.stock_owners, validate_transfers | Inferred from project sponsors and funding reserves; explicit independent resource accounts needed if scenario demands them. Visibility alone is not ownership. |
+| Expenditure and transfer | economy.fulfill_capacity_action, actions.fulfill_transfer, settle_terms | Positive costs, insufficient-stock rejection, conserved transfers and aggregate gross-debit checks; no general units, cap or reservation contract. |
+| Commitments | actions.resolve_agreements, negotiation permissions | Consent and due-date settlement exist, explicitly no balance reservation or forced debt. Distinguish consent from encumbrance and release from recovery. |
+| Production/recovery/loss | runner.advance, events.resolve_dependent_events | Dated and conditional deltas exist; protected economic stocks exclude external writers. Need deliberate interval flow policy for PR/RP, not arbitrary event writes or automatic conversions. |
+| Project capacity | economy.bottleneck, resolve_projects, permission_status | Reuse milestone and permission gates; 0–5 SH44SER axes and rating improvements are not automatically Sarna Len mechanics. |
+| Conflict/order | actions.resolve_reviews, settle_terms | FIFO reviewed requests and authored settlement ordering; simultaneous intentions need explicit common-state conflict policy, not implicit first-mover privilege. |
+| Player briefing | decision_support.decision_brief | Actor-local observed balances and shared-budget warnings exist; advisory only, not reservations. |
+| Continuity | continuity.transfer_values | Verified completed source and approved mappings; assess full accounting group continuity and unit compatibility before historical carry. |
+| Replay | runner.verify_checkpoint, ledger | Existing authoritative state and delta records; use same replay mechanism, not parallel resource database. |
+
+Next inspect all writers/guards (including negotiation, observation, constraints, private continuity and event generator), then derive minimal resource contract from the dated historical scenario. Candidate invariant for bounded PR only: available + reserved + depleted = capacity, each nonnegative, reservation keyed to an actual commitment; release returns reserved capacity, spending creates depletion, recovery cannot restore reserved capacity. This is an accounting proposal, not native numerical calibration. Mortal stocks need source/sink and unit semantics instead of imposing PR identity on every resource. No new mechanics in this repair PR. Source reconstruction can proceed independently.
 
 ## Historical development record (superseded ordering)
 
