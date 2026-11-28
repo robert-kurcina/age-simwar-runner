@@ -9,6 +9,28 @@ from age_runtime.mythos import mythos, player_recap, projections
 
 
 class NarrativeConsolidationTests(unittest.TestCase):
+    def test_protagonist_identity_and_ending_attribution(self):
+        state = mythos.initial("boothbay", 42)
+        identity = state["protagonist"]
+        self.assertEqual(identity["id"], "pc:1")
+        self.assertEqual(identity["entered_at"], state["time"])
+        public = mythos.view(state)
+        self.assertEqual(public["protagonist"], identity)
+        self.assertEqual(mythos.gm_context(state)["player_surface"]["protagonist"], identity)
+        public["protagonist"]["id"] = "tampered"
+        self.assertEqual(state["protagonist"]["id"], "pc:1")
+        _, rules = mythos.load("boothbay")
+        ending = mythos.ending_projection(state, rules, "limit", None)
+        self.assertEqual(ending["protagonist_id"], identity["id"])
+        self.assertEqual(ending["ended_at"], state["time"])
+        mythos.verify(state)
+        state = mythos.step(state, "move:Harbor Diner")
+        self.assertEqual(state["protagonist"], identity)
+        mythos.verify(state)
+        state["protagonist"]["id"] = "pc:2"
+        with self.assertRaisesRegex(ValueError, "replay mismatch"):
+            mythos.verify(state)
+
     def test_public_projection_is_detached_for_every_trial(self):
         for sid in ("boothbay", "castine", "ram-island"):
             with self.subTest(scenario=sid):
