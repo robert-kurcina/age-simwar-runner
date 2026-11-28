@@ -141,9 +141,10 @@ def play(s, state, actor, command):
     elif c["event"] == "conclude-experiment":
         target = next((key for key, p in result["commitments"].items()
                        if p["owner"] == actor and p["region"] == c["region"]), None)
-        if target is None:
-            raise ValueError("no own Experiment to conclude")
-        end_commitment(result, target, "voluntary", result["year"])
+        # This illustrative Event explicitly permits a quiet resolution if no
+        # own regional Experiment exists. No universal pass rule is implied.
+        if target is not None:
+            end_commitment(result, target, "voluntary", result["year"])
     if command["tap"] is not None:
         if c["tap"] == "none":
             raise ValueError("Event does not permit Tap Fount")
