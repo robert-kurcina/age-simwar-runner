@@ -1,22 +1,26 @@
 # Strategic game development plan
 
-Status: WIP (P1) — 2026-11-27. This current roadmap supersedes all historical NEXT/WIP ordering below. Shared constraints and full-stack gate remain in [PLAN.md](PLAN.md). Author UAT and independent experiential qualification are deferred, not blockers for independent implementation or mechanical verification. Do not mark experiential acceptance complete.
+Status: stabilization — 2026-11-27. Current roadmap supersedes historical NEXT/WIP ordering below. Shared constraints and full-stack gate remain in [PLAN.md](PLAN.md). Author UAT, historical approval and independent LLM experiential qualification remain separate and deferred.
 
-## Current ordered roadmap — 2026-11-27
+## Current ordered roadmap
 
-| Order | Priority / status | Deliverable and exit criterion |
-|---|---|---|
-| 1 | P1 DONE (mechanical) | Strategic adjudication, scoped information, consent, economic projects, objective bounds, Opportunity Latitude, advisory creative planning. PR #230 both CI workflows passed (46070851549, 46070851585); contrasting recovery routes mechanically qualified. |
-| 2 | P1 DONE (implementation and integrated CI) | Scenario preparation, roster diagnostics, guided candidate authoring, seven Conflagration drafts, chronological discovery and 25 perspectives. Main after #239 passed Tests 46084119212 and bundle 46084119293. |
-| 3 | P0 BLOCKED (release only) | Standalone draft packaging implemented (#241); main Tests 46084271612 and bundle 46084271407 failed after narrative #240 (invalid initial Scene). Narrative owns fix. Recheck artifact build after repair; no bypass. Does not block independent strategic implementation. |
-| 4 | P1 WIP | **Cross-phase campaign continuity preparation.** Use existing phase_memory and private_continuity, not a new campaign engine. Identify appropriate consecutive episode links, stable actor identity, dated gaps, explicit record selectors and provenance. Provide author-facing validation and an actor-local transition preview without copying stocks or granting authority. Qualify with synthetic or explicitly unreviewed test fixtures; do not register unapproved links. |
-| 5 | P1 PENDING | **Campaign progression presentation.** Distinguish fresh episodes from eligible linked continuations, summarize prior observed outcomes and meaningful persistent consequences; preserve private actor knowledge. No forced canonical outcome, automatic phase advance, or new universal score. |
-| 6 | P1 PENDING | **Scenario authoring and provenance delivery completion.** Resolve authorized pinned source dependencies where available; expose concise actionable review gaps and package reviewed openings only after approval. No requirement for user play or live vault access during draft gameplay. |
-| 7 | P2 WIP | **Additional system coverage.** Select one bounded strategic episode from an authorized additional vault or later SH44SER period using existing mechanics first. Add native capability handling only when a concrete scenario demonstrates necessity. No mandatory new schema or ruleset port. |
-| 8 | DEFERRED | Author UAT, independent LLM experiential qualification and author approval of historical assumptions/rosters; retain distinct exit evidence. Author will test later. |
-| 9 | P3 DEFERRED | Full-stack service: unchanged master entry gate; no AGE Enterprise scope. |
+| Priority / status | Deliverable and exit criterion |
+|---|---|
+| DONE (mechanical) | Strategic adjudication, actor-local information, commitments, objective bounds, Opportunity Latitude and contextual planning; #230 CI passed. |
+| DONE (mechanical) | Seven Conflagration drafts, 25 perspectives, preparation and discovery; #239 CI passed. Standalone Conflagration packaging subsequently passed bundle #255 (46091856503). |
+| DONE (mechanical) | Explicit cross-phase continuation, multi-hop memory, model-faction history and progression; #244–248 merged; #247 CI passed, #248 tests passed, later #255 integrated CI passed. |
+| DONE (mechanical) | Review packet and private selective staging, tested with synthetic evidence; #250 both workflows passed. No actual author approval inferred. |
+| DONE (mechanical) | 2044 Production Accord: one additional episode and four perspectives; #252 passed. #253 allowlist regression repaired in #255; both #255 workflows passed. |
+| P0 VERIFY | #257 integrated industrial routes and corrected licence boundary: tests 46091990119 and bundle 46091990128 pending at inspection. Resolve any failure before marking qualified. |
+| P1 WIP | Unified bundled strategic discovery and launch documentation: eight episodes, 29 perspectives; verify extracted archive with current CI. |
+| P1 NEXT | Actual pinned canonical compilation using authorized source bytes; produce private review packet and distinguish verification from approval. No vault edits, no private bytes in public Git or logs. |
+| DEFERRED | Author review/approval, reviewed private distribution, author UAT and independent LLM experiential qualification. |
+| P2 CONDITIONAL | Additional native-system adapters only on demonstrated gameplay need. Great War requires its own deity/Event/Time! semantics; no generic faction-turn port. |
+| P3 DEFERRED | Full-stack service under unchanged master gate; AGE Enterprise is out of scope. |
 
-Stop adding generic diagnostics, synthetic recovery frameworks and speculative mechanics absent a demonstrated requirement. Continue meaningful implementation batches even when a parallel track fails CI; distinguish implementation completion, successful integrated CI and experiential acceptance. Keep source verification and publication authorization as separate gates for reviewed delivery.
+Stop generic mechanical expansion absent a concrete scenario defect or user-directed capability. Preserve deterministic replay, bounded native rules, independent faction choices and actor-local scope. Mechanical tests are not evidence of predictive accuracy or experiential acceptance.
+
+## Historical development record (superseded ordering)
 
 ## Current checkpoint — transition preparation
 
@@ -26,7 +30,7 @@ Implemented `private transition-preview INVENTORY SESSION TARGET [--selectors JS
 
 PR #244 merged and Tests 46084656813 / bundle 46084656928 passed. Add explicit digest-confirmed `continue-rehearsal` command using the existing historical memory derivation against a fresh target opening. Preserve qualification, target accounting, source session, actor-local records and inherited Opportunity Latitude. No reviewed promotion or inventory changes. Tests cover deterministic repeat, hidden memory, stale confirmation and subsequent turn. CI pending. Immediate-source records only; multi-hop historical retention and model-faction continuity are not yet implemented. Next: campaign progression options and selective multi-hop memory if warranted. UAT deferred.
 
-## Historical development record (superseded ordering)
+
 
 ## Shared consequential information — strategic adoption (P1)
 
