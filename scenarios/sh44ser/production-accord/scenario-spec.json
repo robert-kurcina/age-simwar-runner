@@ -75,7 +75,9 @@
           "fiji_chassis_delay",
           "fiji_chassis_complications",
           "fiji_chassis_industrial",
-          "fiji_chassis_energy"
+          "fiji_chassis_energy",
+          "inguria_certification_progress",
+          "caledonia_refining_progress"
         ],
         "objectives": {
           "readiness": {
@@ -399,7 +401,19 @@
     "material_communications": true,
     "diplomatic_history": true,
     "runtime_propositions": true,
-    "strategic_establishment": true
+    "strategic_establishment": true,
+    "project_dependencies": {
+      "fiji_chassis": [
+        {
+          "project": "inguria_certification",
+          "minimum_stage": 1
+        },
+        {
+          "project": "caledonia_refining",
+          "minimum_stage": 1
+        }
+      ]
+    }
   },
   "initial_refs": {},
   "evidence_refs": {
