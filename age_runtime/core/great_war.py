@@ -243,14 +243,36 @@ def commit(s, session, actor, revision, command):
     return {**session, "state": play(s, session["state"], actor, command)}
 
 
+def discovery(root=None):
+    """Public launch metadata only; do not expose the referee configuration."""
+    path = SPEC if root is None else Path(root) / SPEC.relative_to(ROOT)
+    s = json.loads(path.read_text(encoding="utf-8"))
+    validate(s)
+    # Exercise every perspective's observation without publishing opening state.
+    opening = start(s, 0)
+    for actor in s["deities"]:
+        observe(s, opening, actor)
+    return {"id": "great-war", "title": "Great War",
+            "framework": "great-war", "qualification": s["qualification"],
+            "episodes": [{"id": s["id"], "title": "Manafount rehearsal",
+                          "availability": "available", "play_mode": "great-war",
+                          "perspectives": [{"id": a, "label": a.title()} for a in s["deities"]],
+                          "duration": {"clock": "event-driven-Time!", "endpoint_year": s["endpoint"]},
+                          "conclusion": {"mode": "state-summary", "competitive_scoring": False},
+                          "launcher": "python -m age_runtime.core.great_war",
+                          "guide": "scenarios/great-war/manafount/README.md"}]}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="operation", required=True)
+    sub.add_parser("list")
     for name in ("start", "observe", "play", "packet", "choose"):
         p = sub.add_parser(name)
         p.add_argument("session", type=Path)
         if name == "start":
             p.add_argument("--seed", type=int, required=True)
+            p.add_argument("--actor")
         else:
             p.add_argument("actor")
         if name == "play":
@@ -259,12 +281,17 @@ def main():
         if name == "choose":
             p.add_argument("response", type=Path)
     args = parser.parse_args()
+    if args.operation == "list":
+        print(json.dumps(discovery(), indent=2))
+        return
     s = json.loads(SPEC.read_text(encoding="utf-8"))
     if args.operation == "start":
+        actor = args.actor or s["deities"][0]
+        if actor not in s["deities"]:
+            parser.error("unknown Deity")
         session = start(s, args.seed)
         with os.fdopen(os.open(args.session, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w", encoding="utf-8") as stream:
             json.dump(session, stream)
-        actor = s["deities"][0]
     else:
         session = json.loads(args.session.read_text(encoding="utf-8"))
         actor = args.actor
