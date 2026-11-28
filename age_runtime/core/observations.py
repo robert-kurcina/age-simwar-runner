@@ -4,7 +4,7 @@ from age_runtime.core.communications import view as communication_view, observed
 from age_runtime.core.negotiation import view as negotiation_view
 from age_runtime.core.actions import available_requests
 from age_runtime.core.actors import evaluate
-from age_runtime.core.economy import bottleneck
+from age_runtime.core.economy import bottleneck, dependency_status
 from age_runtime.core.diplomacy import history as diplomatic_history
 from age_runtime.core.establishment import view as established_context
 from age_runtime.core.event_generator import view as development_view
@@ -28,17 +28,20 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
     for p in projects:
         ratings = [(a["axis"], values[a["key"]]) for a in p["axes"]]
         current = bottleneck(p["need"], ratings)
+        dependencies = dependency_status(s, p["id"], values)
+        blocked = any(not row["met"] for row in dependencies)
         stages_left = p["stages"] - values[p["progress"]]
         assessments.append({"id": p["id"],
                             "horizon": {"stages_remaining": stages_left,
                                         "maximum_future_stages": remaining,
                                         "slack_turns": remaining - stages_left,
                                         "possible_at_maximum_rate": stages_left <= remaining,
-                                        "progress_if_capacity_unchanged": min(stages_left, remaining) if current["outcome"] == "clear" else 0}, "progress": values[p["progress"]],
+                                        "progress_if_capacity_unchanged": min(stages_left, remaining) if current["outcome"] == "clear" and not blocked else 0}, "progress": values[p["progress"]],
                             "stages": p["stages"], "delay": values[p["delay"]],
                             "complications": values[p["complications"]],
                             "complete": values[p["progress"]] >= p["stages"],
-                            "capacities": dict(ratings), "bottleneck": current})
+                            "capacities": dict(ratings), "bottleneck": current,
+                            **({"dependencies": dependencies, "dependency_blocked": blocked} if dependencies else {})})
     choices = {}
     own_projects = {p["id"]: p for p in projects}
     for action in requests:
@@ -68,6 +71,10 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
                                         "clears_bottleneck" if after["outcome"] == "clear" else
                                         "reduces_shortfall" if after["shortfall"] < before["shortfall"] else
                                         "no_immediate_shortfall_reduction")
+        dependencies = dependency_status(s, p["id"], values)
+        if dependencies:
+            choice["dependencies"] = dependencies
+            choice["dependency_blocked"] = any(not row["met"] for row in dependencies)
         choices[action] = choice
     # Compare report cutoffs, not hidden current values. A delayed report may
     # first become available this turn; never infer the unknown prior value.
@@ -120,7 +127,7 @@ def strategic_support(s, state, actor_id, values, reports, projects, requests):
             "latest_project_results": [deepcopy(r) for r in state.get("project_results", [])
                                        if r["participant"] == actor_id and r["minute"] == state["minute"]],
             "remaining_turns": remaining,
-            "horizon_basis": "At most one project stage per resolution; constant-capacity illustration excludes pending orders and future changes.",
+            "horizon_basis": "At most one project stage per resolution; constant-capacity illustration excludes pending orders and future changes, including future prerequisite completion.",
             "option_basis": "Current reported values; pending orders, competing spending and future events may change fulfillment."}
 
 
