@@ -2,7 +2,7 @@
 import copy
 import re
 from datetime import datetime
-from age_runtime.core import dxd
+from age_runtime.core import dxd, dxd_hitpoints
 from age_runtime.mythos import pacing, establishment, object_actions
 
 
@@ -26,7 +26,6 @@ def intent_authority(state, rules):
     """GM protocol, not a new effect language or model-owned adjudicator."""
     if state["ending"]:
         return {"status": "ended", "guidance": "No further gameplay; present the established ending."}
-    from age_runtime.core import dxd_hitpoints
     if dxd_hitpoints.incapacitated(state["dxd"]):
         return {"status": "incapacitated", "guidance": "Use only available incapacitated-time advancement."}
     if state["dxd"].get("activity", {}).get("status") == "asleep":
@@ -211,7 +210,8 @@ def completion_available(state, rules, action, npc_available):
 def local_capabilities(state, rules, npc_available):
     """Derive eligible targets, never manufacture an entity or a Test."""
     cfg = rules.get("local_proposals")
-    if not cfg or state["ending"] or state["dxd"].get("activity", {}).get("status") != "awake":
+    if (not cfg or state["ending"] or dxd_hitpoints.incapacitated(state["dxd"])
+            or state["dxd"].get("activity", {}).get("status") != "awake"):
         return []
     from age_runtime.mythos.epistemic import conversation_available
     remaining = (datetime.fromisoformat(rules["end"]) - datetime.fromisoformat(state["time"])).total_seconds()
