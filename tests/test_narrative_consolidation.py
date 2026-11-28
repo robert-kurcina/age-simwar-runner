@@ -376,6 +376,14 @@ class NarrativeConsolidationTests(unittest.TestCase):
             mythos.establish_step(after, {"social_demeanor": harm})
         mythos.verify(after)
 
+    def test_personal_demeanor_history_is_attributed(self):
+        state = mythos.initial("boothbay", 42)
+        mythos.change_demeanor(state, "eleanor", -1)
+        self.assertEqual(state["relationship_changes"][-1]["protagonist_id"], "pc:1")
+        legacy = mythos.initial("ram-island", 42)
+        mythos.change_demeanor(legacy, "matteo", -1)
+        self.assertNotIn("protagonist_id", legacy["relationship_changes"][-1])
+
     def test_native_demeanor_rolling_limits_across_coarse_time(self):
         from datetime import datetime, timedelta
         state = mythos.initial("ram-island", 42)
@@ -672,6 +680,7 @@ class NarrativeConsolidationTests(unittest.TestCase):
         self.assertIn(proposal["action"], {c["action"] for c in mythos.gm_context(after)["referee"]["local_capabilities"]})
         with self.assertRaises(ValueError):
             mythos.establish_step(after, {"object_action": dict(request, id="act:repeat")})
+        self.assertEqual(after["object_actions"][-1]["protagonist_id"], "pc:1")
         witnessed = mythos.establish_step(after, {"action_observation": {
             "id": "obs:watch_stop", "npc": "eleanor", "action": "act:stop_watch",
             "kind": "witnessed", "basis": "Eleanor sees the action and its result."}})
