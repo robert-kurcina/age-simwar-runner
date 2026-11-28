@@ -15,6 +15,35 @@ def validate_request(request):
     if not intent.strip() or len(intent) > 240 or any(ord(c) < 32 for c in intent):
         raise ValueError("invalid intent")
 
+def authored_approaches(action, rules):
+    """One authority for presenting and accepting alternate approaches."""
+    if action.get("terminal") or action.get("cost") or action.get("until") or not action.get("test"):
+        return {}
+    return rules.get("gm_proposals", {}).get(action["id"], {})
+
+
+def intent_authority(state, rules):
+    """GM protocol, not a new effect language or model-owned adjudicator."""
+    if state["ending"]:
+        return {"status": "ended", "guidance": "No further gameplay; present the established ending."}
+    from age_runtime.core import dxd_hitpoints
+    if dxd_hitpoints.incapacitated(state["dxd"]):
+        return {"status": "incapacitated", "guidance": "Use only available incapacitated-time advancement."}
+    if state["dxd"].get("activity", {}).get("status") == "asleep":
+        return {"status": "asleep", "guidance": "Use only available sleep or awakening actions."}
+    return {
+        "status": "active",
+        "classifications": {
+            "certain": "Use a matching certain action or enabled mundane establishment operation; do not invent a Test.",
+            "uncertain": "Use an available native Test, reviewed alternate approach, local capability or danger Beat.",
+            "conditional": "Explain the missing access, cooperation, preparation or other prerequisite. Offer grounded ways to establish it.",
+            "impossible": "Explain the established physical or fictional constraint; no action, elapsed time or Test.",
+            "unsupported": "Distinguish missing engine authority from fictional impossibility. Do not invent effects or silently substitute a different objective."
+        },
+        "guidance": "Interpret the player's intent before selecting an operation. Preserve objective, target and stakes; obtain clarification or agreement if they materially change. Previewing or rejecting intent never spends time, resources or random rolls. Only execute accepted, validated operations. Do not expose private NPC facts or referee identifiers in narration."
+    }
+
+
 def compile_action(state, rules, request, choices):
     if not rules.get("gm_proposals") or state["ending"]:
         raise ValueError("GM proposals unavailable")
@@ -24,12 +53,9 @@ def compile_action(state, rules, request, choices):
     target = next((a for a in choices if a["id"] == request["action"]), None)
     if target is None:
         raise ValueError("objective unavailable")
-    cfg = rules["gm_proposals"].get(request["action"], {})
-    approach = cfg.get(request["approach"])
+    approach = authored_approaches(target, rules).get(request["approach"])
     if approach is None:
         raise ValueError("approach unavailable for objective")
-    if target.get("terminal") or target.get("cost") or target.get("until") or not target.get("test"):
-        raise ValueError("unsupported objective")
     # Every authored alternate uses the same stakes, prerequisites, location,
     # consequences and action identity as the original; only Test changes.
     action = copy.deepcopy(target)
