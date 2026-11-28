@@ -504,3 +504,7 @@ PR #250 passed Tests 46085497192 and bundle 46085497252. Inspect later SH44SER m
 ## Industrial interdependence checkpoint
 
 PR #252 passed Tests 46089515277 and bundle 46089515267. Add optional cross-faction project milestone prerequisites using existing monotone project progress; reject cycles, invalid thresholds, hidden or delayed milestone reports. Resolve against pre-project interval values, preserve local Shortfall, expose separate dependency status in actor-local decision support. Fiji chassis readiness now depends on Inguria certification and Caledonia refining milestones. Tests cover blocked funding-only route, prerequisite clearance, ordering and validation. No physical supply-chain simulation or automatic consent. CI pending. UAT deferred.
+
+## Technology access and dependency integration checkpoint
+
+PR #253 merged but Tests 46091184045 and bundle 46091184030 failed: runner scenario allowlist omitted project_dependencies (391 tests, one failure/two errors). Correct allowlist and include dependency/permission terms in same-project continuity signature. Add optional project_permissions linking exact existing bilateral terms to sponsor projects, evaluated at resolution after expiry; show actor-local permission status separately from capacity and milestones. 2044 Fiji requires a temporary non-sensitive chassis licence. Regression tests exercise unanswered/rejected/accepted/revoked/expired terms, invalid sponsor and duplicate references. No automatic access or new technology subsystem. CI pending; author UAT deferred.
