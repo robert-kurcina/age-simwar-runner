@@ -8,6 +8,17 @@ def read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 def profile(campaign_id, scenario_id):
+    if campaign_id == "great-war":
+        from age_runtime.core.great_war import discovery
+        entry = discovery()["episodes"][0]
+        if scenario_id != entry["id"]:
+            raise ValueError("unknown Great War scenario")
+        return {"version": 1, "campaign": campaign_id, "id": scenario_id,
+                "title": entry["title"], "framework": "great-war",
+                "status": "unreviewed-rehearsal", "scale": "regional",
+                "presentation": "Deity Event play",
+                "perspectives": [p["id"] for p in entry["perspectives"]],
+                "duration": entry["duration"], "conclusion": entry["conclusion"]}
     # Resolve only known catalog IDs, never user-supplied filesystem paths.
     for path in sorted((ROOT / "campaigns").glob("*/campaign.json")):
         manifest = read(path)
