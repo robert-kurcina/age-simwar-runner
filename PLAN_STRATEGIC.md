@@ -532,3 +532,7 @@ Source revision da7e1140e92d5450fd82393acc2a15a3ff36a037. Bounded illustrative t
 ## Great War discovery and delivery checkpoint
 
 #263 Tests 46093407351 passed; bundle 46093407340 pending at inspection. Integrate native Great War discovery into existing bundled strategic catalog (three campaigns, nine episodes, 31 perspectives; SH44SER alone remains eight/29). Native descriptive profile exposes Event-driven Time! and state-summary conclusion, not fixed Turns or scored victory. Select opening actor explicitly; keep actual active Deity unchanged. Extracted offline bundle smoke test starts, obtains an active packet, commits a legal choice and describes profile. Update launch guidance; no new mechanics or canonical registration. Next add authored Deity motivations and contextual choice consequences, then assess native persistent commitments. CI pending.
+
+## Great War contextual decision support
+
+#265 Tests 46093638618 passed; bundle 46093638613 pending at inspection. Add hypothetical private Deity motivations and exact immediate consequence assessments using the existing resolver. Verify own PL scope, public Fount changes, timing and unchanged legal choices under altered motivations; no behavioral mandate or predictive scoring. Next assess persistent divine commitments against native source rules. CI pending.
