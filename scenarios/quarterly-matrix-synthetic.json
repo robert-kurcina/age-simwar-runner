@@ -1,0 +1,739 @@
+{
+  "version": 1,
+  "id": "quarterly-matrix-synthetic",
+  "turn_minutes": 129600,
+  "end_minute": 1036800,
+  "game_length": "Standard",
+  "initial": {
+    "patron_a_free": 8,
+    "patron_a_depleted": 0,
+    "patron_b_free": 8,
+    "patron_b_depleted": 0,
+    "patron_c_free": 8,
+    "patron_c_depleted": 0,
+    "patron_d_free": 8,
+    "patron_d_depleted": 0,
+    "institution_a_stock": 12,
+    "institution_b_stock": 12,
+    "institution_d_stock": 12,
+    "transit_access": 5,
+    "regional_security": 5,
+    "local_autonomy": 5,
+    "network_cohesion": 5
+  },
+  "events": [],
+  "constraints": [],
+  "actors": {
+    "patron_a": {
+      "label": "patron a",
+      "visible_keys": [
+        "patron_a_free",
+        "patron_a_depleted",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "routes": {
+          "key": "transit_access",
+          "comparison": "at_least",
+          "threshold": 7,
+          "description": "transit access at_least 7"
+        },
+        "cohesion": {
+          "key": "network_cohesion",
+          "comparison": "at_least",
+          "threshold": 6,
+          "description": "network cohesion at_least 6"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "routes",
+          "cohesion"
+        ]
+      }
+    },
+    "patron_b": {
+      "label": "patron b",
+      "visible_keys": [
+        "patron_b_free",
+        "patron_b_depleted",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "security": {
+          "key": "regional_security",
+          "comparison": "at_least",
+          "threshold": 7,
+          "description": "regional security at_least 7"
+        },
+        "routes": {
+          "key": "transit_access",
+          "comparison": "at_most",
+          "threshold": 4,
+          "description": "transit access at_most 4"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "security",
+          "routes"
+        ]
+      }
+    },
+    "patron_c": {
+      "label": "patron c",
+      "visible_keys": [
+        "patron_c_free",
+        "patron_c_depleted",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "cohesion": {
+          "key": "network_cohesion",
+          "comparison": "at_most",
+          "threshold": 4,
+          "description": "network cohesion at_most 4"
+        },
+        "river": {
+          "key": "local_autonomy",
+          "comparison": "at_most",
+          "threshold": 4,
+          "description": "local autonomy at_most 4"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "cohesion",
+          "river"
+        ]
+      }
+    },
+    "patron_d": {
+      "label": "patron d",
+      "visible_keys": [
+        "patron_d_free",
+        "patron_d_depleted",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "river": {
+          "key": "local_autonomy",
+          "comparison": "at_least",
+          "threshold": 7,
+          "description": "local autonomy at_least 7"
+        },
+        "cohesion": {
+          "key": "network_cohesion",
+          "comparison": "at_most",
+          "threshold": 5,
+          "description": "network cohesion at_most 5"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "river",
+          "cohesion"
+        ]
+      }
+    },
+    "institution_a": {
+      "label": "institution a",
+      "visible_keys": [
+        "institution_a_stock",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "cohesion": {
+          "key": "network_cohesion",
+          "comparison": "at_least",
+          "threshold": 6,
+          "description": "network cohesion at_least 6"
+        },
+        "stock": {
+          "key": "institution_a_stock",
+          "comparison": "at_least",
+          "threshold": 4,
+          "description": "institution a stock at_least 4"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "cohesion",
+          "stock"
+        ]
+      }
+    },
+    "institution_b": {
+      "label": "institution b",
+      "visible_keys": [
+        "institution_b_stock",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "security": {
+          "key": "regional_security",
+          "comparison": "at_least",
+          "threshold": 7,
+          "description": "regional security at_least 7"
+        },
+        "stock": {
+          "key": "institution_b_stock",
+          "comparison": "at_least",
+          "threshold": 4,
+          "description": "institution b stock at_least 4"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "security",
+          "stock"
+        ]
+      }
+    },
+    "institution_d": {
+      "label": "institution d",
+      "visible_keys": [
+        "institution_d_stock",
+        "transit_access",
+        "regional_security",
+        "local_autonomy",
+        "network_cohesion"
+      ],
+      "objectives": {
+        "river": {
+          "key": "local_autonomy",
+          "comparison": "at_least",
+          "threshold": 7,
+          "description": "local autonomy at_least 7"
+        },
+        "stock": {
+          "key": "institution_d_stock",
+          "comparison": "at_least",
+          "threshold": 4,
+          "description": "institution d stock at_least 4"
+        }
+      },
+      "strategy": {
+        "motivation": "Synthetic independent actor pursuing its stated objectives.",
+        "priorities": [
+          "river",
+          "stock"
+        ]
+      }
+    }
+  },
+  "model_factions": [
+    "patron_b",
+    "patron_c",
+    "patron_d",
+    "institution_a",
+    "institution_b",
+    "institution_d"
+  ],
+  "action_catalog": {
+    "patron_a_routes": {
+      "description": "patron a routes",
+      "actors": [
+        "patron_a"
+      ]
+    },
+    "patron_a_cohesion": {
+      "description": "patron a cohesion",
+      "actors": [
+        "patron_a"
+      ]
+    },
+    "patron_b_security": {
+      "description": "patron b security",
+      "actors": [
+        "patron_b"
+      ]
+    },
+    "patron_b_routes": {
+      "description": "patron b routes",
+      "actors": [
+        "patron_b"
+      ]
+    },
+    "patron_c_pressure": {
+      "description": "patron c pressure",
+      "actors": [
+        "patron_c"
+      ]
+    },
+    "patron_c_river": {
+      "description": "patron c river",
+      "actors": [
+        "patron_c"
+      ]
+    },
+    "everia_river": {
+      "description": "everia river",
+      "actors": [
+        "patron_d"
+      ]
+    },
+    "everia_counter": {
+      "description": "everia counter",
+      "actors": [
+        "patron_d"
+      ]
+    },
+    "institution_a_routes": {
+      "description": "institution a routes",
+      "actors": [
+        "institution_a"
+      ]
+    },
+    "institution_a_cohesion": {
+      "description": "institution a cohesion",
+      "actors": [
+        "institution_a"
+      ]
+    },
+    "regional_security": {
+      "description": "regional security",
+      "actors": [
+        "institution_b"
+      ]
+    },
+    "institution_b_routes": {
+      "description": "institution b routes",
+      "actors": [
+        "institution_b"
+      ]
+    },
+    "institution_d_autonomy": {
+      "description": "institution d autonomy",
+      "actors": [
+        "institution_d"
+      ]
+    },
+    "institution_d_counter": {
+      "description": "institution d counter",
+      "actors": [
+        "institution_d"
+      ]
+    }
+  },
+  "reserve_accounts": {
+    "patron_a": {
+      "owner": "patron_a",
+      "capacity": 8,
+      "available": "patron_a_free",
+      "depleted": "patron_a_depleted",
+      "commitments": {},
+      "recovery": 1
+    },
+    "patron_b": {
+      "owner": "patron_b",
+      "capacity": 8,
+      "available": "patron_b_free",
+      "depleted": "patron_b_depleted",
+      "commitments": {},
+      "recovery": 1
+    },
+    "patron_c": {
+      "owner": "patron_c",
+      "capacity": 8,
+      "available": "patron_c_free",
+      "depleted": "patron_c_depleted",
+      "commitments": {},
+      "recovery": 1
+    },
+    "patron_d": {
+      "owner": "patron_d",
+      "capacity": 8,
+      "available": "patron_d_free",
+      "depleted": "patron_d_depleted",
+      "commitments": {},
+      "recovery": 1
+    }
+  },
+  "reserve_actions": {
+    "patron_a_routes": {
+      "account": "patron_a",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "patron_a_cohesion": {
+      "account": "patron_a",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "patron_b_security": {
+      "account": "patron_b",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "patron_b_routes": {
+      "account": "patron_b",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "patron_c_pressure": {
+      "account": "patron_c",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "patron_c_river": {
+      "account": "patron_c",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "everia_river": {
+      "account": "patron_d",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    },
+    "everia_counter": {
+      "account": "patron_d",
+      "operation": "spend",
+      "amount": 3,
+      "commitment": null
+    }
+  },
+  "stock_accounts": {
+    "institution_a": {
+      "owner": "institution_a",
+      "key": "institution_a_stock",
+      "unit": "synthetic_support"
+    },
+    "institution_b": {
+      "owner": "institution_b",
+      "key": "institution_b_stock",
+      "unit": "synthetic_support"
+    },
+    "institution_d": {
+      "owner": "institution_d",
+      "key": "institution_d_stock",
+      "unit": "synthetic_support"
+    }
+  },
+  "stock_actions": {
+    "institution_a_routes": {
+      "source": "institution_a",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    },
+    "institution_a_cohesion": {
+      "source": "institution_a",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    },
+    "regional_security": {
+      "source": "institution_b",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    },
+    "institution_b_routes": {
+      "source": "institution_b",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    },
+    "institution_d_autonomy": {
+      "source": "institution_d",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    },
+    "institution_d_counter": {
+      "source": "institution_d",
+      "destination": null,
+      "amount": 3,
+      "purpose": "Synthetic institutional allocation"
+    }
+  },
+  "stock_flows": [
+    {
+      "id": "institution_a-production-1",
+      "account": "institution_a",
+      "minute": 129600,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-2",
+      "account": "institution_a",
+      "minute": 259200,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-3",
+      "account": "institution_a",
+      "minute": 388800,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-4",
+      "account": "institution_a",
+      "minute": 518400,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-5",
+      "account": "institution_a",
+      "minute": 648000,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-6",
+      "account": "institution_a",
+      "minute": 777600,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-7",
+      "account": "institution_a",
+      "minute": 907200,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_a-production-8",
+      "account": "institution_a",
+      "minute": 1036800,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-1",
+      "account": "institution_b",
+      "minute": 129600,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-2",
+      "account": "institution_b",
+      "minute": 259200,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-3",
+      "account": "institution_b",
+      "minute": 388800,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-4",
+      "account": "institution_b",
+      "minute": 518400,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-5",
+      "account": "institution_b",
+      "minute": 648000,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-6",
+      "account": "institution_b",
+      "minute": 777600,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-7",
+      "account": "institution_b",
+      "minute": 907200,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_b-production-8",
+      "account": "institution_b",
+      "minute": 1036800,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-1",
+      "account": "institution_d",
+      "minute": 129600,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-2",
+      "account": "institution_d",
+      "minute": 259200,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-3",
+      "account": "institution_d",
+      "minute": 388800,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-4",
+      "account": "institution_d",
+      "minute": 518400,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-5",
+      "account": "institution_d",
+      "minute": 648000,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-6",
+      "account": "institution_d",
+      "minute": 777600,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-7",
+      "account": "institution_d",
+      "minute": 907200,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    },
+    {
+      "id": "institution_d-production-8",
+      "account": "institution_d",
+      "minute": 1036800,
+      "kind": "production",
+      "amount": 1,
+      "basis": "Explicit synthetic quarterly support assumption"
+    }
+  ],
+  "matrix_properties": {
+    "transit_access": {
+      "minimum": 0,
+      "maximum": 10
+    },
+    "regional_security": {
+      "minimum": 0,
+      "maximum": 10
+    },
+    "local_autonomy": {
+      "minimum": 0,
+      "maximum": 10
+    },
+    "network_cohesion": {
+      "minimum": 0,
+      "maximum": 10
+    }
+  },
+  "matrix_effects": {
+    "patron_a_routes": {
+      "transit_access": 2,
+      "regional_security": -1
+    },
+    "patron_a_cohesion": {
+      "network_cohesion": 2
+    },
+    "patron_b_security": {
+      "regional_security": 2
+    },
+    "patron_b_routes": {
+      "transit_access": -2
+    },
+    "patron_c_pressure": {
+      "network_cohesion": -2
+    },
+    "patron_c_river": {
+      "local_autonomy": -2
+    },
+    "everia_river": {
+      "local_autonomy": 2
+    },
+    "everia_counter": {
+      "network_cohesion": -2
+    },
+    "institution_a_routes": {
+      "transit_access": 1
+    },
+    "institution_a_cohesion": {
+      "network_cohesion": 2
+    },
+    "regional_security": {
+      "regional_security": 2
+    },
+    "institution_b_routes": {
+      "transit_access": -1
+    },
+    "institution_d_autonomy": {
+      "local_autonomy": 2
+    },
+    "institution_d_counter": {
+      "network_cohesion": -1
+    }
+  }
+}
