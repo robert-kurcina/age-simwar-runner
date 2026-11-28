@@ -345,7 +345,7 @@ def change_demeanor(state, key, delta):
     rulings are deliberately not supported by this first implementation.
     """
     now = datetime.fromisoformat(state["time"])
-    history = [e for e in state["relationship_changes"] if e["npc"] == key and e["delta"] != 0]
+    history = [e for e in state["relationship_changes"] if e["npc"] == key and e["delta"] != 0 and epistemic.current_protagonist_record(state, e)]
     def recent(days):
         return [e["delta"] for e in history
                 if now - datetime.fromisoformat(e["at"]) < timedelta(days=days)]
@@ -374,7 +374,7 @@ def consequential_demeanor(state, rules, request):
     if state["npcs"][npc]["location"] != state["location"] or not npc_available(state, rules, {"npc": npc, "location": state["location"]}):
         raise ValueError("Demeanor requires available local NPC")
     obs = next((o for o in state["action_observations"] if o["id"] == oid and o["npc"] == npc), None)
-    if not obs or obs["kind"] != "witnessed" or obs["actor"] != "pc" or obs["turn"] != state["turn"] or obs["location"] != state["location"]:
+    if not obs or not epistemic.current_protagonist_record(state, obs) or obs["kind"] != "witnessed" or obs["actor"] != "pc" or obs["turn"] != state["turn"] or obs["location"] != state["location"]:
         raise ValueError("Demeanor requires current directly attributed conduct")
     if not isinstance(severity, str) or severity not in rules["consequential_demeanor"]:
         raise ValueError("invalid Demeanor severity")
@@ -407,16 +407,16 @@ def social_demeanor(state, rules, request):
         raise ValueError("unsupported social consequence")
     if not isinstance(refs, list) or not 1 <= len(refs) <= 4 or any(type(i) is not int for i in refs) or len(set(refs)) != len(refs):
         raise ValueError("invalid social consequence claims")
-    claims = [c for c in state["dialogue"] if c["id"] in refs and {c["speaker"], c["listener"]} == {"pc", nid}
+    claims = [c for c in state["dialogue"] if c["id"] in refs and epistemic.current_protagonist_record(state, c) and {c["speaker"], c["listener"]} == {"pc", nid}
               and c["turn"] == state["turn"] and c["location"] == state["location"]]
     if len(claims) != len(refs) or not any(c["speaker"] == "pc" for c in claims):
         raise ValueError("consequence requires current actual player conduct")
     history = state["relationship_changes"]
-    if any(e["npc"] == nid and (set(e.get("claims", [])) & set(refs) or
+    if any(epistemic.current_protagonist_record(state, e) and e["npc"] == nid and (set(e.get("claims", [])) & set(refs) or
            e.get("source") == "social_conduct" and e.get("turn") == state["turn"]) for e in history):
         raise ValueError("social consequence already adjudicated")
     if kind == "reparation":
-        if not any(c["speaker"] == nid for c in claims) or not any(e["npc"] == nid and e["delta"] < 0 for e in history):
+        if not any(c["speaker"] == nid for c in claims) or not any(epistemic.current_protagonist_record(state, e) and e["npc"] == nid and e["delta"] < 0 for e in history):
             raise ValueError("reparation requires acknowledged conduct and prior relationship harm")
     basis = establishment.text(request["basis"], 240)
     count = len(history)
