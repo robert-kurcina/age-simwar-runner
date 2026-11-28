@@ -1,7 +1,7 @@
 # Grand tactical play — development plan
 
-Status: author-directed concept, 2026-11-28. **Design only; implementation deferred.**
-This is a third gameplay track, not a replacement for [strategic play](PLAN_STRATEGIC.md) or [narrative play](PLAN_NARRATIVE.md). [PLAN.md](PLAN.md) remains the common authority. Complete and qualify those engines independently before attempting cross-scale integration. AGE Enterprise remains out of scope.
+Status: author-directed concept, 2026-11-28. **Design only; DEFERRED (master P4, lowest priority).**
+This is a third gameplay track, not a replacement for [strategic play](PLAN_STRATEGIC.md) or [narrative play](PLAN_NARRATIVE.md). [PLAN.md](PLAN.md) remains the common authority. Both independent tracks must record explicit author-led UAT approval before any Grand Tactical implementation or prototyping. CI and mechanical qualification are insufficient. Master PLAN.md controls priority and activation. AGE Enterprise remains out of scope.
 
 ## Purpose
 
@@ -59,13 +59,13 @@ These are design invariants, not a mandate for a shared database, new scheduler,
 
 | Priority / status | Deliverable and exit criterion |
 |---|---|
-| P0 DEFERRED — prerequisite | Complete the independent Great War strategic cycle and narrative engine qualification; establish stable interfaces and actual evidence of relevant capabilities. |
-| P1 DEFERRED | Select one bounded embodiment, region, dated interval and authority relationship. Pin sources, separate fixed canon from working hypotheses and approve the private scenario configuration. |
-| P1 DEFERRED | Author one meaningful dilemma crossing both scales in each direction. Identify owning properties, the smallest accepted handoff and possible refusal/failure. Do not generalize beyond demonstrated need. |
-| P1 DEFERRED | Prototype one complete personal encounter → strategic commitment → elapsed interval → personal consequence loop, preserving scoped knowledge, resource accounting and replay. |
-| P1 DEFERRED | Qualify alternative outcomes, abstention, independent opposition, invalid authority, duplicate/stale handoffs, time-bound commitments, interruptions, save/resume and terminal failure. |
-| P2 DEFERRED | Extend to a short multi-epoch embodied Great War rehearsal only if the prototype establishes value over playing either engine independently. |
-| P3 OUT OF SCOPE | Universal cross-scale simulation, wider campaigns, full-stack integration and AGE Enterprise. |
+| GATE — BLOCKED | Both PLAN_NARRATIVE.md and PLAN_STRATEGIC.md must record explicit author-led UAT approval. No Grand Tactical implementation, prototyping or integration before both approvals. |
+| P4 DEFERRED | Select one bounded embodiment, region, dated interval and authority relationship. Pin sources, separate fixed canon from working hypotheses and approve the private scenario configuration. |
+| P4 DEFERRED | Author one meaningful dilemma crossing both scales in each direction. Identify owning properties, the smallest accepted handoff and possible refusal/failure. Do not generalize beyond demonstrated need. |
+| P4 DEFERRED | Prototype one complete personal encounter → strategic commitment → elapsed interval → personal consequence loop, preserving scoped knowledge, resource accounting and replay. |
+| P4 DEFERRED | Qualify alternative outcomes, abstention, independent opposition, invalid authority, duplicate/stale handoffs, time-bound commitments, interruptions, save/resume and terminal failure. |
+| P4 DEFERRED — later | Extend to a short multi-epoch embodied Great War rehearsal only if the prototype establishes value over playing either engine independently. |
+| OUT OF SCOPE | Universal cross-scale simulation, wider campaigns, full-stack integration and AGE Enterprise. |
 
 ## Acceptance
 
@@ -75,4 +75,4 @@ The mode is justified only if a player can recognize both the personal and colle
 
 All implementation and scenario ownership stay in age-simwar-runner. The canonical vaults are read-only pinned dependencies. This public plan records only the author-supplied conceptual premise and generic design; restricted historical details, hidden configurations and unapproved derived values belong in AGE's private staging or authorized delivery. No canonical changes are implied.
 
-No implementation is authorized by this roadmap alone. Keep the two active development tracks independent, and do not reopen the Great War strategic closure scope to satisfy grand tactical requirements.
+No implementation is authorized by this roadmap alone. Even after both UAT approvals, the track remains lowest priority; activation requires explicit author direction under PLAN.md. Keep the two active development tracks independent, and do not reopen the Great War strategic closure scope to satisfy grand tactical requirements.
