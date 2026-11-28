@@ -1,6 +1,7 @@
 """Optional local danger: decisive objectives, existing Zones, no AP loop."""
 from datetime import datetime, timedelta
 import copy
+from age_runtime.core import dxd_physical_disability
 
 
 def outcome(cfg, spec, key, default=None):
@@ -53,6 +54,11 @@ def compile_beat(state, rules, request):
     if injury and ("injury" not in state["dxd"] or injury >= state["dxd"]["injury"]["capacity"] or state["dxd"]["injury"]["injury"] + 1 >= state["dxd"]["injury"]["capacity"]):
         if not (rules.get("native_injury_lifecycle") and spec.get("allow_incapacity") is True and "injury" in state["dxd"]):
             raise ValueError("potentially incapacitating Injury requires explicit consequence authority")
+    permanent = outcome(cfg, spec, "permanent_location_on_dof")
+    if permanent is not None:
+        dxd_physical_disability.validate(permanent)
+        if not injury or not rules.get("native_permanent_locations"):
+            raise ValueError("permanent loss requires reviewed resolved Injury authority")
     loc = state["location"]
     return {"id": offer["action"], "label": offer["objective"], "location": loc,
             "duration_seconds": cfg["seconds"], "local_seconds": cfg["seconds"],
@@ -70,6 +76,9 @@ def record(state, rules, action, result):
     if not result["passed"] and result["dof"] and injury:
         from age_runtime.core import dxd_injury
         dxd_injury.apply(state["dxd"]["injury"], injury)
+        permanent = outcome(cfg, spec, "permanent_location_on_dof")
+        if permanent is not None and dxd_injury.projection(state["dxd"]["injury"])["status"] != "dead":
+            dxd_physical_disability.record(state["dxd"]["injury"], permanent)
     if result["passed"]:
         state["observations"].append(outcome(cfg, spec, "success_observation"))
         degree = outcome(cfg, spec, "degree_observation")
