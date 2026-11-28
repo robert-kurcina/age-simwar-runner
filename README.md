@@ -54,7 +54,9 @@ The updated archive includes START_HERE.md; older artifacts without it use the b
 | Fear! — The Keeper at Ram Island | Executable bounded DXD trial |
 | Conflagration / SH44SER | Seven unreviewed regional rehearsals; reviewed private distribution pending |
 
-The live catalog is authoritative: run `python game.py list` in the extracted repository. Do not offer imported scenarios as playable.
+| Near Melanesia — Production Accord (2044) | One unreviewed industrial rehearsal; four perspectives |
+
+The live catalogs are authoritative: run `python game.py list` and `python play.py private bundled-catalog` in the extracted repository. For a bundled strategic rehearsal use its returned inventory, episode ID and selected actor with `private rehearse`. Do not imply canonical approval. Do not offer imported scenarios as playable.
 
 For a first narrative game, choose **The Boothbay Incident**. Boothbay supports advanced GM operations; Castine and Ram Island use authored-action adjudication with persistent local narrative continuity. See the [current narrative facilitator protocol](00_Meta/NARRATIVE_GM.md). Narrative trials are mechanically supported but current player-led experiential qualification is pending; see [qualification procedure](docs/narrative-chat-play-qualification.md). For a short strategic demonstration, choose **Service Restoration** as coordinator.
 

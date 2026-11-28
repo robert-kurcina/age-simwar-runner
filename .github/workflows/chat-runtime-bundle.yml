@@ -71,6 +71,14 @@ jobs:
           cd "$work/age-simwar-runner"
           python -m unittest discover -v
           python game.py list
+          python play.py private bundled-catalog > "$work/strategic-catalog.json"
+          python - "$work/strategic-catalog.json" <<'PY'
+          import json, sys
+          campaigns = json.load(open(sys.argv[1]))
+          assert len(campaigns) == 2
+          assert sum(len(c["episodes"]) for c in campaigns) == 8
+          assert sum(len(e["perspectives"]) for c in campaigns for e in c["episodes"]) == 29
+          PY
           python game.py start boothbay "$work/mythos.json" --seed 42 > "$work/opening.json"
           revision="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["revision"])' "$work/opening.json")"
           python game.py act "$work/mythos.json" inspect_docks --revision "$revision"

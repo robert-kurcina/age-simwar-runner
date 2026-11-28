@@ -109,3 +109,19 @@ def progression(path, previous):
     result["guidance"] = ("Choose a fresh draft opening or explicitly preview and confirm selected historical memory. "
                           "Fresh openings do not inherit records. No automatic phase advance, live obligation or resource carry.")
     return result
+
+
+def bundled_catalog(root=None):
+    """Discover explicitly tracked strategic rehearsal inventories, not private files."""
+    from pathlib import Path
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[2]
+    entries = ("scenarios/sh44ser/conflagration/inventory.json",
+               "scenarios/sh44ser/production-accord/inventory.json")
+    result = []
+    for relative in entries:
+        menu = discover(root / relative)
+        episodes = [e for g in menu["groups"] for e in g["episodes"]
+                    if e["availability"] == "available" and e["play_mode"] == "rehearse"]
+        result.append({"id": menu["id"], "title": menu["title"], "inventory": relative,
+                       "qualification": "unreviewed-rehearsal", "episodes": episodes})
+    return result
