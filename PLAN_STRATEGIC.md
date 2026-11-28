@@ -500,3 +500,7 @@ PR #247 passed Tests 46085131305 and bundle 46085131340; #248 Tests 46085256924 
 ## 2044 industrial readiness checkpoint
 
 PR #250 passed Tests 46085497192 and bundle 46085497252. Inspect later SH44SER manufacturing sources and Great War/Solo City README: Great War has deity/Event/Time! semantics incompatible with direct faction-turn reuse; Solo City is primarily narrative. Select a separate Melanesian Production Accord draft, four national perspectives, six 30-day turns, constrained readiness investments and voluntary transfers. Source roles pinned to SH44SER dda318e8; all mechanical values hypothetical. No new mechanics, no native game port, no actual manufacturing or technology-diffusion claim. Regression exercises four terminal routes and Fiji investment versus reserve. CI pending. Next examine specific industrial interdependence gap only if demonstrated; UAT deferred.
+
+## Industrial interdependence checkpoint
+
+PR #252 passed Tests 46089515277 and bundle 46089515267. Add optional cross-faction project milestone prerequisites using existing monotone project progress; reject cycles, invalid thresholds, hidden or delayed milestone reports. Resolve against pre-project interval values, preserve local Shortfall, expose separate dependency status in actor-local decision support. Fiji chassis readiness now depends on Inguria certification and Caledonia refining milestones. Tests cover blocked funding-only route, prerequisite clearance, ordering and validation. No physical supply-chain simulation or automatic consent. CI pending. UAT deferred.
