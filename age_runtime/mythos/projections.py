@@ -160,8 +160,9 @@ def referee_view(state, story, rules, legal, npc_available, digest, demeanor_lab
                 "character_emphasis_xp": pc.get("xp", 0),
                 "narrative_functions": continuity.projection(state, rules, legal),
                 "local_capabilities": proposals.local_capabilities(state, rules, npc_available),
-                "approaches": {a["id"]: sorted(rules["gm_proposals"][a["id"]])
-                               for a in legal if a["id"] in rules.get("gm_proposals", {})},
+                "approaches": {a["id"]: sorted(approaches)
+                               for a in legal if (approaches := proposals.authored_approaches(a, rules))},
+                "intent_authority": proposals.intent_authority(state, rules),
                 "clocks": [{"id": key, "name": cfg["name"], "source": cfg["source"],
                             "segments": cfg["segments"], **state["narrative_events"]["clocks"][key]}
                            for key, cfg in rules.get("event_clocks", {}).items()
@@ -295,6 +296,7 @@ def authored_referee_view(state, story, rules, legal, public, npc_available, *, 
                              "subjective_beliefs": bool(rules.get("social_epistemic")), "interpersonal_duress": bool(rules.get("interpersonal_duress")),
                              "abstract_npc_recovery": bool(rules.get("npc_abstract_recovery")),
                              "social_demeanor": bool(rules.get("social_demeanor"))},
+            "intent_authority": proposals.intent_authority(state, rules),
             "guidance":  "Resolve mechanical effects through authored actions only. "
                         "Use enabled continuity operations for actual local exchanges and mundane details. "
                         "Do not invent clues, simulate independent NPC actions, "
