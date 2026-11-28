@@ -70,7 +70,7 @@ P0 standing presentation/qualification requirement across both tracks; P1 increm
 
 ## Priority and status discipline
 
-Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLAN_NARRATIVE.md maintain their own ordered deliverables and evidence. Keep one shared engine. Apply the following vocabulary in all three plans:
+Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLAN_NARRATIVE.md maintain their own ordered deliverables and evidence. PLAN_GRAND.md records the deferred cross-scale track. Keep one shared engine with independent gameplay modes. Apply the following vocabulary in the master plan and all three track plans:
 
 | Status | Meaning |
 |---|---|
@@ -82,7 +82,7 @@ Use this master plan as the shared priority authority; PLAN_STRATEGIC.md and PLA
 | DEFERRED | Deliberately postponed until a stated gate or demonstrated need; not active work. |
 | REJECTED | Explicitly declined approach or scope; record rationale, reconsider only with new evidence or author direction. |
 
-Priority is independent of status: P0 = release/qualification blockers; P1 = current playable vertical slices; P2 = subsequent accepted gameplay improvements; P3 = deferred post-qualification delivery. Within a priority, dependencies and demonstrated gameplay value determine order. Keep WIP small, use the existing two track plans rather than a new tracker, and update status/evidence at each meaningful checkpoint. Do not mark gameplay DONE merely because a PR merged or CI passed. Split implementation, mechanical verification and experiential acceptance when their statuses differ. A blocked task does not prevent independent work. Avoid promoting deferred infrastructure ahead of the Chat gameplay gate.
+Priority is independent of status: P0 = release/qualification blockers; P1 = current playable vertical slices; P2 = subsequent accepted gameplay improvements; P3 = deferred post-qualification delivery; P4 = Grand Tactical, the lowest master-plan priority. Within a priority, dependencies and demonstrated gameplay value determine order. Keep WIP small, use the existing two track plans rather than a new tracker, and update status/evidence at each meaningful checkpoint. Do not mark gameplay DONE merely because a PR merged or CI passed. Split implementation, mechanical verification and experiential acceptance when their statuses differ. A blocked task does not prevent independent work. Avoid promoting deferred infrastructure ahead of the Chat gameplay gate.
 
 ## Status — 2026-11-26
 
@@ -104,11 +104,20 @@ Priority is independent of status: P0 = release/qualification blockers; P1 = cur
 | [Narrative sub-game](PLAN_NARRATIVE.md) | WIP (P1) | GM-directed, character-scale gameplay; qualify Boothbay, then other Fear! scenarios. |
 | [Strategic sub-game](PLAN_STRATEGIC.md) | WIP (P1) | Faction-scale gameplay; Twilight Wars campaign, first Great War scenario with eight quarterly Turns, robust resource management and independent Deity/mortal decisions. |
 | [Dramatic Event generation and planned/ad hoc narrative scenarios](PLAN_NARRATIVE.md#subsequent-phase--planned-and-ad-hoc-scenario-facility-deferred-p2) | DEFERRED (P2) | Principal narrative development phase N98–N104 after interpersonal continuity (N94–N97) and foundation mechanical readiness (N93). Generate coherent, extraordinary causal Events, discovery networks and meaningful interventions through one native runtime; separately qualify generated adventures. UAT remains a separate deferred acceptance requirement. |
-| Full-stack service | DEFERRED (P3) | Final experimental phase; see the last section of this plan. |
+| Full-stack service | DEFERRED (P3) | Final delivery experiment for the independent engines; see the entry gate below. |
+| [Grand Tactical play](PLAN_GRAND.md) | DEFERRED (P4 — lowest priority) | Cross-scale embodied gameplay. No implementation or prototyping until both independent tracks have explicitly passed author-led UAT approval. |
 
 Narrative and strategic phases run concurrently, not sequentially. Each has its own plan, priorities and acceptance criteria; neither must wait for the other to finish. Both exercise one shared engine and feed lessons back into AGE. Coordinate changes to shared contracts and regression-test both modes when affected. Prioritize the smallest useful vertical slices independently; shared blockers take precedence when they actually impede play. ChatGPT gameplay acceptance is the joint exit gate of these concurrent phases, not a separate infrastructure project. Record actual player feedback separately from deterministic execution and CI results.
 
 Narrative implementation follows the [current ordered roadmap](PLAN_NARRATIVE.md#current-ordered-implementation-roadmap--2026-11-27). Author-led narrative UAT is deferred for now by author direction; continue implementation and mechanical verification without claiming experiential acceptance. The final full-stack entry gate is unchanged.
+
+## Grand Tactical entry gate — lowest priority (P4)
+
+Grand Tactical is a separate, deferred cross-scale experiment. It must not compete with Narrative or Strategic development, stabilization, qualification, or UAT. It is the lowest priority of this master plan, including relative to P3 delivery work.
+
+**Mandatory entry gate (AND):** both [PLAN_NARRATIVE.md](PLAN_NARRATIVE.md) and [PLAN_STRATEGIC.md](PLAN_STRATEGIC.md) must record explicit author-led UAT approval of their respective independent gameplay modes. Mechanical completion, merged PRs, passing CI, facilitator trials, deferred UAT, or approval of only one track cannot satisfy this gate. Until both approvals are recorded, PLAN_GRAND.md remains DEFERRED; do not start cross-scale implementation, prototyping, integration or speculative prerequisite refactoring. Do not make Grand Tactical a prerequisite for either independent track or the existing full-stack entry gate.
+
+After both approvals, reconsider Grand Tactical only at the lowest master-plan priority; the gate permits consideration, not automatic promotion to NEXT or authorization to begin. Preserve the independent engines and request explicit author direction before activation.
 
 ## Consistency and verification
 
